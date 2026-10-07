@@ -26,6 +26,11 @@ public class DungeonGenerator : MonoBehaviour
   // Xóa biến Vector2Int cũ đi, thay bằng Transform
   public Transform startDoorMarker;
 
+  [Header("Cài đặt 3D Prefabs")]
+  public GameObject visualTilePrefab;     // Kéo prefab gạch đá (đã xóa component Collider)
+  public GameObject invisibleFloorPrefab; // Kéo khối Cube (Có Box Collider, đã xóa Mesh Renderer)
+  public Transform dungeonParent;
+
   // Danh sách lưu các hình chữ nhật đại diện cho hành lang
   private List<RectInt> corridors = new List<RectInt>();
 
@@ -66,6 +71,16 @@ public class DungeonGenerator : MonoBehaviour
     CreateCorridors(rootNode);
 
     ConnectStartRoom();
+
+    // 2 BƯỚC MỚI THÊM VÀO
+    BakeGrid();
+    InstantiateDungeon();
+
+    // Đóng băng và gộp toàn bộ GameObjects con bên trong DungeonParent để tối ưu Draw Calls
+    if (dungeonParent != null)
+    {
+      StaticBatchingUtility.Combine(dungeonParent.gameObject);
+    }
 
     Debug.Log("Đã tạo xong khung BSP nhích lên trên!");
   }
@@ -239,6 +254,87 @@ public class DungeonGenerator : MonoBehaviour
     // Vẽ hành lang bằng tọa độ đã làm tròn
     CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, gridDoorPos.x, closestCenter.y);
     CreateCorridorSegment(gridDoorPos.x, closestCenter.y, closestCenter.x, closestCenter.y);
+  }
+
+  void BakeGrid()
+  {
+    // Quét tất cả các phòng và điền số 1 vào mảng
+    foreach (RectInt room in rooms)
+    {
+      for (int x = room.x; x < room.x + room.width; x++)
+      {
+        for (int y = room.y; y < room.y + room.height; y++)
+        {
+          if (IsInBounds(x, y)) mapGrid[x, y] = 1;
+        }
+      }
+    }
+
+    // Quét tất cả các hành lang và điền số 1 vào mảng
+    foreach (RectInt corridor in corridors)
+    {
+      for (int x = corridor.x; x < corridor.x + corridor.width; x++)
+      {
+        for (int y = corridor.y; y < corridor.y + corridor.height; y++)
+        {
+          if (IsInBounds(x, y)) mapGrid[x, y] = 1;
+        }
+      }
+    }
+  }
+
+  // Hàm kiểm tra an toàn, tránh lỗi tràn mảng (Index Out Of Range)
+  bool IsInBounds(int x, int y)
+  {
+    return x >= 0 && x < mapGrid.GetLength(0) && y >= 0 && y < mapGrid.GetLength(1);
+  }
+
+  void InstantiateDungeon()
+  {
+    // BƯỚC 1: Rải gạch trang trí (Visual) với bước nhảy 2
+    for (int x = 0; x < mapGrid.GetLength(0); x += 2)
+    {
+      for (int y = 0; y < mapGrid.GetLength(1); y += 2)
+      {
+        if (mapGrid[x, y] == 1)
+        {
+          // Nếu Pivot của viên gạch nằm ở Tâm (Center), bạn phải cộng thêm 0.5f 
+          // để viên gạch 2x2 nằm chính giữa 4 ô lưới 1x1
+          Vector3 position = new Vector3(x + 0.5f, 0, y + 0.5f);
+
+          // Nếu Pivot nằm ở góc (Corner), bạn chỉ cần dùng (x, 0, y)
+
+          Instantiate(visualTilePrefab, position, Quaternion.identity, dungeonParent);
+        }
+      }
+    }
+
+    // BƯỚC 2: Sinh sàn ẩn tàng hình (Physics) bao trùm theo khối
+    foreach (RectInt room in rooms)
+    {
+      CreateInvisibleCollider(room);
+    }
+
+    foreach (RectInt corridor in corridors)
+    {
+      CreateInvisibleCollider(corridor);
+    }
+  }
+
+  void CreateInvisibleCollider(RectInt area)
+  {
+    // Tính toán điểm chính giữa của căn phòng/hành lang
+    // (Trừ đi 1 rồi chia 2 vì tọa độ x,y đang là tâm của viên gạch, không phải mép ngoài)
+    float centerX = area.x + (area.width - 1) / 2f;
+    float centerZ = area.y + (area.height - 1) / 2f;
+
+    // Đặt Y âm một chút (ví dụ -0.1f hoặc -0.2f) để bề mặt BoxCollider nằm ngay dưới các phiến đá
+    Vector3 centerPos = new Vector3(centerX, -0.2f, centerZ);
+
+    GameObject invFloor = Instantiate(invisibleFloorPrefab, centerPos, Quaternion.identity, dungeonParent);
+
+    // Kéo giãn khối Cube: Width và Height tương ứng số ô, trục Y để dẹt (0.2)
+    invFloor.transform.localScale = new Vector3(area.width, 0.2f, area.height);
   }
 
   void OnDrawGizmos()

@@ -20,7 +20,7 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.2603773, g: 0.2603773, b: 0.2603773, a: 1}
+  m_AmbientSkyColor: {r: 0.16981131, g: 0.16981131, b: 0.16981131, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
@@ -3589,11 +3589,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7646714297203605862, guid: 58b15cfdcc8b9be40a781c8426f02be3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 98.8
+      value: 151.5
       objectReference: {fileID: 0}
     - target: {fileID: 7646714297203605862, guid: 58b15cfdcc8b9be40a781c8426f02be3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.99999994
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 7646714297203605862, guid: 58b15cfdcc8b9be40a781c8426f02be3, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6552,6 +6552,68 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6136314071380960252, guid: 75d2870748591f749b6be72c69fdb186, type: 3}
   m_PrefabInstance: {fileID: 388950812}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &755363345
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 755363348}
+  - component: {fileID: 755363347}
+  - component: {fileID: 755363346}
+  m_Layer: 0
+  m_Name: InvisFloorPrefab
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &755363346
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755363345}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &755363347
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755363345}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &755363348
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755363345}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 159.60875, y: 0.00001, z: 148.53737}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &755887059 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2881347731508845785, guid: e8e6926244ded9244aa118ff2ab51d92, type: 3}
@@ -12294,7 +12356,7 @@ Transform:
   m_GameObject: {fileID: 1413596610}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 99.6193, y: 1.56, z: 9.1030655}
+  m_LocalPosition: {x: 152.3193, y: 1.56, z: 9.1030655}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14832,11 +14894,14 @@ MonoBehaviour:
   mapHeight: 300
   startRoomHeight: 22
   minNodeSize: 45
-  cutChance: 0.95
+  cutChance: 1
   minRoomSize: 30
   roomPadding: 2
-  corridorThickness: 4
+  corridorThickness: 12
   startDoorMarker: {fileID: 65740451}
+  visualTilePrefab: {fileID: 3222126326094104163, guid: e8e6926244ded9244aa118ff2ab51d92, type: 3}
+  invisibleFloorPrefab: {fileID: 755363345}
+  dungeonParent: {fileID: 2094085076}
 --- !u!4 &1693836170
 Transform:
   m_ObjectHideFlags: 0
@@ -15986,7 +16051,7 @@ Transform:
   m_GameObject: {fileID: 1807044818}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.33, z: 0}
+  m_LocalPosition: {x: 0, y: -0.33, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -16456,6 +16521,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 821439820}
     m_Modifications:
+    - target: {fileID: -8981924948689021224, guid: 55dfbe1a67594f448b0bbe39d220903b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3948239414199306516, guid: 55dfbe1a67594f448b0bbe39d220903b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.66796994
@@ -18042,6 +18111,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 75d2870748591f749b6be72c69fdb186, type: 3}
+--- !u!1 &2094085075
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2094085076}
+  m_Layer: 0
+  m_Name: DungeonEnviroment
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2094085076
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094085075}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 139.27026, y: 0, z: 128.32689}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &2096059251 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7034637148854949217, guid: 5cb5c924e389ac948bf05d9b588b7428, type: 3}
@@ -18448,3 +18548,5 @@ SceneRoots:
   - {fileID: 1526701627}
   - {fileID: 1693836170}
   - {fileID: 65740451}
+  - {fileID: 2094085076}
+  - {fileID: 755363348}

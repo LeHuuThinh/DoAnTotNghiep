@@ -6,7 +6,12 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float runSpeed = 9f;
     [SerializeField] private float gravity = -20f;
+
+    [Header("Run")]
+    [SerializeField] private float runActivationTime = 0.5f;
+    [SerializeField] private Animator animator;
 
     [Header("Jump & Gravity")]
     [SerializeField] private float jumpHeight = 1.5f;
@@ -30,13 +35,23 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float cameraLookHeight = 1.2f;
 
     private CharacterController characterController;
+    private float rightMouseHeldTime;
+    private bool isRightMouseHeld;
+    private bool runPersisted;
     private float verticalVelocity;
     private float cameraYaw;
     private float cameraPitch = 15f;
 
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
 
         if (cameraTransform == null && Camera.main != null)
         {
@@ -57,7 +72,9 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         HandleCameraInput();
+        HandleRunInput();
         HandleMovement();
+        UpdateAnimation();
 
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
@@ -70,6 +87,41 @@ public class PlayerController : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
+    }
+
+    private void HandleRunInput()
+    {
+        if (Mouse.current == null)
+        {
+            rightMouseHeldTime = 0f;
+            isRightMouseHeld = false;
+            return;
+        }
+
+        bool rightMousePressed = Mouse.current.rightButton.isPressed;
+        if (rightMousePressed)
+        {
+            if (!isRightMouseHeld)
+            {
+                isRightMouseHeld = true;
+                rightMouseHeldTime = 0f;
+            }
+
+            rightMouseHeldTime += Time.deltaTime;
+            if (rightMouseHeldTime >= runActivationTime)
+            {
+                runPersisted = true;
+            }
+            return;
+        }
+
+        if (isRightMouseHeld && rightMouseHeldTime < runActivationTime)
+        {
+            runPersisted = false;
+        }
+
+        isRightMouseHeld = false;
+        rightMouseHeldTime = 0f;
     }
 
     private void LateUpdate()
@@ -135,6 +187,11 @@ public class PlayerController : MonoBehaviour
         if (Keyboard.current.aKey.isPressed) input.x -= 1f;
         input = Vector2.ClampMagnitude(input, 1f);
 
+        if (input.sqrMagnitude <= 0.001f)
+        {
+            runPersisted = false;
+        }
+
         Quaternion cameraRotation = Quaternion.Euler(0f, cameraYaw, 0f);
         Vector3 moveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
 
@@ -183,8 +240,32 @@ public class PlayerController : MonoBehaviour
         verticalVelocity += gravity * gravityMultiplier * Time.deltaTime;
 
         // --- ÁP DỤNG VÀO CONTROLLER ---
-        Vector3 velocity = moveDirection * moveSpeed;
+        float currentMoveSpeed = IsRunning ? runSpeed : moveSpeed;
+        Vector3 velocity = moveDirection * currentMoveSpeed;
         velocity.y = verticalVelocity;
         characterController.Move(velocity * Time.deltaTime);
     }
+
+    private void UpdateAnimation()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        Vector2 input = Vector2.zero;
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.wKey.isPressed) input.y += 1f;
+            if (Keyboard.current.sKey.isPressed) input.y -= 1f;
+            if (Keyboard.current.dKey.isPressed) input.x += 1f;
+            if (Keyboard.current.aKey.isPressed) input.x -= 1f;
+        }
+
+        float movementAmount = Mathf.Clamp01(input.magnitude);
+        animator.SetFloat(SpeedHash, movementAmount);
+        animator.SetBool(IsRunningHash, IsRunning && movementAmount > 0f);
+    }
+
+    private bool IsRunning => isRightMouseHeld || runPersisted;
 }
