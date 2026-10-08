@@ -4,6 +4,9 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("State")]
+    public bool canMove = true;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float runSpeed = 9f;
@@ -11,14 +14,16 @@ public class PlayerController : MonoBehaviour
 
     [Header("Run")]
     [SerializeField] private float runActivationTime = 0.5f;
+    [SerializeField] private float speedDampTime = 0.1f;
     [SerializeField] private Animator animator;
 
-    [Header("Jump & Gravity")]
+    [Header("Jump (Fixed Trajectory)")]
     [SerializeField] private float jumpHeight = 1.5f;
-    [SerializeField] private float fallMultiplier = 2.5f; // Nhân trọng lực khi rơi
-    [SerializeField] private float lowJumpMultiplier = 2f; // Nhân trọng lực khi nhả phím nhảy sớm
-    [SerializeField] private float apexHangTimeMultiplier = 0.5f; // Giảm trọng lực ở đỉnh
-    [SerializeField] private float apexVelocityThreshold = 1f; // Ngưỡng vận tốc để kích hoạt Hang Time
+    [SerializeField] private float jumpDelay = 0.15f; // Thời gian chờ khom gối lấy đà (giây)
+
+    [Header("Roll")]
+    [SerializeField] private float rollSpeed = 12f;
+    [SerializeField] private float rollDuration = 0.6f;
 
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
@@ -42,29 +47,29 @@ public class PlayerController : MonoBehaviour
     private float cameraYaw;
     private float cameraPitch = 15f;
 
+    private bool isRolling;
+    private float rollTimer;
+    private Vector3 rollDirection;
+
+    private Vector3 lockedAirVelocity;
+    private Vector3 pendingJumpVelocity; // Đà bay sẽ được bung ra sau khi lấy đà xong
+    private bool isPreparingJump; // Biến đánh dấu đang khom người
+    private float jumpTimer;      // Bộ đếm lùi
+
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
+    private static readonly int JumpHash = Animator.StringToHash("Jump");
+    private static readonly int RollHash = Animator.StringToHash("Roll");
+    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
-
-        if (cameraTransform == null && Camera.main != null)
-        {
-            cameraTransform = Camera.main.transform;
-        }
-
-        if (cameraTransform != null)
-        {
-            cameraYaw = transform.eulerAngles.y;
-        }
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
+        if (cameraTransform != null) cameraYaw = transform.eulerAngles.y;
 
         cameraDistance = Mathf.Clamp(cameraDistance, minZoomDistance, maxZoomDistance);
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -91,13 +96,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleRunInput()
     {
-        if (Mouse.current == null)
-        {
-            rightMouseHeldTime = 0f;
-            isRightMouseHeld = false;
-            return;
-        }
-
+        if (Mouse.current == null) return;
         bool rightMousePressed = Mouse.current.rightButton.isPressed;
         if (rightMousePressed)
         {
@@ -106,152 +105,154 @@ public class PlayerController : MonoBehaviour
                 isRightMouseHeld = true;
                 rightMouseHeldTime = 0f;
             }
-
             rightMouseHeldTime += Time.deltaTime;
-            if (rightMouseHeldTime >= runActivationTime)
-            {
-                runPersisted = true;
-            }
+            if (rightMouseHeldTime >= runActivationTime) runPersisted = true;
             return;
         }
 
-        if (isRightMouseHeld && rightMouseHeldTime < runActivationTime)
-        {
-            runPersisted = false;
-        }
-
+        if (isRightMouseHeld && rightMouseHeldTime < runActivationTime) runPersisted = false;
         isRightMouseHeld = false;
         rightMouseHeldTime = 0f;
     }
 
     private void LateUpdate()
     {
-        if (cameraTransform == null)
-        {
-            return;
-        }
-
-        // 1. Lấy góc xoay tổng của camera dựa trên chuột
+        if (cameraTransform == null) return;
         Quaternion orbitRotation = Quaternion.Euler(cameraPitch, cameraYaw, 0f);
-
-        // 2. Điểm gốc trên người nhân vật (điểm Camera sẽ xoay quanh)
         Vector3 targetPosition = transform.position + Vector3.up * cameraLookHeight;
-
-        // 3. Gộp tất cả các khoảng cách (Side, Height, Distance) vào MỘT vector cục bộ.
-        // Khi nhân với orbitRotation, camera sẽ giữ nguyên form này dù bạn nhìn lên/xuống/trái/phải.
         Vector3 localOffset = new Vector3(cameraSideOffset, cameraHeight - cameraLookHeight, -cameraDistance);
-
-        // 4. Tính toán vị trí cuối cùng
         Vector3 desiredPosition = targetPosition + orbitRotation * localOffset;
 
-        // 5. Di chuyển camera mượt mà
-        cameraTransform.position = Vector3.Lerp(
-            cameraTransform.position,
-            desiredPosition,
-            cameraFollowSpeed * Time.deltaTime);
-
-        // 6. QUAN TRỌNG: Gán thẳng góc nhìn thay vì dùng LookAt().
-        // Việc này đảm bảo camera luôn nhìn song song phía trước, tạo đúng cảm giác nhìn qua vai.
+        cameraTransform.position = Vector3.Lerp(cameraTransform.position, desiredPosition, cameraFollowSpeed * Time.deltaTime);
         cameraTransform.rotation = orbitRotation;
     }
 
     private void HandleCameraInput()
     {
-        if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked)
-        {
-            return;
-        }
-
+        if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
         cameraYaw += mouseDelta.x * mouseSensitivity;
         cameraPitch = Mathf.Clamp(cameraPitch - mouseDelta.y * mouseSensitivity, minPitch, maxPitch);
 
         float scrollDelta = Mouse.current.scroll.ReadValue().y;
-        cameraDistance = Mathf.Clamp(
-            cameraDistance - scrollDelta * zoomSpeed * 0.01f,
-            minZoomDistance,
-            maxZoomDistance);
+        cameraDistance = Mathf.Clamp(cameraDistance - scrollDelta * zoomSpeed * 0.01f, minZoomDistance, maxZoomDistance);
     }
+
+    public void LockMovement() { canMove = false; }
+    public void UnlockMovement() { canMove = true; }
 
     private void HandleMovement()
     {
-        if (Keyboard.current == null)
-        {
-            return;
-        }
+        if (Keyboard.current == null) return;
+
+        bool isGrounded = characterController.isGrounded;
 
         Vector2 input = Vector2.zero;
-        if (Keyboard.current.wKey.isPressed) input.y += 1f;
-        if (Keyboard.current.sKey.isPressed) input.y -= 1f;
-        if (Keyboard.current.dKey.isPressed) input.x += 1f;
-        if (Keyboard.current.aKey.isPressed) input.x -= 1f;
+
+        // 1. CHỈ NHẬN INPUT NẾU ĐƯỢC PHÉP DI CHUYỂN
+        if (canMove)
+        {
+            if (Keyboard.current.wKey.isPressed) input.y += 1f;
+            if (Keyboard.current.sKey.isPressed) input.y -= 1f;
+            if (Keyboard.current.dKey.isPressed) input.x += 1f;
+            if (Keyboard.current.aKey.isPressed) input.x -= 1f;
+        }
         input = Vector2.ClampMagnitude(input, 1f);
 
-        if (input.sqrMagnitude <= 0.001f)
-        {
-            runPersisted = false;
-        }
+        if (input.sqrMagnitude <= 0.001f) runPersisted = false;
 
         Quaternion cameraRotation = Quaternion.Euler(0f, cameraYaw, 0f);
-        Vector3 moveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
+        Vector3 desiredMoveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
 
-        if (moveDirection.sqrMagnitude > 0.001f)
+        // --- XỬ LÝ ROLL ---
+        if (canMove && !isRolling && isGrounded && Keyboard.current.shiftKey.wasPressedThisFrame && !isPreparingJump)
         {
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                Quaternion.LookRotation(moveDirection),
-                12f * Time.deltaTime);
+            isRolling = true;
+            rollTimer = rollDuration;
+            animator.SetTrigger(RollHash);
+            rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
         }
 
-        // --- XỬ LÝ CHẠM ĐẤT ---
-        bool isGrounded = characterController.isGrounded;
-        if (isGrounded && verticalVelocity < 0f)
+        if (isRolling)
         {
-            verticalVelocity = -2f; // Ép nhẹ xuống đất để leo dốc mượt
+            rollTimer -= Time.deltaTime;
+            if (rollTimer <= 0f) isRolling = false;
+            else
+            {
+                transform.rotation = Quaternion.LookRotation(rollDirection);
+                verticalVelocity += gravity * Time.deltaTime;
+                Vector3 rollVelocity = rollDirection * rollSpeed;
+                rollVelocity.y = verticalVelocity;
+                characterController.Move(rollVelocity * Time.deltaTime);
+                return;
+            }
         }
 
-        // --- KÍCH HOẠT NHẢY ---
-        // Công thức vật lý kinh điển để đạt đúng chiều cao mong muốn: v = căn bậc 2 của (h * -2 * g)
-        if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
+        // --- XỬ LÝ ĐI BỘ & NHẢY CÓ TRỄ ---
+        if (isGrounded)
         {
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -2f;
+
+            float currentSpeed = IsRunning ? runSpeed : moveSpeed;
+
+            if (!isPreparingJump)
+            {
+                // 1. Chỉ xoay người và cập nhật vận tốc khi KHÔNG khom gối lấy đà
+                if (desiredMoveDirection.sqrMagnitude > 0.001f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), 12f * Time.deltaTime);
+                }
+                lockedAirVelocity = desiredMoveDirection * currentSpeed;
+
+                // 2. NHẬN LỆNH NHẢY
+                if (canMove && Keyboard.current.spaceKey.wasPressedThisFrame)
+                {
+                    LockMovement(); // Khóa input WASD
+                    isPreparingJump = true;
+                    jumpTimer = jumpDelay;
+                    animator.SetTrigger(JumpHash);
+
+                    // Lưu lại hướng và tốc độ chạy hiện tại để dùng khi thực sự bay lên
+                    pendingJumpVelocity = lockedAirVelocity;
+                }
+            }
+            else
+            {
+                // 3. ĐANG LẤY ĐÀ: Ép lực đẩy ngang về 0 để nhân vật đứng yên gồng sức
+                lockedAirVelocity = Vector3.zero;
+
+                // 4. ĐẾM LÙI
+                jumpTimer -= Time.deltaTime;
+                if (jumpTimer <= 0f)
+                {
+                    isPreparingJump = false;
+                    verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity); // Nảy trục Y
+
+                    // Trả lại đà đã lưu để bay lướt về phía trước trên không trung
+                    lockedAirVelocity = pendingJumpVelocity;
+                }
+            }
+        }
+        else
+        {
+            isPreparingJump = false; // Đề phòng rơi tự do khỏi mép vực lúc đang lấy đà
+            verticalVelocity += gravity * Time.deltaTime;
         }
 
-        // --- XỬ LÝ TRỌNG LỰC "GAME FEEL" ---
-        float gravityMultiplier = 1f;
-
-        if (verticalVelocity < 0f)
-        {
-            // 1. Fall Multiplier: Càng rơi càng chịu trọng lực mạnh -> Cú chạm đất có lực hơn
-            gravityMultiplier = fallMultiplier;
-        }
-        else if (verticalVelocity > 0f && !Keyboard.current.spaceKey.isPressed)
-        {
-            // 2. Low Jump: Nếu đang bay lên mà người chơi thả tay khỏi phím Space -> Kéo rơi xuống sớm
-            gravityMultiplier = lowJumpMultiplier;
-        }
-        else if (Mathf.Abs(verticalVelocity) < apexVelocityThreshold && !isGrounded)
-        {
-            // 3. Hang Time: Khi đang ở lơ lửng quanh đỉnh cú nhảy -> Trọng lực yếu đi để tạo độ "lỳ"
-            gravityMultiplier = apexHangTimeMultiplier;
-        }
-
-        // Áp dụng trọng lực đã tinh chỉnh vào vận tốc trục Y
-        verticalVelocity += gravity * gravityMultiplier * Time.deltaTime;
-
-        // --- ÁP DỤNG VÀO CONTROLLER ---
-        float currentMoveSpeed = IsRunning ? runSpeed : moveSpeed;
-        Vector3 velocity = moveDirection * currentMoveSpeed;
-        velocity.y = verticalVelocity;
-        characterController.Move(velocity * Time.deltaTime);
+        // Áp dụng lực vào Character Controller
+        Vector3 finalVelocity = lockedAirVelocity;
+        finalVelocity.y = verticalVelocity;
+        characterController.Move(finalVelocity * Time.deltaTime);
     }
 
     private void UpdateAnimation()
     {
-        if (animator == null)
-        {
-            return;
-        }
+        if (animator == null) return;
+
+        bool isGrounded = characterController.isGrounded;
+        animator.SetBool(IsGroundedHash, isGrounded);
+
+        if (isRolling || !isGrounded || isPreparingJump) return;
 
         Vector2 input = Vector2.zero;
         if (Keyboard.current != null)
@@ -262,9 +263,21 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.aKey.isPressed) input.x -= 1f;
         }
 
-        float movementAmount = Mathf.Clamp01(input.magnitude);
-        animator.SetFloat(SpeedHash, movementAmount);
-        animator.SetBool(IsRunningHash, IsRunning && movementAmount > 0f);
+        float inputMagnitude = Mathf.Clamp01(input.magnitude);
+        float targetAnimationSpeed = 0f;
+
+        // QUY ĐỔI TRẠNG THÁI RA SỐ FLOAT
+        if (inputMagnitude > 0.01f)
+        {
+            // Nếu có đi bộ, gán là 0.5. Nếu có thêm chạy, gán là 1.0.
+            targetAnimationSpeed = IsRunning ? 1f : 0.5f;
+        }
+
+        // Gửi thẳng giá trị này vào Animator
+        animator.SetFloat(SpeedHash, targetAnimationSpeed, speedDampTime, Time.deltaTime);
+
+        // (Tùy chọn) Giữ lại biến IsRunning nếu sau này bạn cần dùng cho các Transition khác
+        animator.SetBool(IsRunningHash, IsRunning && inputMagnitude > 0f);
     }
 
     private bool IsRunning => isRightMouseHeld || runPersisted;
