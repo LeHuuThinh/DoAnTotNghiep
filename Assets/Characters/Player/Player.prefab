@@ -1849,6 +1849,7 @@ MonoBehaviour:
   runSpeed: 7
   gravity: -20
   runActivationTime: 0.5
+  speedDampTime: 0.15
   animator: {fileID: 3586210189879081407}
   jumpHeight: 1
   jumpDelay: 0.8
@@ -2824,6 +2825,7 @@ GameObject:
   - component: {fileID: 7432324762511942597}
   - component: {fileID: 3586210189879081407}
   - component: {fileID: 4866823633212550455}
+  - component: {fileID: 2224738506303633511}
   m_Layer: 0
   m_Name: MainModel
   m_TagString: Untagged
@@ -2906,6 +2908,30 @@ MonoBehaviour:
   collisionColor: {r: 1, g: 0, b: 0, a: 1}
   groundCollisionColor: {r: 0, g: 1, b: 0, a: 1}
   angleLimitDrawScale: 0.2
+--- !u!114 &2224738506303633511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813529105481955711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c04871aa22e83d043afec0238871b149, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  animator: {fileID: 3586210189879081407}
+  playerController: {fileID: 4095114976695307337}
+  characterController: {fileID: 4791678739667565749}
+  swordLayerIndex: 1
+  layerFadeSpeed: 6
+  maxFailsafeTimeout: 3
+  chargeThreshold: 0.35
+  runUpDistance: 2
+  leapDistance: 4
+  leapHeight: 2.5
+  leapDuration: 0.6
+  leapDelay: 0.4
 --- !u!1 &7843226253183409663
 GameObject:
   m_ObjectHideFlags: 0
