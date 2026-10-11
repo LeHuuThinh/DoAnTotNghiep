@@ -26049,7 +26049,7 @@ AnimationClip:
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
     m_StopTime: 1.2666668
-    m_OrientationOffsetY: 0
+    m_OrientationOffsetY: -30
     m_Level: 0
     m_CycleOffset: 0
     m_HasAdditiveReferencePose: 0
@@ -50787,6 +50787,20 @@ AnimationClip:
   m_Events:
   - time: 0.3
     functionName: EnableComboWindow
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.6666667
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.8
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

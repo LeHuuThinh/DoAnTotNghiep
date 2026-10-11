@@ -475,6 +475,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1927153698415919129}
+  - component: {fileID: 5538005785888328646}
+  - component: {fileID: 3919844265982350931}
+  - component: {fileID: 7164169299375368469}
   m_Layer: 0
   m_Name: Sword
   m_TagString: Untagged
@@ -503,6 +506,69 @@ Transform:
   - {fileID: 6943867681162986139}
   m_Father: {fileID: 2325537594288829374}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
+--- !u!65 &5538005785888328646
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294064406184401571}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.3634237, y: 2.306992, z: 1.3905851}
+  m_Center: {x: 0.0038697934, y: 0.8107612, z: -0.010267613}
+--- !u!54 &3919844265982350931
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294064406184401571}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &7164169299375368469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294064406184401571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66098b482c4f56441ab5a900b4c26450, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1388358114080068217
 GameObject:
   m_ObjectHideFlags: 0
@@ -2923,15 +2989,20 @@ MonoBehaviour:
   animator: {fileID: 3586210189879081407}
   playerController: {fileID: 4095114976695307337}
   characterController: {fileID: 4791678739667565749}
+  weaponHitbox: {fileID: 7164169299375368469}
+  attack1Damage: 15
+  attack2Damage: 15
+  attack3Damage: 20
+  jumpAttackDamage: 30
   swordLayerIndex: 1
   layerFadeSpeed: 6
   maxFailsafeTimeout: 3
   chargeThreshold: 0.35
-  runUpDistance: 2
-  leapDistance: 4
-  leapHeight: 2.5
+  runUpDistance: 3.5
+  leapDistance: 5
+  leapHeight: 3
   leapDuration: 0.6
-  leapDelay: 0.4
+  leapDelay: 0.6
 --- !u!1 &7843226253183409663
 GameObject:
   m_ObjectHideFlags: 0
