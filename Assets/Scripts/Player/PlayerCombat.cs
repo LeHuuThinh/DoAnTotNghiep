@@ -16,6 +16,12 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private float attack3Damage = 35f;
   [SerializeField] private float jumpAttackDamage = 50f;
 
+  [Header("Knockback Settings")]
+  [SerializeField] private float attack1Knockback = 0f;    // Đòn 1: Không đẩy
+  [SerializeField] private float attack2Knockback = 0f;    // Đòn 2: Không đẩy
+  [SerializeField] private float attack3Knockback = 0.8f;   // Đòn 3: Đẩy nhẹ kết chuỗi
+  [SerializeField] private float jumpAttackKnockback = 1.6f;
+
   [Header("Layer Settings")]
   [SerializeField] private int swordLayerIndex = 1;
   [SerializeField] private float layerFadeSpeed = 6f;
@@ -306,19 +312,39 @@ public class PlayerCombat : MonoBehaviour
   }
 
   /// <summary>
-  /// Gắn event này ở thời điểm kiếm bắt đầu vung qua phía trước
+  /// Gắn event này trên Animation Clip Attack 1
   /// </summary>
-  public void EnableWeaponHitbox()
+  public void EnableAttack1Hitbox()
   {
-    if (weaponHitbox == null) return;
+    if (weaponHitbox != null)
+      weaponHitbox.EnableHitbox(attack1Damage, attack1Knockback);
+  }
 
-    // Xác định mức sát thương dựa vào đòn đang đánh
-    float damageToDeal = attack1Damage;
-    if (comboStep == 2) damageToDeal = attack2Damage;
-    else if (comboStep == 3) damageToDeal = attack3Damage;
-    else if (isAttacking && comboStep == 0) damageToDeal = jumpAttackDamage; // Đòn Jump Attack
+  /// <summary>
+  /// Gắn event này trên Animation Clip Attack 2 (Cam kết Knockback = 0)
+  /// </summary>
+  public void EnableAttack2Hitbox()
+  {
+    if (weaponHitbox != null)
+      weaponHitbox.EnableHitbox(attack2Damage, attack2Knockback);
+  }
 
-    weaponHitbox.EnableHitbox(damageToDeal);
+  /// <summary>
+  /// Gắn event này trên Animation Clip Attack 3 (Đòn kết combo có Knockback)
+  /// </summary>
+  public void EnableAttack3Hitbox()
+  {
+    if (weaponHitbox != null)
+      weaponHitbox.EnableHitbox(attack3Damage, attack3Knockback);
+  }
+
+  /// <summary>
+  /// Gắn event này trên Animation Clip Jump Attack
+  /// </summary>
+  public void EnableJumpAttackHitbox()
+  {
+    if (weaponHitbox != null)
+      weaponHitbox.EnableHitbox(jumpAttackDamage, jumpAttackKnockback);
   }
 
   /// <summary>

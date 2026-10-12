@@ -10,6 +10,7 @@ public class WeaponHitbox : MonoBehaviour
 
   private Collider hitCollider;
   private float currentDamage = 10f;
+  private float currentKnockback = 0f;
   private Transform attacker;
 
   // Danh sách lưu các mục tiêu đã trúng đòn trong 1 lần vung kiếm (chống lặp dame)
@@ -30,10 +31,11 @@ public class WeaponHitbox : MonoBehaviour
   /// <summary>
   /// Bật hitbox khi kiếm bắt đầu vung trúng đích
   /// </summary>
-  public void EnableHitbox(float damage)
+  public void EnableHitbox(float damage, float knockback)
   {
     currentDamage = damage;
-    hitTargets.Clear(); // Xóa bộ nhớ trúng đòn của nhát trước
+    currentKnockback = knockback;
+    hitTargets.Clear();
     if (hitCollider != null) hitCollider.enabled = true;
   }
 
@@ -63,7 +65,7 @@ public class WeaponHitbox : MonoBehaviour
       Vector3 hitDirection = attacker != null ? attacker.forward : transform.forward;
 
       // Gây sát thương
-      damageable.TakeDamage(currentDamage, hitPoint, hitDirection);
+      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback);
     }
   }
 }

@@ -54915,7 +54915,7 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.6333333
-    functionName: EnableWeaponHitbox
+    functionName: EnableAttack1Hitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

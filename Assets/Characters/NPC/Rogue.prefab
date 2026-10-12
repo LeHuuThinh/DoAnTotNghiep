@@ -108,7 +108,7 @@ NavMeshAgent:
   m_Height: 2
   m_BaseOffset: 0
   m_WalkableMask: 9
-  m_ObstacleAvoidanceType: 4
+  m_ObstacleAvoidanceType: 2
 --- !u!114 &2213916184143339222
 MonoBehaviour:
   m_ObjectHideFlags: 0
