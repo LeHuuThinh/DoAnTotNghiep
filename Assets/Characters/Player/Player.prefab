@@ -1876,6 +1876,9 @@ GameObject:
   - component: {fileID: 4791678739667565749}
   - component: {fileID: 6971768768852571698}
   - component: {fileID: 1443231080541979558}
+  - component: {fileID: 369121258138334455}
+  - component: {fileID: 759275986569051391}
+  - component: {fileID: 6269426121722460428}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1913,27 +1916,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   canMove: 1
   moveSpeed: 3
+  strafeSpeed: 3.8
   runSpeed: 7
   gravity: -20
+  rotationSpeed: 12
   runActivationTime: 0.5
   speedDampTime: 0.15
-  animator: {fileID: 3586210189879081407}
   jumpHeight: 1
   jumpDelay: 0.8
-  rollSpeed: 8
+  rollSpeed: 5
   rollDuration: 1
-  cameraTransform: {fileID: 0}
-  zoomSpeed: 30
-  minZoomDistance: 2.5
-  maxZoomDistance: 6
-  cameraDistance: 4.5
-  cameraHeight: 1.4
-  cameraSideOffset: 0.9
-  mouseSensitivity: 0.05
-  minPitch: -25
-  maxPitch: 65
-  cameraFollowSpeed: 30
-  cameraLookHeight: -1
+  animator: {fileID: 3586210189879081407}
+  thirdPersonCamera: {fileID: 0}
+  targetLockSystem: {fileID: 0}
 --- !u!143 &4791678739667565749
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1999,6 +1994,62 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &369121258138334455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66ef352803645754f9bd974de7cd32db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatTester
+  enemyPrefab: {fileID: 3329707019587242983, guid: 65ad483aba4897242b1045c1ab5dcb3e, type: 3}
+  spawnDistance: 16
+--- !u!114 &759275986569051391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632d1258e2883eb45887b2216d8b8f91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetLockSystem
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 1
+  lockRange: 14
+  breakLockRange: 18
+  viewAngleLimit: 75
+  lockOnReticle: {fileID: 0}
+  reticleOffset: {x: 0, y: 1.2, z: 0}
+--- !u!114 &6269426121722460428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fffdc0235b183c49a9388ef85906584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFeedback
+  animator: {fileID: 0}
+  targetLockSystem: {fileID: 0}
+  maxPoise: 100
+  poiseRecoveryDelay: 7
+  poiseRecoveryRate: 35
+  staggerDuration: 1
+  knockbackDuration: 0.5
 --- !u!1 &5454798165073531583
 GameObject:
   m_ObjectHideFlags: 0

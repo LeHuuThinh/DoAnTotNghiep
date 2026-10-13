@@ -9,11 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 376526952409064734}
+  - component: {fileID: 4993214139274053888}
   - component: {fileID: 3167275676395035288}
   - component: {fileID: 6841203782640174366}
   - component: {fileID: 1565550510966275929}
   - component: {fileID: 4703182412023202275}
-  - component: {fileID: 4993214139274053888}
   m_Layer: 9
   m_Name: SkeletonWarrior
   m_TagString: Untagged
@@ -30,13 +30,42 @@ Transform:
   m_GameObject: {fileID: 3329707019587242983}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 184.04, y: 0.5, z: 135.75}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 417237518366928556}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4993214139274053888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3329707019587242983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c3a019af7a6de64dbf59de37cb97dfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  animator: {fileID: 5992742559750042838}
+  weaponHitbox: {fileID: 2550425182332717077}
+  chaseRange: 14
+  combatStanceRange: 8
+  preferredDistance: 5
+  attackRange: 2.2
+  attackCooldown: 5
+  attackDamage: 20
+  attackKnockback: 0.5
+  circleDuration: 5
+  directionChangeInterval: 2
+  walkSpeed: 1.8
+  strafeSpeed: 2.2
+  runSpeed: 4
+  rotationSpeed: 8
+  patrolRadius: 8
+  patrolWaitTime: 5
 --- !u!114 &3167275676395035288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75,6 +104,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFeedback
   animator: {fileID: 5992742559750042838}
   enemyCollider: {fileID: 1565550510966275929}
+  bodyRenderers: []
+  flashDuration: 0.1
+  flashColor: {r: 1, g: 0, b: 0, a: 1}
+  maxPoise: 100
+  poiseRecoveryDelay: 2.5
+  poiseRecoveryRate: 40
   knockbackDuration: 0.15
 --- !u!136 &1565550510966275929
 CapsuleCollider:
@@ -121,30 +156,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &4993214139274053888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3329707019587242983}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c3a019af7a6de64dbf59de37cb97dfa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  animator: {fileID: 5992742559750042838}
-  weaponHitbox: {fileID: 2550425182332717077}
-  chaseRange: 8
-  attackRange: 1.8
-  attackCooldown: 1.8
-  attackDamage: 15
-  attackKnockback: 0.5
-  patrolRadius: 4
-  patrolWaitTime: 2.5
-  walkSpeed: 1.8
-  runSpeed: 4
-  rotationSpeed: 8
 --- !u!1001 &162387089395321159
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -220,6 +231,30 @@ PrefabInstance:
     - target: {fileID: -6415790494268509736, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
       propertyPath: m_Layer
       value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8208557
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.14714317
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.24402025
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.49497375
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -33.112
+      objectReference: {fileID: 0}
+    - target: {fileID: -5515783359193845756, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -62.18
       objectReference: {fileID: 0}
     - target: {fileID: -5489203338784653783, guid: ddb306cf6f858374785e37ed06ea495a, type: 3}
       propertyPath: m_Layer
@@ -491,8 +526,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.5041734, y: 1.3271667, z: 0.22225034}
-  m_Center: {x: -0.00001218915, y: 0.3341565, z: -0.00000005185935}
+  m_Size: {x: 0.70775354, y: 1.7421722, z: 0.4774882}
+  m_Center: {x: -0.000011782322, y: 0.541656, z: -0.0000000057161644}
 --- !u!54 &3501018153084070236
 Rigidbody:
   m_ObjectHideFlags: 0

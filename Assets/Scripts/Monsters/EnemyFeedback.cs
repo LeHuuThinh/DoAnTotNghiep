@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
@@ -7,12 +8,36 @@ public class EnemyFeedback : MonoBehaviour
   [Header("References")]
   [SerializeField] private Animator animator;
   [SerializeField] private Collider enemyCollider;
+  [Tooltip("Để trống thì code tự tìm tất cả bộ phận con. Hoặc bạn có thể tự kéo các bộ phận vào đây.")]
+  [SerializeField] private Renderer[] bodyRenderers;
+
+  [Header("Flash Feedback")]
+  [SerializeField] private float flashDuration = 0.1f;
+  [SerializeField] private Color flashColor = Color.red;
+
+  [Header("Souls-like Poise Settings")]
+  [SerializeField] private float maxPoise = 100f;
+  [SerializeField] private float poiseRecoveryDelay = 2.5f;
+  [SerializeField] private float poiseRecoveryRate = 40f;
 
   [Header("Knockback Settings")]
-  [SerializeField] private float knockbackDuration = 0.15f; // Thời gian trượt lùi (càng nhỏ trượt càng gắt)
+  [SerializeField] private float knockbackDuration = 0.15f;
+
+  // Lưu từng material và màu gốc của nó
+  private class MaterialCache
+  {
+    public Material mat;
+    public Color originalColor;
+    public string propName;
+  }
 
   private Health health;
+  private EnemyAI enemyAI;
+  private float currentPoise;
+  private float lastHitTime;
   private Coroutine knockbackCoroutine;
+  private Coroutine flashCoroutine;
+  private readonly List<MaterialCache> cachedMaterials = new List<MaterialCache>();
 
   private static readonly int GetHitTriggerHash = Animator.StringToHash("GetHit");
   private static readonly int HitTypeHash = Animator.StringToHash("HitType");
@@ -22,8 +47,40 @@ public class EnemyFeedback : MonoBehaviour
   private void Awake()
   {
     health = GetComponent<Health>();
+    enemyAI = GetComponent<EnemyAI>();
+
     if (animator == null) animator = GetComponentInChildren<Animator>();
     if (enemyCollider == null) enemyCollider = GetComponent<Collider>();
+
+    currentPoise = maxPoise;
+
+    // 1. Tự tìm tất cả SkinnedMeshRenderer và MeshRenderer ở mọi object con nếu chưa kéo tay
+    if (bodyRenderers == null || bodyRenderers.Length == 0)
+    {
+      bodyRenderers = GetComponentsInChildren<Renderer>(true);
+    }
+
+    // 2. Lưu lại toàn bộ Material và màu gốc của từng bộ phận
+    foreach (Renderer rend in bodyRenderers)
+    {
+      if (rend == null || rend is ParticleSystemRenderer || rend is TrailRenderer) continue;
+
+      foreach (Material m in rend.materials)
+      {
+        if (m == null) continue;
+
+        string prop = m.HasProperty("_BaseColor") ? "_BaseColor" : "_Color";
+        if (m.HasProperty(prop))
+        {
+          cachedMaterials.Add(new MaterialCache
+          {
+            mat = m,
+            originalColor = m.GetColor(prop),
+            propName = prop
+          });
+        }
+      }
+    }
   }
 
   private void OnEnable()
@@ -36,25 +93,88 @@ public class EnemyFeedback : MonoBehaviour
   {
     health.onTakeDamage.RemoveListener(HandleTakeDamage);
     health.onDeath.RemoveListener(HandleDeath);
+    ResetColors();
   }
 
-  // =========================================================================
-  // XỬ LÝ GET HIT (Random A/B & Chỉ Knockback khi có lực đẩy)
-  // =========================================================================
+  private void Update()
+  {
+    if (currentPoise < maxPoise && Time.time >= lastHitTime + poiseRecoveryDelay)
+    {
+      currentPoise = Mathf.Min(maxPoise, currentPoise + poiseRecoveryRate * Time.deltaTime);
+    }
+  }
+
   private void HandleTakeDamage(Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance)
   {
     if (health.IsDead) return;
 
-    // 1. RANDOM 1 TRONG 2 THẾ GIẬT NGƯỜI (0: Hit_A, 1: Hit_B)
-    int randomHit = Random.Range(0, 2);
-    animator.SetInteger(HitTypeHash, randomHit);
-    animator.SetTrigger(GetHitTriggerHash);
+    lastHitTime = Time.time;
 
-    // 2. CHỈ ĐẨY LÙI KHI ĐÒN ĐÁNH CÓ YÊU CẦU KNOCKBACK (> 0)
-    if (knockbackDistance > 0f)
+    // Tính Poise
+    float poiseDamageTaken = 30f;
+    if (knockbackDistance >= 1.5f) poiseDamageTaken = 100f;
+    else if (knockbackDistance > 0f) poiseDamageTaken = 60f;
+
+    currentPoise -= poiseDamageTaken;
+
+    // Luôn chớp đỏ tất cả bộ phận khi trúng kiếm
+    FlashDamageFeedback();
+
+    // Hyper Armor check
+    bool isAttacking = enemyAI != null && enemyAI.IsAttacking;
+    if (isAttacking && currentPoise > 0f) return;
+
+    // Stagger
+    if (currentPoise <= 0f || knockbackDistance > 0f)
     {
-      if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
-      knockbackCoroutine = StartCoroutine(ApplyKnockback(hitDirection, knockbackDistance));
+      currentPoise = maxPoise;
+
+      int randomHit = Random.Range(0, 2);
+      animator.SetInteger(HitTypeHash, randomHit);
+      animator.SetTrigger(GetHitTriggerHash);
+
+      if (knockbackDistance > 0f)
+      {
+        if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+        knockbackCoroutine = StartCoroutine(ApplyKnockback(hitDirection, knockbackDistance));
+      }
+    }
+  }
+
+  // =========================================================================
+  // XỬ LÝ NHÁY ĐỎ TRỰC TIẾP TRÊN MATERIAL
+  // =========================================================================
+
+  private void FlashDamageFeedback()
+  {
+    if (cachedMaterials.Count == 0) return;
+
+    if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+    flashCoroutine = StartCoroutine(FlashRedRoutine());
+  }
+
+  private IEnumerator FlashRedRoutine()
+  {
+    // Đổi màu tất cả bộ phận sang đỏ
+    for (int i = 0; i < cachedMaterials.Count; i++)
+    {
+      if (cachedMaterials[i].mat != null)
+        cachedMaterials[i].mat.SetColor(cachedMaterials[i].propName, flashColor);
+    }
+
+    yield return new WaitForSeconds(flashDuration);
+
+    // Trả lại màu gốc cho tất cả bộ phận
+    ResetColors();
+    flashCoroutine = null;
+  }
+
+  private void ResetColors()
+  {
+    for (int i = 0; i < cachedMaterials.Count; i++)
+    {
+      if (cachedMaterials[i].mat != null)
+        cachedMaterials[i].mat.SetColor(cachedMaterials[i].propName, cachedMaterials[i].originalColor);
     }
   }
 
@@ -69,7 +189,6 @@ public class EnemyFeedback : MonoBehaviour
     while (timer < knockbackDuration)
     {
       timer += Time.deltaTime;
-      // Trượt nhẹ quái về sau theo hướng vung kiếm
       transform.position += direction * (speed * Time.deltaTime);
       yield return null;
     }
@@ -78,24 +197,22 @@ public class EnemyFeedback : MonoBehaviour
   }
 
   // =========================================================================
-  // XỬ LÝ DEATH (Random A/B & Tắt va chạm)
+  // XỬ LÝ CHẾT (Đảm bảo nháy đỏ xong tự nhả lại màu gốc)
   // =========================================================================
+
   private void HandleDeath()
   {
     if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
 
-    // 1. RANDOM 1 TRONG 2 THẾ NGÃ CHẾT (0: Death_A, 1: Death_B)
+    // Phát chém kết liễu: Không ngắt flashCoroutine giữa chừng để nó tự chạy nốt
+    // 0.1 giây rồi trả lại màu gốc bình thường cho cái xác.
+
     int randomDeath = Random.Range(0, 2);
     animator.SetInteger(DeathTypeHash, randomDeath);
     animator.SetTrigger(DieTriggerHash);
 
-    // 2. TẮT COLLIDER NGAY: Để người chơi không bị cản đường, bước qua xác được
-    if (enemyCollider != null)
-    {
-      enemyCollider.enabled = false;
-    }
+    if (enemyCollider != null) enemyCollider.enabled = false;
 
-    // Tự hủy GameObject xác sau 5 giây để dọn dẹp bộ nhớ hầm ngục
     Destroy(gameObject, 5f);
   }
 }
