@@ -40,7 +40,6 @@ public class TargetLockSystem : MonoBehaviour
     // Bấm Chuột giữa HOẶC phím Q để Bật/Tắt khóa mục tiêu
     bool togglePressed = false;
     if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame) togglePressed = true;
-    if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) togglePressed = true;
 
     if (togglePressed)
     {

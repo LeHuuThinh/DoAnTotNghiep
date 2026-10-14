@@ -1920,7 +1920,7 @@ MonoBehaviour:
   runSpeed: 7
   gravity: -20
   rotationSpeed: 12
-  runActivationTime: 0.5
+  sprintHoldThreshold: 0.25
   speedDampTime: 0.15
   jumpHeight: 1
   jumpDelay: 0.8
@@ -1928,7 +1928,7 @@ MonoBehaviour:
   rollDuration: 1
   animator: {fileID: 3586210189879081407}
   thirdPersonCamera: {fileID: 0}
-  targetLockSystem: {fileID: 0}
+  targetLockSystem: {fileID: 759275986569051391}
 --- !u!143 &4791678739667565749
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1968,8 +1968,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RHandAdjust
   rightShoulderBone: {fileID: 6861751337939341881}
   rightHandBone: {fileID: 4744513038661158918}
-  shoulderOffset: {x: 18, y: 0, z: -15}
-  wristOffset: {x: 0, y: 0, z: -35}
+  lockSystem: {fileID: 759275986569051391}
+  normalShoulderOffset: {x: 18, y: 0, z: -15}
+  normalWristOffset: {x: 0, y: 0, z: -35}
+  combatShoulderOffset: {x: 0, y: 0, z: 0}
+  combatWristOffset: {x: 0, y: -30, z: -40}
+  transitionSpeed: 8
 --- !u!114 &1443231080541979558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1982,7 +1986,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 100
+  maxHealth: 1000
   currentHealth: 0
   isInvulnerable: 0
   onHealthChanged:
@@ -2043,8 +2047,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fffdc0235b183c49a9388ef85906584, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFeedback
-  animator: {fileID: 0}
-  targetLockSystem: {fileID: 0}
+  animator: {fileID: 3586210189879081407}
+  targetLockSystem: {fileID: 759275986569051391}
+  playerCombat: {fileID: 2224738506303633511}
   maxPoise: 100
   poiseRecoveryDelay: 7
   poiseRecoveryRate: 35
@@ -3065,24 +3070,23 @@ MonoBehaviour:
   animator: {fileID: 3586210189879081407}
   playerController: {fileID: 4095114976695307337}
   characterController: {fileID: 4791678739667565749}
+  playerFeedback: {fileID: 6269426121722460428}
   weaponHitbox: {fileID: 7164169299375368469}
   attack1Damage: 15
   attack2Damage: 15
   attack3Damage: 20
-  jumpAttackDamage: 30
+  chargeAttackDamage: 10
+  counterAttackDamage: 40
   attack1Knockback: 0
   attack2Knockback: 0
   attack3Knockback: 0.4
-  jumpAttackKnockback: 0.4
+  chargeAttackKnockback: 0.3
+  counterAttackKnockback: 0.5
+  parryWindowDuration: 0.2
+  counterWindowDuration: 1
   swordLayerIndex: 1
   layerFadeSpeed: 6
-  maxFailsafeTimeout: 3
   chargeThreshold: 0.35
-  runUpDistance: 3.5
-  leapDistance: 5
-  leapHeight: 3
-  leapDuration: 0.6
-  leapDelay: 0.6
 --- !u!1 &7843226253183409663
 GameObject:
   m_ObjectHideFlags: 0

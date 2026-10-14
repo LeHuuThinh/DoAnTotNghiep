@@ -60,9 +60,9 @@ MonoBehaviour:
   attackKnockback: 0.5
   circleDuration: 5
   directionChangeInterval: 2
-  walkSpeed: 1.8
-  strafeSpeed: 2.2
-  runSpeed: 4
+  walkSpeed: 2
+  strafeSpeed: 2.5
+  runSpeed: 5
   rotationSpeed: 8
   patrolRadius: 8
   patrolWaitTime: 5
@@ -106,7 +106,7 @@ MonoBehaviour:
   enemyCollider: {fileID: 1565550510966275929}
   bodyRenderers: []
   flashDuration: 0.1
-  flashColor: {r: 1, g: 0, b: 0, a: 1}
+  flashColor: {r: 0.81886786, g: 0.41870406, b: 0.41870406, a: 1}
   maxPoise: 100
   poiseRecoveryDelay: 2.5
   poiseRecoveryRate: 40

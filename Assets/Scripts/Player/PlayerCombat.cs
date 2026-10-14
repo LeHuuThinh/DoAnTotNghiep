@@ -8,41 +8,37 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private Animator animator;
   [SerializeField] private PlayerController playerController;
   [SerializeField] private CharacterController characterController;
+  [SerializeField] private PlayerFeedback playerFeedback;
 
   [Header("Weapon & Damage Settings")]
   [SerializeField] private WeaponHitbox weaponHitbox;
   [SerializeField] private float attack1Damage = 15f;
   [SerializeField] private float attack2Damage = 20f;
   [SerializeField] private float attack3Damage = 35f;
-  [SerializeField] private float jumpAttackDamage = 50f;
+  [SerializeField] private float chargeAttackDamage = 50f;
+  [SerializeField] private float counterAttackDamage = 65f;   // Sát thương phản đòn cực lớn!
 
   [Header("Knockback Settings")]
-  [SerializeField] private float attack1Knockback = 0f;    // Đòn 1: Không đẩy
-  [SerializeField] private float attack2Knockback = 0f;    // Đòn 2: Không đẩy
-  [SerializeField] private float attack3Knockback = 0.8f;   // Đòn 3: Đẩy nhẹ kết chuỗi
-  [SerializeField] private float jumpAttackKnockback = 1.6f;
+  [SerializeField] private float attack1Knockback = 0f;
+  [SerializeField] private float attack2Knockback = 0f;
+  [SerializeField] private float attack3Knockback = 0.8f;
+  [SerializeField] private float chargeAttackKnockback = 1.2f;
+  [SerializeField] private float counterAttackKnockback = 2.0f; // Đẩy bay quái khi Counter
+
+  [Header("Parry & Counter Settings")]
+  [Tooltip("Khung thời gian vàng (giây) tính từ khi bấm Chuột Phải mà đòn chém của quái bị gạt")]
+  [SerializeField] private float parryWindowDuration = 0.28f;
+  [Tooltip("Khung thời gian (giây) cho phép người chơi bấm Chuột Trái để tung Counter Attack")]
+  [SerializeField] private float counterWindowDuration = 1.2f;
 
   [Header("Layer Settings")]
   [SerializeField] private int swordLayerIndex = 1;
   [SerializeField] private float layerFadeSpeed = 6f;
 
-  [Header("Combo Settings")]
-  [SerializeField] private float maxFailsafeTimeout = 3.0f;
-
-  [Header("Charge / Jump Attack Settings")]
-  [Tooltip("Thời gian giữ chuột tối thiểu (giây) để kích hoạt Jump Attack")]
+  [Header("Charge Attack Settings")]
   [SerializeField] private float chargeThreshold = 0.35f;
-  [Tooltip("Quãng đường chạy lấy đà trên mặt đất trước khi bật nhảy (mét)")]
-  [SerializeField] private float runUpDistance = 2.5f;
-  [Tooltip("Quãng đường nhân vật phóng về phía trước (mét)")]
-  [SerializeField] private float leapDistance = 4.5f;
-  [Tooltip("Độ cao tối đa của cú nhảy nhấc bổng lên (mét)")]
-  [SerializeField] private float leapHeight = 1.2f; // <-- BẠN TỰ CHỈNH ĐỘ CAO Ở ĐÂY
-  [Tooltip("Thời gian bay trên không (giây)")]
-  [SerializeField] private float leapDuration = 0.45f;
-  [Tooltip("Thời gian chờ nhún chân lấy đà trước khi thực sự phóng đi (giây)")]
-  [SerializeField] private float leapDelay = 0.15f;
 
+  private Health health;
   private int comboStep = 0;
   private bool isAttacking = false;
   private bool canCombo = false;
@@ -50,44 +46,85 @@ public class PlayerCombat : MonoBehaviour
   private float attackTimer = 0f;
   private float targetLayerWeight = 1f;
 
-  // Biến đo thời gian giữ chuột
+  // Biến Charge Attack
   private float holdTimer = 0f;
   private bool isHoldingMouse = false;
-  private Coroutine leapCoroutine;
 
+  // Biến Parry & Counter
+  private bool isParryActive = false;
+  private bool canCounterAttack = false;
+  private float counterTimer = 0f;
+  private float parryTimer = 0f;
+  private Coroutine parryWindowCoroutine;
+
+  // Animator Hashes
   private static readonly int AttackTriggerHash = Animator.StringToHash("Attack");
   private static readonly int ComboStepHash = Animator.StringToHash("ComboStep");
   private static readonly int JumpAttackTriggerHash = Animator.StringToHash("JumpAttack");
+  private static readonly int ParryTriggerHash = Animator.StringToHash("Parry");
+  private static readonly int CounterAttackTriggerHash = Animator.StringToHash("CounterAttack");
 
   private void Awake()
   {
-    if (animator == null) animator = GetComponent<Animator>();
+    if (animator == null) animator = GetComponentInChildren<Animator>();
     if (playerController == null) playerController = GetComponentInParent<PlayerController>();
     if (characterController == null) characterController = GetComponentInParent<CharacterController>();
+    if (playerFeedback == null) playerFeedback = GetComponentInParent<PlayerFeedback>();
+
+    health = GetComponent<Health>();
+    if (health == null) health = GetComponentInParent<Health>();
 
     targetLayerWeight = 1f;
 
     if (weaponHitbox != null)
     {
-      weaponHitbox.Initialize(transform.root); // Gán Player gốc làm attacker
+      weaponHitbox.Initialize(transform.root);
     }
   }
 
   private void Update()
   {
     HandleCombatInput();
+    UpdateCounterWindow();
 
-    // Failsafe chống kẹt animation quá thời gian quy định
+    // =========================================================================
+    // XỬ LÝ THOÁT KẸT TỰ ĐỘNG
+    // =========================================================================
     if (isAttacking)
     {
       attackTimer += Time.deltaTime;
-      if (attackTimer >= maxFailsafeTimeout)
+
+      if (attackTimer > 0.25f && animator != null)
+      {
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        if (!animator.IsInTransition(0) &&
+           (stateInfo.IsName("Locomotion") || stateInfo.IsName("CombatLocomotion") || stateInfo.IsName("FreeLocomotion")))
+        {
+          ForceResetCombat();
+        }
+      }
+
+      if (attackTimer >= 2.0f)
       {
         ForceResetCombat();
       }
     }
 
-    // Hòa trộn mượt mà trọng số của Layer tay phải
+    // Failsafe nếu animation Block bị lỡ Event kết thúc
+    if (isParryActive)
+    {
+      parryTimer += Time.deltaTime;
+      if (parryTimer >= 1.2f)
+      {
+        OnParryAnimationEnd();
+      }
+    }
+    else
+    {
+      parryTimer = 0f;
+    }
+
+    // Quản lý Layer tay phải
     if (animator != null && swordLayerIndex < animator.layerCount)
     {
       float currentWeight = animator.GetLayerWeight(swordLayerIndex);
@@ -103,9 +140,40 @@ public class PlayerCombat : MonoBehaviour
   {
     if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
 
-    // 1. NHẤN CHUỘT XUỐNG
+    // Chặn input nếu đang lăn, đang bị quái đánh choáng (stagger), hoặc đã chết
+    if (playerController != null && playerController.IsRolling) return;
+    if (playerFeedback != null && playerFeedback.IsStaggered) return;
+    if (health != null && health.IsDead) return;
+
+    // CHỈ CHẶN canMove NẾU ĐÓ LÀ LỆNH KHÓA TỪ BÊN NGOÀI (Ví dụ: đang khom người lấy đà nhảy)
+    // TUYỆT ĐỐI KHÔNG CHẶN nếu canMove bị khóa do chính đòn chém hoặc đỡ đòn đang chạy!
+    if (playerController != null && !playerController.canMove && !isAttacking && !isParryActive) return;
+
+    // =====================================================================
+    // 1. BẤM CHUỘT PHẢI (RMB) -> KÍCH HOẠT PARRY / BLOCK
+    // =====================================================================
+    if (Mouse.current.rightButton.wasPressedThisFrame)
+    {
+      if (!isAttacking && !isParryActive)
+      {
+        ExecuteParry();
+        return;
+      }
+    }
+
+    // =====================================================================
+    // 2. BẤM CHUỘT TRÁI (LMB)
+    // =====================================================================
     if (Mouse.current.leftButton.wasPressedThisFrame)
     {
+      // ƯU TIÊN SỐ 1: NẾU ĐANG TRONG CỬA SỔ PARRY THÀNH CÔNG -> TUNG COUNTER ATTACK!
+      if (canCounterAttack)
+      {
+        ExecuteCounterAttack();
+        return;
+      }
+
+      // Đánh thường / Nối Combo
       if (!isAttacking)
       {
         isHoldingMouse = true;
@@ -113,32 +181,27 @@ public class PlayerCombat : MonoBehaviour
       }
       else
       {
-        // Đang trong đòn đánh khác -> Lưu đệm để nối combo thường
+        // Khi đang chém đòn 1 hoặc 2: nhận nhấp chuột để nối tiếp đòn sau
         if (comboStep > 0 && comboStep < 3)
         {
           comboBuffered = true;
-          if (canCombo)
-          {
-            AdvanceCombo();
-          }
+          if (canCombo) AdvanceCombo();
         }
       }
     }
 
-    // 2. ĐANG GIỮ CHUỘT: TÍNH GIỜ VÀ TỰ ĐỘNG KÍCH HOẠT KHI ĐỦ THỜI GIAN
+    // Giữ chuột đếm Charge Attack
     if (isHoldingMouse && Mouse.current.leftButton.isPressed)
     {
       holdTimer += Time.deltaTime;
-
-      // ĐỦ 0.35s LÀ TỰ BẬT ĐÒN JUMP ATTACK NGAY LẬP TỨC (KHÔNG CẦN CHỜ NHẢ CHUỘT)
       if (holdTimer >= chargeThreshold)
       {
-        isHoldingMouse = false; // Tắt cờ để nhả chuột ra không bị chém thường
-        ExecuteJumpAttack();
+        isHoldingMouse = false;
+        ExecuteChargeAttack();
       }
     }
 
-    // 3. NHẢ CHUỘT RA (CHỈ DÀNH CHO NHẤP NHANH < 0.35s)
+    // Nhả chuột nhanh (< 0.35s) -> Tung đòn chém thường 1
     if (isHoldingMouse && Mouse.current.leftButton.wasReleasedThisFrame)
     {
       isHoldingMouse = false;
@@ -148,7 +211,77 @@ public class PlayerCombat : MonoBehaviour
   }
 
   // =========================================================================
-  // XỬ LÝ CHÉM THƯỜNG COMBO
+  // HỆ THỐNG PARRY & COUNTER
+  // =========================================================================
+
+  private void ExecuteParry()
+  {
+    isParryActive = true;
+    parryTimer = 0f;
+    isHoldingMouse = false;
+
+    targetLayerWeight = 0f;
+    if (animator != null) animator.SetLayerWeight(swordLayerIndex, 0f);
+
+    if (playerController != null) playerController.LockMovement();
+
+    animator.SetTrigger(ParryTriggerHash);
+
+    if (parryWindowCoroutine != null) StopCoroutine(parryWindowCoroutine);
+    parryWindowCoroutine = StartCoroutine(ParryWindowRoutine());
+  }
+
+  private IEnumerator ParryWindowRoutine()
+  {
+    yield return new WaitForSeconds(0.04f); // Chờ 0.04s vung thế đón đòn
+
+    if (playerFeedback != null) playerFeedback.IsParrying = true;
+
+    yield return new WaitForSeconds(parryWindowDuration);
+
+    if (playerFeedback != null) playerFeedback.IsParrying = false;
+  }
+
+  public void OnParrySuccess()
+  {
+    if (parryWindowCoroutine != null) StopCoroutine(parryWindowCoroutine);
+    if (playerFeedback != null) playerFeedback.IsParrying = false;
+
+    // Mở cửa sổ phản đòn
+    canCounterAttack = true;
+    counterTimer = counterWindowDuration;
+  }
+
+  private void UpdateCounterWindow()
+  {
+    if (canCounterAttack)
+    {
+      counterTimer -= Time.deltaTime;
+      if (counterTimer <= 0f)
+      {
+        canCounterAttack = false;
+      }
+    }
+  }
+
+  private void ExecuteCounterAttack()
+  {
+    canCounterAttack = false;
+    isAttacking = true;
+    isParryActive = false;
+    isHoldingMouse = false;
+    attackTimer = 0f;
+
+    targetLayerWeight = 0f;
+    if (animator != null) animator.SetLayerWeight(swordLayerIndex, 0f);
+
+    if (playerController != null) playerController.LockMovement();
+
+    animator.SetTrigger(CounterAttackTriggerHash);
+  }
+
+  // =========================================================================
+  // CÁC ĐÒN TẤN CÔNG KHÁC
   // =========================================================================
 
   private void ExecuteNormalAttack()
@@ -175,11 +308,7 @@ public class PlayerCombat : MonoBehaviour
     ExecuteNormalAttack();
   }
 
-  // =========================================================================
-  // XỬ LÝ ĐÒN CHARGE / JUMP ATTACK (CÓ ĐỘ CAO THEO ĐƯỜNG CUNG)
-  // =========================================================================
-
-  private void ExecuteJumpAttack()
+  private void ExecuteChargeAttack()
   {
     isAttacking = true;
     comboStep = 0;
@@ -193,68 +322,6 @@ public class PlayerCombat : MonoBehaviour
     if (playerController != null) playerController.LockMovement();
 
     animator.SetTrigger(JumpAttackTriggerHash);
-
-    if (leapCoroutine != null) StopCoroutine(leapCoroutine);
-    leapCoroutine = StartCoroutine(PerformLeapRoutine());
-  }
-
-  private IEnumerator PerformLeapRoutine()
-  {
-    // Lấy hướng nhìn hiện tại của nhân vật
-    Vector3 direction = playerController != null ? playerController.transform.forward : transform.forward;
-    direction.y = 0f;
-    direction.Normalize();
-
-    // =========================================================================
-    // GIAI ĐOẠN 1: CHẠY LẤY ĐÀ SÁT MẶT ĐẤT (0.4s)
-    // =========================================================================
-    if (leapDelay > 0f)
-    {
-      float runTimer = 0f;
-      float runSpeed = runUpDistance / leapDelay;
-
-      while (runTimer < leapDelay)
-      {
-        runTimer += Time.deltaTime;
-
-        if (characterController != null)
-        {
-          // Thêm lực đè nhẹ trục Y (-2f) để nhân vật bám sát mặt sàn khi chạy
-          Vector3 runDelta = (direction * runSpeed * Time.deltaTime) + (Vector3.down * 2f * Time.deltaTime);
-          characterController.Move(runDelta);
-        }
-
-        yield return null;
-      }
-    }
-
-    // =========================================================================
-    // GIAI ĐOẠN 2: BẬT NHẢY BỔ KIẾM TRÊN KHÔNG (1.0s)
-    // =========================================================================
-    float leapTimer = 0f;
-    float leapSpeed = leapDistance / leapDuration;
-    float lastArcY = 0f;
-
-    while (leapTimer < leapDuration)
-    {
-      leapTimer += Time.deltaTime;
-      float progress = Mathf.Clamp01(leapTimer / leapDuration);
-
-      // Quỹ đạo Parabol: Bay bổng lên đỉnh leapHeight rồi hạ cánh
-      float currentArcY = 4f * leapHeight * progress * (1f - progress);
-      float deltaY = currentArcY - lastArcY;
-      lastArcY = currentArcY;
-
-      if (characterController != null)
-      {
-        Vector3 leapDelta = (direction * leapSpeed * Time.deltaTime) + (Vector3.up * deltaY);
-        characterController.Move(leapDelta);
-      }
-
-      yield return null;
-    }
-
-    leapCoroutine = null;
   }
 
   // =========================================================================
@@ -270,91 +337,71 @@ public class PlayerCombat : MonoBehaviour
     }
   }
 
-  public void DisableComboWindow()
-  {
-    canCombo = false;
-  }
+  public void DisableComboWindow() => canCombo = false;
 
-  public void OnAttackEnd()
+  public void OnAttackEnd() => ForceResetCombat();
+
+  public void OnParryAnimationEnd()
   {
-    ForceResetCombat();
+    isParryActive = false;
+    if (playerFeedback != null) playerFeedback.IsParrying = false;
+    targetLayerWeight = 1f;
+
+    // Nếu không tung Counter thì mở khóa chân di chuyển lại bình thường
+    if (!isAttacking && playerController != null)
+    {
+      playerController.UnlockMovement();
+    }
   }
 
   public void ForceResetCombat()
   {
-    if (leapCoroutine != null)
+    // Ngắt Coroutine Parry nếu đang đếm dở
+    if (parryWindowCoroutine != null)
     {
-      StopCoroutine(leapCoroutine);
-      leapCoroutine = null;
+      StopCoroutine(parryWindowCoroutine);
+      parryWindowCoroutine = null;
     }
 
     comboStep = 0;
     isAttacking = false;
+    isParryActive = false;
     canCombo = false;
     comboBuffered = false;
     isHoldingMouse = false;
     holdTimer = 0f;
     attackTimer = 0f;
-
     targetLayerWeight = 1f;
 
-    if (animator != null)
-      animator.SetInteger(ComboStepHash, 0);
-
-    if (playerController != null)
-      playerController.UnlockMovement();
-
-    // (Đảm bảo hitbox luôn bị tắt nếu người chơi bị ngắt chiêu đột ngột)
-    if (weaponHitbox != null)
-    {
-      weaponHitbox.DisableHitbox();
-    }
+    if (playerFeedback != null) playerFeedback.IsParrying = false;
+    if (animator != null) animator.SetInteger(ComboStepHash, 0);
+    if (playerController != null) playerController.UnlockMovement();
+    if (weaponHitbox != null) weaponHitbox.DisableHitbox();
   }
 
-  /// <summary>
-  /// Gắn event này trên Animation Clip Attack 1
-  /// </summary>
-  public void EnableAttack1Hitbox()
-  {
-    if (weaponHitbox != null)
-      weaponHitbox.EnableHitbox(attack1Damage, attack1Knockback);
-  }
+  // =========================================================================
+  // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG CHUẨN
+  // =========================================================================
 
-  /// <summary>
-  /// Gắn event này trên Animation Clip Attack 2 (Cam kết Knockback = 0)
-  /// </summary>
-  public void EnableAttack2Hitbox()
-  {
-    if (weaponHitbox != null)
-      weaponHitbox.EnableHitbox(attack2Damage, attack2Knockback);
-  }
+  // Đòn 1: Nhanh, mượt (Hitlag = 0.035s)
+  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage, attack1Knockback, 0.035f);
 
-  /// <summary>
-  /// Gắn event này trên Animation Clip Attack 3 (Đòn kết combo có Knockback)
-  /// </summary>
-  public void EnableAttack3Hitbox()
-  {
-    if (weaponHitbox != null)
-      weaponHitbox.EnableHitbox(attack3Damage, attack3Knockback);
-  }
+  // Đòn 2: Nhanh, dứt khoát (Hitlag = 0.045s)
+  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage, attack2Knockback, 0.045f);
 
-  /// <summary>
-  /// Gắn event này trên Animation Clip Jump Attack
-  /// </summary>
-  public void EnableJumpAttackHitbox()
-  {
-    if (weaponHitbox != null)
-      weaponHitbox.EnableHitbox(jumpAttackDamage, jumpAttackKnockback);
-  }
+  // Đòn 3: Đòn kết đầm tay (Hitlag = 0.08s)
+  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage, attack3Knockback, 0.08f);
 
-  /// <summary>
-  /// Gắn event này ở thời điểm kiếm vừa chém xong (trước khi thu thế)
-  /// </summary>
-  public void DisableWeaponHitbox()
-  {
-    if (weaponHitbox != null)
-    {
-      weaponHitbox.DisableHitbox();
-    }
-  }
+  // Charge Attack - Hit 1: Chém mở màn (Hitlag = 0.05s)
+  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.4f, 0f, 0.05f);
+
+  // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm (Hitlag = 0.095s)
+  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.6f, chargeAttackKnockback, 0.095f);
+
+  // Counter Attack: Nhát chém trừng phạt cực nặng (Hitlag = 0.11s)
+  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage, counterAttackKnockback, 0.11f);
+
+  public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
+  // Thêm vào PlayerCombat để PlayerController có thể đọc được
+  public bool IsBlockingOrParrying => isParryActive;
 }

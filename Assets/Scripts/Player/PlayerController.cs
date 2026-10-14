@@ -14,8 +14,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float rotationSpeed = 12f;
 
-    [Header("Run Settings")]
-    [SerializeField] private float runActivationTime = 0.5f;
+    [Header("Run / Sprint Settings (Shift Key)")]
+    [Tooltip("Thời gian giữ Shift (giây) để bắt đầu chạy nước rút. Nhả ra trước mốc này sẽ là Lăn né (Roll).")]
+    [SerializeField] private float sprintHoldThreshold = 0.25f;
     [SerializeField] private float speedDampTime = 0.1f;
 
     [Header("Jump Settings (Fixed Trajectory)")]
@@ -30,15 +31,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
     [SerializeField] private TargetLockSystem targetLockSystem;
+    [SerializeField] private PlayerCombat playerCombat; // Tham chiếu tới PlayerCombat
 
-    // Components & States
+    // Components & Physics States
     private CharacterController characterController;
-    private float rightMouseHeldTime;
-    private bool isRightMouseHeld;
-    private bool runPersisted;
     private float verticalVelocity;
 
-    // Roll States
+    // Shift (Roll / Sprint) States
+    private float shiftHoldTimer = 0f;
+    private bool isShiftHeld = false;
+    private bool isSprinting = false;
+
+    // Roll Execution States
     private bool isRolling;
     private float rollTimer;
     private Vector3 rollDirection;
@@ -61,13 +65,20 @@ public class PlayerController : MonoBehaviour
 
     public bool IsRolling => isRolling;
     public bool IsGrounded => characterController.isGrounded;
-    private bool IsRunning => (isRightMouseHeld || runPersisted) && !(targetLockSystem != null && targetLockSystem.IsLockedOn);
+    private bool IsRunning => isSprinting && !(targetLockSystem != null && targetLockSystem.IsLockedOn);
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (targetLockSystem == null) targetLockSystem = GetComponent<TargetLockSystem>();
+
+        // Tự động tìm PlayerCombat ở cả Object cha lẫn Object con
+        if (playerCombat == null)
+        {
+            playerCombat = GetComponent<PlayerCombat>();
+            if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
+        }
 
         if (thirdPersonCamera == null && Camera.main != null)
         {
@@ -77,44 +88,22 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        HandleRunInput();
         HandleMovement();
         UpdateAnimation();
     }
 
-    private void HandleRunInput()
-    {
-        if (Mouse.current == null) return;
-        bool rightMousePressed = Mouse.current.rightButton.isPressed;
-
-        if (rightMousePressed)
-        {
-            if (!isRightMouseHeld)
-            {
-                isRightMouseHeld = true;
-                rightMouseHeldTime = 0f;
-            }
-            rightMouseHeldTime += Time.deltaTime;
-            if (rightMouseHeldTime >= runActivationTime) runPersisted = true;
-            return;
-        }
-
-        if (isRightMouseHeld && rightMouseHeldTime < runActivationTime) runPersisted = false;
-        isRightMouseHeld = false;
-        rightMouseHeldTime = 0f;
-    }
-
     private void HandleMovement()
     {
-        // CHỐT CHẶN: Nếu CharacterController đã bị tắt (đã chết) thì dừng toàn bộ tính toán di chuyển
         if (characterController == null || !characterController.enabled) return;
-
         if (Keyboard.current == null) return;
 
         bool isGrounded = characterController.isGrounded;
+        bool isBlocking = playerCombat != null && playerCombat.IsBlockingOrParrying;
+
         Vector2 input = Vector2.zero;
 
-        if (canMove)
+        // 1. NHẬN PHÍM WASD (Nhận cả khi đang Block để xác định hướng Lăn né chuẩn xác)
+        if (canMove || isBlocking)
         {
             if (Keyboard.current.wKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;
@@ -123,11 +112,10 @@ public class PlayerController : MonoBehaviour
         }
         input = Vector2.ClampMagnitude(input, 1f);
 
-        if (input.sqrMagnitude <= 0.001f) runPersisted = false;
-
+        bool isMoving = input.sqrMagnitude > 0.001f;
         bool isLocked = targetLockSystem != null && targetLockSystem.IsLockedOn;
 
-        // TÍNH TOÁN HƯỚNG DI CHUYỂN
+        // Tính hướng di chuyển theo góc quay của Camera
         Quaternion cameraRotation = thirdPersonCamera != null
             ? thirdPersonCamera.PlanarRotation
             : Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
@@ -135,20 +123,66 @@ public class PlayerController : MonoBehaviour
         Vector3 desiredMoveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
 
         // =====================================================================
-        // 1. XỬ LÝ LĂN (ROLL) - Luôn lăn theo hướng bấm phím
+        // 2. XỬ LÝ PHÍM SHIFT: CHO PHÉP NHẤN KHI CANMOVE HOẶC KHI ĐANG BLOCK
         // =====================================================================
-        if (canMove && !isRolling && isGrounded && Keyboard.current.shiftKey.wasPressedThisFrame && !isPreparingJump)
+        bool shiftPressed = Keyboard.current.leftShiftKey.isPressed;
+        bool shiftDown = Keyboard.current.leftShiftKey.wasPressedThisFrame;
+        bool shiftUp = Keyboard.current.leftShiftKey.wasReleasedThisFrame;
+
+        // SỬA LỖI TẠI ĐÂY: Cho phép nhận Shift nếu canMove = true HOẶC đang Block!
+        if (shiftDown && (canMove || isBlocking) && !isRolling)
         {
-            isRolling = true;
-            rollTimer = rollDuration;
-            animator.SetTrigger(RollHash);
-            rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
+            isShiftHeld = true;
+            shiftHoldTimer = 0f;
         }
 
+        if (isShiftHeld && shiftPressed)
+        {
+            shiftHoldTimer += Time.deltaTime;
+
+            // Chỉ chạy nhanh nếu được phép di chuyển tự do (canMove)
+            if (shiftHoldTimer >= sprintHoldThreshold && isMoving && canMove)
+            {
+                isSprinting = true;
+            }
+        }
+
+        if (shiftUp)
+        {
+            if (isShiftHeld && shiftHoldTimer < sprintHoldThreshold)
+            {
+                if ((canMove || isBlocking) && !isRolling && isGrounded && !isPreparingJump)
+                {
+                    // NẾU ĐANG BLOCK MÀ LĂN NÉ -> DẬP TẮT NGAY TRẠNG THÁI BLOCK
+                    if (isBlocking && playerCombat != null)
+                    {
+                        playerCombat.ForceResetCombat();
+                    }
+
+                    TriggerRoll(desiredMoveDirection);
+                }
+            }
+
+            isShiftHeld = false;
+            shiftHoldTimer = 0f;
+            isSprinting = false;
+        }
+
+        if (!isMoving || !canMove)
+        {
+            isSprinting = false;
+        }
+
+        // =====================================================================
+        // 3. THỰC THI LĂN (ROLL)
+        // =====================================================================
         if (isRolling)
         {
             rollTimer -= Time.deltaTime;
-            if (rollTimer <= 0f) isRolling = false;
+            if (rollTimer <= 0f)
+            {
+                isRolling = false;
+            }
             else
             {
                 transform.rotation = Quaternion.LookRotation(rollDirection);
@@ -161,7 +195,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // =====================================================================
-        // 2. DI CHUYỂN BỘ & CHIẾN ĐẤU (TỰ DO vs STRAFE LOCK-ON)
+        // 4. DI CHUYỂN BỘ & CHIẾN ĐẤU (CHỈ DI CHUYỂN KHI CANMOVE = TRUE)
         // =====================================================================
         if (isGrounded)
         {
@@ -169,10 +203,11 @@ public class PlayerController : MonoBehaviour
 
             if (!isPreparingJump)
             {
+                // Nếu canMove = false (đang vung kiếm hoặc đang Block) -> Không cho chân chạy
+                Vector3 moveDir = canMove ? desiredMoveDirection : Vector3.zero;
+
                 if (isLocked)
                 {
-                    // --- CHẾ ĐỘ LOCK-ON (STRAFE) ---
-                    // Thân người chơi luôn xoay mặt về phía quái
                     Vector3 toTarget = targetLockSystem.CurrentTarget.position - transform.position;
                     toTarget.y = 0f;
                     if (toTarget.sqrMagnitude > 0.001f)
@@ -181,22 +216,20 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, rotationSpeed * Time.deltaTime);
                     }
 
-                    // Di chuyển theo tốc độ Strafe
-                    lockedAirVelocity = desiredMoveDirection * strafeSpeed;
+                    lockedAirVelocity = moveDir * strafeSpeed;
                 }
                 else
                 {
-                    // --- CHẾ ĐỘ TỰ DO ---
-                    if (desiredMoveDirection.sqrMagnitude > 0.001f)
+                    if (moveDir.sqrMagnitude > 0.001f)
                     {
-                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), rotationSpeed * Time.deltaTime);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
                     }
 
                     float currentSpeed = IsRunning ? runSpeed : moveSpeed;
-                    lockedAirVelocity = desiredMoveDirection * currentSpeed;
+                    lockedAirVelocity = moveDir * currentSpeed;
                 }
 
-                // LỆNH NHẢY
+                // LỆNH NHẢY (SPACE)
                 if (canMove && Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
                     LockMovement();
@@ -208,7 +241,6 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // KHOM GỐI LẤY ĐÀ
                 lockedAirVelocity = Vector3.zero;
                 jumpTimer -= Time.deltaTime;
                 if (jumpTimer <= 0f)
@@ -225,15 +257,21 @@ public class PlayerController : MonoBehaviour
             verticalVelocity += gravity * Time.deltaTime;
         }
 
-        // Áp dụng lực vào Character Controller
         Vector3 finalVelocity = lockedAirVelocity;
         finalVelocity.y = verticalVelocity;
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 
+    private void TriggerRoll(Vector3 desiredMoveDirection)
+    {
+        isRolling = true;
+        rollTimer = rollDuration;
+        animator.SetTrigger(RollHash);
+        rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
+    }
+
     private void UpdateAnimation()
     {
-
         if (animator == null || !characterController.enabled) return;
 
         bool isGrounded = characterController.isGrounded;
@@ -245,7 +283,7 @@ public class PlayerController : MonoBehaviour
         if (isRolling || !isGrounded || isPreparingJump) return;
 
         Vector2 input = Vector2.zero;
-        if (Keyboard.current != null)
+        if (Keyboard.current != null && canMove)
         {
             if (Keyboard.current.wKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;
@@ -255,13 +293,11 @@ public class PlayerController : MonoBehaviour
 
         if (isLocked)
         {
-            // Trong thế chiến đấu: Truyền trực tiếp trục X (Trái/Phải) và Y (Tiến/Lùi) vào 2D Blend Tree
             animator.SetFloat(StrafeXHash, input.x, speedDampTime, Time.deltaTime);
             animator.SetFloat(StrafeZHash, input.y, speedDampTime, Time.deltaTime);
         }
         else
         {
-            // Trong chế độ tự do: Dùng Speed (0 = Idle, 0.5 = Walk, 1.0 = Run)
             float inputMagnitude = Mathf.Clamp01(input.magnitude);
             float targetSpeed = 0f;
             if (inputMagnitude > 0.01f)
