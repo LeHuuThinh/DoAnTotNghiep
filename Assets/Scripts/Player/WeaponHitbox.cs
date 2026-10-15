@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,10 +11,13 @@ public class WeaponHitbox : MonoBehaviour
 
   private Collider hitCollider;
   private float currentDamage = 10f;
+  private float currentKnockback = 0f;
+  private float currentHitlag = 0f; // Biến lưu thời gian hitlag của nhát chém
   private Transform attacker;
 
   // Danh sách lưu các mục tiêu đã trúng đòn trong 1 lần vung kiếm (chống lặp dame)
   private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
+  private static Coroutine activeHitlagCoroutine;
 
   private void Awake()
   {
@@ -28,12 +32,15 @@ public class WeaponHitbox : MonoBehaviour
   }
 
   /// <summary>
-  /// Bật hitbox khi kiếm bắt đầu vung trúng đích
+  /// Bật hitbox khi kiếm bắt đầu vung trúng đích.
+  /// hitlag = 0f làm mặc định để quái vật dùng chung không bị ảnh hưởng.
   /// </summary>
-  public void EnableHitbox(float damage)
+  public void EnableHitbox(float damage, float knockback, float hitlag = 0f)
   {
     currentDamage = damage;
-    hitTargets.Clear(); // Xóa bộ nhớ trúng đòn của nhát trước
+    currentKnockback = knockback;
+    currentHitlag = hitlag;
+    hitTargets.Clear();
     if (hitCollider != null) hitCollider.enabled = true;
   }
 
@@ -48,6 +55,9 @@ public class WeaponHitbox : MonoBehaviour
 
   private void OnTriggerEnter(Collider other)
   {
+    // Bỏ qua nếu va chạm trúng chính bản thân người vung kiếm
+    if (attacker != null && other.transform.root == attacker) return;
+
     // 1. Kiểm tra layer có nằm trong danh sách được phép chém không
     if ((targetLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
@@ -63,7 +73,42 @@ public class WeaponHitbox : MonoBehaviour
       Vector3 hitDirection = attacker != null ? attacker.forward : transform.forward;
 
       // Gây sát thương
-      damageable.TakeDamage(currentDamage, hitPoint, hitDirection);
+      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback);
+
+      // 3. KÍCH HOẠT HITLAG NẾU ĐÒN ĐÁNH CÓ CÀI ĐẶT THỜI GIAN KHỰNG
+      if (currentHitlag > 0f)
+      {
+        TriggerHitlag(currentHitlag);
+      }
+    }
+  }
+
+  private void TriggerHitlag(float duration)
+  {
+    if (activeHitlagCoroutine != null)
+    {
+      StopCoroutine(activeHitlagCoroutine);
+      Time.timeScale = 1f;
+    }
+
+    activeHitlagCoroutine = StartCoroutine(HitlagRoutine(duration));
+  }
+
+  private IEnumerator HitlagRoutine(float duration)
+  {
+    Time.timeScale = 0.05f; // Làm chậm thế giới xuống còn 5% để tạo độ khựng đanh
+    yield return new WaitForSecondsRealtime(duration);
+    Time.timeScale = 1f;    // Trả lại tốc độ bình thường
+    activeHitlagCoroutine = null;
+  }
+
+  private void OnDisable()
+  {
+    // Failsafe: Đảm bảo thời gian không bao giờ bị kẹt lại 0.05 nếu kiếm bị tắt đột ngột
+    if (activeHitlagCoroutine != null)
+    {
+      Time.timeScale = 1f;
+      activeHitlagCoroutine = null;
     }
   }
 }

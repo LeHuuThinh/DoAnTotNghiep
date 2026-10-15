@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 
 public class DungeonRenderer : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class DungeonRenderer : MonoBehaviour
   public GameObject ceilingPrefab;
   public GameObject invisibleFloorPrefab;
   public Transform dungeonParent;
+
+  [Header("AI Navigation")]
+  [Tooltip("Kéo component NavMeshSurface vào đây để tự động bake khi sinh xong map")]
+  public NavMeshSurface navMeshSurface;
 
   [Header("Hình học Dungeon")]
   public Material dungeonMaterial;
@@ -35,6 +40,14 @@ public class DungeonRenderer : MonoBehaviour
     {
       CreateCombinedAreaMesh(corridor, "Corridor", data);
       CreateInvisibleCollider(corridor);
+    }
+
+    // =====================================================================
+    // 3. TỰ ĐỘNG BAKE NAVMESH NGAY KHI VỪA SINH XONG TOÀN BỘ SÀN VÀ TƯỜNG
+    // =====================================================================
+    if (navMeshSurface != null)
+    {
+      navMeshSurface.BuildNavMesh();
     }
   }
 
@@ -249,7 +262,7 @@ public class DungeonRenderer : MonoBehaviour
   {
     float centerX = (area.x * tileSize) + ((area.width * tileSize) / 2f);
     float centerZ = (area.y * tileSize) + ((area.height * tileSize) / 2f);
-    Vector3 centerPos = new Vector3(centerX, -0.2f, centerZ);
+    Vector3 centerPos = new Vector3(centerX, 0f, centerZ);
 
     GameObject invFloor = Instantiate(invisibleFloorPrefab, centerPos, Quaternion.identity, dungeonParent);
     invFloor.transform.localScale = new Vector3(area.width * tileSize, 0.2f, area.height * tileSize);

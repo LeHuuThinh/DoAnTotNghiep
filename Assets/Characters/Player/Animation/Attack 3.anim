@@ -50793,7 +50793,7 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.6666667
-    functionName: EnableWeaponHitbox
+    functionName: EnableAttack3Hitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -50806,14 +50806,14 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 1.1666666
+  - time: 1.0666667
     functionName: DisableComboWindow
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 1.2333333
+  - time: 1.1333333
     functionName: OnAttackEnd
     data: 
     objectReferenceParameter: {fileID: 0}

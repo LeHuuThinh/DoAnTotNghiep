@@ -7,150 +7,103 @@ public class PlayerController : MonoBehaviour
     [Header("State")]
     public bool canMove = true;
 
-    [Header("Movement")]
+    [Header("Movement Speeds")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float strafeSpeed = 3.8f;      // Tốc độ khi bước ngang/lùi vờn quái
     [SerializeField] private float runSpeed = 9f;
     [SerializeField] private float gravity = -20f;
+    [SerializeField] private float rotationSpeed = 12f;
 
-    [Header("Run")]
-    [SerializeField] private float runActivationTime = 0.5f;
+    [Header("Run / Sprint Settings (Shift Key)")]
+    [Tooltip("Thời gian giữ Shift (giây) để bắt đầu chạy nước rút. Nhả ra trước mốc này sẽ là Lăn né (Roll).")]
+    [SerializeField] private float sprintHoldThreshold = 0.25f;
     [SerializeField] private float speedDampTime = 0.1f;
-    [SerializeField] private Animator animator;
 
-    [Header("Jump (Fixed Trajectory)")]
+    [Header("Jump Settings (Fixed Trajectory)")]
     [SerializeField] private float jumpHeight = 1.5f;
-    [SerializeField] private float jumpDelay = 0.15f; // Thời gian chờ khom gối lấy đà (giây)
+    [SerializeField] private float jumpDelay = 0.15f;
 
-    [Header("Roll")]
+    [Header("Roll Settings")]
     [SerializeField] private float rollSpeed = 12f;
     [SerializeField] private float rollDuration = 0.6f;
 
-    [Header("Camera")]
-    [SerializeField] private Transform cameraTransform;
-    [SerializeField] private float zoomSpeed = 2f;
-    [SerializeField] private float minZoomDistance = 2f;
-    [SerializeField] private float maxZoomDistance = 8f;
-    [SerializeField] private float cameraDistance = 5f;
-    [SerializeField] private float cameraHeight = 2.2f;
-    [SerializeField] private float cameraSideOffset = 0.8f;
-    [SerializeField] private float mouseSensitivity = 0.12f;
-    [SerializeField] private float minPitch = -25f;
-    [SerializeField] private float maxPitch = 65f;
-    [SerializeField] private float cameraFollowSpeed = 12f;
-    [SerializeField] private float cameraLookHeight = 1.2f;
+    [Header("References")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private ThirdPersonCamera thirdPersonCamera;
+    [SerializeField] private TargetLockSystem targetLockSystem;
+    [SerializeField] private PlayerCombat playerCombat; // Tham chiếu tới PlayerCombat
 
+    // Components & Physics States
     private CharacterController characterController;
-    private float rightMouseHeldTime;
-    private bool isRightMouseHeld;
-    private bool runPersisted;
     private float verticalVelocity;
-    private float cameraYaw;
-    private float cameraPitch = 15f;
 
+    // Shift (Roll / Sprint) States
+    private float shiftHoldTimer = 0f;
+    private bool isShiftHeld = false;
+    private bool isSprinting = false;
+
+    // Roll Execution States
     private bool isRolling;
     private float rollTimer;
     private Vector3 rollDirection;
 
+    // Jump States
     private Vector3 lockedAirVelocity;
-    private Vector3 pendingJumpVelocity; // Đà bay sẽ được bung ra sau khi lấy đà xong
-    private bool isPreparingJump; // Biến đánh dấu đang khom người
-    private float jumpTimer;      // Bộ đếm lùi
+    private Vector3 pendingJumpVelocity;
+    private bool isPreparingJump;
+    private float jumpTimer;
 
+    // Animator Hashes
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
     private static readonly int JumpHash = Animator.StringToHash("Jump");
     private static readonly int RollHash = Animator.StringToHash("Roll");
     private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
+    private static readonly int IsLockedOnHash = Animator.StringToHash("IsLockedOn");
+    private static readonly int StrafeXHash = Animator.StringToHash("StrafeX");
+    private static readonly int StrafeZHash = Animator.StringToHash("StrafeZ");
+
+    public bool IsRolling => isRolling;
+    public bool IsGrounded => characterController.isGrounded;
+    private bool IsRunning => isSprinting && !(targetLockSystem != null && targetLockSystem.IsLockedOn);
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
-        if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
-        if (cameraTransform != null) cameraYaw = transform.eulerAngles.y;
+        if (targetLockSystem == null) targetLockSystem = GetComponent<TargetLockSystem>();
 
-        cameraDistance = Mathf.Clamp(cameraDistance, minZoomDistance, maxZoomDistance);
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Tự động tìm PlayerCombat ở cả Object cha lẫn Object con
+        if (playerCombat == null)
+        {
+            playerCombat = GetComponent<PlayerCombat>();
+            if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
+        }
+
+        if (thirdPersonCamera == null && Camera.main != null)
+        {
+            thirdPersonCamera = Camera.main.GetComponent<ThirdPersonCamera>();
+        }
     }
 
     private void Update()
     {
-        HandleCameraInput();
-        HandleRunInput();
         HandleMovement();
         UpdateAnimation();
-
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
     }
-
-    private void HandleRunInput()
-    {
-        if (Mouse.current == null) return;
-        bool rightMousePressed = Mouse.current.rightButton.isPressed;
-        if (rightMousePressed)
-        {
-            if (!isRightMouseHeld)
-            {
-                isRightMouseHeld = true;
-                rightMouseHeldTime = 0f;
-            }
-            rightMouseHeldTime += Time.deltaTime;
-            if (rightMouseHeldTime >= runActivationTime) runPersisted = true;
-            return;
-        }
-
-        if (isRightMouseHeld && rightMouseHeldTime < runActivationTime) runPersisted = false;
-        isRightMouseHeld = false;
-        rightMouseHeldTime = 0f;
-    }
-
-    private void LateUpdate()
-    {
-        if (cameraTransform == null) return;
-        Quaternion orbitRotation = Quaternion.Euler(cameraPitch, cameraYaw, 0f);
-        Vector3 targetPosition = transform.position + Vector3.up * cameraLookHeight;
-        Vector3 localOffset = new Vector3(cameraSideOffset, cameraHeight - cameraLookHeight, -cameraDistance);
-        Vector3 desiredPosition = targetPosition + orbitRotation * localOffset;
-
-        cameraTransform.position = Vector3.Lerp(cameraTransform.position, desiredPosition, cameraFollowSpeed * Time.deltaTime);
-        cameraTransform.rotation = orbitRotation;
-    }
-
-    private void HandleCameraInput()
-    {
-        if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-        cameraYaw += mouseDelta.x * mouseSensitivity;
-        cameraPitch = Mathf.Clamp(cameraPitch - mouseDelta.y * mouseSensitivity, minPitch, maxPitch);
-
-        float scrollDelta = Mouse.current.scroll.ReadValue().y;
-        cameraDistance = Mathf.Clamp(cameraDistance - scrollDelta * zoomSpeed * 0.01f, minZoomDistance, maxZoomDistance);
-    }
-
-    public void LockMovement() { canMove = false; }
-    public void UnlockMovement() { canMove = true; }
 
     private void HandleMovement()
     {
+        if (characterController == null || !characterController.enabled) return;
         if (Keyboard.current == null) return;
 
         bool isGrounded = characterController.isGrounded;
+        bool isBlocking = playerCombat != null && playerCombat.IsBlockingOrParrying;
 
         Vector2 input = Vector2.zero;
 
-        // 1. CHỈ NHẬN INPUT NẾU ĐƯỢC PHÉP DI CHUYỂN
-        if (canMove)
+        // 1. NHẬN PHÍM WASD (Nhận cả khi đang Block để xác định hướng Lăn né chuẩn xác)
+        if (canMove || isBlocking)
         {
             if (Keyboard.current.wKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;
@@ -159,24 +112,77 @@ public class PlayerController : MonoBehaviour
         }
         input = Vector2.ClampMagnitude(input, 1f);
 
-        if (input.sqrMagnitude <= 0.001f) runPersisted = false;
+        bool isMoving = input.sqrMagnitude > 0.001f;
+        bool isLocked = targetLockSystem != null && targetLockSystem.IsLockedOn;
 
-        Quaternion cameraRotation = Quaternion.Euler(0f, cameraYaw, 0f);
+        // Tính hướng di chuyển theo góc quay của Camera
+        Quaternion cameraRotation = thirdPersonCamera != null
+            ? thirdPersonCamera.PlanarRotation
+            : Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
         Vector3 desiredMoveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
 
-        // --- XỬ LÝ ROLL ---
-        if (canMove && !isRolling && isGrounded && Keyboard.current.shiftKey.wasPressedThisFrame && !isPreparingJump)
+        // =====================================================================
+        // 2. XỬ LÝ PHÍM SHIFT: CHO PHÉP NHẤN KHI CANMOVE HOẶC KHI ĐANG BLOCK
+        // =====================================================================
+        bool shiftPressed = Keyboard.current.leftShiftKey.isPressed;
+        bool shiftDown = Keyboard.current.leftShiftKey.wasPressedThisFrame;
+        bool shiftUp = Keyboard.current.leftShiftKey.wasReleasedThisFrame;
+
+        // SỬA LỖI TẠI ĐÂY: Cho phép nhận Shift nếu canMove = true HOẶC đang Block!
+        if (shiftDown && (canMove || isBlocking) && !isRolling)
         {
-            isRolling = true;
-            rollTimer = rollDuration;
-            animator.SetTrigger(RollHash);
-            rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
+            isShiftHeld = true;
+            shiftHoldTimer = 0f;
         }
 
+        if (isShiftHeld && shiftPressed)
+        {
+            shiftHoldTimer += Time.deltaTime;
+
+            // Chỉ chạy nhanh nếu được phép di chuyển tự do (canMove)
+            if (shiftHoldTimer >= sprintHoldThreshold && isMoving && canMove)
+            {
+                isSprinting = true;
+            }
+        }
+
+        if (shiftUp)
+        {
+            if (isShiftHeld && shiftHoldTimer < sprintHoldThreshold)
+            {
+                if ((canMove || isBlocking) && !isRolling && isGrounded && !isPreparingJump)
+                {
+                    // NẾU ĐANG BLOCK MÀ LĂN NÉ -> DẬP TẮT NGAY TRẠNG THÁI BLOCK
+                    if (isBlocking && playerCombat != null)
+                    {
+                        playerCombat.ForceResetCombat();
+                    }
+
+                    TriggerRoll(desiredMoveDirection);
+                }
+            }
+
+            isShiftHeld = false;
+            shiftHoldTimer = 0f;
+            isSprinting = false;
+        }
+
+        if (!isMoving || !canMove)
+        {
+            isSprinting = false;
+        }
+
+        // =====================================================================
+        // 3. THỰC THI LĂN (ROLL)
+        // =====================================================================
         if (isRolling)
         {
             rollTimer -= Time.deltaTime;
-            if (rollTimer <= 0f) isRolling = false;
+            if (rollTimer <= 0f)
+            {
+                isRolling = false;
+            }
             else
             {
                 transform.rotation = Quaternion.LookRotation(rollDirection);
@@ -188,74 +194,96 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // --- XỬ LÝ ĐI BỘ & NHẢY CÓ TRỄ ---
+        // =====================================================================
+        // 4. DI CHUYỂN BỘ & CHIẾN ĐẤU (CHỈ DI CHUYỂN KHI CANMOVE = TRUE)
+        // =====================================================================
         if (isGrounded)
         {
             if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -2f;
 
-            float currentSpeed = IsRunning ? runSpeed : moveSpeed;
-
             if (!isPreparingJump)
             {
-                // 1. Chỉ xoay người và cập nhật vận tốc khi KHÔNG khom gối lấy đà
-                if (desiredMoveDirection.sqrMagnitude > 0.001f)
-                {
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), 12f * Time.deltaTime);
-                }
-                lockedAirVelocity = desiredMoveDirection * currentSpeed;
+                // Nếu canMove = false (đang vung kiếm hoặc đang Block) -> Không cho chân chạy
+                Vector3 moveDir = canMove ? desiredMoveDirection : Vector3.zero;
 
-                // 2. NHẬN LỆNH NHẢY
+                if (isLocked)
+                {
+                    Vector3 toTarget = targetLockSystem.CurrentTarget.position - transform.position;
+                    toTarget.y = 0f;
+                    if (toTarget.sqrMagnitude > 0.001f)
+                    {
+                        Quaternion lookRot = Quaternion.LookRotation(toTarget);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, rotationSpeed * Time.deltaTime);
+                    }
+
+                    lockedAirVelocity = moveDir * strafeSpeed;
+                }
+                else
+                {
+                    if (moveDir.sqrMagnitude > 0.001f)
+                    {
+                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
+                    }
+
+                    float currentSpeed = IsRunning ? runSpeed : moveSpeed;
+                    lockedAirVelocity = moveDir * currentSpeed;
+                }
+
+                // LỆNH NHẢY (SPACE)
                 if (canMove && Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
-                    LockMovement(); // Khóa input WASD
+                    LockMovement();
                     isPreparingJump = true;
                     jumpTimer = jumpDelay;
                     animator.SetTrigger(JumpHash);
-
-                    // Lưu lại hướng và tốc độ chạy hiện tại để dùng khi thực sự bay lên
                     pendingJumpVelocity = lockedAirVelocity;
                 }
             }
             else
             {
-                // 3. ĐANG LẤY ĐÀ: Ép lực đẩy ngang về 0 để nhân vật đứng yên gồng sức
                 lockedAirVelocity = Vector3.zero;
-
-                // 4. ĐẾM LÙI
                 jumpTimer -= Time.deltaTime;
                 if (jumpTimer <= 0f)
                 {
                     isPreparingJump = false;
-                    verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity); // Nảy trục Y
-
-                    // Trả lại đà đã lưu để bay lướt về phía trước trên không trung
+                    verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     lockedAirVelocity = pendingJumpVelocity;
                 }
             }
         }
         else
         {
-            isPreparingJump = false; // Đề phòng rơi tự do khỏi mép vực lúc đang lấy đà
+            isPreparingJump = false;
             verticalVelocity += gravity * Time.deltaTime;
         }
 
-        // Áp dụng lực vào Character Controller
         Vector3 finalVelocity = lockedAirVelocity;
         finalVelocity.y = verticalVelocity;
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 
+    private void TriggerRoll(Vector3 desiredMoveDirection)
+    {
+        isRolling = true;
+        rollTimer = rollDuration;
+        animator.SetTrigger(RollHash);
+        rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
+    }
+
     private void UpdateAnimation()
     {
-        if (animator == null) return;
+        if (animator == null || !characterController.enabled) return;
 
         bool isGrounded = characterController.isGrounded;
         animator.SetBool(IsGroundedHash, isGrounded);
 
+        bool isLocked = targetLockSystem != null && targetLockSystem.IsLockedOn;
+        animator.SetBool(IsLockedOnHash, isLocked);
+
         if (isRolling || !isGrounded || isPreparingJump) return;
 
         Vector2 input = Vector2.zero;
-        if (Keyboard.current != null)
+        if (Keyboard.current != null && canMove)
         {
             if (Keyboard.current.wKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;
@@ -263,22 +291,25 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.aKey.isPressed) input.x -= 1f;
         }
 
-        float inputMagnitude = Mathf.Clamp01(input.magnitude);
-        float targetAnimationSpeed = 0f;
-
-        // QUY ĐỔI TRẠNG THÁI RA SỐ FLOAT
-        if (inputMagnitude > 0.01f)
+        if (isLocked)
         {
-            // Nếu có đi bộ, gán là 0.5. Nếu có thêm chạy, gán là 1.0.
-            targetAnimationSpeed = IsRunning ? 1f : 0.5f;
+            animator.SetFloat(StrafeXHash, input.x, speedDampTime, Time.deltaTime);
+            animator.SetFloat(StrafeZHash, input.y, speedDampTime, Time.deltaTime);
         }
+        else
+        {
+            float inputMagnitude = Mathf.Clamp01(input.magnitude);
+            float targetSpeed = 0f;
+            if (inputMagnitude > 0.01f)
+            {
+                targetSpeed = IsRunning ? 1f : 0.5f;
+            }
 
-        // Gửi thẳng giá trị này vào Animator
-        animator.SetFloat(SpeedHash, targetAnimationSpeed, speedDampTime, Time.deltaTime);
-
-        // (Tùy chọn) Giữ lại biến IsRunning nếu sau này bạn cần dùng cho các Transition khác
-        animator.SetBool(IsRunningHash, IsRunning && inputMagnitude > 0f);
+            animator.SetFloat(SpeedHash, targetSpeed, speedDampTime, Time.deltaTime);
+            animator.SetBool(IsRunningHash, IsRunning && inputMagnitude > 0f);
+        }
     }
 
-    private bool IsRunning => isRightMouseHeld || runPersisted;
+    public void LockMovement() => canMove = false;
+    public void UnlockMovement() => canMove = true;
 }

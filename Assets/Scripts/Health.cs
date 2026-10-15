@@ -11,7 +11,7 @@ public class Health : MonoBehaviour, IDamageable
 
   [Header("Events (Tùy chọn gắn VFX / SFX qua Inspector)")]
   public UnityEvent<float, float> onHealthChanged; // Gửi (currentHealth, maxHealth) để cập nhật thanh máu UI
-  public UnityEvent<Vector3, Vector3> onTakeDamage; // Gửi (hitPoint, hitDirection) để sinh VFX trúng đòn
+  public UnityEvent<Vector3, Vector3, float> onTakeDamage; // Gửi (hitPoint, hitDirection, knockbackDistance) để sinh VFX trúng đòn
   public UnityEvent onDeath;
 
   private bool isDead = false;
@@ -25,7 +25,7 @@ public class Health : MonoBehaviour, IDamageable
     currentHealth = maxHealth;
   }
 
-  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection)
+  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f)
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
@@ -34,7 +34,7 @@ public class Health : MonoBehaviour, IDamageable
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);
-    onTakeDamage?.Invoke(hitPoint, hitDirection);
+    onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
 
     if (currentHealth <= 0f)
     {
