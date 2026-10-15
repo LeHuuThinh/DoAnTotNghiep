@@ -10,6 +10,11 @@ public class TargetLockSystem : MonoBehaviour
   [SerializeField] private float breakLockRange = 18f;     // Cự ly quái chạy thoát sẽ tự bung khóa
   [SerializeField] private float viewAngleLimit = 75f;     // Góc quét hình nón phía trước camera
 
+  [Header("Obstacle Occlusion")]
+  [Tooltip("Thời gian quái nấp sau tường liên tục (giây) trước khi tự hủy khóa")]
+  [SerializeField] private float wallLostGraceTime = 0.8f;
+  private float wallOccludedTimer = 0f;
+
   [Header("UI Reticle (Tùy chọn)")]
   [Tooltip("Kéo một icon/chấm tròn World Space UI vào đây để hiển thị tâm ngắm trên đầu quái")]
   [SerializeField] private GameObject lockOnReticle;
@@ -110,27 +115,45 @@ public class TargetLockSystem : MonoBehaviour
   {
     if (!IsLockedOn) return;
 
-    // Tự hủy khóa nếu: Quái bị xóa khỏi game, quái chết, hoặc chạy quá cự ly breakLockRange
+    // 1. Quái bị xóa khỏi scene hoặc quái đã chết -> Hủy khóa
     if (currentTarget == null || (targetHealth != null && targetHealth.IsDead))
     {
       UnlockTarget();
+      wallOccludedTimer = 0f;
       return;
     }
 
+    // 2. Quái chạy quá xa -> Hủy khóa
     float distance = Vector3.Distance(transform.position, currentTarget.position);
     if (distance > breakLockRange)
     {
       UnlockTarget();
+      wallOccludedTimer = 0f;
       return;
     }
 
-    // Tự hủy khóa nếu quái nấp sau tường quá 1.5 giây
-    Vector3 rayStart = transform.position + Vector3.up * 1.5f;
-    Vector3 rayEnd = currentTarget.position + Vector3.up * 1.5f;
-    if (Physics.Linecast(rayStart, rayEnd, obstacleLayer))
+    // 3. KIỂM TRA TƯỜNG CHẮN AN TOÀN (BỎ QUA TRIGGER VÀ HIỆU ỨNG CHIÊU THỨC)
+    Vector3 rayStart = transform.position + Vector3.up * 1.3f;
+    Vector3 rayEnd = currentTarget.position + Vector3.up * 1.3f;
+
+    // Thêm QueryTriggerInteraction.Ignore để tia quét KHÔNG BỊ CẢN bởi kiếm khí/hitbox
+    if (Physics.Linecast(rayStart, rayEnd, out RaycastHit hit, obstacleLayer, QueryTriggerInteraction.Ignore))
     {
-      UnlockTarget();
+      // Nếu vật cản không phải là bản thân Player và cũng không phải con Quái đang khóa
+      if (hit.transform.root != transform.root && hit.transform.root != currentTarget.root)
+      {
+        wallOccludedTimer += Time.deltaTime;
+        if (wallOccludedTimer >= wallLostGraceTime)
+        {
+          UnlockTarget();
+          wallOccludedTimer = 0f;
+        }
+        return;
+      }
     }
+
+    // Nếu tầm nhìn thông thoáng, reset bộ đếm thời gian
+    wallOccludedTimer = 0f;
   }
 
   private void UpdateReticlePosition()

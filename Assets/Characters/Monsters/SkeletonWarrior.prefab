@@ -56,7 +56,7 @@ MonoBehaviour:
   preferredDistance: 5
   attackRange: 2.2
   attackCooldown: 5
-  attackDamage: 20
+  attackDamage: 15
   attackKnockback: 0.5
   circleDuration: 5
   directionChangeInterval: 2
@@ -78,7 +78,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 200
+  maxHealth: 100
   currentHealth: 0
   isInvulnerable: 0
   onHealthChanged:
@@ -131,9 +131,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.59900177
-  m_Height: 1.5282165
+  m_Height: 2.0130198
   m_Direction: 1
-  m_Center: {x: 0, y: 0.76712567, z: 0}
+  m_Center: {x: 0, y: 1.0095273, z: 0}
 --- !u!195 &4703182412023202275
 NavMeshAgent:
   m_ObjectHideFlags: 0

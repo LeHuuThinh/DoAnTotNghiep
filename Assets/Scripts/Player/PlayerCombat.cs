@@ -18,6 +18,16 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private float chargeAttackDamage = 50f;
   [SerializeField] private float counterAttackDamage = 65f;   // Sát thương phản đòn cực lớn!
 
+  [Header("Skill Settings")]
+  [SerializeField] private GameObject slashProjectilePrefab; // Prefab dải năng lượng (E)
+  [SerializeField] private Transform projectileSpawnPoint;    // Điểm phóng đạn (đầu mũi kiếm)
+  [SerializeField] private GameObject aoeSpellPrefab;         // Prefab AoeSpell (Q)
+  [SerializeField] private GameObject swordAuraVfx;           // Effect gắn trên lưỡi kiếm
+
+  [Header("Skill Cooldowns")]
+  [SerializeField] private float skillECooldown = 4.0f;
+  [SerializeField] private float skillQCooldown = 8.0f;
+
   [Header("Knockback Settings")]
   [SerializeField] private float attack1Knockback = 0f;
   [SerializeField] private float attack2Knockback = 0f;
@@ -46,6 +56,10 @@ public class PlayerCombat : MonoBehaviour
   private float attackTimer = 0f;
   private float targetLayerWeight = 1f;
 
+  // Biến CD SKill
+  private float skillETimer = 0f;
+  private float skillQTimer = 0f;
+
   // Biến Charge Attack
   private float holdTimer = 0f;
   private bool isHoldingMouse = false;
@@ -63,6 +77,8 @@ public class PlayerCombat : MonoBehaviour
   private static readonly int JumpAttackTriggerHash = Animator.StringToHash("JumpAttack");
   private static readonly int ParryTriggerHash = Animator.StringToHash("Parry");
   private static readonly int CounterAttackTriggerHash = Animator.StringToHash("CounterAttack");
+  private static readonly int SkillETriggerHash = Animator.StringToHash("Skill_E");
+  private static readonly int SkillQTriggerHash = Animator.StringToHash("Skill_Q");
 
   private void Awake()
   {
@@ -134,6 +150,11 @@ public class PlayerCombat : MonoBehaviour
         animator.SetLayerWeight(swordLayerIndex, newWeight);
       }
     }
+
+    // Đếm ngược Cooldown của Kỹ năng
+    if (skillETimer > 0f) skillETimer -= Time.deltaTime;
+    if (skillQTimer > 0f) skillQTimer -= Time.deltaTime;
+
   }
 
   private void HandleCombatInput()
@@ -207,6 +228,25 @@ public class PlayerCombat : MonoBehaviour
       isHoldingMouse = false;
       comboStep = 1;
       ExecuteNormalAttack();
+    }
+    // =====================================================================
+    // 3. THI TRIỂN KỸ NĂNG (E: SLASHRANGE, Q: AOE CHARGE)
+    // =====================================================================
+    if (!isAttacking && !isParryActive)
+    {
+      // Phím E: Phóng dải năng lượng tầm xa
+      if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && skillETimer <= 0f)
+      {
+        ExecuteSkillE();
+        return;
+      }
+
+      // Phím Q: Gồng nổ AOE xung quanh
+      if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame && skillQTimer <= 0f)
+      {
+        ExecuteSkillQ();
+        return;
+      }
     }
   }
 
@@ -377,6 +417,88 @@ public class PlayerCombat : MonoBehaviour
     if (animator != null) animator.SetInteger(ComboStepHash, 0);
     if (playerController != null) playerController.UnlockMovement();
     if (weaponHitbox != null) weaponHitbox.DisableHitbox();
+  }
+
+  private void ExecuteSkillE()
+  {
+    isAttacking = true;
+    skillETimer = skillECooldown;
+    targetLayerWeight = 0f;
+
+    if (playerController != null) playerController.LockMovement();
+    animator.SetTrigger(SkillETriggerHash);
+  }
+
+  private void ExecuteSkillQ()
+  {
+    isAttacking = true;
+    skillQTimer = skillQCooldown;
+    targetLayerWeight = 0f;
+
+    if (playerController != null) playerController.LockMovement();
+
+    // Gồng chiêu lớn: BẬT HYPER ARMOR để quái đánh nhẹ không ngắt được chiêu!
+    if (playerFeedback != null) playerFeedback.EnableHyperArmor();
+
+    animator.SetTrigger(SkillQTriggerHash);
+  }
+
+  // =========================================================================
+  // ANIMATION EVENTS CHO SKILLS
+  // =========================================================================
+
+  public void EnableSwordAura()
+  {
+    if (swordAuraVfx != null) swordAuraVfx.SetActive(true);
+  }
+
+  public void DisableSwordAura()
+  {
+    if (swordAuraVfx != null) swordAuraVfx.SetActive(false);
+  }
+
+  /// <summary>
+  /// Gắn Event này đúng thời điểm vung kiếm trong clip Skill E
+  /// </summary>
+  public void SpawnSlashProjectileEvent()
+  {
+    if (slashProjectilePrefab == null) return;
+
+    Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : (transform.position + transform.forward + Vector3.up * 1.2f);
+    Vector3 launchDir = transform.root.forward; // Lấy đúng hướng nhân vật đang nhìn tại thời điểm chém
+
+    GameObject proj = Instantiate(slashProjectilePrefab, spawnPos, Quaternion.LookRotation(launchDir));
+    ProjectileSlash slash = proj.GetComponent<ProjectileSlash>();
+    if (slash != null)
+    {
+      slash.Launch(transform.root, launchDir);
+    }
+  }
+
+  /// <summary>
+  /// Gắn Event này đúng thời điểm cắm kiếm xuống đất / bộc phát chiêu trong clip Skill Q
+  /// </summary>
+  public void SpawnAoeSpellEvent()
+  {
+    if (aoeSpellPrefab == null) return;
+
+    Vector3 spawnPos = transform.root.position;
+    GameObject aoe = Instantiate(aoeSpellPrefab, spawnPos, Quaternion.identity);
+    AoeSpell spell = aoe.GetComponent<AoeSpell>();
+    if (spell != null)
+    {
+      spell.Initialize(transform.root);
+    }
+  }
+
+  /// <summary>
+  /// Gắn ở cuối 2 clip Skill để trả lại quyền điều khiển
+  /// </summary>
+  public void OnSkillAnimationEnd()
+  {
+    DisableSwordAura();
+    if (playerFeedback != null) playerFeedback.DisableHyperArmor();
+    ForceResetCombat();
   }
 
   // =========================================================================
