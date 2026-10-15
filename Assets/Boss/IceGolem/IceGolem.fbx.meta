@@ -1,0 +1,470 @@
+fileFormatVersion: 2
+guid: b5b9b67da9c37804daa64ac364bda5f3
+ModelImporter:
+  serializedVersion: 24501
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: shaded
+    second: {fileID: 2800000, guid: 65f60d919abd2f541a43dd15922f85dd, type: 3}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 3
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 3
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    importUVs: -1
+    importVertexColors: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+    calculateBlendshapeNormalsDeltaFromImportedNormals: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human:
+    - boneName: Bung
+      humanName: Hips
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: DauGoiT
+      humanName: LeftUpperLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: DauGoiP
+      humanName: RightUpperLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: GotChanT
+      humanName: LeftLowerLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: GotChanP
+      humanName: RightLowerLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BanChanT
+      humanName: LeftFoot
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BanChanP
+      humanName: RightFoot
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: Nguc
+      humanName: Spine
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BaVaiP
+      humanName: RightShoulder
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BapTayPhai
+      humanName: RightUpperArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: CanhBanTayP
+      humanName: RightLowerArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BaVaiT
+      humanName: LeftShoulder
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: BapTayTrai
+      humanName: LeftUpperArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: CanhBanTayT
+      humanName: LeftLowerArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: DotTayT4
+      humanName: LeftHand
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: DotTayP4
+      humanName: RightHand
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: Mieng
+      humanName: Head
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    skeleton:
+    - name: IceGolem(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Armature
+      parentName: IceGolem(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Bung
+      parentName: Armature
+      position: {x: 0.0006755607, y: 0.0037425675, z: 0.024941016}
+      rotation: {x: 0.77200997, y: -0.021829758, z: 0.03802824, w: 0.63409615}
+      scale: {x: 1, y: 0.99999994, z: 0.99999994}
+    - name: HongP
+      parentName: Bung
+      position: {x: 0.000055392313, y: -0.0000418774, z: 0.0000017475044}
+      rotation: {x: 0.6144113, y: 0.49080724, z: 0.5930803, w: -0.1728086}
+      scale: {x: 0.99999994, y: 0.9999999, z: 0.99999994}
+    - name: DauGoiP
+      parentName: HongP
+      position: {x: 1.11758706e-10, y: 0.00595831, z: -0.0000000010058283}
+      rotation: {x: -0.42823896, y: 0.0038881095, z: 0.0025070538, w: 0.90365374}
+      scale: {x: 1, y: 0.9999999, z: 1}
+    - name: GotChanP
+      parentName: DauGoiP
+      position: {x: 9.778887e-11, y: 0.009260227, z: 0.0000000014581015}
+      rotation: {x: -0.0923553, y: -0.012963048, z: 0.22853473, w: 0.9690585}
+      scale: {x: 1.0000001, y: 1, z: 1}
+    - name: BanChanP
+      parentName: GotChanP
+      position: {x: 2.7939676e-10, y: 0.01152218, z: -3.5273842e-10}
+      rotation: {x: 0.40010688, y: 0.040613227, z: -0.5297948, w: 0.7467145}
+      scale: {x: 1, y: 1, z: 1}
+    - name: HongT
+      parentName: Bung
+      position: {x: -0.00011207063, y: -0.00010832005, z: 0.00006298599}
+      rotation: {x: 0.61461234, y: -0.5499567, z: -0.4988624, w: -0.26633748}
+      scale: {x: 0.9999997, y: 0.99999964, z: 0.99999994}
+    - name: DauGoiT
+      parentName: HongT
+      position: {x: 4.4703483e-10, y: 0.0066636372, z: -0.0000000015366822}
+      rotation: {x: -0.4596892, y: -0.016195323, z: -0.027420579, w: 0.8875087}
+      scale: {x: 0.99999994, y: 0.9999999, z: 0.9999999}
+    - name: GotChanT
+      parentName: DauGoiT
+      position: {x: -4.749745e-10, y: 0.00903569, z: -9.0105456e-10}
+      rotation: {x: -0.12032753, y: -0.0032462645, z: -0.2330152, w: 0.96499467}
+      scale: {x: 0.99999994, y: 1, z: 0.99999994}
+    - name: BanChanT
+      parentName: GotChanT
+      position: {x: 1.3969838e-10, y: 0.011902726, z: -0.000000001246808}
+      rotation: {x: 0.23495813, y: 0.16021611, z: 0.6175439, w: 0.7333247}
+      scale: {x: 1, y: 1, z: 0.99999994}
+    - name: Nguc
+      parentName: Bung
+      position: {x: -2.4447216e-10, y: 0.0044393446, z: -0.0000000017086856}
+      rotation: {x: -0.2649119, y: -0.019002875, z: -0.039829012, w: 0.96326226}
+      scale: {x: 1, y: 0.99999994, z: 1}
+    - name: NgucTren
+      parentName: Nguc
+      position: {x: -9.822542e-12, y: 0.006084792, z: -7.5437123e-10}
+      rotation: {x: 0.015029782, y: 0.0153791765, z: 0.0020406782, w: 0.9997667}
+      scale: {x: 0.99999994, y: 0.99999994, z: 1.0000001}
+    - name: Co
+      parentName: NgucTren
+      position: {x: 1.1350493e-11, y: 0.0066224993, z: 1.316357e-10}
+      rotation: {x: 0.8485169, y: 0.0046613975, z: 0.012128808, w: 0.52900875}
+      scale: {x: 0.99999994, y: 0.9999999, z: 1}
+    - name: Bone.026
+      parentName: Co
+      position: {x: 1.7462298e-10, y: 0.00891013, z: -2.5494953e-10}
+      rotation: {x: -0.2714999, y: 0.000102206664, z: -0.016386554, w: 0.962299}
+      scale: {x: 1.0000001, y: 0.99999994, z: 1}
+    - name: Mieng
+      parentName: Bone.026
+      position: {x: -0.000000022766468, y: 0.0011488141, z: 0.000004588568}
+      rotation: {x: 0.43084165, y: 0.053446475, z: -0.02696473, w: 0.9004398}
+      scale: {x: 1, y: 1, z: 1}
+    - name: VaiPhai
+      parentName: NgucTren
+      position: {x: 1.1350493e-11, y: 0.0066224993, z: 1.316357e-10}
+      rotation: {x: 0.047000226, y: 0.03749116, z: -0.68761337, w: 0.7235837}
+      scale: {x: 0.9999998, y: 0.9999999, z: 0.9999999}
+    - name: BaVaiP
+      parentName: VaiPhai
+      position: {x: 0.0000000020395963, y: 0.009085755, z: 3.42261e-10}
+      rotation: {x: 0.0022746287, y: 0.0031811036, z: -0.06552436, w: 0.9978433}
+      scale: {x: 0.9999999, y: 0.99999994, z: 0.9999999}
+    - name: BapTayPhai
+      parentName: BaVaiP
+      position: {x: 5.5879353e-11, y: 0.0037036538, z: 8.381903e-10}
+      rotation: {x: -0.0032144955, y: 0.04613448, z: 0.015331157, w: 0.99881244}
+      scale: {x: 0.99999994, y: 1, z: 0.99999994}
+    - name: CanhBanTayP
+      parentName: BapTayPhai
+      position: {x: -0, y: 0.01685547, z: -4.4703483e-10}
+      rotation: {x: 0.006779601, y: 0.021415, z: 0.015423601, w: 0.9996287}
+      scale: {x: 0.99999994, y: 1, z: 1}
+    - name: DotTayP1
+      parentName: CanhBanTayP
+      position: {x: 1.11758706e-10, y: 0.0113060195, z: 6.705522e-10}
+      rotation: {x: 0.71991384, y: 0.0016463669, z: 0.15714817, w: 0.67603695}
+      scale: {x: 1, y: 0.9999999, z: 1}
+    - name: DotTayP2
+      parentName: DotTayP1
+      position: {x: -0.0000000010058283, y: 0.0057971496, z: 0.0000000020116566}
+      rotation: {x: -0.34747946, y: -0.12826791, z: -0.42342433, w: 0.82675105}
+      scale: {x: 1, y: 1, z: 1}
+    - name: DotTayP3
+      parentName: DotTayP2
+      position: {x: -0.000000002682209, y: 0.0024389762, z: -0.000000001117587}
+      rotation: {x: 0.3440569, y: 0.84397775, z: -0.15137877, w: -0.38263676}
+      scale: {x: 1, y: 1.0000001, z: 0.99999994}
+    - name: DotTayP4
+      parentName: CanhBanTayP
+      position: {x: 1.11758706e-10, y: 0.0113060195, z: 6.705522e-10}
+      rotation: {x: 0.14225388, y: -0.073720485, z: 0.047679435, w: 0.98592895}
+      scale: {x: 0.9999999, y: 0.99999994, z: 0.9999999}
+    - name: DotTayP5
+      parentName: DotTayP4
+      position: {x: -0.0000000024586915, y: 0.0047523486, z: 0}
+      rotation: {x: 0.16236168, y: 0.020134851, z: -0.5836052, w: 0.7953856}
+      scale: {x: 1, y: 1, z: 1}
+    - name: DotTayP6
+      parentName: DotTayP5
+      position: {x: -4.4703483e-10, y: 0.002209866, z: 0.0000000010617076}
+      rotation: {x: 0.11196225, y: 0.8972479, z: 0.25856334, w: -0.3399348}
+      scale: {x: 0.99999994, y: 1.0000002, z: 1.0000001}
+    - name: DotTayP7
+      parentName: CanhBanTayP
+      position: {x: 1.11758706e-10, y: 0.0113060195, z: 6.705522e-10}
+      rotation: {x: -0.4248121, y: 0.012518322, z: -0.15474954, w: 0.8918691}
+      scale: {x: 1, y: 1.0000001, z: 1.0000001}
+    - name: DotTayP8
+      parentName: DotTayP7
+      position: {x: 2.2351741e-10, y: 0.006745947, z: -0.00000000173226}
+      rotation: {x: 0.6987643, y: 0.3262126, z: 0.0031845355, w: 0.6366346}
+      scale: {x: 0.99999994, y: 1.0000001, z: 1}
+    - name: DotTayP9
+      parentName: DotTayP8
+      position: {x: 8.9406965e-10, y: 0.00270974, z: 0.0000000010058283}
+      rotation: {x: -0.034074515, y: 0.8835682, z: 0.42039824, w: -0.20349792}
+      scale: {x: 0.9999999, y: 0.99999994, z: 1}
+    - name: VaiTrai
+      parentName: NgucTren
+      position: {x: 1.1350493e-11, y: 0.0066224993, z: 1.316357e-10}
+      rotation: {x: -0.029316515, y: 0.07904935, z: 0.6912927, w: 0.7176394}
+      scale: {x: 0.9999999, y: 0.9999999, z: 0.9999998}
+    - name: BaVaiT
+      parentName: VaiTrai
+      position: {x: 0.00000000728527, y: 0.0087944865, z: 1.11758706e-10}
+      rotation: {x: -0.003454411, y: 0.005758498, z: 0.02835148, w: 0.99957556}
+      scale: {x: 1, y: 0.99999994, z: 0.9999999}
+    - name: BapTayTrai
+      parentName: BaVaiT
+      position: {x: -6.84522e-10, y: 0.0036346745, z: -2.5145708e-10}
+      rotation: {x: -0.040776532, y: -0.020407273, z: 0.0065305433, w: 0.9989385}
+      scale: {x: 1, y: 0.99999994, z: 1}
+    - name: CanhBanTayT
+      parentName: BapTayTrai
+      position: {x: -0.0000000028149223, y: 0.016340863, z: -1.6763806e-10}
+      rotation: {x: 0.016136624, y: -0.08306077, z: -0.01159324, w: 0.9963464}
+      scale: {x: 1, y: 1.0000001, z: 1}
+    - name: DotTayT1
+      parentName: CanhBanTayT
+      position: {x: 6.1467287e-10, y: 0.012754667, z: -4.4703483e-10}
+      rotation: {x: 0.7450603, y: 0.0013795949, z: 0.090880446, w: 0.6607753}
+      scale: {x: 1, y: 1, z: 1}
+    - name: DotTayT2
+      parentName: DotTayT1
+      position: {x: -0.0000000010617076, y: 0.0050795805, z: 0}
+      rotation: {x: -0.45445555, y: 0.2584857, z: -0.0064136926, w: 0.85241663}
+      scale: {x: 1, y: 0.99999994, z: 0.9999999}
+    - name: DotTayT3
+      parentName: DotTayT2
+      position: {x: 0.00000056551653, y: 0.002613626, z: -0.00000068801455}
+      rotation: {x: -0.39709145, y: -0.14777946, z: 0.13356805, w: 0.8959013}
+      scale: {x: 0.99999994, y: 1, z: 1.0000001}
+    - name: DotTayT4
+      parentName: CanhBanTayT
+      position: {x: 6.1467287e-10, y: 0.012754667, z: -4.4703483e-10}
+      rotation: {x: 0.074377134, y: 0.20056659, z: -0.042554703, w: 0.9759253}
+      scale: {x: 0.99999994, y: 1.0000001, z: 1}
+    - name: DotTayT5
+      parentName: DotTayT4
+      position: {x: -4.4703483e-10, y: 0.004973158, z: 6.1467287e-10}
+      rotation: {x: -0.084621556, y: 0.19353823, z: 0.52834713, w: 0.822333}
+      scale: {x: 1, y: 0.99999994, z: 0.99999994}
+    - name: DotTayT6
+      parentName: DotTayT5
+      position: {x: 0.0000000015646219, y: 0.002266971, z: 0.0000000013411044}
+      rotation: {x: -0.09286884, y: -0.14730635, z: 0.36941648, w: 0.91280216}
+      scale: {x: 1, y: 0.99999994, z: 1}
+    - name: DotTayT7
+      parentName: CanhBanTayT
+      position: {x: 6.1467287e-10, y: 0.012754667, z: -4.4703483e-10}
+      rotation: {x: -0.23879583, y: 0.027808363, z: 0.109436594, w: 0.9644827}
+      scale: {x: 1, y: 1, z: 0.99999994}
+    - name: DotTayT8
+      parentName: DotTayT7
+      position: {x: -6.705522e-10, y: 0.0077324235, z: -3.352761e-10}
+      rotation: {x: 0.6656425, y: -0.055184096, z: 0.27351996, w: 0.6921428}
+      scale: {x: 1, y: 1, z: 1}
+    - name: DotTayT9
+      parentName: DotTayT8
+      position: {x: 0.0000000017881393, y: 0.004393779, z: 0.000000002235174}
+      rotation: {x: 0.24269193, y: 0.3165055, z: 0.2369493, w: 0.8858781}
+      scale: {x: 1, y: 1, z: 1}
+    - name: model
+      parentName: IceGolem(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 3
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 1
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 3
+  humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
