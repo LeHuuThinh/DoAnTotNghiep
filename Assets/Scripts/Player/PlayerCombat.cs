@@ -9,6 +9,7 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private PlayerController playerController;
   [SerializeField] private CharacterController characterController;
   [SerializeField] private PlayerFeedback playerFeedback;
+  [SerializeField] private PlayerStats playerStats;
 
   [Header("Weapon & Damage Settings")]
   [SerializeField] private WeaponHitbox weaponHitbox;
@@ -71,6 +72,10 @@ public class PlayerCombat : MonoBehaviour
   private float parryTimer = 0f;
   private Coroutine parryWindowCoroutine;
 
+  // Loại đòn tấn công đang thi triển (dùng cho tính lượng Spirit nhận được)
+  private bool isChargeAttackActive = false;
+  private bool isCounterAttackActive = false;
+
   // Animator Hashes
   private static readonly int AttackTriggerHash = Animator.StringToHash("Attack");
   private static readonly int ComboStepHash = Animator.StringToHash("ComboStep");
@@ -87,6 +92,10 @@ public class PlayerCombat : MonoBehaviour
     if (characterController == null) characterController = GetComponentInParent<CharacterController>();
     if (playerFeedback == null) playerFeedback = GetComponentInParent<PlayerFeedback>();
 
+    if (playerStats == null) playerStats = GetComponent<PlayerStats>();
+    if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
+    if (playerStats == null) playerStats = gameObject.AddComponent<PlayerStats>();
+
     health = GetComponent<Health>();
     if (health == null) health = GetComponentInParent<Health>();
 
@@ -95,6 +104,36 @@ public class PlayerCombat : MonoBehaviour
     if (weaponHitbox != null)
     {
       weaponHitbox.Initialize(transform.root);
+      weaponHitbox.OnHitTarget += HandleWeaponHitTarget;
+    }
+  }
+
+  private void OnDestroy()
+  {
+    if (weaponHitbox != null)
+    {
+      weaponHitbox.OnHitTarget -= HandleWeaponHitTarget;
+    }
+  }
+
+  /// <summary>
+  /// Nhận thông báo khi kiếm chém trúng quái vật -> Tích lũy Năng lượng Kỹ năng (Spirit)
+  /// </summary>
+  private void HandleWeaponHitTarget(IDamageable target, float damage)
+  {
+    if (playerStats == null) return;
+
+    if (isCounterAttackActive)
+    {
+      playerStats.GainSpirit(playerStats.SpiritGainOnCounterHit);
+    }
+    else if (isChargeAttackActive)
+    {
+      playerStats.GainSpirit(playerStats.SpiritGainOnChargeHit);
+    }
+    else
+    {
+      playerStats.GainSpirit(playerStats.SpiritGainOnLightHit);
     }
   }
 
@@ -234,16 +273,38 @@ public class PlayerCombat : MonoBehaviour
     // =====================================================================
     if (!isAttacking && !isParryActive)
     {
-      // Phím E: Phóng dải năng lượng tầm xa
+      // Phím E: Phóng dải năng lượng tầm xa (Tiêu hao 50 Spirit)
       if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && skillETimer <= 0f)
       {
+        if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillECost))
+        {
+          Debug.Log("<color=cyan>[Skill E]</color> Không đủ Spirit! Cần: " + playerStats.SkillECost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+          return;
+        }
+
+        if (playerStats != null)
+        {
+          playerStats.ConsumeSpirit(playerStats.SkillECost);
+        }
+
         ExecuteSkillE();
         return;
       }
 
-      // Phím Q: Gồng nổ AOE xung quanh
+      // Phím Q: Gồng nổ AOE xung quanh (Tiêu hao 100 Spirit)
       if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame && skillQTimer <= 0f)
       {
+        if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillQCost))
+        {
+          Debug.Log("<color=cyan>[Skill Q]</color> Không đủ Spirit! Cần: " + playerStats.SkillQCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+          return;
+        }
+
+        if (playerStats != null)
+        {
+          playerStats.ConsumeSpirit(playerStats.SkillQCost);
+        }
+
         ExecuteSkillQ();
         return;
       }
@@ -256,6 +317,17 @@ public class PlayerCombat : MonoBehaviour
 
   private void ExecuteParry()
   {
+    if (playerStats != null && !playerStats.HasStamina(playerStats.ParryWhiffCost))
+    {
+      Debug.Log("<color=yellow>[Parry]</color> Không đủ thể lực để giơ kiếm đón đòn!");
+      return;
+    }
+
+    if (playerStats != null)
+    {
+      playerStats.ConsumeStamina(playerStats.ParryWhiffCost);
+    }
+
     isParryActive = true;
     parryTimer = 0f;
     isHoldingMouse = false;
@@ -287,6 +359,13 @@ public class PlayerCombat : MonoBehaviour
     if (parryWindowCoroutine != null) StopCoroutine(parryWindowCoroutine);
     if (playerFeedback != null) playerFeedback.IsParrying = false;
 
+    // Hoàn trả lại thể lực do Parry chuẩn xác, đồng thời thưởng Spirit!
+    if (playerStats != null)
+    {
+      playerStats.RestoreStamina(playerStats.ParryWhiffCost);
+      playerStats.GainSpirit(playerStats.SpiritGainOnParrySuccess);
+    }
+
     // Mở cửa sổ phản đòn
     canCounterAttack = true;
     counterTimer = counterWindowDuration;
@@ -312,6 +391,9 @@ public class PlayerCombat : MonoBehaviour
     isHoldingMouse = false;
     attackTimer = 0f;
 
+    isChargeAttackActive = false;
+    isCounterAttackActive = true;
+
     targetLayerWeight = 0f;
     if (animator != null) animator.SetLayerWeight(swordLayerIndex, 0f);
 
@@ -326,6 +408,18 @@ public class PlayerCombat : MonoBehaviour
 
   private void ExecuteNormalAttack()
   {
+    if (playerStats != null && !playerStats.ConsumeStamina(playerStats.LightAttackCost))
+    {
+      comboStep = 0;
+      canCombo = false;
+      comboBuffered = false;
+      isAttacking = false;
+      return;
+    }
+
+    isChargeAttackActive = false;
+    isCounterAttackActive = false;
+
     isAttacking = true;
     canCombo = false;
     comboBuffered = false;
@@ -350,6 +444,15 @@ public class PlayerCombat : MonoBehaviour
 
   private void ExecuteChargeAttack()
   {
+    if (playerStats != null && !playerStats.ConsumeStamina(playerStats.ChargeAttackCost))
+    {
+      isAttacking = false;
+      return;
+    }
+
+    isChargeAttackActive = true;
+    isCounterAttackActive = false;
+
     isAttacking = true;
     comboStep = 0;
     canCombo = false;
@@ -412,6 +515,9 @@ public class PlayerCombat : MonoBehaviour
     holdTimer = 0f;
     attackTimer = 0f;
     targetLayerWeight = 1f;
+
+    isChargeAttackActive = false;
+    isCounterAttackActive = false;
 
     if (playerFeedback != null) playerFeedback.IsParrying = false;
     if (animator != null) animator.SetInteger(ComboStepHash, 0);

@@ -19,16 +19,29 @@ public class Health : MonoBehaviour, IDamageable
   public float CurrentHealth => currentHealth;
   public float MaxHealth => maxHealth;
   public bool IsDead => isDead;
+  public Transform LastAttacker { get; private set; }
+
+  // Callback kiểm tra Parry hoặc Block trước khi trừ máu (trả về true nếu chặn/parry thành công -> không trừ máu)
+  public Func<Transform, Vector3, Vector3, float, bool> onCheckParryOrBlock;
 
   private void Awake()
   {
     currentHealth = maxHealth;
   }
 
-  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f)
+  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null)
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
+    LastAttacker = attacker;
+
+    // 1. Kiểm tra nếu đòn đánh bị Parry hoặc Chặn đứng thành công -> MIỄN NHIỄM 100% SÁT THƯƠNG, KHÔNG TRỪ MÁU!
+    if (onCheckParryOrBlock != null && onCheckParryOrBlock.Invoke(attacker, hitPoint, hitDirection, knockbackDistance))
+    {
+      return;
+    }
+
+    // 2. Nếu không parry thì trừ máu bình thường
     currentHealth = Mathf.Max(0f, currentHealth - damage);
     Debug.Log($"[Trúng đòn!] Mục tiêu dính {damage} sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
 

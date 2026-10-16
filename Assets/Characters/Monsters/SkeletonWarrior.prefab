@@ -54,16 +54,28 @@ MonoBehaviour:
   chaseRange: 14
   combatStanceRange: 8
   preferredDistance: 5
-  attackRange: 2.2
+  attackRange: 2
   attackCooldown: 5
   attackDamage: 15
   attackKnockback: 0.5
   circleDuration: 5
   directionChangeInterval: 2
-  walkSpeed: 2
-  strafeSpeed: 2.5
+  distanceVariance: 1.5
+  crowdRepulsionRadius: 2.4
+  crowdRepulsionForce: 1.5
+  walkSpeed: 1.8
+  strafeSpeed: 2
+  retreatSpeed: 1
+  postAttackRetreatSpeed: 2
   runSpeed: 5
   rotationSpeed: 8
+  closeCombatTriggerRange: 2
+  stepBackDistance: 2
+  reactionDuration: 1.5
+  standGuardChance: 35
+  sidestepChance: 35
+  stepBackChance: 30
+  counterAttackIfReady: 1
   patrolRadius: 8
   patrolWaitTime: 5
 --- !u!114 &3167275676395035288

@@ -283,7 +283,7 @@ MonoBehaviour:
   radius: 0.09
   height: 1
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &667029274382050958
 GameObject:
   m_ObjectHideFlags: 0
@@ -361,7 +361,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.1
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &874088661470407133
 GameObject:
   m_ObjectHideFlags: 0
@@ -1124,7 +1124,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.05
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &3255214983765822876
 GameObject:
   m_ObjectHideFlags: 0
@@ -1234,7 +1234,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.1
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &3685927717426988447
 GameObject:
   m_ObjectHideFlags: 0
@@ -1281,7 +1281,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.1
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &4039452480687935344
 GameObject:
   m_ObjectHideFlags: 0
@@ -1911,6 +1911,7 @@ GameObject:
   - component: {fileID: 369121258138334455}
   - component: {fileID: 759275986569051391}
   - component: {fileID: 6269426121722460428}
+  - component: {fileID: 4698226416880465567}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1948,21 +1949,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   canMove: 1
-  moveSpeed: 3
-  strafeSpeed: 3.8
-  runSpeed: 7
+  moveSpeed: 4
+  strafeSpeed: 4
+  runSpeed: 8
   gravity: -20
   rotationSpeed: 12
   sprintHoldThreshold: 0.25
   speedDampTime: 0.15
   jumpHeight: 1
   jumpDelay: 0.6
-  rollSpeed: 5
+  rollSpeed: 6
   rollDuration: 1
+  rollIFrameDuration: 0.45
   animator: {fileID: 3586210189879081407}
   thirdPersonCamera: {fileID: 0}
   targetLockSystem: {fileID: 759275986569051391}
   playerCombat: {fileID: 2224738506303633511}
+  playerStats: {fileID: 4698226416880465567}
+  health: {fileID: 1443231080541979558}
 --- !u!143 &4791678739667565749
 CharacterController:
   m_ObjectHideFlags: 0
@@ -2071,6 +2075,8 @@ MonoBehaviour:
   breakLockRange: 18
   viewAngleLimit: 75
   wallLostGraceTime: 0.8
+  autoSwitchOnTargetDeath: 1
+  switchTargetRange: 16
   lockOnReticle: {fileID: 0}
   reticleOffset: {x: 0, y: 1.2, z: 0}
 --- !u!114 &6269426121722460428
@@ -2088,11 +2094,49 @@ MonoBehaviour:
   animator: {fileID: 3586210189879081407}
   targetLockSystem: {fileID: 759275986569051391}
   playerCombat: {fileID: 2224738506303633511}
+  thirdPersonCamera: {fileID: 0}
   maxPoise: 150
   poiseRecoveryDelay: 7
   poiseRecoveryRate: 30
+  parryHitlagDuration: 0.2
+  parryTimeScale: 0.05
   staggerDuration: 1
   knockbackDuration: 0.5
+--- !u!114 &4698226416880465567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbf54c8152365014793e47d56d455435, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  maxStamina: 100
+  currentStamina: 100
+  staminaRegenRate: 20
+  staminaRegenDelay: 2
+  sprintCostPerSecond: 15
+  rollCost: 20
+  lightAttackCost: 10
+  chargeAttackCost: 20
+  parryWhiffCost: 20
+  maxSpirit: 150
+  currentSpirit: 75
+  skillECost: 50
+  skillQCost: 100
+  spiritGainOnLightHit: 5
+  spiritGainOnChargeHit: 7
+  spiritGainOnCounterHit: 8
+  spiritGainOnParrySuccess: 15
+  onStaminaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onSpiritChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &5454798165073531583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2202,7 +2246,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.05
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &5932984356089814521
 GameObject:
   m_ObjectHideFlags: 0
@@ -2413,7 +2457,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.15
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &6592054627383699404
 GameObject:
   m_ObjectHideFlags: 0
@@ -2582,7 +2626,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.05
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &6832342256204731246
 GameObject:
   m_ObjectHideFlags: 0
@@ -3109,6 +3153,7 @@ MonoBehaviour:
   playerController: {fileID: 4095114976695307337}
   characterController: {fileID: 4791678739667565749}
   playerFeedback: {fileID: 6269426121722460428}
+  playerStats: {fileID: 0}
   weaponHitbox: {fileID: 7164169299375368469}
   attack1Damage: 15
   attack2Damage: 15
@@ -3117,7 +3162,7 @@ MonoBehaviour:
   counterAttackDamage: 40
   slashProjectilePrefab: {fileID: 1574271572835420843, guid: 855685a51bd1d6c41b21c09c0becf7f3, type: 3}
   projectileSpawnPoint: {fileID: 3075534017654103088}
-  aoeSpellPrefab: {fileID: 3280519133390621005, guid: da2600bc97bc22743939b85c1199713a, type: 3}
+  aoeSpellPrefab: {fileID: 6547965365630005983, guid: f8c946e92f6f0ec42873179368db598c, type: 3}
   swordAuraVfx: {fileID: 4914798154512801455}
   skillECooldown: 2
   skillQCooldown: 2
@@ -3272,7 +3317,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
   radius: 0.05
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &8115335064407135759
 GameObject:
   m_ObjectHideFlags: 0
@@ -3351,7 +3396,7 @@ MonoBehaviour:
   radius: 0.09
   height: 1
   linkedRenderer: {fileID: 0}
-  shouldDrawGizmosThisFrame: 0
+  shouldDrawGizmosThisFrame: 1
 --- !u!1 &8409536995589421674
 GameObject:
   m_ObjectHideFlags: 0
