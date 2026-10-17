@@ -2051,7 +2051,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66ef352803645754f9bd974de7cd32db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatTester
-  enemyPrefab: {fileID: 3329707019587242983, guid: 65ad483aba4897242b1045c1ab5dcb3e, type: 3}
+  enemyPrefab: {fileID: 2517675790099561320, guid: 6d7045efad74d824c98a3ecdc5606166, type: 3}
   spawnDistance: 16
 --- !u!114 &759275986569051391
 MonoBehaviour:

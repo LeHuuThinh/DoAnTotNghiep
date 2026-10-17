@@ -520,7 +520,11 @@ public class PlayerCombat : MonoBehaviour
     isCounterAttackActive = false;
 
     if (playerFeedback != null) playerFeedback.IsParrying = false;
-    if (animator != null) animator.SetInteger(ComboStepHash, 0);
+    if (animator != null)
+    {
+      animator.SetInteger(ComboStepHash, 0);
+      animator.speed = 1f;
+    }
     if (playerController != null) playerController.UnlockMovement();
     if (weaponHitbox != null) weaponHitbox.DisableHitbox();
   }
@@ -604,7 +608,20 @@ public class PlayerCombat : MonoBehaviour
   {
     DisableSwordAura();
     if (playerFeedback != null) playerFeedback.DisableHyperArmor();
+    if (animator != null) animator.speed = 1f;
     ForceResetCombat();
+  }
+
+  /// <summary>
+  /// Thay đổi tốc độ animation linh hoạt theo từng frame (gọi qua Animation Event trên timeline clip).
+  /// Ví dụ Skill Q: Đoạn đầu gồng đặt SetAnimatorSpeed(0.6f), đoạn vung kiếm đập xuống đất đặt SetAnimatorSpeed(2.2f).
+  /// </summary>
+  public void SetAnimatorSpeed(float speed)
+  {
+    if (animator != null)
+    {
+      animator.speed = speed;
+    }
   }
 
   // =========================================================================

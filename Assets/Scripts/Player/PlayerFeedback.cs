@@ -181,7 +181,7 @@ public class PlayerFeedback : MonoBehaviour
       Collider[] cols = Physics.OverlapSphere(transform.position + transform.forward * 1.5f, 3.0f);
       foreach (Collider c in cols)
       {
-        EnemyAI ai = c.GetComponentInParent<EnemyAI>();
+        EnemyAIBase ai = c.GetComponentInParent<EnemyAIBase>();
         if (ai != null && ai.IsAttacking)
         {
           parriedEnemy = ai.transform.root;
@@ -193,7 +193,7 @@ public class PlayerFeedback : MonoBehaviour
     // Ưu tiên 3: Nếu vẫn chưa thấy, kiểm tra quái đang lock-on (nhưng cũng phải đang vung kiếm IsAttacking)
     if (parriedEnemy == null && targetLockSystem != null && targetLockSystem.IsLockedOn)
     {
-      EnemyAI lockAI = targetLockSystem.CurrentTarget.GetComponentInParent<EnemyAI>();
+      EnemyAIBase lockAI = targetLockSystem.CurrentTarget.GetComponentInParent<EnemyAIBase>();
       if (lockAI != null && lockAI.IsAttacking)
       {
         parriedEnemy = lockAI.transform.root;
@@ -203,7 +203,7 @@ public class PlayerFeedback : MonoBehaviour
     // Ép CHỈ CON QUÁI BỊ PARRY bị ngắt chiêu và vỡ thế hoàn toàn
     if (parriedEnemy != null)
     {
-      EnemyAI enemyAI = parriedEnemy.GetComponentInChildren<EnemyAI>();
+      EnemyAIBase enemyAI = parriedEnemy.GetComponentInChildren<EnemyAIBase>();
       if (enemyAI != null)
       {
         enemyAI.InterruptAttack();
