@@ -3932,10 +3932,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 369121258138334455, guid: db39e9736dc24354d97037437d9c8841, type: 3}
-      propertyPath: enemyPrefab
-      value: 
-      objectReference: {fileID: 4989933198260461715, guid: 954d63b683e01ee458114819de824bfe, type: 3}
     - target: {fileID: 4095114976695307337, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: thirdPersonCamera
       value: 

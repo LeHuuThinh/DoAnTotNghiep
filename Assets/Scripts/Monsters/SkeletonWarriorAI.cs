@@ -295,6 +295,7 @@ public class SkeletonWarriorAI : EnemyAIBase
   protected override void ExecuteAttack()
   {
     isAttacking = true;
+    attackStateTimer = 0f;
     lastAttackTime = Time.time;
 
     int randomAttack = Random.Range(0, 2);
@@ -309,6 +310,7 @@ public class SkeletonWarriorAI : EnemyAIBase
   public override void InterruptAttack()
   {
     isAttacking = false;
+    attackStateTimer = 0f;
     isPostAttackRetreating = false;
     currentReaction = CloseReaction.None;
     reactionTimer = 0f;
@@ -332,6 +334,7 @@ public class SkeletonWarriorAI : EnemyAIBase
   public override void OnEnemyAttackEnd()
   {
     isAttacking = false;
+    attackStateTimer = 0f;
     isPostAttackRetreating = true;
     postAttackRetreatTimeout = 2.5f;
     currentState = AIState.Circling;

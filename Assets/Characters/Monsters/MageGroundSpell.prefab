@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4330468513817889461
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4672436367044494373}
+  - component: {fileID: 4539389921968191197}
+  m_Layer: 0
+  m_Name: MageGroundSpell
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4672436367044494373
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4330468513817889461}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 149.05121, y: 0, z: 12.6263}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4539389921968191197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4330468513817889461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ce66768df6e8ad4e9ad57c73cb7ffbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MageGroundSpell
+  radius: 2.8
+  chargeDuration: 1.3
+  damage: 35
+  knockback: 2
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  explosionVfxPrefab: {fileID: 7064883253219195277, guid: d2028f046e0a0f54c8a3e4a16bd8749a, type: 3}
+  borderColor: {r: 1, g: 0.15, b: 0.15, a: 0.95}
+  fillColor: {r: 1, g: 0.15, b: 0.15, a: 0.35}
+  customOuterRing: {fileID: 0}
+  customInnerFill: {fileID: 0}

@@ -33,4 +33,28 @@ public class EnemyAnimationRelay : MonoBehaviour
   {
     if (enemyAI != null) enemyAI.ShootProjectileEvent();
   }
+
+  /// <summary>
+  /// Bật hiệu ứng aura trên đầu cây trượng khi giơ trượng lên trời
+  /// </summary>
+  public void EnableStaffAura()
+  {
+    if (enemyAI != null) enemyAI.EnableStaffAura();
+  }
+
+  /// <summary>
+  /// Tắt hiệu ứng aura trên đầu cây trượng khi hạ tay / kết thúc cast
+  /// </summary>
+  public void DisableStaffAura()
+  {
+    if (enemyAI != null) enemyAI.DisableStaffAura();
+  }
+
+  /// <summary>
+  /// Kích hoạt vòng tròn ma pháp dưới chân Player
+  /// </summary>
+  public void SpawnMageSpellEvent()
+  {
+    if (enemyAI != null) enemyAI.SpawnMageSpellEvent();
+  }
 }

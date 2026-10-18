@@ -23,7 +23,15 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private GameObject slashProjectilePrefab; // Prefab dải năng lượng (E)
   [SerializeField] private Transform projectileSpawnPoint;    // Điểm phóng đạn (đầu mũi kiếm)
   [SerializeField] private GameObject aoeSpellPrefab;         // Prefab AoeSpell (Q)
-  [SerializeField] private GameObject swordAuraVfx;           // Effect gắn trên lưỡi kiếm
+  [Tooltip("Aura kiếm mặc định / Fallback")]
+  [SerializeField] private GameObject swordAuraVfx;
+  [Tooltip("Aura kiếm màu xanh cho Skill E (Chém kiếm khí tầm xa)")]
+  [SerializeField] private GameObject swordAuraBlueVfx;
+  [Tooltip("Aura kiếm màu vàng cam cho Skill Q (Gồng nổ AOE chấn địa)")]
+  [SerializeField] private GameObject swordAuraOrangeVfx;
+
+  private enum ActiveSkillType { None, SkillE, SkillQ }
+  private ActiveSkillType currentActiveSkill = ActiveSkillType.None;
 
   [Header("Skill Cooldowns")]
   [SerializeField] private float skillECooldown = 4.0f;
@@ -527,11 +535,13 @@ public class PlayerCombat : MonoBehaviour
     }
     if (playerController != null) playerController.UnlockMovement();
     if (weaponHitbox != null) weaponHitbox.DisableHitbox();
+    DisableSwordAura();
   }
 
   private void ExecuteSkillE()
   {
     isAttacking = true;
+    currentActiveSkill = ActiveSkillType.SkillE;
     skillETimer = skillECooldown;
     targetLayerWeight = 0f;
 
@@ -542,6 +552,7 @@ public class PlayerCombat : MonoBehaviour
   private void ExecuteSkillQ()
   {
     isAttacking = true;
+    currentActiveSkill = ActiveSkillType.SkillQ;
     skillQTimer = skillQCooldown;
     targetLayerWeight = 0f;
 
@@ -559,12 +570,26 @@ public class PlayerCombat : MonoBehaviour
 
   public void EnableSwordAura()
   {
-    if (swordAuraVfx != null) swordAuraVfx.SetActive(true);
+    if (currentActiveSkill == ActiveSkillType.SkillE && swordAuraBlueVfx != null)
+    {
+      swordAuraBlueVfx.SetActive(true);
+    }
+    else if (currentActiveSkill == ActiveSkillType.SkillQ && swordAuraOrangeVfx != null)
+    {
+      swordAuraOrangeVfx.SetActive(true);
+    }
+    else if (swordAuraVfx != null)
+    {
+      swordAuraVfx.SetActive(true);
+    }
   }
 
   public void DisableSwordAura()
   {
+    if (swordAuraBlueVfx != null) swordAuraBlueVfx.SetActive(false);
+    if (swordAuraOrangeVfx != null) swordAuraOrangeVfx.SetActive(false);
     if (swordAuraVfx != null) swordAuraVfx.SetActive(false);
+    currentActiveSkill = ActiveSkillType.None;
   }
 
   /// <summary>

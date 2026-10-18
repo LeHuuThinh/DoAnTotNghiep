@@ -169,6 +169,7 @@ public class SkeletonRogueAI : EnemyAIBase
   protected override void ExecuteAttack()
   {
     isAttacking = true;
+    attackStateTimer = 0f;
     lastAttackTime = Time.time;
 
     // Cung thủ chỉ có 1 animation bắn tên (AttackType = 0)
@@ -185,6 +186,7 @@ public class SkeletonRogueAI : EnemyAIBase
   public override void InterruptAttack()
   {
     isAttacking = false;
+    attackStateTimer = 0f;
     ReleaseToken();
   }
 
@@ -232,6 +234,7 @@ public class SkeletonRogueAI : EnemyAIBase
   public override void OnEnemyAttackEnd()
   {
     isAttacking = false;
+    attackStateTimer = 0f;
     currentState = AIState.Circling;
     ReleaseToken();
   }

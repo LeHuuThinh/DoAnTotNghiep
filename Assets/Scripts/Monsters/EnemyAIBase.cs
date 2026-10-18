@@ -65,6 +65,7 @@ public abstract class EnemyAIBase : MonoBehaviour
   protected float patrolTimer = 0f;
   protected float individualPreferredDistance;
   protected float distanceReshuffleTimer = 0f;
+  protected float attackStateTimer = 0f;
 
   // Animator Hashes
   protected static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -175,10 +176,37 @@ public abstract class EnemyAIBase : MonoBehaviour
 
     if (IsAttacking)
     {
+      attackStateTimer += Time.deltaTime;
+
+      // Failsafe 1: Nếu Animator đã chuyển về Locomotion hoặc CombatLocomotion
+      if (attackStateTimer > 0.25f && animator != null)
+      {
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        if (!animator.IsInTransition(0) &&
+           (stateInfo.IsName("Locomotion") || stateInfo.IsName("CombatLocomotion") || stateInfo.IsName("Idle")))
+        {
+          OnEnemyAttackEnd();
+          attackStateTimer = 0f;
+          return;
+        }
+      }
+
+      // Failsafe 2: Timeout tối đa cho đòn đánh (tránh animation event bị lỡ hoặc bị cắt bỏ)
+      if (attackStateTimer >= 2.5f)
+      {
+        OnEnemyAttackEnd();
+        attackStateTimer = 0f;
+        return;
+      }
+
       agent.isStopped = true;
       RotateTowards(playerTransform.position);
       UpdateAnimator();
       return;
+    }
+    else
+    {
+      attackStateTimer = 0f;
     }
 
     float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
@@ -388,4 +416,7 @@ public abstract class EnemyAIBase : MonoBehaviour
   public virtual void DisableEnemyAttackHitbox() {}
   public virtual void ShootProjectileEvent() {}
   public virtual void OnEnemyAttackEnd() {}
+  public virtual void EnableStaffAura() {}
+  public virtual void DisableStaffAura() {}
+  public virtual void SpawnMageSpellEvent() {}
 }
