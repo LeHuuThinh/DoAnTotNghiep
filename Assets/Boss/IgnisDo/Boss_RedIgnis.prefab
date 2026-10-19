@@ -1,0 +1,1037 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1080715650473680714
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6944076566958353782}
+  m_Layer: 0
+  m_Name: HairCone3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6944076566958353782
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080715650473680714}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.00674513, y: 0.16247906, z: -0.102109104, w: 0.9813913}
+  m_LocalPosition: {x: 0.0000000041976107, y: -0.000000019788363, z: 0.000000015533928}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2630692277918947367}
+  m_LocalEulerAnglesHint: {x: 2.661, y: 18.535, z: -11.446}
+--- !u!1 &3806274301772261096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4345900317041521329}
+  - component: {fileID: 3649202453250265302}
+  m_Layer: 0
+  m_Name: Boss_RedIgnis
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4345900317041521329
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.15471174, z: -0, w: 0.9879597}
+  m_LocalPosition: {x: 241.71373, y: 19.91457, z: 83.937614}
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 819811194924355601}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -17.8, z: 0}
+--- !u!114 &3649202453250265302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af276926b0db1c248a93ab3c1134a6c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringManager
+  automaticUpdates: 1
+  isPaused: 0
+  simulationFrameRate: 60
+  dynamicRatio: 1
+  gravity: {x: 0, y: -4, z: 0}
+  bounce: 0
+  friction: 1
+  enableAngleLimits: 1
+  enableCollision: 1
+  enableLengthLimits: 1
+  collideWithGround: 1
+  groundHeight: 0
+  springBones:
+  - {fileID: 259471665173783}
+  - {fileID: 5248188247627938357}
+  - {fileID: 5786009082313622347}
+  - {fileID: 7764155428179573429}
+  - {fileID: 4218777416692155126}
+  - {fileID: 1787687732111965880}
+  - {fileID: 9158013695233464153}
+  - {fileID: 493755796977801640}
+  - {fileID: 6133976210228493124}
+  - {fileID: 2555793667829317585}
+  - {fileID: 982265451363169741}
+  - {fileID: 4576591846032301698}
+  - {fileID: 4667910546966905290}
+  - {fileID: 5240280156830843138}
+  - {fileID: 3053239541994412661}
+  - {fileID: 8363715193861942706}
+  - {fileID: 5971253589880611747}
+  - {fileID: 7873472157857817034}
+  - {fileID: 4561863845198276171}
+  boneColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  colliderColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  collisionColor: {r: 1, g: 0, b: 0, a: 1}
+  groundCollisionColor: {r: 0, g: 1, b: 0, a: 1}
+  angleLimitDrawScale: 0.05
+--- !u!1 &6911256532254517642
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5686562361022115808}
+  m_Layer: 0
+  m_Name: HairCone4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5686562361022115808
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6911256532254517642}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.002707958, y: 0.07120774, z: -0.10229583, w: 0.99219847}
+  m_LocalPosition: {x: 0.0000000041976107, y: -0.000000019788363, z: 0.000000015533928}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2630692277918947367}
+  m_LocalEulerAnglesHint: {x: 0.527, y: 8.156, z: -11.735}
+--- !u!1 &8183946739531524042
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3786032727770636138}
+  m_Layer: 0
+  m_Name: HairCone2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3786032727770636138
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8183946739531524042}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.02014839, y: 0.29044908, z: -0.10032848, w: 0.9514029}
+  m_LocalPosition: {x: 0.0000000041976107, y: -0.000000019788363, z: 0.000000015533928}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2630692277918947367}
+  m_LocalEulerAnglesHint: {x: 5.545, y: 33.45, z: -10.372}
+--- !u!1 &8760966975015594793
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1930371365982862443}
+  m_Layer: 0
+  m_Name: HairCone1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1930371365982862443
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8760966975015594793}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.04772087, y: 0.18801521, z: -0.71477836, w: 0.6719114}
+  m_LocalPosition: {x: 0.0000000041976107, y: -0.000000019788363, z: 0.000000015533928}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2630692277918947367}
+  m_LocalEulerAnglesHint: {x: 11.809, y: 19.136, z: -91.544}
+--- !u!1001 &930614054524270586
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4345900317041521329}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.9789543
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.4668651
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_Name
+      value: RedIgnis
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 01a925a60024af64ba588b60767e75dc, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1930371365982862443}
+    - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3786032727770636138}
+    - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6944076566958353782}
+    - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5686562361022115808}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -5940291217940540646, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 259471665173783}
+    - targetCorrespondingSourceObject: {fileID: -7770812399464758167, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5248188247627938357}
+    - targetCorrespondingSourceObject: {fileID: -8360255808340513212, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4218777416692155126}
+    - targetCorrespondingSourceObject: {fileID: 1932431597587444499, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 982265451363169741}
+    - targetCorrespondingSourceObject: {fileID: 1611297961126368243, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5786009082313622347}
+    - targetCorrespondingSourceObject: {fileID: 6117305315221037748, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1787687732111965880}
+    - targetCorrespondingSourceObject: {fileID: -3495917837264923579, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2555793667829317585}
+    - targetCorrespondingSourceObject: {fileID: 5324209967536134309, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5240280156830843138}
+    - targetCorrespondingSourceObject: {fileID: 6999796768836936743, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8363715193861942706}
+    - targetCorrespondingSourceObject: {fileID: -6059321790700975605, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6133976210228493124}
+    - targetCorrespondingSourceObject: {fileID: -6378187494344363705, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4667910546966905290}
+    - targetCorrespondingSourceObject: {fileID: -1889411133253528906, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3053239541994412661}
+    - targetCorrespondingSourceObject: {fileID: 236981464830111913, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7873472157857817034}
+    - targetCorrespondingSourceObject: {fileID: 2489258599997269281, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4561863845198276171}
+    - targetCorrespondingSourceObject: {fileID: 1053603381897360218, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7764155428179573429}
+    - targetCorrespondingSourceObject: {fileID: 4196489597796080480, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9158013695233464153}
+    - targetCorrespondingSourceObject: {fileID: -6960586755776382904, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 493755796977801640}
+    - targetCorrespondingSourceObject: {fileID: 2655487480752943777, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4576591846032301698}
+    - targetCorrespondingSourceObject: {fileID: -3583260405208057456, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5971253589880611747}
+  m_SourcePrefab: {fileID: 100100000, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+--- !u!1 &177067812995712160 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1053603381897360218, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7764155428179573429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177067812995712160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &508998216110315966 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8360255808340513212, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4218777416692155126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 508998216110315966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!4 &640179479152015948 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 290600190421634486, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &819811194924355601 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1126983955303319379 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 236981464830111913, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7873472157857817034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1126983955303319379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 100
+  dragForce: 0.8
+  springForce: {x: 0, y: -0.02, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 5686562361022115808}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 1
+    min: -95
+    max: 98
+  zAngleLimits:
+    active: 1
+    min: -84
+    max: 82
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &1408839107686125490 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -6960586755776382904, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &493755796977801640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408839107686125490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &1601967284125369577 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1932431597587444499, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &982265451363169741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1601967284125369577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &1784186065902662547 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -7770812399464758167, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5248188247627938357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1784186065902662547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &1924812168702206985 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1611297961126368243, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5786009082313622347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924812168702206985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &2406589135582110944 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5940291217940540646, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &259471665173783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406589135582110944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!4 &2630692277918947367 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2811022843924168177 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -6059321790700975605, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6133976210228493124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2811022843924168177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 200
+  dragForce: 0.8
+  springForce: {x: 0, y: -0.02, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 1930371365982862443}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 1
+    min: -84
+    max: 82
+  zAngleLimits:
+    active: 1
+    min: -83
+    max: 77
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &2895844548215375195 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2655487480752943777, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4576591846032301698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2895844548215375195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &3140720644029957821 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -6378187494344363705, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4667910546966905290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3140720644029957821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 100
+  dragForce: 0.8
+  springForce: {x: 0, y: -0.02, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 3786032727770636138}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 1
+    min: -105
+    max: 93
+  zAngleLimits:
+    active: 1
+    min: -88
+    max: 93
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &3342140480472994523 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2489258599997269281, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4561863845198276171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3342140480472994523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 100
+  dragForce: 0.8
+  springForce: {x: 0, y: -0.02, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 640179479152015948}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 1
+    min: -10.7
+    max: 10.6
+  zAngleLimits:
+    active: 1
+    min: -10.7
+    max: 11.4
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &3951584881517423770 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4196489597796080480, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9158013695233464153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3951584881517423770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &4805207934222880362 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3583260405208057456, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5971253589880611747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4805207934222880362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &4870139087936873407 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3495917837264923579, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2555793667829317585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4870139087936873407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &4974595555024072543 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5324209967536134309, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5240280156830843138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4974595555024072543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &6345356682989425998 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6117305315221037748, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1787687732111965880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6345356682989425998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &7578786422961136972 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1889411133253528906, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3053239541994412661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7578786422961136972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 100
+  dragForce: 0.8
+  springForce: {x: 0, y: -0.02, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 6944076566958353782}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 1
+    min: -104
+    max: 101
+  zAngleLimits:
+    active: 1
+    min: -102
+    max: 89
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
+--- !u!1 &7912387620088599517 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6999796768836936743, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8363715193861942706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7912387620088599517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 10
+  dragForce: 0.5
+  springForce: {x: 0, y: -0.06, z: 0}
+  windInfluence: 1
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.05
+  sphereColliders: []
+  capsuleColliders: []
+  panelColliders: []
