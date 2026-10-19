@@ -19,6 +19,9 @@ public class WeaponHitbox : MonoBehaviour
   private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
   private static Coroutine activeHitlagCoroutine;
 
+  // Event thông báo chém trúng mục tiêu (dùng cho tích nộ/spirit, lifesteal...)
+  public event System.Action<IDamageable, float> OnHitTarget;
+
   private void Awake()
   {
     hitCollider = GetComponent<Collider>();
@@ -72,8 +75,9 @@ public class WeaponHitbox : MonoBehaviour
       Vector3 hitPoint = other.ClosestPoint(transform.position);
       Vector3 hitDirection = attacker != null ? attacker.forward : transform.forward;
 
-      // Gây sát thương
-      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback);
+      // Gây sát thương (kèm tham chiếu attacker để hệ thống Parry nhận diện chính xác kẻ tấn công)
+      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback, attacker);
+      OnHitTarget?.Invoke(damageable, currentDamage);
 
       // 3. KÍCH HOẠT HITLAG NẾU ĐÒN ĐÁNH CÓ CÀI ĐẶT THỜI GIAN KHỰNG
       if (currentHitlag > 0f)

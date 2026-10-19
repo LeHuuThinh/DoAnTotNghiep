@@ -26,12 +26,16 @@ public class PlayerController : MonoBehaviour
     [Header("Roll Settings")]
     [SerializeField] private float rollSpeed = 12f;
     [SerializeField] private float rollDuration = 0.6f;
+    [Tooltip("Thời gian bất tử (i-frame) tính từ khi bắt đầu lăn né (giây, khuyên dùng 0.45s)")]
+    [SerializeField] private float rollIFrameDuration = 0.45f;
 
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
     [SerializeField] private TargetLockSystem targetLockSystem;
     [SerializeField] private PlayerCombat playerCombat; // Tham chiếu tới PlayerCombat
+    [SerializeField] private PlayerStats playerStats;   // Tham chiếu tới PlayerStats
+    [SerializeField] private Health health;             // Tham chiếu tới Health để điều khiển I-Frames
 
     // Components & Physics States
     private CharacterController characterController;
@@ -45,6 +49,7 @@ public class PlayerController : MonoBehaviour
     // Roll Execution States
     private bool isRolling;
     private float rollTimer;
+    private float rollIFrameTimer;
     private Vector3 rollDirection;
 
     // Jump States
@@ -65,6 +70,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsRolling => isRolling;
     public bool IsGrounded => characterController.isGrounded;
+    public ThirdPersonCamera ThirdPersonCamera => thirdPersonCamera;
     private bool IsRunning => isSprinting && !(targetLockSystem != null && targetLockSystem.IsLockedOn);
 
     private void Awake()
@@ -80,10 +86,28 @@ public class PlayerController : MonoBehaviour
             if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
         }
 
+        if (playerStats == null)
+        {
+            playerStats = GetComponent<PlayerStats>();
+            if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
+            if (playerStats == null) playerStats = gameObject.AddComponent<PlayerStats>();
+        }
+
+        if (health == null)
+        {
+            health = GetComponent<Health>();
+            if (health == null) health = GetComponentInParent<Health>();
+        }
+
         if (thirdPersonCamera == null && Camera.main != null)
         {
             thirdPersonCamera = Camera.main.GetComponent<ThirdPersonCamera>();
         }
+    }
+
+    private void OnDisable()
+    {
+        if (health != null) health.SetInvulnerable(false);
     }
 
     private void Update()
@@ -140,10 +164,29 @@ public class PlayerController : MonoBehaviour
         {
             shiftHoldTimer += Time.deltaTime;
 
-            // Chỉ chạy nhanh nếu được phép di chuyển tự do (canMove)
+            // Chỉ chạy nhanh nếu được phép di chuyển tự do (canMove) và có đủ thể lực
             if (shiftHoldTimer >= sprintHoldThreshold && isMoving && canMove)
             {
-                isSprinting = true;
+                if (playerStats == null || playerStats.HasStamina(1f))
+                {
+                    isSprinting = true;
+                }
+                else
+                {
+                    isSprinting = false;
+                }
+            }
+        }
+
+        // Tiêu hao Stamina liên tục khi đang chạy nhanh
+        if (isSprinting && isMoving && canMove)
+        {
+            if (playerStats != null)
+            {
+                if (!playerStats.ConsumeStaminaContinuous(playerStats.SprintCostPerSecond * Time.deltaTime))
+                {
+                    isSprinting = false; // Hết thể lực -> Tự động dừng chạy nhanh về đi bộ
+                }
             }
         }
 
@@ -153,13 +196,21 @@ public class PlayerController : MonoBehaviour
             {
                 if ((canMove || isBlocking) && !isRolling && isGrounded && !isPreparingJump)
                 {
-                    // NẾU ĐANG BLOCK MÀ LĂN NÉ -> DẬP TẮT NGAY TRẠNG THÁI BLOCK
-                    if (isBlocking && playerCombat != null)
+                    // Kiểm tra thể lực trước khi cho phép Lăn né
+                    if (playerStats != null && !playerStats.ConsumeStamina(playerStats.RollCost))
                     {
-                        playerCombat.ForceResetCombat();
+                        Debug.Log("<color=yellow>[Roll]</color> Hết thể lực, không thể lăn né!");
                     }
+                    else
+                    {
+                        // NẾU ĐANG BLOCK MÀ LĂN NÉ -> DẬP TẮT NGAY TRẠNG THÁI BLOCK
+                        if (isBlocking && playerCombat != null)
+                        {
+                            playerCombat.ForceResetCombat();
+                        }
 
-                    TriggerRoll(desiredMoveDirection);
+                        TriggerRoll(desiredMoveDirection);
+                    }
                 }
             }
 
@@ -174,14 +225,24 @@ public class PlayerController : MonoBehaviour
         }
 
         // =====================================================================
-        // 3. THỰC THI LĂN (ROLL)
+        // 3. THỰC THI LĂN (ROLL) & I-FRAME BẤT TỬ
         // =====================================================================
         if (isRolling)
         {
+            if (rollIFrameTimer > 0f)
+            {
+                rollIFrameTimer -= Time.deltaTime;
+                if (rollIFrameTimer <= 0f && health != null)
+                {
+                    health.SetInvulnerable(false);
+                }
+            }
+
             rollTimer -= Time.deltaTime;
             if (rollTimer <= 0f)
             {
                 isRolling = false;
+                if (health != null) health.SetInvulnerable(false);
             }
             else
             {
@@ -266,6 +327,9 @@ public class PlayerController : MonoBehaviour
     {
         isRolling = true;
         rollTimer = rollDuration;
+        rollIFrameTimer = rollIFrameDuration;
+        if (health != null) health.SetInvulnerable(true);
+
         animator.SetTrigger(RollHash);
         rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;
     }

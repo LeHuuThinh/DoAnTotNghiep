@@ -32,7 +32,7 @@ public class EnemyFeedback : MonoBehaviour
   }
 
   private Health health;
-  private EnemyAI enemyAI;
+  private EnemyAIBase enemyAI;
   private float currentPoise;
   private float lastHitTime;
   private Coroutine knockbackCoroutine;
@@ -47,7 +47,7 @@ public class EnemyFeedback : MonoBehaviour
   private void Awake()
   {
     health = GetComponent<Health>();
-    enemyAI = GetComponent<EnemyAI>();
+    enemyAI = GetComponent<EnemyAIBase>();
 
     if (animator == null) animator = GetComponentInChildren<Animator>();
     if (enemyCollider == null) enemyCollider = GetComponent<Collider>();

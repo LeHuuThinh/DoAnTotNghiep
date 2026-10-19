@@ -9,11 +9,18 @@ public class PlayerFeedback : MonoBehaviour
   [SerializeField] private Animator animator;
   [SerializeField] private TargetLockSystem targetLockSystem;
   [SerializeField] private PlayerCombat playerCombat;
+  [SerializeField] private ThirdPersonCamera thirdPersonCamera;
 
   [Header("Souls-like Poise Settings")]
   [SerializeField] private float maxPoise = 100f;
   [SerializeField] private float poiseRecoveryDelay = 2.5f;
   [SerializeField] private float poiseRecoveryRate = 35f;
+
+  [Header("Parry Feedback Settings")]
+  [Tooltip("Thời gian hitlag khựng hình khi Parry thành công (giây thực tế)")]
+  [SerializeField] private float parryHitlagDuration = 0.2f;
+  [Tooltip("Tốc độ thời gian khi khựng hitlag (0.05 = làm chậm 95%)")]
+  [SerializeField] private float parryTimeScale = 0.05f;
 
   [Header("Stagger / Knockback")]
   [SerializeField] private float staggerDuration = 0.5f;
@@ -33,6 +40,7 @@ public class PlayerFeedback : MonoBehaviour
   private float lastHitTime;
   private Coroutine staggerCoroutine;
   private Coroutine knockbackCoroutine;
+  private Coroutine hitStopCoroutine;
 
   private static readonly int GetHitHash = Animator.StringToHash("GetHit");
   private static readonly int DieHash = Animator.StringToHash("Die");
@@ -54,6 +62,18 @@ public class PlayerFeedback : MonoBehaviour
       if (playerCombat == null) playerCombat = GetComponentInParent<PlayerCombat>();
     }
 
+    if (thirdPersonCamera == null)
+    {
+      if (playerController != null && playerController.ThirdPersonCamera != null)
+      {
+        thirdPersonCamera = playerController.ThirdPersonCamera;
+      }
+      else
+      {
+        thirdPersonCamera = FindAnyObjectByType<ThirdPersonCamera>();
+      }
+    }
+
     currentPoise = maxPoise;
   }
 
@@ -61,12 +81,33 @@ public class PlayerFeedback : MonoBehaviour
   {
     health.onTakeDamage.AddListener(HandleTakeDamage);
     health.onDeath.AddListener(HandleDeath);
+    if (health != null) health.onCheckParryOrBlock = TryParry;
   }
 
   private void OnDisable()
   {
     health.onTakeDamage.RemoveListener(HandleTakeDamage);
     health.onDeath.RemoveListener(HandleDeath);
+    if (health != null && health.onCheckParryOrBlock == TryParry) health.onCheckParryOrBlock = null;
+
+    if (hitStopCoroutine != null)
+    {
+      Time.timeScale = 1f;
+      hitStopCoroutine = null;
+    }
+  }
+
+  /// <summary>
+  /// Can thiệp ngay TRƯỚC KHI Health bị trừ máu: Nếu người chơi đang trong thế Parry thì gạt đòn thành công!
+  /// </summary>
+  private bool TryParry(Transform attacker, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance)
+  {
+    if (IsParrying)
+    {
+      ExecuteParrySuccess(attacker);
+      return true; // Gạt đòn thành công -> Bỏ qua 100% sát thương, KHÔNG TRỪ MÁU!
+    }
+    return false;
   }
 
   private void Update()
@@ -81,27 +122,15 @@ public class PlayerFeedback : MonoBehaviour
   {
     if (health.IsDead) return;
 
-    // 1. I-FRAME ROLL: Đang lăn né đòn thì bỏ qua sát thương
-    if (playerController.IsRolling) return;
-
-    // 2. =================================================================
-    // PARRY THÀNH CÔNG!
-    // =================================================================
-    if (IsParrying)
-    {
-      ExecuteParrySuccess();
-      return; // Miễn nhiễm 100% sát thương và không bị khựng đòn
-    }
-
     lastHitTime = Time.time;
 
-    // 3. TÍNH POISE DAMAGE BÌNH THƯỜNG
+    // 1. TÍNH POISE DAMAGE BÌNH THƯỜNG
     float poiseDamageTaken = knockbackDistance > 0.8f ? 70f : 35f;
     currentPoise -= poiseDamageTaken;
 
     if (HasHyperArmor) return;
 
-    // 4. BỊ VỠ THẾ
+    // 2. BỊ VỠ THẾ
     if (currentPoise <= 0f || knockbackDistance >= 1.2f)
     {
       currentPoise = maxPoise;
@@ -118,36 +147,69 @@ public class PlayerFeedback : MonoBehaviour
     }
   }
 
-  private void ExecuteParrySuccess()
+  public void ExecuteParrySuccess(Transform incomingAttacker = null)
   {
     Debug.Log("<color=yellow>[PARRY THÀNH CÔNG!] Keng!</color>");
 
-    // Khựng hình nhẹ 0.06s tạo độ "đanh"
-    StartCoroutine(HitStopRoutine(0.06f));
+    // 1. Khựng hình hitlag 0.2s tạo độ đanh và cảm giác lực
+    TriggerHitlag(parryHitlagDuration, parryTimeScale);
 
-    // Tìm quái tấn công (ưu tiên quái đang lock-on hoặc ở gần trước mặt)
-    Transform enemy = targetLockSystem != null && targetLockSystem.IsLockedOn ? targetLockSystem.CurrentTarget : null;
-
-    if (enemy == null)
+    // 2. Kích hoạt camera zoom tới và trả về mượt mà
+    if (thirdPersonCamera != null)
     {
-      Collider[] cols = Physics.OverlapSphere(transform.position + transform.forward * 1.5f, 2.5f);
+      thirdPersonCamera.TriggerParryZoom();
+    }
+    else
+    {
+      thirdPersonCamera = FindAnyObjectByType<ThirdPersonCamera>();
+      if (thirdPersonCamera != null) thirdPersonCamera.TriggerParryZoom();
+    }
+
+    // 3. XÁC ĐỊNH CHÍNH XÁC CON QUÁI THỰC SỰ VUNG KIẾM BỊ PARRY
+    // Ưu tiên cao nhất: Lấy trực tiếp attacker từ đòn đánh vừa bị gạt phăng
+    Transform parriedEnemy = incomingAttacker;
+
+    // Ưu tiên 2: Lấy từ LastAttacker trên Health
+    if (parriedEnemy == null && health != null && health.LastAttacker != null)
+    {
+      parriedEnemy = health.LastAttacker;
+    }
+
+    // Ưu tiên 2 (Failsafe): Quét các quái xung quanh NHƯNG BẮT BUỘC ĐANG TẤN CÔNG (IsAttacking == true)
+    if (parriedEnemy == null)
+    {
+      Collider[] cols = Physics.OverlapSphere(transform.position + transform.forward * 1.5f, 3.0f);
       foreach (Collider c in cols)
       {
-        if (c.GetComponentInParent<EnemyAI>() != null)
+        EnemyAIBase ai = c.GetComponentInParent<EnemyAIBase>();
+        if (ai != null && ai.IsAttacking)
         {
-          enemy = c.transform.root;
+          parriedEnemy = ai.transform.root;
           break;
         }
       }
     }
 
-    // Ép quái bị ngắt chiêu và vỡ thế hoàn toàn
-    if (enemy != null)
+    // Ưu tiên 3: Nếu vẫn chưa thấy, kiểm tra quái đang lock-on (nhưng cũng phải đang vung kiếm IsAttacking)
+    if (parriedEnemy == null && targetLockSystem != null && targetLockSystem.IsLockedOn)
     {
-      EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
-      if (enemyAI != null) enemyAI.InterruptAttack();
+      EnemyAIBase lockAI = targetLockSystem.CurrentTarget.GetComponentInParent<EnemyAIBase>();
+      if (lockAI != null && lockAI.IsAttacking)
+      {
+        parriedEnemy = lockAI.transform.root;
+      }
+    }
 
-      Animator enemyAnim = enemy.GetComponentInChildren<Animator>();
+    // Ép CHỈ CON QUÁI BỊ PARRY bị ngắt chiêu và vỡ thế hoàn toàn
+    if (parriedEnemy != null)
+    {
+      EnemyAIBase enemyAI = parriedEnemy.GetComponentInChildren<EnemyAIBase>();
+      if (enemyAI != null)
+      {
+        enemyAI.InterruptAttack();
+      }
+
+      Animator enemyAnim = parriedEnemy.GetComponentInChildren<Animator>();
       if (enemyAnim != null)
       {
         enemyAnim.SetInteger("HitType", 1);
@@ -166,11 +228,22 @@ public class PlayerFeedback : MonoBehaviour
     }
   }
 
-  private IEnumerator HitStopRoutine(float duration)
+  public void TriggerHitlag(float duration, float scale = 0.05f)
   {
-    Time.timeScale = 0.05f;
+    if (hitStopCoroutine != null)
+    {
+      StopCoroutine(hitStopCoroutine);
+      Time.timeScale = 1f;
+    }
+    hitStopCoroutine = StartCoroutine(HitStopRoutine(duration, scale));
+  }
+
+  private IEnumerator HitStopRoutine(float duration, float scale)
+  {
+    Time.timeScale = scale;
     yield return new WaitForSecondsRealtime(duration);
     Time.timeScale = 1f;
+    hitStopCoroutine = null;
   }
 
   private IEnumerator StaggerRoutine()
