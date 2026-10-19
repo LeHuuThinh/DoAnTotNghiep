@@ -52,6 +52,50 @@ public class DungeonManager : MonoBehaviour
       int gridZ = Mathf.FloorToInt(generator.startDoorMarker.position.z / tSize);
       Gizmos.DrawCube(new Vector3((gridX + 0.5f) * tSize, 0, (gridZ + 0.5f) * tSize), new Vector3(generator.corridorThickness * tSize, 1f, generator.corridorThickness * tSize));
     }
+
+    // Hiển thị trực quan loại phòng và tầng 2 trong Scene View
+    if (currentData.roomDataList != null)
+    {
+      foreach (var r in currentData.roomDataList)
+      {
+        Vector3 rCenter = new Vector3((r.bounds.x + r.bounds.width / 2f) * tSize, r.ceilingHeight / 2f, (r.bounds.y + r.bounds.height / 2f) * tSize);
+        Vector3 rSize = new Vector3(r.bounds.width * tSize, r.ceilingHeight, r.bounds.height * tSize);
+
+        switch (r.type)
+        {
+          case RoomType.Start:
+            Gizmos.color = Color.cyan;
+            break;
+          case RoomType.Boss:
+            Gizmos.color = Color.red;
+            break;
+          case RoomType.Mezzanine:
+            Gizmos.color = new Color(0.2f, 0.8f, 1f);
+            break;
+          case RoomType.Treasure:
+            Gizmos.color = Color.yellow;
+            break;
+          default:
+            Gizmos.color = Color.gray;
+            break;
+        }
+
+        Gizmos.DrawWireCube(rCenter, rSize);
+
+        // Vẽ sàn gác lửng tầng 2
+        if (r.hasMezzanine)
+        {
+          Gizmos.color = new Color(1f, 0.55f, 0f, 0.9f); // Màu cam
+          Vector3 mCenter = new Vector3((r.mezzanineBounds.x + r.mezzanineBounds.width / 2f) * tSize, r.mezzanineHeight, (r.mezzanineBounds.y + r.mezzanineBounds.height / 2f) * tSize);
+          Vector3 mSize = new Vector3(r.mezzanineBounds.width * tSize, 0.4f, r.mezzanineBounds.height * tSize);
+          Gizmos.DrawCube(mCenter, mSize);
+
+          // Vẽ vị trí cầu thang
+          Gizmos.color = Color.green;
+          Gizmos.DrawSphere(r.stairsPosition + Vector3.up * 1f, 0.6f);
+        }
+      }
+    }
   }
 
   void DrawNodeGizmo(BSPNode node, float tSize)

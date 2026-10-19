@@ -23,6 +23,8 @@ public class MageGroundSpell : MonoBehaviour
   [Header("Explosion VFX")]
   [Tooltip("Prefab hiệu ứng bộc phát khi vòng tròn nạp đầy (ví dụ: FX_LightPillar hoặc cột nổ phép)")]
   [SerializeField] private GameObject explosionVfxPrefab;
+  [Tooltip("Thời gian tồn tại (giây) của hiệu ứng nổ phép trước khi tự động hủy khỏi Scene/Hierarchy")]
+  [SerializeField] private float explosionVfxLifetime = 4.0f;
 
   [Header("Telegraph Visuals (Tùy chọn)")]
   [SerializeField] private Color borderColor = new Color(1f, 0.15f, 0.15f, 0.95f);
@@ -76,15 +78,39 @@ public class MageGroundSpell : MonoBehaviour
     SnapToGround();
   }
 
+  private void Start()
+  {
+    SnapToGround();
+  }
+
   /// <summary>
-  /// Bắn tia xuống sàn để vòng tròn nằm phẳng và dính sát mặt đất, chống bay lơ lửng hay chìm vào sàn
+  /// Canh chỉnh vòng tròn ma pháp luôn nằm phẳng tuyệt đối trên mặt đất (X-Z plane),
+  /// không bao giờ bị méo hoặc chéo khi người chơi di chuyển, lộn hoặc làm các động tác khác.
   /// </summary>
   private void SnapToGround()
   {
-    if (Physics.Raycast(transform.position + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4.0f, groundLayers))
+    // 1. Luôn khóa góc xoay phẳng ngang trên mặt đất (X-Z plane), triệt tiêu hoàn toàn góc nghiêng/chéo
+    transform.rotation = Quaternion.identity;
+
+    // 2. Ưu tiên lấy tọa độ sàn chuẩn từ NavMesh: không bao giờ bị va quẹt vào capsule/collider của Player khi đang lộn
+    if (UnityEngine.AI.NavMesh.SamplePosition(transform.position, out UnityEngine.AI.NavMeshHit navHit, 3.5f, UnityEngine.AI.NavMesh.AllAreas))
     {
-      transform.position = hit.point + hit.normal * 0.02f;
-      transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+      transform.position = new Vector3(transform.position.x, navHit.position.y + 0.02f, transform.position.z);
+      return;
+    }
+
+    // 3. Fallback bắn raycast xuống dưới nếu không có NavMesh, lọc bỏ người chơi và quái
+    RaycastHit[] hits = Physics.RaycastAll(transform.position + Vector3.up * 1.5f, Vector3.down, 5.0f, groundLayers, QueryTriggerInteraction.Ignore);
+    System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+    foreach (var hit in hits)
+    {
+      if (hit.collider.GetComponentInParent<IDamageable>() != null) continue;
+      if (hit.collider.GetComponentInParent<CharacterController>() != null) continue;
+      if (hit.collider.isTrigger) continue;
+
+      transform.position = new Vector3(transform.position.x, hit.point.y + 0.02f, transform.position.z);
+      break;
     }
   }
 
@@ -159,10 +185,11 @@ public class MageGroundSpell : MonoBehaviour
       }
     }
 
-    // 2. Kích hoạt hiệu ứng bộc phát (VFX)
+    // 2. Kích hoạt hiệu ứng bộc phát (VFX) và tự động dọn dẹp khỏi Hierarchy
     if (explosionVfxPrefab != null)
     {
-      Instantiate(explosionVfxPrefab, transform.position, Quaternion.identity);
+      GameObject vfxInstance = Instantiate(explosionVfxPrefab, transform.position, Quaternion.identity);
+      Destroy(vfxInstance, explosionVfxLifetime);
     }
 
     // 3. Hủy vòng tròn cảnh báo

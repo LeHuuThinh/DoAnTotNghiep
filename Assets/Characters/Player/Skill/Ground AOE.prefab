@@ -24377,7 +24377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AoeSpell
   radius: 4.5
-  damage: 40
+  damage: 90
   knockback: 2.5
   explodeDelay: 0.3
   targetLayers:

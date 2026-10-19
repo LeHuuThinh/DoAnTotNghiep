@@ -255,6 +255,11 @@ public class SkeletonMageAI : EnemyAIBase
     if (groundSpellPrefab == null || playerTransform == null) return;
 
     Vector3 targetPos = playerTransform.position;
+    if (NavMesh.SamplePosition(targetPos, out NavMeshHit navHit, 3.0f, NavMesh.AllAreas))
+    {
+      targetPos = navHit.position;
+    }
+
     GameObject spellObj = Instantiate(groundSpellPrefab, targetPos, Quaternion.identity);
 
     MageGroundSpell groundSpell = spellObj.GetComponent<MageGroundSpell>();

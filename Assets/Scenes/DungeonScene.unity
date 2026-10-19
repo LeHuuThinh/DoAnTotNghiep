@@ -3933,9 +3933,17 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 4095114976695307337, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: moveSpeed
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4095114976695307337, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1413596615}
+    - target: {fileID: 4698226416880465567, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: currentSpirit
+      value: 150
+      objectReference: {fileID: 0}
     - target: {fileID: 5452323325029716220, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: m_Name
       value: Player
@@ -17307,6 +17315,14 @@ MonoBehaviour:
   ceilingPrefab: {fileID: 6801351942486686022, guid: 75d2870748591f749b6be72c69fdb186, type: 3}
   invisibleFloorPrefab: {fileID: 755363345}
   dungeonParent: {fileID: 2094085076}
+  mezzanineFloorPrefab: {fileID: 579972609977373524, guid: 63b4e41d3ea2b684d875642d98b6765e, type: 3}
+  mezzanineEdgePrefab: {fileID: 5729736176402248162, guid: 4e9786cd23224d147b693b9e5e11c288, type: 3}
+  mezzanineCornerPrefab: {fileID: 7578224332302511134, guid: b33351061639e5f49a878f507608c553, type: 3}
+  pillarPrefab: {fileID: 3366690747098531942, guid: ebce3d246d080f44284f728600d378f6, type: 3}
+  barrierPrefab: {fileID: 939741556932790829, guid: cad253d0fc72925449715fcf80218400, type: 3}
+  stairsPrefab: {fileID: 7085228454602791937, guid: 085baec4e5013f443bd350764544c4df, type: 3}
+  stairsFillPrefab: {fileID: 2661230022673935049, guid: 07ea78950cc1c924f80977b21ef43142, type: 3}
+  encloseStairsBase: 1
   navMeshSurface: {fileID: 2094085077}
   dungeonMaterial: {fileID: 2100000, guid: b2e8f2e2fbd67b84c998a63e88eef6d2, type: 2}
   tileSize: 2
@@ -17335,6 +17351,14 @@ MonoBehaviour:
   corridorThickness: 3
   startDoorMarker: {fileID: 65740451}
   tileSize: 2
+  mezzanineSettings:
+    enableMezzanine: 1
+    minRoomSize: 10
+    rectangleChance: 0.4
+    lShapeChance: 0.3
+    uShapeChance: 0.3
+    minPillarDistance: 6
+    freestandingStairChance: 0.8
 --- !u!4 &1695492866 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2881347731508845785, guid: e8e6926244ded9244aa118ff2ab51d92, type: 3}

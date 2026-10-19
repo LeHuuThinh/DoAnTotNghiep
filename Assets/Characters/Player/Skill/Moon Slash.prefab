@@ -97,7 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileSlash
   speed: 18
   lifeTime: 3
-  damage: 50
+  damage: 80
   knockback: 1.2
   targetLayers:
     serializedVersion: 2
