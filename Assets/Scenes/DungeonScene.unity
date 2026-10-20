@@ -20,7 +20,7 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.4566037, g: 0.4566037, b: 0.4566037, a: 1}
+  m_AmbientSkyColor: {r: 0.16981131, g: 0.16981131, b: 0.16981131, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
@@ -3932,18 +3932,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1443231080541979558, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: maxHealth
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 4095114976695307337, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: moveSpeed
-      value: 20
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4095114976695307337, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1413596615}
-    - target: {fileID: 4698226416880465567, guid: db39e9736dc24354d97037437d9c8841, type: 3}
-      propertyPath: currentSpirit
-      value: 150
-      objectReference: {fileID: 0}
     - target: {fileID: 5452323325029716220, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: m_Name
       value: Player
@@ -17254,6 +17254,7 @@ GameObject:
   - component: {fileID: 1693836173}
   - component: {fileID: 1693836172}
   - component: {fileID: 1693836171}
+  - component: {fileID: 1693836174}
   m_Layer: 0
   m_Name: DungeonCore
   m_TagString: Untagged
@@ -17290,6 +17291,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonManager
   generator: {fileID: 1693836173}
   dungeonRenderer: {fileID: 1693836172}
+  testEnemyPrefab: {fileID: 3329707019587242983, guid: 65ad483aba4897242b1045c1ab5dcb3e, type: 3}
+  spawnTestEnemyOnMezzanine: 1
 --- !u!114 &1693836172
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17324,6 +17327,7 @@ MonoBehaviour:
   stairsFillPrefab: {fileID: 2661230022673935049, guid: 07ea78950cc1c924f80977b21ef43142, type: 3}
   encloseStairsBase: 1
   navMeshSurface: {fileID: 2094085077}
+  propDecorator: {fileID: 1693836174}
   dungeonMaterial: {fileID: 2100000, guid: b2e8f2e2fbd67b84c998a63e88eef6d2, type: 2}
   tileSize: 2
   ceilingHeight: 16
@@ -17344,10 +17348,10 @@ MonoBehaviour:
   mapWidth: 150
   mapHeight: 150
   startRoomHeight: 11
-  minNodeSize: 23
+  minNodeSize: 20
   cutChance: 1
-  minRoomSize: 15
-  roomPadding: 1
+  minRoomSize: 12
+  roomPadding: 2
   corridorThickness: 3
   startDoorMarker: {fileID: 65740451}
   tileSize: 2
@@ -17359,6 +17363,68 @@ MonoBehaviour:
     uShapeChance: 0.3
     minPillarDistance: 6
     freestandingStairChance: 0.8
+--- !u!114 &1693836174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1693836168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b6d474ac7b79094293db4655e3506bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonPropDecorator
+  wallMountOffset: 0.3
+  furnitureWallOffset: 0.3
+  enableLighting: 1
+  enableFloorTorches: 1
+  floorTorchYOffset: 0.5
+  placeDoorwayFloorTorches: 0
+  maxFloorTorchesPerRoom: 6
+  enableRandomFloorTorches: 1
+  randomFloorTorchChance: 0.1
+  maxRandomFloorTorches: 6
+  maxTorchesPerRoom: 6
+  torchRange: 10
+  torchIntensity: 5
+  candleDensity: 0.5
+  enableBanners: 1
+  bannerDensity: 0.3
+  minBannerHeight: 2
+  maxBannerHeight: 3.6
+  enableWallWeapons: 1
+  wallWeaponDensity: 0.5
+  enableCornerProps: 1
+  cornerDecorChance: 0.85
+  rubbleRatio: 0.3
+  enableWallFurniture: 1
+  wallFurnitureChance: 0.65
+  enableCenterTables: 1
+  centerTableChance: 0.85
+  enableFloorScatter: 1
+  floorScatterDensity: 0.15
+  floorRubbleChance: 0.05
+  enableMezzanineDecor: 1
+  maxMezzanineProps: 20
+  enableMezzanineWallDecor: 1
+  enableCorridorLighting: 1
+  corridorTorchSpacing: 10
+  combineStaticProps: 1
+  enableLightCulling: 1
+  lightCullingDistance: 50
+  wallTorchPrefab: {fileID: 0}
+  floorTorchPrefab: {fileID: 0}
+  candlePrefabs: []
+  bannerPrefabs: []
+  wallWeaponPrefabs: []
+  rubblePrefabs: []
+  crateBoxPrefabs: []
+  tablePrefabs: []
+  chairPrefabs: []
+  shelfPrefabs: []
+  bedPrefabs: []
+  tabletopPrefabs: []
 --- !u!4 &1695492866 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2881347731508845785, guid: e8e6926244ded9244aa118ff2ab51d92, type: 3}

@@ -53,6 +53,7 @@ public class RoomData
   public bool hasMezzanine = false;
   public MezzanineShape mezzanineShape = MezzanineShape.Rectangle;
   public RectInt mezzanineBounds;
+  [System.NonSerialized]
   public HashSet<Vector2Int> mezzanineTiles = new HashSet<Vector2Int>();
   public float mezzanineHeight = 8f;
   public MezzanineWallSide mezzanineSide = MezzanineWallSide.North;
@@ -63,6 +64,7 @@ public class RoomData
   public Vector3 stairsUpperPosition; // Vị trí nhịp thang trên (4m -> 8m)
   public Quaternion stairsRotation = Quaternion.identity;
   public Vector2Int stairGridPos;
+  [System.NonSerialized]
   public HashSet<Vector2Int> stairLandingTiles = new HashSet<Vector2Int>(); // Các ô đón cầu thang (không dựng lan can)
 
   [Header("Cột đỡ")]

@@ -1959,9 +1959,15 @@ MonoBehaviour:
   speedDampTime: 0.15
   jumpHeight: 1
   jumpDelay: 0.6
+  airControl: 0.35
   rollSpeed: 6
   rollDuration: 1
   rollIFrameDuration: 0.45
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  softLandLockDuration: 0.1
+  hardLandLockDuration: 0.2
   animator: {fileID: 3586210189879081407}
   thirdPersonCamera: {fileID: 0}
   targetLockSystem: {fileID: 759275986569051391}

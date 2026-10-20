@@ -5,6 +5,12 @@ public class DungeonManager : MonoBehaviour
   public BSPGenerator generator;
   public DungeonRenderer dungeonRenderer;
 
+  [Header("Thử Nghiệm AI & Quái Vật")]
+  [Tooltip("Kéo Prefab SkeletonWarrior vào đây để sinh thử 1 quái trên tầng 2 kiểm tra AI leo thang")]
+  public GameObject testEnemyPrefab;
+  [Tooltip("Bật để tự động sinh 1 quái vật trên tầng 2 để kiểm tra xem quái có biết leo cầu thang xuống đuổi player không")]
+  public bool spawnTestEnemyOnMezzanine = false;
+
   // Data chứa toàn bộ lưới sau khi render
   [System.NonSerialized]
   public DungeonData currentData;
@@ -22,11 +28,35 @@ public class DungeonManager : MonoBehaviour
     // 2. Vẽ 3D
     dungeonRenderer.BuildMesh(currentData);
 
-    // 3. Tương lai bạn sẽ thêm:
-    // propSpawner.SpawnDecorations(currentData);
-    // entitySpawner.SpawnMobs(currentData);
+    // 3. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
+    SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");
+  }
+
+  private void SpawnTestEnemies()
+  {
+    if (testEnemyPrefab == null || !spawnTestEnemyOnMezzanine || currentData == null || currentData.roomDataList == null) return;
+
+    foreach (var r in currentData.roomDataList)
+    {
+      if (r.hasMezzanine)
+      {
+        float tSize = generator.tileSize;
+        // Đặt quái trên sàn tầng 2 ở vị trí xa cầu thang
+        Vector3 spawnPos = (r.mezzanineSide == MezzanineWallSide.North)
+          ? new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z + tSize * 2f)
+          : new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z - tSize * 2f);
+
+        if (UnityEngine.AI.NavMesh.SamplePosition(spawnPos, out UnityEngine.AI.NavMeshHit hit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+        {
+          GameObject enemy = Instantiate(testEnemyPrefab, hit.position, Quaternion.identity);
+          enemy.name = $"Test_Skeleton_Room_{r.id}";
+          Debug.Log($"<color=cyan>[Test AI]</color> Đã sinh quái thử nghiệm tại phòng {r.id} (Tầng 2) tại tọa độ: {hit.position}");
+        }
+        break; // Chỉ sinh 1 con ở phòng gác lửng đầu tiên để test
+      }
+    }
   }
 
   void OnDrawGizmos()
@@ -93,6 +123,23 @@ public class DungeonManager : MonoBehaviour
           // Vẽ vị trí cầu thang
           Gizmos.color = Color.green;
           Gizmos.DrawSphere(r.stairsPosition + Vector3.up * 1f, 0.6f);
+        }
+      }
+    }
+
+    // Hiển thị trực quan đường đi NavMesh leo cầu thang lên tầng 2 (màu xanh lá neon)
+    if (dungeonRenderer != null && dungeonRenderer.debugNavMeshPaths != null)
+    {
+      Gizmos.color = Color.green;
+      foreach (var pathCorners in dungeonRenderer.debugNavMeshPaths)
+      {
+        if (pathCorners != null && pathCorners.Length > 1)
+        {
+          for (int i = 1; i < pathCorners.Length; i++)
+          {
+            Gizmos.DrawLine(pathCorners[i - 1] + Vector3.up * 0.2f, pathCorners[i] + Vector3.up * 0.2f);
+            Gizmos.DrawSphere(pathCorners[i] + Vector3.up * 0.2f, 0.2f);
+          }
         }
       }
     }
