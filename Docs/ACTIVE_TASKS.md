@@ -2,21 +2,21 @@
 
 > [!TIP]
 > **Hướng dẫn gọi việc cho AI:** Mỗi khi mở một phiên chat mới, chỉ cần gõ đúng mã nhiệm vụ.  
-> *Ví dụ:* `"Đọc Docs/SYSTEM_ARCHITECTURE.md và Docs/ACTIVE_TASKS.md. Hãy cùng tôi làm Task D-01: Tự động sinh quái trong các phòng hầm ngục."*
+> _Ví dụ:_ `"Đọc Docs/SYSTEM_ARCHITECTURE.md và Docs/ACTIVE_TASKS.md. Hãy cùng tôi làm Task D-01: Tự động sinh quái trong các phòng hầm ngục."\*
 
 ---
 
 ## 🚩 GIAI ĐOẠN 1: Hoàn Thiện Trải Nghiệm Chơi Hầm Ngục (Dungeon Playability)
 
-- [ ] **CH-01: Commit Git Checkpoint hiện tại**
+- [x] **CH-01: Commit Git Checkpoint hiện tại**
   - Lưu toàn bộ thay đổi vừa xong (Jump/Fall animation, Light optimizer, Decorator).
   - Lệnh: `git add . && git commit -m "feat: jump fall animation and dungeon lighting"`
 
 - [ ] **D-01: Bộ sinh quái tự động cho hầm ngục (`ProceduralEnemySpawner.cs`)**
   - Dựa vào danh sách `RoomData` từ `DungeonManager`:
-    * Phòng thường (Normal): Sinh ngẫu nhiên 2–3 Skeleton Minion / Warrior.
-    * Phòng lớn / Phòng gác lửng (Mezzanine): Sinh thêm Skeleton Rogue hoặc Mage trên tầng 2.
-    * Đảm bảo quái sinh đúng trên NavMesh (dùng `NavMesh.SamplePosition`).
+    - Phòng thường (Normal): Sinh ngẫu nhiên 2–3 Skeleton Minion / Warrior.
+    - Phòng lớn / Phòng gác lửng (Mezzanine): Sinh thêm Skeleton Rogue hoặc Mage trên tầng 2.
+    - Đảm bảo quái sinh đúng trên NavMesh (dùng `NavMesh.SamplePosition`).
 
 - [ ] **UI-01: Cập nhật `PlayerHUD` hiển thị đầy đủ 3 thanh tài nguyên**
   - Hiện tại `PlayerHUD` mới có thanh Máu (HP).
@@ -37,10 +37,10 @@
 
 - [ ] **GM-02: Cơ chế Tử trận & Hồi sinh tại Chuông Làng (Death & Respawn Loop)**
   - Khi Máu người chơi = 0 trong `DungeonScene`:
-    * Hiển thị màn hình You Died ngắn gọn.
-    * Tăng `CurrentDay += 1`.
-    * Load lại `LandScene` và đặt vị trí người chơi ngay cạnh **Chuông Trung Tâm Làng**.
-    * Hồi phục 100% Máu/Stamina.
+    - Hiển thị màn hình You Died ngắn gọn.
+    - Tăng `CurrentDay += 1`.
+    - Load lại `LandScene` và đặt vị trí người chơi ngay cạnh **Chuông Trung Tâm Làng**.
+    - Hồi phục 100% Máu/Stamina.
 
 - [ ] **GM-03: Cơ chế Chiến thắng Tầng & Lựa chọn Đi tiếp / Về Làng**
   - Khi Boss chết: Hiện UI thông báo chiến thắng.
@@ -80,9 +80,9 @@
   - **Observations:** Vị trí tương đối so với Player, góc quay, khoảng cách, trạng thái hành động của Player (đang chém, đang roll, đang parry).
   - **Actions (Discrete/Continuous):** Quyết định tung đòn tấn công thường, dậm đất (JumpAttack), gầm (Roar), hoặc di chuyển bao vây.
   - **Reward Signal:**
-    * `+1.0` khi đánh trúng Player; `+2.0` khi hạ gục Player.
-    * `-0.5` khi đánh trượt; `-1.0` khi bị Player Parry thành công.
-    * `+0.01` khi giữ khoảng cách combat tối ưu.
+    - `+1.0` khi đánh trúng Player; `+2.0` khi hạ gục Player.
+    - `-0.5` khi đánh trượt; `-1.0` khi bị Player Parry thành công.
+    - `+0.01` khi giữ khoảng cách combat tối ưu.
 
 - [ ] **ML-03: Huấn luyện & Đóng gói Model ONNX**
   - Dựng sàn đấu arena phụ trong scene `IceGolem.unity` để huấn luyện tự động với bot đối thủ hoặc player mô phỏng.

@@ -2,14 +2,14 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Hệ thống trang trí đạo cụ tĩnh và chiếu sáng Dungeon (Bước 4 - Tối ưu hóa & Đa dạng hóa cao)
-/// - Căn chỉnh offset riêng cho đồ treo tường (wallMountOffset) và nội thất áp tường (furnitureWallOffset).
-/// - Khắc phục triệt để đuốc sàn lún 1/2 bằng floorTorchYOffset (do pivot ở giữa thân).
-/// - Tắt mặc định đuốc sàn ở cửa để không bao giờ bị xếp hàng cản lối đi (chỉ rải tự nhiên khắp phòng và chân thang).
-/// - Khớp chuẩn 100% cao độ Tầng 2 (mY = room.mezzanineHeight = 8.0m) triệt tiêu hoàn toàn hiện tượng props bay lơ lửng ở 4m.
-/// - Đa dạng hóa tuyệt đối toàn bộ danh mục Props (hơn 150 prefabs: hòm, thùng, keg, rương, chai lọ, đĩa chén, nến sàn, bàn ghế).
-/// - Tùy chỉnh trực tiếp tầm kích hoạt ánh sáng (lightCullingDistance) trên Inspector.
-/// - Gộp Mesh (Mesh Combine) toàn bộ đồ tĩnh trong mỗi phòng thành 1 Draw Call duy nhất.
+/// Hệ thống trang trí đạo cụ tĩnh, cụm kiến trúc tàn tích và chiếu sáng Dungeon (Bước 4 - Tối ưu hóa & Đa dạng hóa cao)
+/// - Cụm kiến trúc tàn tích (Wall Templates): 8 mẫu tường chữ L, cổng vòm xuyên qua, phế tích đổ nát, shrine, storage.
+/// - Cụm tiểu cảnh đạo cụ (Prop Templates): 5 mẫu trại cũ, kho đồ bị cướp, bàn tiệc tàn, phòng giả kim, đống đất đá sập.
+/// - Tự động tính toán Bounding Box của Templates và đánh dấu vào forbiddenTiles để tuyệt đối không bị đè đồ.
+/// - Kiểm tra an toàn lối đi (Path Safety): Không bao giờ chắn cửa, hành lang hay chân thang.
+/// - Khắc phục triệt để đuốc sàn lún 1/2 bằng floorTorchYOffset.
+/// - Khớp chuẩn 100% cao độ Tầng 2 (mY = room.mezzanineHeight = 8.0m).
+/// - Gộp Mesh (Mesh Combine) toàn bộ đồ tĩnh và templates trong mỗi phòng thành 1 Draw Call duy nhất.
 /// </summary>
 public class DungeonPropDecorator : MonoBehaviour
 {
@@ -100,7 +100,22 @@ public class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Mật độ xuất hiện khiên kiếm trên tường")]
   public float wallWeaponDensity = 0.5f;
 
-  [Header("4. Góc Phòng & Phế Tích (Corner & Rubble Density)")]
+  [Header("4. Cụm Kiến Trúc Tàn Tích & Tiểu Cảnh (Templates)")]
+  [Tooltip("Bật/Tắt sinh các cụm tường tàn tích (Wall Templates: chữ L, cổng vòm, đống đổ nát, shrine)")]
+  public bool enableWallTemplates = true;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ phòng đủ điều kiện được sinh cụm tường tàn tích")]
+  public float wallTemplateChance = 0.85f;
+
+  [Tooltip("Bật/Tắt sinh các cụm tiểu cảnh đạo cụ (Prop Templates: trại, tiệc tàn, giả kim, đồ bị cướp)")]
+  public bool enablePropTemplates = true;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ phòng đủ điều kiện được sinh cụm tiểu cảnh đạo cụ")]
+  public float propTemplateChance = 0.80f;
+
+  [Header("5. Góc Phòng & Phế Tích (Corner & Rubble Density)")]
   [Tooltip("Bật/Tắt đồ trang trí tại các góc phòng")]
   public bool enableCornerProps = true;
 
@@ -112,7 +127,7 @@ public class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Tỉ lệ ưu tiên sinh đống đá đổ vỡ (Rubble) so với thùng gỗ (Crates) ở các góc phòng")]
   public float rubbleRatio = 0.45f;
 
-  [Header("5. Nội Thất Sát Tường & Bàn Ghế (Furniture Density)")]
+  [Header("6. Nội Thất Sát Tường & Bàn Ghế (Furniture Density)")]
   [Tooltip("Bật/Tắt đồ nội thất sát tường (giường, kệ sách, rương, bàn nhỏ)")]
   public bool enableWallFurniture = true;
 
@@ -127,7 +142,7 @@ public class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Tỉ lệ phòng lớn có bàn ghế ở giữa phòng")]
   public float centerTableChance = 0.85f;
 
-  [Header("6. Rải Rác Đồ Vật Trên Sàn (Floor Scatter Props)")]
+  [Header("7. Rải Rác Đồ Vật Trên Sàn (Floor Scatter Props)")]
   [Tooltip("Bật/Tắt rải rác đồ vật ngẫu nhiên trên mặt sàn phòng (thùng gỗ, rương, keg, chai lọ, nến, đá vụn)")]
   public bool enableFloorScatter = true;
 
@@ -139,7 +154,7 @@ public class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Tỉ lệ xuất hiện đá vụn nhỏ trên sàn (đặt thấp ~0.05 để tránh các khối đá to choán chỗ)")]
   public float floorRubbleChance = 0.05f;
 
-  [Header("7. Gác Lửng Tầng 2 & Hành Lang")]
+  [Header("8. Gác Lửng Tầng 2 & Hành Lang")]
   [Tooltip("Bật/Tắt trang trí tầng 2 (gác lửng)")]
   public bool enableMezzanineDecor = true;
 
@@ -157,16 +172,24 @@ public class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Khoảng cách giữa các ngọn đuốc hành lang (số ô tile)")]
   public int corridorTorchSpacing = 8;
 
-  [Header("8. Tối Ưu Hiệu Năng (Performance Optimization)")]
+  [Header("9. Tối Ưu Hiệu Năng (Performance Optimization)")]
   [Tooltip("Tự động gộp mesh toàn bộ đồ tĩnh trong mỗi phòng thành 1 Draw Call duy nhất")]
   public bool combineStaticProps = true;
 
-  [Tooltip("Tự động tắt Point Light ở xa người chơi để đảm bảo FPS luôn cao")]
+  [Tooltip("Tự động tắt Point Light và Particle (khói, lửa) ở xa người chơi để đảm bảo FPS luôn cao (100-120+)")]
   public bool enableLightCulling = true;
 
-  [Range(10f, 80f)]
-  [Tooltip("Tầm kích hoạt ánh sáng (mét): Các ngọn đuốc/nến trong bán kính này tính từ Player sẽ bật sáng, ở xa hơn sẽ tự tắt để tối ưu FPS")]
-  public float lightCullingDistance = 28f;
+  [Range(10f, 150f)]
+  [Tooltip("Tầm kích hoạt ánh sáng (mét): Các ngọn đuốc/nến trong bán kính này tính từ Player sẽ bật sáng và phát khói/lửa, ở xa hơn sẽ tự tắt để tối ưu triệt để FPS. Với map 300m, khuyên dùng 70 - 90m để các phòng lân cận luôn sáng sẵn.")]
+  public float lightCullingDistance = 80f;
+
+  [Range(50f, 500f)]
+  [Tooltip("Tự động đồng bộ tầm nhìn xa Camera Far Clip Plane (mét) cho hầm ngục. Với map 300m, 200m là lý tưởng để không thấy khoảng không.")]
+  public float cameraFarClipPlane = 200f;
+
+  [Header("Prefabs Mẫu Kiến Trúc & Tiểu Cảnh (Templates)")]
+  public List<GameObject> wallTemplatePrefabs = new List<GameObject>();
+  public List<GameObject> propTemplatePrefabs = new List<GameObject>();
 
   [Header("Prefabs Chiếu Sáng (Lighting)")]
   public GameObject wallTorchPrefab;       // torch_wall_lit.prefab
@@ -189,6 +212,7 @@ public class DungeonPropDecorator : MonoBehaviour
   public List<GameObject> tabletopPrefabs = new List<GameObject>();
 
   private DungeonLightOptimizer activeLightOptimizer;
+  private Dictionary<GameObject, Bounds> templateBoundsCache = new Dictionary<GameObject, Bounds>();
 
   private void Awake()
   {
@@ -201,14 +225,14 @@ public class DungeonPropDecorator : MonoBehaviour
     if (activeLightOptimizer != null && Mathf.Abs(activeLightOptimizer.maxLightDistance - lightCullingDistance) > 0.05f)
     {
       activeLightOptimizer.maxLightDistance = lightCullingDistance;
-      activeLightOptimizer.UpdateLightsImmediate();
+      activeLightOptimizer.UpdateLightsImmediate(true);
     }
   }
 
   public void EnsurePrefabsLoaded()
   {
 #if UNITY_EDITOR
-    if (wallTorchPrefab == null || floorTorchPrefab == null || bannerPrefabs.Count == 0 || crateBoxPrefabs.Count == 0)
+    if (wallTorchPrefab == null || floorTorchPrefab == null || bannerPrefabs.Count == 0 || crateBoxPrefabs.Count == 0 || wallTemplatePrefabs.Count == 0 || propTemplatePrefabs.Count == 0)
     {
       LoadAllPrefabsFromProject();
     }
@@ -255,12 +279,35 @@ public class DungeonPropDecorator : MonoBehaviour
       else if (name.Contains("bottle") || name.Contains("plate")) tabletopPrefabs.Add(prefab);
     }
 
-    Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs từ thư mục DungeonPrefabs.");
+    // Tự động quét và nạp toàn bộ Templates từ 2 thư mục Walls và Props
+    wallTemplatePrefabs.Clear();
+    propTemplatePrefabs.Clear();
+
+    string wallTemplatesFolder = "Assets/Enviro Prefabs/Dungeon/Templates/Walls";
+    string[] wallGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { wallTemplatesFolder });
+    foreach (string guid in wallGuids)
+    {
+      string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+      GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+      if (prefab != null) wallTemplatePrefabs.Add(prefab);
+    }
+
+    string propTemplatesFolder = "Assets/Enviro Prefabs/Dungeon/Templates/Props";
+    string[] propGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { propTemplatesFolder });
+    foreach (string guid in propGuids)
+    {
+      string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+      GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+      if (prefab != null) propTemplatePrefabs.Add(prefab);
+    }
+
+    templateBoundsCache.Clear();
+    Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs thường, <b>{wallTemplatePrefabs.Count}</b> wall templates, <b>{propTemplatePrefabs.Count}</b> prop templates.");
   }
 #endif
 
   /// <summary>
-  /// Khởi tạo và phân bổ toàn bộ đạo cụ trang trí và nguồn sáng cho hầm ngục
+  /// Khởi tạo và phân bổ toàn bộ đạo cụ trang trí, cụm templates và nguồn sáng cho hầm ngục
   /// </summary>
   public void DecorateDungeon(DungeonData data, Transform dungeonParent, float tileSize)
   {
@@ -285,15 +332,35 @@ public class DungeonPropDecorator : MonoBehaviour
       DecorateCorridors(data, propsRoot.transform, tileSize);
     }
 
-    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG DỰA TRÊN KHOẢNG CÁCH (LIGHT CULLER)
+    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG VÀ HIỆU ỨNG HẠT (LIGHT & PARTICLE CULLER)
     if (enableLightCulling)
     {
       activeLightOptimizer = propsRoot.AddComponent<DungeonLightOptimizer>();
       activeLightOptimizer.maxLightDistance = lightCullingDistance;
+      activeLightOptimizer.cullParticles = true;
       activeLightOptimizer.RefreshLights();
     }
 
-    Debug.Log("<color=cyan>[DungeonPropDecorator]</color> Hoàn tất Bước 4: Trang trí Props tĩnh & Hệ thống chiếu sáng tùy chỉnh!");
+    // 4. TỰ ĐỘNG TẮT SHADOW CASTER CHO DIRECTIONAL LIGHT CƯỜNG ĐỘ 0 ĐỂ GIẢI PHÓNG 4 SHADOW PASSES
+    Light[] sceneLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+    foreach (var l in sceneLights)
+    {
+      if (l != null && l.type == LightType.Directional && l.intensity <= 0.01f)
+      {
+        l.shadows = LightShadows.None;
+        l.enabled = false;
+        Debug.Log("<color=green>[DungeonPropDecorator]</color> Đã vô hiệu hóa Shadow Caster Pass cho Directional Light cường độ 0 (giải phóng 4-6ms GPU).");
+      }
+    }
+
+    // 5. ĐỒNG BỘ TẦM NHÌN XA CỦA CAMERA CHÍNH (FAR CLIP PLANE)
+    if (cameraFarClipPlane > 10f && Camera.main != null)
+    {
+      Camera.main.farClipPlane = cameraFarClipPlane;
+      Debug.Log($"<color=green>[DungeonPropDecorator]</color> Đã đồng bộ Camera Far Clip Plane: {cameraFarClipPlane}m");
+    }
+
+    Debug.Log("<color=cyan>[DungeonPropDecorator]</color> Hoàn tất Bước 4: Trang trí Props tĩnh, Templates & Hệ thống chiếu sáng tùy chỉnh!");
   }
 
   private void DecorateRoom(RoomData room, Transform propsRoot, DungeonData data, float tileSize)
@@ -316,6 +383,10 @@ public class DungeonPropDecorator : MonoBehaviour
 
     // 1. ĐUỐC TƯỜNG (2 - 4 ĐUỐC CHIẾN LƯỢC, KIỂM TRA TƯỜNG ĐẶC) & CỜ / KHIÊN TREO TƯỜNG
     DecorateRoomWalls(room, lightsGroup, tempStaticProps.transform, forbiddenTiles, roomBanners, theme, data, tileSize);
+
+    // 1.5. CỤM TƯỜNG TÀN TÍCH (WALL TEMPLATES) & TIỂU CẢNH ĐẠO CỤ (PROP TEMPLATES)
+    // Đặt các cụm kiến trúc và tiểu cảnh trước, chiếm dụng các ô tương ứng vào forbiddenTiles
+    DecorateRoomTemplates(room, tempStaticProps.transform, lightsGroup, forbiddenTiles, theme, data, tileSize);
 
     // 2. ĐUỐC ĐỨNG TRÊN SÀN (FLOOR TORCHES - Chân cầu thang, không chắn cửa)
     if (enableLighting && enableFloorTorches)
@@ -353,7 +424,7 @@ public class DungeonPropDecorator : MonoBehaviour
       DecorateMezzanine(room, tempStaticProps.transform, lightsGroup, forbiddenTiles, roomBanners, theme, data, tileSize);
     }
 
-    // 8. GỘP MESH TOÀN BỘ PROPS TĨNH TRONG PHÒNG THÀNH 1 DRAW CALL DUY NHẤT
+    // 8. GỘP MESH TOÀN BỘ PROPS TĨNH VÀ TEMPLATES TRONG PHÒNG THÀNH 1 DRAW CALL DUY NHẤT
     if (combineStaticProps)
     {
       CombineStaticPropsInRoom(tempStaticProps, roomPropsObj.transform, room.id);
@@ -361,6 +432,349 @@ public class DungeonPropDecorator : MonoBehaviour
     else
     {
       tempStaticProps.name = "StaticProps";
+    }
+  }
+
+  /// <summary>
+  /// Bố trí các cụm tường tàn tích (Wall Templates) và tiểu cảnh đạo cụ (Prop Templates) vào các phòng đủ lớn.
+  /// Tự động chiếm dụng toàn bộ diện tích footprint vào forbiddenTiles để tuyệt đối không bị đồ khác đè lên.
+  /// </summary>
+  private void DecorateRoomTemplates(RoomData room, Transform staticPropsGroup, Transform lightsGroup, HashSet<Vector2Int> forbiddenTiles, RoomTheme theme, DungeonData data, float tileSize)
+  {
+    RectInt b = room.bounds;
+    // Phòng quá nhỏ (< 7x7) không nên nhét cụm kiến trúc lớn để tránh cản đường
+    if (b.width < 7 || b.height < 7) return;
+
+    int maxWallTemplates = 0;
+    int maxPropTemplates = 0;
+
+    if (b.width >= 12 && b.height >= 12)
+    {
+      maxWallTemplates = 2;
+      maxPropTemplates = 1;
+    }
+    else if (b.width >= 9 || b.height >= 9)
+    {
+      maxWallTemplates = 1;
+      maxPropTemplates = 1;
+    }
+    else
+    {
+      // Phòng vừa (7-8 tiles)
+      maxWallTemplates = (Random.value < 0.5f) ? 1 : 0;
+      maxPropTemplates = (maxWallTemplates == 0) ? 1 : 0;
+    }
+
+    // 1. SINH CỤM TƯỜNG TÀN TÍCH (WALL TEMPLATES)
+    if (enableWallTemplates && maxWallTemplates > 0 && wallTemplatePrefabs.Count > 0 && Random.value < wallTemplateChance)
+    {
+      int placed = 0;
+      List<GameObject> pool = GetThemedWallTemplates(theme);
+      for (int attempt = 0; attempt < 20 && placed < maxWallTemplates; attempt++)
+      {
+        GameObject prefab = pool[Random.Range(0, pool.Count)];
+        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, forbiddenTiles, tileSize))
+        {
+          placed++;
+        }
+      }
+    }
+
+    // 2. SINH CỤM TIỂU CẢNH ĐẠO CỤ (PROP TEMPLATES)
+    if (enablePropTemplates && maxPropTemplates > 0 && propTemplatePrefabs.Count > 0 && Random.value < propTemplateChance)
+    {
+      int placed = 0;
+      List<GameObject> pool = GetThemedPropTemplates(theme);
+      for (int attempt = 0; attempt < 20 && placed < maxPropTemplates; attempt++)
+      {
+        GameObject prefab = pool[Random.Range(0, pool.Count)];
+        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, forbiddenTiles, tileSize))
+        {
+          placed++;
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Thử nghiệm tìm vị trí và góc xoay thích hợp để đặt 1 cụm Template.
+  /// Kiểm tra 100% diện tích footprint không va chạm cửa, đường đi chính, cầu thang, tường bao và mezzanine.
+  /// </summary>
+  private bool TryPlaceTemplate(GameObject prefab, RoomData room, Transform staticPropsGroup, Transform lightsGroup, HashSet<Vector2Int> forbiddenTiles, float tileSize)
+  {
+    if (prefab == null) return false;
+
+    Bounds localBounds = GetPrefabLocalBounds(prefab);
+    RectInt b = room.bounds;
+    float halfTile = tileSize / 2f;
+
+    // Các hướng xoay chuẩn 90 độ
+    int[] angles = new int[] { 0, 90, 180, 270 };
+    ShuffleArray(angles);
+
+    for (int a = 0; a < angles.Length; a++)
+    {
+      int angle = angles[a];
+      Quaternion rot = Quaternion.Euler(0, angle, 0);
+
+      Vector3 ext = localBounds.extents;
+      Vector3 cOffset = localBounds.center;
+      Vector3 rotCenterOffset = rot * cOffset;
+
+      // Kích thước phủ rộng theo trục X và Z sau khi xoay (thêm đệm 0.25m an toàn)
+      bool swapXZ = (angle == 90 || angle == 270);
+      float rotatedHalfSpanX = (swapXZ ? ext.z : ext.x) + 0.25f;
+      float rotatedHalfSpanZ = (swapXZ ? ext.x : ext.z) + 0.25f;
+
+      int tileRadiusX = Mathf.CeilToInt(rotatedHalfSpanX / tileSize);
+      int tileRadiusZ = Mathf.CeilToInt(rotatedHalfSpanZ / tileSize);
+
+      int minCx = b.x + 1 + tileRadiusX;
+      int maxCx = b.x + b.width - 2 - tileRadiusX;
+      int minCy = b.y + 1 + tileRadiusZ;
+      int maxCy = b.y + b.height - 2 - tileRadiusZ;
+
+      if (minCx > maxCx || minCy > maxCy)
+      {
+        continue; // Template quá lớn so với phòng ở góc xoay này
+      }
+
+      // Thử một số tọa độ tâm ngẫu nhiên
+      for (int attempt = 0; attempt < 10; attempt++)
+      {
+        int cx = Random.Range(minCx, maxCx + 1);
+        int cy = Random.Range(minCy, maxCy + 1);
+
+        Vector3 worldCenter = new Vector3(cx * tileSize + halfTile, 0f, cy * tileSize + halfTile);
+
+        // Tính khoảng tile thực tế bị chiếm dụng bởi bounding box
+        float minWx = worldCenter.x + rotCenterOffset.x - rotatedHalfSpanX;
+        float maxWx = worldCenter.x + rotCenterOffset.x + rotatedHalfSpanX;
+        float minWz = worldCenter.z + rotCenterOffset.z - rotatedHalfSpanZ;
+        float maxWz = worldCenter.z + rotCenterOffset.z + rotatedHalfSpanZ;
+
+        int tMinX = Mathf.FloorToInt(minWx / tileSize);
+        int tMaxX = Mathf.FloorToInt(maxWx / tileSize);
+        int tMinY = Mathf.FloorToInt(minWz / tileSize);
+        int tMaxY = Mathf.FloorToInt(maxWz / tileSize);
+
+        bool canPlace = true;
+        for (int tx = tMinX; tx <= tMaxX; tx++)
+        {
+          for (int ty = tMinY; ty <= tMaxY; ty++)
+          {
+            Vector2Int tile = new Vector2Int(tx, ty);
+
+            // Phải nằm hoàn toàn bên trong phòng (không chạm tường bao)
+            if (tx <= b.x || tx >= b.x + b.width - 1 || ty <= b.y || ty >= b.y + b.height - 1)
+            {
+              canPlace = false;
+              break;
+            }
+
+            // Không được trùng vào lối đi cửa, đường đi chính, cầu thang, hoặc template khác
+            if (forbiddenTiles.Contains(tile))
+            {
+              canPlace = false;
+              break;
+            }
+
+            // Không đặt dưới sàn tầng lửng
+            if (room.hasMezzanine && room.IsInMezzanine(tx, ty))
+            {
+              canPlace = false;
+              break;
+            }
+          }
+          if (!canPlace) break;
+        }
+
+        if (canPlace)
+        {
+          // ĐẶT CỤM TEMPLATE VÀO PHÒNG
+          GameObject instance = Instantiate(prefab, worldCenter, rot, staticPropsGroup);
+
+          // Tách toàn bộ các cụm Đuốc / Nến / Particle System (Khói, Lửa) sang lightsGroup
+          // để không bị DestroyImmediate xóa sổ khi gộp mesh phòng!
+          HashSet<Transform> dynamicRoots = new HashSet<Transform>();
+
+          // 1. Tìm tất cả ParticleSystem (khói, lửa, vfx)
+          foreach (ParticleSystem ps in instance.GetComponentsInChildren<ParticleSystem>(true))
+          {
+            Transform t = ps.transform;
+            while (t.parent != null && t.parent != instance.transform)
+            {
+              t = t.parent;
+            }
+            if (t != instance.transform)
+            {
+              dynamicRoots.Add(t);
+            }
+          }
+
+          // 2. Tìm tất cả Light (Point Light)
+          foreach (Light l in instance.GetComponentsInChildren<Light>(true))
+          {
+            Transform t = l.transform;
+            while (t.parent != null && t.parent != instance.transform)
+            {
+              t = t.parent;
+            }
+            if (t != instance.transform)
+            {
+              dynamicRoots.Add(t);
+            }
+          }
+
+          // 3. Chuyển toàn bộ các cây đuốc / ngọn lửa hoàn chỉnh sang lightsGroup
+          foreach (Transform dynRoot in dynamicRoots)
+          {
+            dynRoot.SetParent(lightsGroup, true);
+
+            // Kích hoạt phát khói và lửa cho tất cả ParticleSystem con
+            ParticleSystem[] childPS = dynRoot.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (var ps in childPS)
+            {
+              if (!ps.isPlaying) ps.Play();
+            }
+          }
+
+          // ĐÁNH DẤU TOÀN BỘ CÁC Ô ĐÃ CHIẾM DỤNG VÀO FORBIDDENTILES ĐỂ KHÔNG BỊ PROPS KHÁC ĐÈ LÊN
+          for (int tx = tMinX; tx <= tMaxX; tx++)
+          {
+            for (int ty = tMinY; ty <= tMaxY; ty++)
+            {
+              forbiddenTiles.Add(new Vector2Int(tx, ty));
+            }
+          }
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Tính toán chính xác Bounding Box cục bộ của Prefab Template dựa trên toàn bộ MeshFilter con
+  /// </summary>
+  private Bounds GetPrefabLocalBounds(GameObject prefab)
+  {
+    if (templateBoundsCache.TryGetValue(prefab, out Bounds cached))
+    {
+      return cached;
+    }
+
+    Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+    bool hasBounds = false;
+
+    MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
+    foreach (var mf in filters)
+    {
+      if (mf.sharedMesh == null) continue;
+      Bounds mb = mf.sharedMesh.bounds;
+      Transform t = mf.transform;
+
+      Matrix4x4 m = prefab.transform.worldToLocalMatrix * t.localToWorldMatrix;
+
+      Vector3 min = mb.min;
+      Vector3 max = mb.max;
+      Vector3[] corners = new Vector3[8]
+      {
+        m.MultiplyPoint3x4(new Vector3(min.x, min.y, min.z)),
+        m.MultiplyPoint3x4(new Vector3(max.x, min.y, min.z)),
+        m.MultiplyPoint3x4(new Vector3(min.x, max.y, min.z)),
+        m.MultiplyPoint3x4(new Vector3(max.x, max.y, min.z)),
+        m.MultiplyPoint3x4(new Vector3(min.x, min.y, max.z)),
+        m.MultiplyPoint3x4(new Vector3(max.x, min.y, max.z)),
+        m.MultiplyPoint3x4(new Vector3(min.x, max.y, max.z)),
+        m.MultiplyPoint3x4(new Vector3(max.x, max.y, max.z))
+      };
+
+      foreach (var c in corners)
+      {
+        if (!hasBounds)
+        {
+          bounds = new Bounds(c, Vector3.zero);
+          hasBounds = true;
+        }
+        else
+        {
+          bounds.Encapsulate(c);
+        }
+      }
+    }
+
+    if (!hasBounds)
+    {
+      bounds = new Bounds(Vector3.zero, new Vector3(2f, 2f, 2f));
+    }
+
+    templateBoundsCache[prefab] = bounds;
+    return bounds;
+  }
+
+  private List<GameObject> GetThemedWallTemplates(RoomTheme theme)
+  {
+    if (wallTemplatePrefabs == null || wallTemplatePrefabs.Count == 0) return wallTemplatePrefabs;
+
+    List<GameObject> filtered = new List<GameObject>();
+    switch (theme)
+    {
+      case RoomTheme.RuinsAbandoned:
+        filtered.AddRange(wallTemplatePrefabs.FindAll(p => p.name.Contains("ruins") || p.name.Contains("L")));
+        break;
+      case RoomTheme.GrandHall:
+        filtered.AddRange(wallTemplatePrefabs.FindAll(p => p.name.Contains("shrine") || p.name.Contains("gate")));
+        break;
+      case RoomTheme.ArmoryStorage:
+        filtered.AddRange(wallTemplatePrefabs.FindAll(p => p.name.Contains("storage") || p.name.Contains("L2")));
+        break;
+      default:
+        filtered.AddRange(wallTemplatePrefabs.FindAll(p => p.name.Contains("gate") || p.name.Contains("L")));
+        break;
+    }
+
+    return (filtered.Count > 0) ? filtered : wallTemplatePrefabs;
+  }
+
+  private List<GameObject> GetThemedPropTemplates(RoomTheme theme)
+  {
+    if (propTemplatePrefabs == null || propTemplatePrefabs.Count == 0) return propTemplatePrefabs;
+
+    List<GameObject> filtered = new List<GameObject>();
+    switch (theme)
+    {
+      case RoomTheme.LibraryStudy:
+        filtered.AddRange(propTemplatePrefabs.FindAll(p => p.name.Contains("alchemist")));
+        break;
+      case RoomTheme.Barracks:
+        filtered.AddRange(propTemplatePrefabs.FindAll(p => p.name.Contains("camp")));
+        break;
+      case RoomTheme.ArmoryStorage:
+        filtered.AddRange(propTemplatePrefabs.FindAll(p => p.name.Contains("looted")));
+        break;
+      case RoomTheme.DiningQuarters:
+      case RoomTheme.GrandHall:
+        filtered.AddRange(propTemplatePrefabs.FindAll(p => p.name.Contains("banquet")));
+        break;
+      case RoomTheme.RuinsAbandoned:
+        filtered.AddRange(propTemplatePrefabs.FindAll(p => p.name.Contains("collapsed") || p.name.Contains("looted")));
+        break;
+    }
+
+    return (filtered.Count > 0) ? filtered : propTemplatePrefabs;
+  }
+
+  private void ShuffleArray<T>(T[] array)
+  {
+    for (int i = 0; i < array.Length; i++)
+    {
+      int rnd = Random.Range(i, array.Length);
+      T temp = array[i];
+      array[i] = array[rnd];
+      array[rnd] = temp;
     }
   }
 
@@ -1173,7 +1587,7 @@ public class DungeonPropDecorator : MonoBehaviour
   }
 
   /// <summary>
-  /// Gộp toàn bộ Mesh của đồ tĩnh trong phòng theo Material để giảm triệt để Draw Call (1 Draw Call duy nhất)
+  /// Gộp toàn bộ Mesh của đồ tĩnh và templates trong phòng theo Material để giảm triệt để Draw Call (1 Draw Call duy nhất)
   /// </summary>
   private void CombineStaticPropsInRoom(GameObject tempRoot, Transform targetParent, int roomId)
   {
@@ -1224,9 +1638,16 @@ public class DungeonPropDecorator : MonoBehaviour
 
       MeshRenderer cmr = combinedObj.AddComponent<MeshRenderer>();
       cmr.sharedMaterial = mat;
+      cmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // Đồ tĩnh hầm ngục không cần tạo bóng thêm
 
-      MeshCollider cmc = combinedObj.AddComponent<MeshCollider>();
-      cmc.sharedMesh = combinedMesh;
+      // Chỉ tạo MeshCollider cho các nhóm vật liệu kiến trúc, nội thất gỗ/đá; bỏ qua cờ vải, chai lọ nhỏ để giảm tải PhysX
+      string matName = (mat != null) ? mat.name.ToLower() : "";
+      bool isNonCollidingMat = matName.Contains("banner") || matName.Contains("cloth") || matName.Contains("flag") || matName.Contains("glass");
+      if (!isNonCollidingMat)
+      {
+        MeshCollider cmc = combinedObj.AddComponent<MeshCollider>();
+        cmc.sharedMesh = combinedMesh;
+      }
     }
 
     DestroyImmediate(tempRoot);
