@@ -5,6 +5,10 @@ public class DungeonManager : MonoBehaviour
   public BSPGenerator generator;
   public DungeonRenderer dungeonRenderer;
 
+  [Header("Hệ Thống Sinh Quái Hầm Ngục (Task D-01)")]
+  [Tooltip("Bộ sinh quái tự động cho các phòng")]
+  public ProceduralEnemySpawner enemySpawner;
+
   [Header("Thử Nghiệm AI & Quái Vật")]
   [Tooltip("Kéo Prefab SkeletonWarrior vào đây để sinh thử 1 quái trên tầng 2 kiểm tra AI leo thang")]
   public GameObject testEnemyPrefab;
@@ -25,10 +29,15 @@ public class DungeonManager : MonoBehaviour
     // 1. Chạy toán học tạo dữ liệu
     currentData = generator.Generate();
 
-    // 2. Vẽ 3D
+    // 2. Vẽ 3D & nướng NavMesh & trang trí props
     dungeonRenderer.BuildMesh(currentData);
 
-    // 3. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
+    // 3. Tự động sinh quái vật trong hầm ngục (Task D-01)
+    if (enemySpawner == null) enemySpawner = GetComponent<ProceduralEnemySpawner>();
+    if (enemySpawner == null) enemySpawner = gameObject.AddComponent<ProceduralEnemySpawner>();
+    enemySpawner.SpawnEnemies(currentData, generator.tileSize);
+
+    // 4. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
     SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");

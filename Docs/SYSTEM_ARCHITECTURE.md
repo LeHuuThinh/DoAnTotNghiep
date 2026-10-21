@@ -43,14 +43,24 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 3. **Dựng hình học 3D (`DungeonRenderer.cs`):** 
    * Dựng sàn, tường, cửa mở, và hệ thống cầu thang 3D nối sàn tầng 1 lên gác lửng tầng 2.
    * Áp dụng Perlin Noise để tạo độ gồ ghề và biến thể hoa văn vật liệu cho sàn đá.
-4. **Trang trí & Phân bổ đạo cụ ngẫu nhiên (`DungeonPropDecorator.cs`, `PoissonDiskSampler.cs`):**
-   * Dùng Poisson Disk Sampling để rải đều các vật thể tương tác: Thùng gỗ đập vỡ được, hòm kho báu, bình gốm, đuốc tường.
-5. **Tối ưu hóa ánh sáng (`DungeonLightOptimizer.cs`):**
-   * Kiểm soát số lượng nguồn sáng động (Point Light của đuốc) trong URP để duy trì 60+ FPS.
+4. **Trang trí, Templates & Phân bổ đạo cụ (`DungeonPropDecorator.cs`):**
+   * **Cụm kiến trúc tàn tích & tiểu cảnh đạo cụ (Templates):** 8 mẫu tường vỡ/chữ L/cổng vòm và 5 mẫu tiểu cảnh (trại, tiệc tàn, giả kim, kho đổ nát). Tự động đo Bounding Box, xoay 4 hướng, đảm bảo an toàn cửa/cầu thang và đánh dấu `forbiddenTiles` chống đè đồ.
+   * **Trang trí gác lửng Tầng 2 (Mezzanine):** Khớp chuẩn cao độ 8m, bố trí cờ hiệu ngẫu nhiên cao thấp, khiên kiếm, bàn ghế ngắm cảnh lan can và rải rác sàn.
+   * **Đuốc sàn (Floor Torch) & Đuốc tường:** Nâng offset Y 0.5m chống lún chân đế, kiểm tra tường đặc chống lơ lửng, rải ngẫu nhiên cả tầng 1 và tầng 2.
+   * **Gộp Mesh tĩnh (Mesh Combine):** Gộp toàn bộ đồ tĩnh trong mỗi phòng theo Material thành 1 Draw Call duy nhất, tắt Shadow Casting và lọc bỏ MeshCollider thừa cho cờ vải/thủy tinh.
+5. **Tối ưu hóa ánh sáng & Hiệu ứng hạt (`DungeonLightOptimizer.cs`):**
+   * **Culling kép (Dual Culling):** Bật/tắt đồng bộ cả `Light` (Point Light) và `ParticleSystem` (Lửa & Khói của đuốc) dựa trên cự ly tới Player. Khi ở xa, hạt bị dừng mô phỏng CPU và xóa quads GPU, loại bỏ hoàn toàn hiện tượng Overdraw xuyên tường.
+   * **Hysteresis Buffer:** Độ đệm 6m chống nhấp nháy đèn (Flicker-free) ở ranh giới culling.
+   * **Triệt tiêu Shadow Caster Pass:** Tự động phát hiện và vô hiệu hóa shadow pass của Directional Light cường độ 0 (tiết kiệm 4 cascades 2048x2048 vô ích).
+   * **Duy trì FPS cực cao:** Đạt 110 - 120 FPS ngay cả trong hầm ngục quy mô lớn 300m x 322m với Far Clip Plane 200m.
 
 ---
 
 ### B. Phân Hệ Combat Souls-like (Player & Monsters)
+* **Giao diện Người chơi Souls-like (`PlayerHUD.cs`):**
+  * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ `ghostShrinkDelay = 0.5s` khi dính đòn.
+  * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
+  * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
 * **Thanh chịu đòn Poise (`PlayerFeedback.cs`, `EnemyFeedback.cs`):**
   * Cả người chơi và quái vật đều sở hữu thanh Poise ẩn.
   * Khi bị đánh liên tục hoặc dính đòn nặng, Poise tụt về 0 sẽ gây ra trạng thái **Stagger (Khựng đòn / Thất thế)**.
@@ -74,6 +84,19 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 ---
 
 ### C. Phân Hệ Quái Vật (Monsters) & Trùm Học Máy (ML-Agents Boss)
+* **Bộ Sinh Quái Tự Động Theo Biệt Đội (`ProceduralEnemySpawner.cs`):**
+  * **Cơ chế Cụm / Biệt Đội (Squad / Pack System):**
+    * Không bó cứng quái theo tầng mà phối hợp linh hoạt Melee & Ranged theo 4 cấp đội hình:
+      * Nhóm 4 quái: 2 Melee (1 Warrior + 1 Minion) + 2 Ranged (1 Rogue + 1 Mage).
+      * Nhóm 3 quái: 2 Melee + 1 Ranged HOẶC 1 Melee + 2 Ranged.
+      * Nhóm 2 quái: 2 Melee HOẶC 1 Melee + 1 Ranged.
+      * Nhóm 1 quái lẻ: Random ngẫu nhiên 1 trong 4 loại quái.
+  * **Phân bổ theo quy mô phòng (Dungeon 300x300m):**
+    * Sàn trệt phòng thường: 1 – 2 nhóm; Sàn trệt đại sảnh lớn (>= 220 tiles): 2 – 3 nhóm.
+    * Sàn tầng 2 gác lửng: 1 – 2 nhóm (tỷ lệ 2 nhóm là 25%).
+    * Start Room & Boss Room: Miễn nhiễm hoàn toàn (0 quái).
+    * Treasure & Shrine Room: 1 nhóm nhỏ (1–2 quái) canh giữ.
+  * **Định vị Cụm (Spatial Clustering):** Mỗi nhóm chọn 1 Điểm Neo (Anchor Point), quái tụ tập bán kính 3m quanh tâm, các nhóm cách nhau tối thiểu 8.5m. Nắn chuẩn 100% lên bề mặt NavMesh và dùng `Physics.CheckSphere` chống kẹt vào đạo cụ tĩnh.
 * **Quái thường (Bộ xương Skeleton):**
   1. `SkeletonWarriorAI`: Chiến binh cận chiến, biết leo cầu thang lên/xuống tầng 2 để truy sát người chơi.
   2. `SkeletonMinion`: Quái cận chiến số lượng đông, máu yếu nhưng đánh bọc lót.
