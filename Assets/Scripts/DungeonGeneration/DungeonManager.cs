@@ -8,6 +8,8 @@ public class DungeonManager : MonoBehaviour
   [Header("Hệ Thống Sinh Quái Hầm Ngục (Task D-01)")]
   [Tooltip("Bộ sinh quái tự động cho các phòng")]
   public ProceduralEnemySpawner enemySpawner;
+  [Tooltip("Bộ tối ưu hóa ngủ đông và culling cho quái vật (Tiered AI/Animation LOD)")]
+  public DungeonEnemyOptimizer enemyOptimizer;
 
   [Header("Thử Nghiệm AI & Quái Vật")]
   [Tooltip("Kéo Prefab SkeletonWarrior vào đây để sinh thử 1 quái trên tầng 2 kiểm tra AI leo thang")]
@@ -37,7 +39,12 @@ public class DungeonManager : MonoBehaviour
     if (enemySpawner == null) enemySpawner = gameObject.AddComponent<ProceduralEnemySpawner>();
     enemySpawner.SpawnEnemies(currentData, generator.tileSize);
 
-    // 4. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
+    // 4. Kích hoạt bộ tối ưu hóa ngủ đông quái vật (AI / Animation LOD & Sleep)
+    if (enemyOptimizer == null) enemyOptimizer = GetComponent<DungeonEnemyOptimizer>();
+    if (enemyOptimizer == null) enemyOptimizer = gameObject.AddComponent<DungeonEnemyOptimizer>();
+    enemyOptimizer.RefreshEnemies(enemySpawner.activeEnemies);
+
+    // 5. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
     SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");

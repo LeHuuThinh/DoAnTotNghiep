@@ -28,6 +28,7 @@ public class TargetLockSystem : MonoBehaviour
 
   private Transform currentTarget;
   private Health targetHealth;
+  private Health playerHealth;
   private Camera mainCamera;
 
   public bool IsLockedOn => currentTarget != null;
@@ -37,10 +38,30 @@ public class TargetLockSystem : MonoBehaviour
   {
     mainCamera = Camera.main;
     if (lockOnReticle != null) lockOnReticle.SetActive(false);
+
+    playerHealth = GetComponent<Health>();
+    if (playerHealth == null) playerHealth = GetComponentInParent<Health>();
+  }
+
+  private void OnEnable()
+  {
+    if (playerHealth != null) playerHealth.onDeath.AddListener(UnlockTarget);
+  }
+
+  private void OnDisable()
+  {
+    if (playerHealth != null) playerHealth.onDeath.RemoveListener(UnlockTarget);
+    UnlockTarget();
   }
 
   private void Update()
   {
+    if (playerHealth != null && playerHealth.IsDead)
+    {
+      if (IsLockedOn) UnlockTarget();
+      return;
+    }
+
     HandleLockInput();
     ValidateCurrentTarget();
     UpdateReticlePosition();
@@ -48,6 +69,8 @@ public class TargetLockSystem : MonoBehaviour
 
   private void HandleLockInput()
   {
+    if (playerHealth != null && playerHealth.IsDead) return;
+
     // Bấm Chuột giữa HOẶC phím Q để Bật/Tắt khóa mục tiêu
     bool togglePressed = false;
     if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame) togglePressed = true;
@@ -67,6 +90,8 @@ public class TargetLockSystem : MonoBehaviour
 
   private void LockClosestTarget()
   {
+    if (playerHealth != null && playerHealth.IsDead) return;
+
     Transform bestTarget = FindBestTarget();
     if (bestTarget != null)
     {
@@ -134,6 +159,12 @@ public class TargetLockSystem : MonoBehaviour
   /// </summary>
   public bool TrySwitchToNextTarget()
   {
+    if (playerHealth != null && playerHealth.IsDead)
+    {
+      UnlockTarget();
+      return false;
+    }
+
     Transform oldTarget = currentTarget;
     Transform nextTarget = FindBestTarget(excludeTarget: oldTarget, searchRadius: switchTargetRange);
 
@@ -155,6 +186,12 @@ public class TargetLockSystem : MonoBehaviour
 
   public void SetTarget(Transform newTarget)
   {
+    if (newTarget != null && playerHealth != null && playerHealth.IsDead)
+    {
+      UnlockTarget();
+      return;
+    }
+
     currentTarget = newTarget;
     if (newTarget != null)
     {

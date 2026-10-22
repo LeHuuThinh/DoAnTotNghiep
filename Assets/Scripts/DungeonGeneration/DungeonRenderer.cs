@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine.AI;
@@ -123,13 +123,13 @@ public class DungeonRenderer : MonoBehaviour
       }
     }
 
-    // 3. TỰ ĐỘNG BAKE NAVMESH VÀ KIỂM ĐỊNH KẾT NỐI TOÀN BỘ SÀN TRỆT, CẦU THANG VÀ TẦNG 2
-    BakeAndValidateNavMesh(data);
-
-    // 4. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (BƯỚC 4)
+    // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Sinh TRƯỚC khi Bake NavMesh để NavMesh tự động đục lỗ né vật cản)
     if (propDecorator == null) propDecorator = GetComponent<DungeonPropDecorator>();
     if (propDecorator == null) propDecorator = gameObject.AddComponent<DungeonPropDecorator>();
     propDecorator.DecorateDungeon(data, dungeonParent, tileSize);
+
+    // 4. TỰ ĐỘNG BAKE NAVMESH VÀ KIỂM ĐỊNH KẾT NỐI TOÀN BỘ SÀN TRỆT, CẦU THANG VÀ TẦNG 2 (Sau khi đã có đầy đủ Props)
+    BakeAndValidateNavMesh(data);
   }
 
   void ClearGeneratedDungeon()
@@ -339,6 +339,8 @@ public class DungeonRenderer : MonoBehaviour
 
       MeshCollider mc = areaObj.AddComponent<MeshCollider>();
       mc.sharedMesh = combinedMesh;
+      NavMeshModifier navMod = areaObj.AddComponent<NavMeshModifier>();
+      navMod.ignoreFromBuild = true; // Bỏ qua trần nhà và hình học phòng visual khi bake NavMesh
     }
   }
 
@@ -825,7 +827,7 @@ public class DungeonRenderer : MonoBehaviour
     // - Chỉ thu thập các collider thuộc Layer 10 (NavMessFloor: sàn trệt, sàn tầng 2, cầu thang)
     navMeshSurface.collectObjects = CollectObjects.Children;
     navMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
-    navMeshSurface.layerMask = (1 << 10); // Layer 10: NavMessFloor
+    navMeshSurface.layerMask = (1 << 10) | (1 << 0); // Layer 10: NavMessFloor, Layer 0: Props vật cản
 
     // Nướng NavMesh Surface đồng bộ
     navMeshSurface.BuildNavMesh();

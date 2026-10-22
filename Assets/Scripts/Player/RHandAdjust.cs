@@ -30,6 +30,7 @@ public class RHandAdjust : MonoBehaviour
   private Vector3 currentShoulderOffset;
   private Vector3 currentWristOffset;
   private float currentWeight = 1f;
+  private Health playerHealth;
 
   private void Awake()
   {
@@ -37,6 +38,9 @@ public class RHandAdjust : MonoBehaviour
     {
       lockSystem = GetComponentInParent<TargetLockSystem>();
     }
+
+    playerHealth = GetComponent<Health>();
+    if (playerHealth == null) playerHealth = GetComponentInParent<Health>();
 
     if (animator == null)
     {
@@ -52,6 +56,7 @@ public class RHandAdjust : MonoBehaviour
 
   private void LateUpdate()
   {
+    if (playerHealth != null && playerHealth.IsDead) return;
     if (rightShoulderBone == null && rightHandBone == null) return;
 
     // 1. ĐỒNG BỘ TRỌNG SỐ THEO LAYER TAY PHẢI TRONG ANIMATOR

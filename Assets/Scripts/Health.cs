@@ -47,11 +47,14 @@ public class Health : MonoBehaviour, IDamageable
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);
-    onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
 
     if (currentHealth <= 0f)
     {
       Die();
+    }
+    else
+    {
+      onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
     }
   }
 

@@ -116,11 +116,30 @@ public class PlayerCombat : MonoBehaviour
     }
   }
 
+  private void OnDisable()
+  {
+    SetCounterAttackActive(false);
+  }
+
   private void OnDestroy()
   {
     if (weaponHitbox != null)
     {
       weaponHitbox.OnHitTarget -= HandleWeaponHitTarget;
+    }
+  }
+
+  /// <summary>
+  /// Bật/Tắt trạng thái Counter Attack và đồng bộ I-Frames bảo vệ người chơi
+  /// </summary>
+  private void SetCounterAttackActive(bool active)
+  {
+    if (isCounterAttackActive == active) return;
+    isCounterAttackActive = active;
+
+    if (health != null)
+    {
+      health.SetInvulnerable(active);
     }
   }
 
@@ -400,7 +419,7 @@ public class PlayerCombat : MonoBehaviour
     attackTimer = 0f;
 
     isChargeAttackActive = false;
-    isCounterAttackActive = true;
+    SetCounterAttackActive(true);
 
     targetLayerWeight = 0f;
     if (animator != null) animator.SetLayerWeight(swordLayerIndex, 0f);
@@ -426,7 +445,7 @@ public class PlayerCombat : MonoBehaviour
     }
 
     isChargeAttackActive = false;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     isAttacking = true;
     canCombo = false;
@@ -459,7 +478,7 @@ public class PlayerCombat : MonoBehaviour
     }
 
     isChargeAttackActive = true;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     isAttacking = true;
     comboStep = 0;
@@ -525,7 +544,7 @@ public class PlayerCombat : MonoBehaviour
     targetLayerWeight = 1f;
 
     isChargeAttackActive = false;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     if (playerFeedback != null) playerFeedback.IsParrying = false;
     if (animator != null)
@@ -674,4 +693,5 @@ public class PlayerCombat : MonoBehaviour
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
   // Thêm vào PlayerCombat để PlayerController có thể đọc được
   public bool IsBlockingOrParrying => isParryActive;
+  public bool IsAttacking => isAttacking;
 }

@@ -1,6 +1,6 @@
 # Nhật Ký Tiến Độ Dự Án (Progress Log) - Infinite Labyrinth
 
-> **Cập nhật ngày:** 21/10/2026  
+> **Cập nhật ngày:** 22/10/2026  
 > **Trạng thái đối chiếu:** Đã rà soát trực tiếp 100% mã nguồn C#, Prefabs, Scenes và Git Commits trên ổ đĩa.
 
 ---
@@ -29,7 +29,8 @@
 | **Monster AI** | Quái cận chiến (Skeleton Warrior & Minion) | ✅ Hoàn thành | Prefab + AI truy vết leo cầu thang |
 | **Monster AI** | Quái bắn cung tầm xa (Skeleton Rogue) | ✅ Hoàn thành | Prefab + Bắn tên `Skeleton_Arrow` |
 | **Monster AI** | Quái pháp sư (Skeleton Mage) | ✅ Hoàn thành | Prefab + Đạn ma pháp, Vùng đất lửa, Cột sáng |
-| **Monster PCG** | Bộ sinh quái tự động cho hầm ngục (`ProceduralEnemySpawner.cs`) | ✅ Hoàn thành | Tự động sinh quái trên NavMesh theo từng loại phòng: bỏ qua Start & Boss Room, phòng thường (2-4 Minion/Warrior), phòng gác lửng tầng 2 (cận chiến sàn 1, tầm xa Rogue/Mage sàn 2), phòng kho báu (1-2 lính gác); chống sinh đè props & cửa |
+| **Monster PCG** | Bộ sinh quái tự động cho hầm ngục (`ProceduralEnemySpawner.cs`) | ✅ Hoàn thành | Sinh quái theo Biệt đội chuẩn RPG: Phòng nhỏ/vừa 1 nhóm T1 + 1 nhóm T2 (nếu có); Phòng lớn 1-2 nhóm T1 + 1-2 nhóm T2; Kho báu 1 nhóm nhỏ; Sinh quái cả phòng đầu vào (`data.startRoom`); Chỉ chừa trống Boss Room; Điểm neo R=3m cách nhau >=8.5m; Chống kẹt props & cửa |
+| **Monster / Optimization** | Tối ưu hóa hiệu năng quái vật hầm ngục (`DungeonEnemyOptimizer.cs`) | ✅ Hoàn thành | AI, Animation, Mesh & Shadow Hibernation: Cự ly <40m thức tỉnh đầy đủ, >48m ngủ đông (0% CPU/GPU, tắt Animator.enabled, tắt Renderers, tắt Shadow, tắt NavMesh, tắt AI Update); Tối ưu `EnemyFeedback` bằng `MaterialPropertyBlock` không clone material; Time-slicing 4 batch; Thức tỉnh tức thì khi dính đòn |
 | **Boss** | Mô hình 3D & Bộ Animation Boss Ice Golem | ✅ Hoàn thành | `Boss_IceGolem.prefab`, Attack, Jump, Roar, Walk |
 | **World** | Chuyển cảnh Làng -> Dungeon (Cổng dịch chuyển) | ✅ Hoàn thành | `PortalController.cs` (Đè phím F) |
 | **World** | Môi trường Làng (`LandScene`) & NPC tuần tra | ✅ Hoàn thành | `LandScene.unity`, `NpcPatrol.cs` |

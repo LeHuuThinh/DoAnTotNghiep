@@ -44,6 +44,19 @@ public class PlayerController : MonoBehaviour
 
     private float landingLockTimer = 0f;
 
+    [Header("Idle Flair Actions")]
+    [SerializeField] private bool enableIdleActions = true;
+    [Tooltip("Thời gian đứng yên tối thiểu trước khi kích hoạt hành động ngẫu nhiên (giây)")]
+    [SerializeField] private float minIdleActionDelay = 6f;
+    [Tooltip("Thời gian đứng yên tối đa trước khi kích hoạt hành động ngẫu nhiên (giây)")]
+    [SerializeField] private float maxIdleActionDelay = 12f;
+    [Tooltip("Tên các state hành động Idle trong Animator")]
+    [SerializeField] private string[] idleActionStateNames = new string[] { "Idle Action 1", "Idle Action 2", "Idle Action 3" };
+
+    private float idleTimer = 0f;
+    private float nextIdleActionDelay = 8f;
+    private bool isPlayingIdleAction = false;
+
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
@@ -123,6 +136,8 @@ public class PlayerController : MonoBehaviour
         {
             thirdPersonCamera = Camera.main.GetComponent<ThirdPersonCamera>();
         }
+
+        nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
     }
 
     private void OnDisable()
@@ -132,6 +147,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (health != null && health.IsDead) return;
         HandleMovement();
         UpdateAnimation();
     }
@@ -206,6 +222,9 @@ public class PlayerController : MonoBehaviour
 
         Vector3 desiredMoveDirection = cameraRotation * new Vector3(input.x, 0f, input.y);
 
+        // Xử lý đếm giờ và kích hoạt / hủy Idle Actions
+        HandleIdleActions(input, isMoving, isLocked, isBlocking);
+
         // =====================================================================
         // 2. XỬ LÝ PHÍM SHIFT: CHO PHÉP NHẤN KHI CANMOVE HOẶC KHI ĐANG BLOCK
         // =====================================================================
@@ -224,8 +243,8 @@ public class PlayerController : MonoBehaviour
         {
             shiftHoldTimer += Time.deltaTime;
 
-            // Chỉ chạy nhanh nếu được phép di chuyển tự do (canMove) và có đủ thể lực
-            if (shiftHoldTimer >= sprintHoldThreshold && isMoving && canMove)
+            // Chỉ chạy nhanh nếu không bị khóa mục tiêu (không ở trong CombatLocomotion), được phép di chuyển tự do (canMove) và có đủ thể lực
+            if (!isLocked && shiftHoldTimer >= sprintHoldThreshold && isMoving && canMove)
             {
                 if (playerStats == null || playerStats.HasStamina(1f))
                 {
@@ -236,10 +255,14 @@ public class PlayerController : MonoBehaviour
                     isSprinting = false;
                 }
             }
+            else if (isLocked)
+            {
+                isSprinting = false;
+            }
         }
 
-        // Tiêu hao Stamina liên tục khi đang chạy nhanh
-        if (isSprinting && isMoving && canMove)
+        // Tiêu hao Stamina liên tục khi đang chạy nhanh (chỉ khi thực sự chạy nhanh ngoài combat lock-on)
+        if (IsRunning && isMoving && canMove)
         {
             if (playerStats != null)
             {
@@ -279,7 +302,7 @@ public class PlayerController : MonoBehaviour
             isSprinting = false;
         }
 
-        if (!isMoving || !canMove)
+        if (!isMoving || !canMove || isLocked)
         {
             isSprinting = false;
         }
@@ -519,4 +542,139 @@ public class PlayerController : MonoBehaviour
 
     public void LockMovement() => canMove = false;
     public void UnlockMovement() => canMove = true;
+
+    // =====================================================================
+    // IDLE FLAIR ACTIONS (HÀNH ĐỘNG NGẪU NHIÊN KHI ĐỨNG IDLE LÂU)
+    // =====================================================================
+    private void HandleIdleActions(Vector2 input, bool isMoving, bool isLocked, bool isBlocking)
+    {
+        if (!enableIdleActions || animator == null) return;
+
+        bool isAttacking = playerCombat != null && playerCombat.IsAttacking;
+        bool isTrulyIdle = IsGrounded && !isMoving && canMove && !isRolling 
+                           && !isPreparingJump && !isJumping && !isLocked && !isBlocking && !isAttacking
+                           && landingLockTimer <= 0f;
+
+        // Nếu đang trong diễn hoạt Idle Action
+        if (isPlayingIdleAction)
+        {
+            // Kiểm tra xem có bất kỳ input hoặc thay đổi trạng thái nào từ người chơi không
+            bool hasMovementInput = isMoving || input.sqrMagnitude > 0.001f;
+            bool hasActionStateChange = !canMove || isRolling || isPreparingJump || isJumping || isLocked || isBlocking || isAttacking;
+
+            bool hasKeyInput = false;
+            if (Keyboard.current != null)
+            {
+                hasKeyInput = Keyboard.current.spaceKey.wasPressedThisFrame ||
+                              Keyboard.current.leftShiftKey.wasPressedThisFrame ||
+                              Keyboard.current.qKey.wasPressedThisFrame ||
+                              Keyboard.current.eKey.wasPressedThisFrame;
+            }
+
+            bool hasMouseInput = false;
+            if (Mouse.current != null)
+            {
+                hasMouseInput = Mouse.current.leftButton.wasPressedThisFrame ||
+                                Mouse.current.rightButton.wasPressedThisFrame ||
+                                Mouse.current.middleButton.wasPressedThisFrame;
+            }
+
+            if (hasMovementInput || hasActionStateChange || hasKeyInput || hasMouseInput)
+            {
+                CancelIdleAction();
+                return;
+            }
+
+            // Kiểm tra trạng thái Animator để biết khi nào clip kết thúc
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            bool backInLocomotion = stateInfo.IsName("Locomotion") && !animator.IsInTransition(0);
+            bool animFinished = !animator.IsInTransition(0) && stateInfo.normalizedTime >= 0.98f;
+
+            if (backInLocomotion || animFinished)
+            {
+                if (animFinished && !stateInfo.IsName("Locomotion"))
+                {
+                    animator.CrossFadeInFixedTime("Locomotion", 0.25f, 0);
+                }
+                isPlayingIdleAction = false;
+                idleTimer = 0f;
+                nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
+            }
+            return;
+        }
+
+        // Khi đứng yên hoàn toàn: đếm thời gian
+        if (isTrulyIdle)
+        {
+            idleTimer += Time.deltaTime;
+            if (idleTimer >= nextIdleActionDelay)
+            {
+                TriggerRandomIdleAction();
+            }
+        }
+        else
+        {
+            idleTimer = 0f;
+        }
+    }
+
+    private void TriggerRandomIdleAction()
+    {
+        idleTimer = 0f;
+        nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
+
+        if (idleActionStateNames == null || idleActionStateNames.Length == 0) return;
+
+        // Chọn ngẫu nhiên 1 hành động
+        int randomIndex = Random.Range(0, idleActionStateNames.Length);
+        string preferredName = idleActionStateNames[randomIndex];
+
+        // Tìm đúng tên State trong Animator (hỗ trợ cả trường hợp có hoặc không có dấu cách)
+        string resolvedName = ResolveIdleActionStateName(preferredName, randomIndex + 1);
+
+        animator.CrossFadeInFixedTime(resolvedName, 0.25f, 0);
+        isPlayingIdleAction = true;
+    }
+
+    private string ResolveIdleActionStateName(string preferredName, int actionNumber)
+    {
+        if (animator.HasState(0, Animator.StringToHash(preferredName)))
+        {
+            return preferredName;
+        }
+
+        // Các biến thể đặt tên phổ biến
+        string[] candidates = new string[]
+        {
+            $"Idle Action {actionNumber}",
+            $"IdleAction{actionNumber}",
+            $"Idle Action{actionNumber}",
+            "Idle Action" // fallback cho action 1
+        };
+
+        foreach (string candidate in candidates)
+        {
+            if (animator.HasState(0, Animator.StringToHash(candidate)))
+            {
+                return candidate;
+            }
+        }
+
+        return preferredName;
+    }
+
+    public void CancelIdleAction()
+    {
+        if (!isPlayingIdleAction) return;
+
+        isPlayingIdleAction = false;
+        idleTimer = 0f;
+        nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
+
+        // Chỉ CrossFade về Locomotion nếu không đang bị khóa bởi Jump hay Roll
+        if (animator != null && IsGrounded && canMove && !isRolling && !isPreparingJump)
+        {
+            animator.CrossFadeInFixedTime("Locomotion", 0.15f, 0);
+        }
+    }
 }

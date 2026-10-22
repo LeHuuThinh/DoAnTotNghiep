@@ -72,7 +72,7 @@ MonoBehaviour:
   staffAuraVfx: {fileID: 7155408594750781030}
   spellRadius: 2.8
   spellChargeDuration: 1.3
-  spellDamage: 35
+  spellDamage: 30
   obstacleLayerMask:
     serializedVersion: 2
     m_Bits: 1

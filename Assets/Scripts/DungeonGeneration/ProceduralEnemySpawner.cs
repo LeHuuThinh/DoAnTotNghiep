@@ -42,27 +42,37 @@ public class ProceduralEnemySpawner : MonoBehaviour
   public bool enableSpawning = true;
 
   [Header("Quy Mô Phòng & Số Cụm Quái (Squad Counts Per Room)")]
-  [Tooltip("Ngưỡng diện tích (số ô tile) để phòng được coi là Đại sảnh lớn (phòng lớn sẽ sinh 2 - 3 nhóm quái)")]
+  [Tooltip("Ngưỡng diện tích (số ô tile) để phòng được coi là Đại sảnh lớn")]
   public int largeRoomTileThreshold = 220;
 
   [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường")]
+  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
   public int minGroundSquadsStandard = 1;
-  [Range(1, 4)]
-  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường")]
-  public int maxGroundSquadsStandard = 2;
+  [Range(1, 3)]
+  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
+  public int maxGroundSquadsStandard = 1;
 
-  [Range(2, 4)]
+  [Range(1, 3)]
   [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng lớn")]
-  public int minGroundSquadsLarge = 2;
-  [Range(2, 5)]
+  public int minGroundSquadsLarge = 1;
+  [Range(1, 4)]
   [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng lớn")]
-  public int maxGroundSquadsLarge = 3;
+  public int maxGroundSquadsLarge = 2;
 
   [Header("Tầng 2 Gác Lửng (Mezzanine Floor)")]
-  [Range(0f, 1f)]
-  [Tooltip("Tỷ lệ xuất hiện 2 nhóm quái trên gác lửng tầng 2 (còn lại là 1 nhóm)")]
-  public float mezzanineTwoSquadsChance = 0.25f;
+  [Range(1, 2)]
+  [Tooltip("Số nhóm quái tối thiểu trên tầng 2 phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
+  public int minMezzanineSquadsStandard = 1;
+  [Range(1, 2)]
+  [Tooltip("Số nhóm quái tối đa trên tầng 2 phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
+  public int maxMezzanineSquadsStandard = 1;
+
+  [Range(1, 3)]
+  [Tooltip("Số nhóm quái tối thiểu trên tầng 2 phòng lớn")]
+  public int minMezzanineSquadsLarge = 1;
+  [Range(1, 3)]
+  [Tooltip("Số nhóm quái tối đa trên tầng 2 phòng lớn")]
+  public int maxMezzanineSquadsLarge = 2;
 
   [Header("Tỷ Lệ Kích Thước Nhóm (Squad Size Chances)")]
   [Range(0.05f, 0.5f)]
@@ -220,8 +230,8 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
     foreach (var room in data.roomDataList)
     {
-      // 1. Tuyệt đối không sinh quái tại Start Room và Boss Room
-      if (room == data.startRoom || room.type == RoomType.Start) continue;
+      // 1. Chỉ bỏ qua phòng Boss (dành riêng cho Boss Arena Ice Golem ở Task D-02)
+      // Phòng bắt đầu (data.startRoom / RoomType.Start) vẫn sinh quái bình thường để người chơi vừa bước vào hầm ngục là có quái giao chiến ngay!
       if (room == data.bossRoom || room.type == RoomType.Boss) continue;
 
       int roomSpawnedBefore = activeEnemies.Count;
@@ -242,10 +252,12 @@ public class ProceduralEnemySpawner : MonoBehaviour
           if (spawned > 0) totalSquads++;
         }
       }
-      // 3. PHÒNG GÁC LỬNG (Mezzanine): 1 - 2 nhóm dưới sàn trệt VÀ 1 - 2 nhóm trên gác lửng
-      else if (room.hasMezzanine || room.type == RoomType.Mezzanine)
+      else
       {
-        // 3A. Sàn trệt tầng 1: 1 - 2 nhóm (nếu phòng rất lớn thì 2 - 3 nhóm)
+        // 3. CÁC PHÒNG CHIẾN ĐẤU (Bao gồm phòng nối với phòng khởi đầu, phòng thường, phòng lớn, phòng gác lửng):
+        // 3A. Sàn trệt Tầng 1:
+        // - Phòng nhỏ & vừa: đúng 1 nhóm
+        // - Phòng lớn: 1 - 2 nhóm
         int groundSquadCount = isLargeRoom 
           ? Random.Range(minGroundSquadsLarge, maxGroundSquadsLarge + 1)
           : Random.Range(minGroundSquadsStandard, maxGroundSquadsStandard + 1);
@@ -257,27 +269,21 @@ public class ProceduralEnemySpawner : MonoBehaviour
           if (spawned > 0) totalSquads++;
         }
 
-        // 3B. Sàn gác lửng tầng 2: 1 - 2 nhóm (tỷ lệ 2 nhóm thấp hơn, mặc định 25%)
-        int mezzanineSquadCount = (Random.value < mezzanineTwoSquadsChance) ? 2 : 1;
-        for (int s = 0; s < mezzanineSquadCount; s++)
+        // 3B. Tầng 2 Gác Lửng (Nếu phòng có gác lửng):
+        // - Phòng nhỏ & vừa: đúng 1 nhóm
+        // - Phòng lớn: 1 - 2 nhóm
+        if (room.hasMezzanine || room.type == RoomType.Mezzanine)
         {
-          SquadSize size = RollSquadSize();
-          int spawned = SpawnSquad(room, true, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Mezzanine_Squad_{s + 1}");
-          if (spawned > 0) totalSquads++;
-        }
-      }
-      // 4. PHÒNG CHIẾN ĐẤU TIÊU CHUẨN (Normal Rooms): 1 - 2 nhóm (phòng thường), 2 - 3 nhóm (phòng rộng)
-      else
-      {
-        int groundSquadCount = isLargeRoom 
-          ? Random.Range(minGroundSquadsLarge, maxGroundSquadsLarge + 1)
-          : Random.Range(minGroundSquadsStandard, maxGroundSquadsStandard + 1);
+          int mezzanineSquadCount = isLargeRoom
+            ? Random.Range(minMezzanineSquadsLarge, maxMezzanineSquadsLarge + 1)
+            : Random.Range(minMezzanineSquadsStandard, maxMezzanineSquadsStandard + 1);
 
-        for (int s = 0; s < groundSquadCount; s++)
-        {
-          SquadSize size = RollSquadSize();
-          int spawned = SpawnSquad(room, false, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Squad_{s + 1}");
-          if (spawned > 0) totalSquads++;
+          for (int s = 0; s < mezzanineSquadCount; s++)
+          {
+            SquadSize size = RollSquadSize();
+            int spawned = SpawnSquad(room, true, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Mezzanine_Squad_{s + 1}");
+            if (spawned > 0) totalSquads++;
+          }
         }
       }
 
