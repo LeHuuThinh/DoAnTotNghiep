@@ -1,0 +1,5 @@
+Hello, we are the Kindle Tech community, dedicated to creating high-quality 3D assets for Mobile, PC, Console, and VR games. If you're interested in joining us, feel free to become a part of our Discord community!
+
+ Join us: https://discord.gg/VNThuJwtRm
+
+All our models are game-ready and optimized with a low-triangle count. They use the Standard Render Pipeline by default, but if you're using URP, you can easily upgrade the materials. For optimal performance, we recommend using single-material prefabs.

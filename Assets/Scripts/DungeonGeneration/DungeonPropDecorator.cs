@@ -240,11 +240,40 @@ public partial class DungeonPropDecorator : MonoBehaviour
   }
 
 #if UNITY_EDITOR
+  /// <summary>
+  /// Tự động tìm đường dẫn thư mục dungeon, hỗ trợ cả Assets/Prefabs/Dungeon và Assets/Enviro Prefabs/Dungeon
+  /// </summary>
+  private static string ResolveDungeonFolder(string subPath)
+  {
+    string newPath = $"Assets/Prefabs/Dungeon/{subPath}";
+    if (UnityEditor.AssetDatabase.IsValidFolder(newPath)) return newPath;
+
+    string oldPath = $"Assets/Enviro Prefabs/Dungeon/{subPath}";
+    if (UnityEditor.AssetDatabase.IsValidFolder(oldPath)) return oldPath;
+
+    string folderName = System.IO.Path.GetFileName(subPath);
+    string[] foundGuids = UnityEditor.AssetDatabase.FindAssets($"{folderName} t:Folder");
+    foreach (string g in foundGuids)
+    {
+      string p = UnityEditor.AssetDatabase.GUIDToAssetPath(g).Replace('\\', '/');
+      if (p.EndsWith(subPath) && UnityEditor.AssetDatabase.IsValidFolder(p))
+        return p;
+    }
+
+    return newPath;
+  }
+
   [ContextMenu("Tải lại toàn bộ Prefabs Trang trí")]
   public void LoadAllPrefabsFromProject()
   {
-    string folder = "Assets/Enviro Prefabs/Dungeon/DungeonPrefabs";
+    string folder = ResolveDungeonFolder("DungeonPrefabs");
     string[] guids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { folder });
+
+    if (guids == null || guids.Length == 0)
+    {
+      Debug.LogWarning($"<color=yellow>[DungeonPropDecorator]</color> Không tìm thấy prefabs nào trong thư mục: {folder}. Vui lòng kiểm tra lại đường dẫn Assets/Prefabs/Dungeon.");
+      return;
+    }
 
     wallTorchPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/torch_wall_lit.prefab");
     floorTorchPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/torch_lit.prefab");
@@ -283,26 +312,32 @@ public partial class DungeonPropDecorator : MonoBehaviour
     wallTemplatePrefabs.Clear();
     propTemplatePrefabs.Clear();
 
-    string wallTemplatesFolder = "Assets/Enviro Prefabs/Dungeon/Templates/Walls";
-    string[] wallGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { wallTemplatesFolder });
-    foreach (string guid in wallGuids)
+    string wallTemplatesFolder = ResolveDungeonFolder("Templates/Walls");
+    if (UnityEditor.AssetDatabase.IsValidFolder(wallTemplatesFolder))
     {
-      string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-      GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
-      if (prefab != null) wallTemplatePrefabs.Add(prefab);
+      string[] wallGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { wallTemplatesFolder });
+      foreach (string guid in wallGuids)
+      {
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+        GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (prefab != null) wallTemplatePrefabs.Add(prefab);
+      }
     }
 
-    string propTemplatesFolder = "Assets/Enviro Prefabs/Dungeon/Templates/Props";
-    string[] propGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { propTemplatesFolder });
-    foreach (string guid in propGuids)
+    string propTemplatesFolder = ResolveDungeonFolder("Templates/Props");
+    if (UnityEditor.AssetDatabase.IsValidFolder(propTemplatesFolder))
     {
-      string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-      GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
-      if (prefab != null) propTemplatePrefabs.Add(prefab);
+      string[] propGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { propTemplatesFolder });
+      foreach (string guid in propGuids)
+      {
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+        GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (prefab != null) propTemplatePrefabs.Add(prefab);
+      }
     }
 
     templateBoundsCache.Clear();
-    Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs thường, <b>{wallTemplatePrefabs.Count}</b> wall templates, <b>{propTemplatePrefabs.Count}</b> prop templates.");
+    Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs thường, <b>{wallTemplatePrefabs.Count}</b> wall templates, <b>{propTemplatePrefabs.Count}</b> prop templates từ '{folder}'.");
   }
 #endif
 

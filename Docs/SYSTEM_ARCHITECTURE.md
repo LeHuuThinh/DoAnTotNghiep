@@ -124,16 +124,31 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 ---
 
 ### D. Phân Hệ Tiến Trình RPG (RPG Progression & Economy)
-1. **Hub Ngôi Làng (`LandScene`):**
-   * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, đóng vai trò điểm Respawn sau khi tử trận trong Dungeon.
-   * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu nhặt từ Dungeon (xương quái, đá hầm ngục) và Vàng để cường hóa vũ khí, tăng chỉ số sát thương.
-   * **Cửa hàng (Merchant Shop):** Mua bán bình máu hồi phục, buff tạm thời.
+1. **Hệ Thống Rơi Đồ Thế Giới (Loot Drop & World Drops):**
+   * **Nguồn rơi đồ:** Quái vật chết (`Health.onDeath`), Thùng gỗ/hòm đập vỡ (`BreakableProp.cs` nhận đòn qua `IDamageable`), Rương kho báu mở (`ChestInteractable.cs`).
+   * **Hiệu ứng vật lý văng đồ (Arc Pop Physics):** Vật phẩm búng nảy theo hình vòng cung parabol nhẹ khi xuất hiện (`LootDropper.cs`), tránh đè dính chùm.
+   * **Vật phẩm thế giới (`WorldItemPickup.cs`):** Model 3D thu nhỏ, xoay lơ lửng, tia sáng hào quang nhẹ (Loot Beam/Glow) tương ứng theo độ hiếm.
+   * **Tương tác nhặt đồ:** Player lại gần trong bán kính 2m hiển thị Pickup Prompt UI (Icon + Tên + Phím `[F]`). Tiền Vàng hỗ trợ cơ chế tự động bay hút (Magnetic Auto-pickup) khi lại gần.
+   * **Thông báo nhặt đồ (`PickupNotificationFeed.cs`):** Xếp chồng mép trái màn hình, trượt mượt lên từ dưới (smooth slide up), mờ dần sau 2.5s.
+2. **Hệ Thống Túi Đồ 2 Cửa Sổ (Dual-Pane Inventory Screen - Phím Tab/I):**
+   * **Cửa sổ Trái (Character & Stats):**
+     * Khung trung tâm: Model 3D nhân vật thời gian thực qua Camera Sub-Preview + `RenderTexture` (xoay ngắm 360 độ).
+     * Ô trang bị: Vũ khí & Giáp hiển thị trang bị đang mặc.
+     * Bảng chỉ số người chơi: Sức tấn công (ATK), Máu (HP), Thể lực (Stamina), Phòng thủ (DEF).
+     * Nút góc dưới phải: Mở Modal **Cộng Điểm Tiềm Năng** (có badge thông báo khi có điểm dư).
+   * **Cửa sổ Phải (Kho Đồ & Thao Tác):**
+     * Tab phân loại: `Tất cả` | `Vũ khí` | `Giáp` | `Vật phẩm (Thuốc & Nguyên liệu)`.
+     * Lưới ô chứa đồ (Inventory Grid Slots): Icon, viền độ hiếm, số lượng stack (`xCount`).
+     * Thanh hiển thị số Vàng hiện có.
+     * Cửa sổ thông tin chi tiết: Tên, icon lớn, mô tả lore, stats cộng thêm + 2 nút tương tác **[Trang bị / Sử dụng]** và **[Bỏ]**.
+3. **Kinh Nghiệm, Cấp Độ & Điểm Tiềm Năng (`PlayerProgression.cs`):**
+   * Tiêu diệt quái nhận EXP -> Cập nhật thanh EXP. Đủ EXP -> Lên cấp.
+   * Thưởng Điểm tiềm năng (Attribute Points) để cộng vào: Máu tối đa (Max HP), Sức tấn công (ATK), Thể lực tối đa (Max Stamina).
+   * Có chế độ xem trước thay đổi chỉ số trước khi bấm "Xác Nhận".
+4. **Hub Ngôi Làng & Thợ Rèn (`LandScene`):**
+   * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
+   * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu (Đá cường hóa kiếm) và Vàng để nâng cấp vũ khí (+1, +2...), tăng sát thương chém và hiệu ứng visual.
    * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon.
-2. **Kinh Nghiệm & Cấp Độ (EXP & Stats Upgrading):**
-   * Tiêu diệt quái và boss nhận điểm EXP.
-   * Lên cấp nhận điểm tiềm năng (Attribute Points) để tăng: Máu tối đa (Max HP), Sức tấn công (Attack Damage), Thể lực (Stamina) hoặc Tốc độ di chuyển (Move Speed).
-3. **Túi Đồ & Vật Phẩm (Inventory & Loot System):**
-   * Phân loại vật phẩm: Trang bị (Vũ khí), Thuốc tiêu hao (Potions), Nguyên liệu chế tạo (Materials), Đơn vị tiền tệ (Gold).
 
 ---
 

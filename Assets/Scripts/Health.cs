@@ -41,9 +41,20 @@ public class Health : MonoBehaviour, IDamageable
       return;
     }
 
-    // 2. Nếu không parry thì trừ máu bình thường
-    currentHealth = Mathf.Max(0f, currentHealth - damage);
-    Debug.Log($"[Trúng đòn!] Mục tiêu dính {damage} sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
+    // 2. Tính giảm trừ sát thương từ Giáp trang bị (nếu là Player)
+    float actualDamage = damage;
+    if (CompareTag("Player") && InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      float defense = InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalDefenseBonus();
+      if (defense > 0f)
+      {
+        actualDamage = Mathf.Max(1f, actualDamage - defense);
+      }
+    }
+
+    // 3. Nếu không parry thì trừ máu bình thường
+    currentHealth = Mathf.Max(0f, currentHealth - actualDamage);
+    Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);

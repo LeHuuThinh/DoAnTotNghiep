@@ -68,28 +68,34 @@ public class DungeonRenderer : MonoBehaviour
   public void EnsurePrefabsAssigned()
   {
 #if UNITY_EDITOR
+    string folder = "Assets/Prefabs/Dungeon/DungeonPrefabs";
+    if (!UnityEditor.AssetDatabase.IsValidFolder(folder))
+    {
+      folder = "Assets/Enviro Prefabs/Dungeon/DungeonPrefabs";
+    }
+
     if (mezzanineFloorPrefab == null)
     {
-      mezzanineFloorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/floor_wood_small.prefab");
+      mezzanineFloorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/floor_wood_small.prefab");
       if (mezzanineFloorPrefab == null)
-        mezzanineFloorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/floor_wood_large.prefab");
+        mezzanineFloorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/floor_wood_large.prefab");
     }
     if (mezzanineEdgePrefab == null)
-      mezzanineEdgePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/floor_foundation_front.prefab");
+      mezzanineEdgePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/floor_foundation_front.prefab");
     if (mezzanineCornerPrefab == null)
-      mezzanineCornerPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/floor_foundation_corner.prefab");
+      mezzanineCornerPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/floor_foundation_corner.prefab");
     if (pillarPrefab == null)
-      pillarPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/pillar.prefab");
+      pillarPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/pillar.prefab");
     if (barrierPrefab == null)
     {
-      barrierPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/barrier.prefab");
+      barrierPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/barrier.prefab");
       if (barrierPrefab == null)
-        barrierPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/barrier_half.prefab");
+        barrierPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/barrier_half.prefab");
     }
     if (stairsPrefab == null)
-      stairsPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/stairs.prefab");
+      stairsPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/stairs.prefab");
     if (stairsFillPrefab == null)
-      stairsFillPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Enviro Prefabs/Dungeon/DungeonPrefabs/stairs_fill.prefab");
+      stairsFillPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/stairs_fill.prefab");
 #endif
   }
 

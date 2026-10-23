@@ -13,12 +13,19 @@
 
 ---
 
-## 2. Bảo Vệ Tài Nguyên Nhị Phân & Scene / Prefab
+## 2. Quy Định Thao Tác Với Scene, Prefab & Unity Editor
 
-- **CẤM TUYỆT ĐỐI** không sửa trực tiếp nội dung các file `.unity`, `.prefab`, `.asset`, `.mat`, `.controller` bằng công cụ text editor (edit_file / write_file).
-- Mọi logic cấu hình scene/prefab phức tạp nên được thực hiện thông qua Unity Editor hoặc các script Editor tự động (`[MenuItem]`).
-- Mọi thao tác cấu hình trong Unity Editor cần hướng dẫn người dùng thực hiện.
-- Đảm bảo giữ nguyên các file `.meta` tương ứng khi thêm mới/đổi tên file C#.
+- **CẤM TUYỆT ĐỐI sửa file nhị phân / YAML:** KHÔNG BAO GIỜ được dùng công cụ sửa file (`edit_file`, `write_file`) trên các file `.unity`, `.prefab`, `.asset`, `.mat`, `.controller` trong bất kỳ tình huống nào (kể cả khi người dùng yêu cầu gán component / reference).
+- **CẤM TUYỆT ĐỐI tự ý viết script tự động hóa Editor (`[MenuItem]`, Python, v.v.):** 
+  - KHÔNG TỰ TIỆN tạo các script Editor (thêm nút trên thanh Menu Bar/taskbar) hoặc script automation để tự động gán component / setup Scene.
+  - Chỉ được viết script Editor khi người dùng YÊU CẦU ĐÍCH DANH bằng câu lệnh: *"Hãy viết Editor script để làm việc này"*.
+- **BẮT BUỘC HƯỚNG DẪN THAO TÁC BẰNG TAY (UI Checklist):**
+  - Mọi thao tác cấu hình Scene, Prefab, gán Component, kéo thả Reference hoặc tinh chỉnh Inspector, AI **PHẢI** xuất ra hướng dẫn từng bước rõ ràng để người dùng tự thao tác trong giao diện Unity Editor.
+  - Định dạng hướng dẫn chuẩn:
+    1. **Bước 1 (Vị trí):** Mở Scene / Prefab nào?
+    2. **Bước 2 (Đối tượng):** Chọn GameObject nào trong cửa sổ Hierarchy?
+    3. **Bước 3 (Thao tác):** Kéo thả component / asset nào vào trường (field) nào trong Inspector? Giá trị số/enum cần chỉnh là gì?
+- **Đảm bảo giữ nguyên các file `.meta`:** Luôn giữ nguyên hoặc tạo đúng các file `.meta` tương ứng khi thêm mới/đổi tên file C#.
 
 ---
 
@@ -50,3 +57,4 @@
 1. **Luôn `read_file` trước khi sửa:** Kiểm tra mã nguồn thật trên ổ đĩa, không bao giờ đoán mò code từ lịch sử chat.
 2. **Khu biệt phạm vi (Feature-Scoped):** Chỉ can thiệp đúng file của tính năng được giao trong `Docs/ACTIVE_TASKS.md`.
 3. **Giữ nguyên Comment & Tooltip tiếng Việt:** Duy trì phong cách chú thích tiếng Việt chi tiết có sẵn trong codebase.
+4. **Ưu tiên checklist UI hơn script tự động:** Với mọi cài đặt Scene / Prefab / Inspector, luôn ưu tiên cung cấp checklist các bước thao tác rõ ràng để người dùng thao tác an toàn trên giao diện Unity.

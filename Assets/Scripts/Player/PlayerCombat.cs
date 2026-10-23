@@ -668,27 +668,32 @@ public class PlayerCombat : MonoBehaviour
     }
   }
 
+  // Bonus sát thương từ trang bị trong Kho đồ
+  private float AttackBonus => InfiniteLabyrinth.Inventory.InventoryManager.HasInstance 
+    ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalAttackBonus() 
+    : 0f;
+
   // =========================================================================
   // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG CHUẨN
   // =========================================================================
 
   // Đòn 1: Nhanh, mượt (Hitlag = 0.035s)
-  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage, attack1Knockback, 0.035f);
+  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage + AttackBonus, attack1Knockback, 0.035f);
 
   // Đòn 2: Nhanh, dứt khoát (Hitlag = 0.045s)
-  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage, attack2Knockback, 0.045f);
+  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage + AttackBonus, attack2Knockback, 0.045f);
 
   // Đòn 3: Đòn kết đầm tay (Hitlag = 0.08s)
-  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage, attack3Knockback, 0.08f);
+  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage + AttackBonus * 1.5f, attack3Knockback, 0.08f);
 
   // Charge Attack - Hit 1: Chém mở màn (Hitlag = 0.05s)
-  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.4f, 0f, 0.05f);
+  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + AttackBonus) * 0.4f, 0f, 0.05f);
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm (Hitlag = 0.095s)
-  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.6f, chargeAttackKnockback, 0.095f);
+  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + AttackBonus) * 0.6f, chargeAttackKnockback, 0.095f);
 
   // Counter Attack: Nhát chém trừng phạt cực nặng (Hitlag = 0.11s)
-  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage, counterAttackKnockback, 0.11f);
+  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage + AttackBonus * 2.0f, counterAttackKnockback, 0.11f);
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
   // Thêm vào PlayerCombat để PlayerController có thể đọc được

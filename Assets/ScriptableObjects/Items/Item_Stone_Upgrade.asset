@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Stone_Upgrade
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: mat_upgrade_stone
+  itemName: "\u0110\xE1 H\u1EA7m Ng\u1EE5c C\u01B0\u1EDDng H\xF3a"
+  description: "Kho\xE1ng th\u1EA1ch c\u1ED5 x\u01B0a t\u1ECFa ra \xE1nh s\xE1ng
+    ma thu\u1EADt. Nguy\xEAn li\u1EC7u ch\xEDnh \u0111\u1EC3 Th\u1EE3 R\xE8n trui
+    r\xE8n v\xE0 gia t\u0103ng s\xE1t th\u01B0\u01A1ng v\u0169 kh\xED."
+  icon: {fileID: 21300000, guid: 0812b073c9fb4f34abef407fbecfa972, type: 3}
+  itemType: 3
+  rarity: 1
+  maxStack: 99
+  goldValue: 50
+  bonusAttack: 0
+  bonusDefense: 0
+  bonusHealth: 0
+  bonusStamina: 0
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 0}

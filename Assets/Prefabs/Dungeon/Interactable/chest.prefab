@@ -1,0 +1,151 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &7658474201730725201
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      propertyPath: m_Name
+      value: chest
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1653017561591000999}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4181089307031745784}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1493439936490546834}
+  m_SourcePrefab: {fileID: 100100000, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+--- !u!1 &7388494268579055616 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6e27ae3d2490e7d46bb85ad3552efafa, type: 3}
+  m_PrefabInstance: {fileID: 7658474201730725201}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1653017561591000999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7388494268579055616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ae890a832d91b144a7638e413365248, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ChestInteractable
+  chestLid: {fileID: 0}
+  openEulerOffset: {x: -95, y: 0, z: 0}
+  openSpeed: 3.5
+  interactionRadius: 2.5
+  openSound: {fileID: 0}
+  openVfxPrefab: {fileID: 0}
+--- !u!65 &4181089307031745784
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7388494268579055616}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.6, y: 0.60000026, z: 1.245803}
+  m_Center: {x: 0, y: 0.29999977, z: 0.022901058}
+--- !u!114 &1493439936490546834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7388494268579055616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e913b3634397f2744bb0dc9ecaf9497a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.LootDropper
+  worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  lootTable:
+  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    dropChance: 0.75
+    minQuantity: 1
+    maxQuantity: 2
+  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    dropChance: 0.4
+    minQuantity: 1
+    maxQuantity: 3
+  - item: {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
+    dropChance: 0.35
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+    dropChance: 0.25
+    minQuantity: 1
+    maxQuantity: 1
+  goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
+  goldDropChance: 1
+  minGold: 15
+  maxGold: 40
+  minDropRadius: 0.8
+  maxDropRadius: 2
+  arcHeight: 1.3
+  arcDuration: 0.5
+  autoDropOnDeath: 1
