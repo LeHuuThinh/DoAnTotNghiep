@@ -140,27 +140,43 @@
   - `PickupNotificationFeed.cs` & `PickupNotificationItem.cs`: Danh sách thông báo xếp tầng góc mép trái màn hình. Khi nhặt vật phẩm / nhận vàng, dòng thông báo trượt mượt mà (Slide In từ trái qua), giữ hiển thị trong 2.5s rồi trôi nhẹ lên trên và mờ dần (Slide Up + Fade Out). Tự động dọn dẹp hàng đợi tối đa 5 thông báo.
   - Tích hợp MenuItem tự động hóa: `Infinite Labyrinth -> RPG -> 4. Tự Động Tạo Pickup UI & Notification Feed Trên Canvas` tự động dựng prefab dòng thông báo `PickupNotificationItem.prefab` và gắn sẵn toàn bộ các UI này lên Game Canvas.
 
-- [ ] **RPG-04: Giao diện Túi Đồ 2 Cửa Sổ (Dual-Pane Inventory Screen - Phím Tab / I)**
-  - Bật/tắt bằng phím `Tab` hoặc `I`, tự động giải phóng con trỏ chuột (`Cursor.lockState = None`) và ngắt tạm thời điều khiển di chuyển/tấn công.
-  - Tận dụng bộ sprite UI có sẵn trong `Assets/UI RPG` (`Panel_WithBorder`, `Slot_WithBorder_Base`, `Button_Base`...).
-  - **Cửa sổ Trái (Character & Stats):**
-    - Khung giữa: Model nhân vật 3D thời gian thực qua Camera Sub-Preview + `RenderTexture` (cho phép xoay ngắm bằng chuột).
-    - Ô trang bị: Ô Vũ khí (Weapon Slot) & Ô Giáp (Armor Slot) hiển thị trang bị đang mặc.
-    - Bảng chỉ số người chơi bên dưới: Sát thương (ATK), Máu (HP), Thể lực (Stamina), Phòng thủ (DEF).
-    - Nút góc dưới phải: Mở Modal **Cộng Điểm Tiềm Năng** (có badge nhấp nháy khi còn điểm chưa cộng).
-  - **Cửa sổ Phải (Túi đồ & Tương tác):**
-    - Thanh Tab phân loại bên trên: `Tất cả` | `Vũ khí` | `Giáp` | `Vật phẩm (Thuốc & NL)`.
-    - Lưới ô chứa đồ (Inventory Grid Slots): Hiển thị icon item, viền màu rarity, số lượng stack (`x5`).
-    - Thanh hiển thị Vàng ở cạnh dưới cùng.
-    - Cửa sổ/Popup Thông tin Vật phẩm khi click vào 1 slot: Tên, Icon lớn, Mô tả, Stats cộng thêm + 2 nút: **[Trang bị / Sử dụng]** và **[Bỏ (Drop)]**.
+- [x] **RPG-04: Giao diện Túi Đồ 2 Cửa Sổ (Dual-Pane Inventory Screen - Phím Tab)**
+  - Đóng / mở nhanh bằng phím `Tab` hoặc phím `Esc`, tự động giải phóng con trỏ chuột (`Cursor.lockState = None`), tạm dừng di chuyển người chơi và đóng băng xoay camera / combat trong lúc mở túi.
+  - Tối ưu hóa tránh xung đột: Khắc phục triệt để lỗi tự động khóa lại chuột trong `ThirdPersonCamera.cs` khi click giao diện UI, bổ sung hàm `EnsureEventSystem()` tự động tạo `EventSystem` + `InputSystemUIInputModule` chuẩn New Input System nếu scene bị thiếu.
+  - **Cửa sổ Trái (LeftPane - Character & Stats):**
+    - `CharacterPreviewController.cs`: Soi nhân vật 3D thời gian thực qua Camera Sub-Preview + `RenderTexture` (512x512). Camera chuyên dụng chỉ soi **Layer 3: Player** (tường, quái và hầm ngục hoàn toàn tàng hình), có đèn định hướng dịu đi kèm. Hỗ trợ **nhấp giữ chuột trái và kéo ngang (Drag) trên khung hình để xoay nhân vật 360 độ**. Tự động tắt camera khi đóng túi để tiết kiệm 100% GPU khi chơi.
+    - 2 Ô trang bị chuyên dụng (`EquipmentSlotUI.cs`): Ô Vũ khí (`WeaponSlot`) & Ô Giáp (`ArmorSlot`). Tự động hiển thị placeholder khi rỗng, đổi icon và tô màu nền `RarityBG` theo phẩm cấp món đồ khi trang bị.
+    - Bảng chỉ số thời gian thực (`PlayerStatsPanelUI.cs`): Tự động tính toán và hiển thị Tấn công (ATK + Bonus), Phòng thủ (DEF), Máu tối đa (Max HP + Bonus), Thể lực tối đa (Stamina + Bonus). Cập nhật tức thì khi thay đổi trang bị.
+    - Nút `BtnAttributePoints` ("Cộng Điểm Tiềm Năng") chuẩn bị sẵn sàng kết nối sang Task RPG-05.
+  - **Cửa sổ Phải (RightPane - Túi đồ & Tương tác):**
+    - Thanh Tab phân loại 4 danh mục: `BtnAll` (Tất cả), `BtnWeapon` (Vũ khí), `BtnArmor` (Giáp), `BtnItem` (Vật phẩm tiêu hao & nguyên liệu). Tự động lọc lưới 30 ô và bật/tắt viền góc `SelectHighlight` tương ứng, tách biệt hoàn toàn không đè màu `Color Tint` của Button.
+    - Lưới 30 ô túi đồ (`InventorySlotUI.cs`): Hiển thị icon vật phẩm (tự động ẩn an toàn nếu chưa có sprite), nền trắng `RarityBG` tô màu theo phẩm cấp Rarity, số lượng dồn stack (`xCount`), viền trang trí góc `SelectHighlight` khi được chọn.
+    - Hiển thị tiền vàng ở cạnh dưới (`NumberText` định dạng số có dấu phẩy phân cách).
+    - **Bảng Chi Tiết Vật Phẩm Động (`ItemDetailPopupUI.cs`):**
+      - Tự động định vị bám theo ô đồ vừa click (`PositionNearSlot`): Mặc định góc trên-trái của Popup nằm đúng tâm ô đồ; nếu ô ở hàng dưới cùng thì tự động lật thành góc dưới-trái để trồi lên trên; nếu ô ở sát mép phải thì tự động mở sang trái, đảm bảo 100% không bao giờ bị tràn khỏi màn hình.
+      - Click lại chính ô đang chọn -> tự động đóng Popup (Toggle thông minh).
+      - Tách riêng Text độ hiếm `ItemRarity` (tô màu theo phẩm cấp) và phân loại `ItemType`.
+      - Cụm 4 nút hành động: `BtnEquip` và `BtnUnequip` xếp đè cùng 1 vị trí (Trang bị hiện khi xem đồ trong túi, Tháo ra hiện khi xem đồ đang mặc trên người); `BtnUse` cho bình máu; `BtnDrop` vứt đồ ra sàn đất.
 
-- [ ] **RPG-05: Cấp độ, Kinh nghiệm & Cộng Điểm Tiềm Năng (`PlayerProgression.cs`)**
-  - Tiêu diệt quái vật nhận EXP -> Cập nhật thanh EXP trên HUD (`ExpBar_Fill.png`).
-  - Đủ EXP -> Lên cấp! Thưởng 2–3 Điểm Tiềm Năng (Attribute Points).
-  - Modal Phân phối Điểm Tiềm Năng (mở từ nút cửa sổ trái):
-    - Các hàng: `Sức Tấn Công (ATK)`, `Máu Tối Đa (Max HP)`, `Thể Lực (Max Stamina)`.
-    - Nút `+` và `-` tạm thời để tính toán trước chỉ số (Preview).
-    - Nút "Xác Nhận": Chính thức trừ điểm tiềm năng và áp dụng vĩnh viễn vào `Health.cs`, `PlayerStats.cs`, `PlayerCombat.cs`.
+- [x] **RPG-05: Cấp độ, Kinh nghiệm & Cộng Điểm Tiềm Năng (`PlayerProgression.cs`, `AttributeAllocationUI.cs`)**
+  - **Kiến trúc Cốt Lõi `PlayerProgression.cs` (Singleton / DontDestroyOnLoad):**
+    - Quản lý Level (mặc định 1, max 50), Kinh nghiệm EXP hiện tại và EXP cần lên cấp theo công thức tăng trưởng mượt mà: `baseExp * (level ^ expGrowthExponent)`.
+    - Thưởng Điểm tiềm năng (mặc định 3 điểm / cấp).
+    - Cấu hình chỉ số cộng thêm mỗi điểm: `attackPerPoint = 2f`, `healthPerPoint = 15f`, `staminaPerPoint = 10f`.
+    - Tự động đồng bộ và áp dụng chỉ số trực tiếp vào `Health.cs` (`BaseMaxHealth` + `SetBonusMaxHealth`), `PlayerStats.cs` (`BaseMaxStamina` + `SetBonusMaxStamina`) và `PlayerCombat.cs` (`TotalAttackBonus` cho toàn bộ combo chém, charge attack, counter attack).
+    - Quái vật chết (`EnemyAIBase.cs`) tự động thưởng EXP cho Player (`expReward = 25` EXP).
+  - **Thanh EXP Dạng Vòng Tròn Chữ C (`ExpRingFill` trên PlayerHUD):**
+    - Ánh xạ chính xác tỷ lệ EXP từ 0% đến 100% tương ứng dải `0.19f - 0.58f` trong `Image.fillAmount` theo đúng sprite chữ C đã test.
+    - Chạy mượt mà qua nội suy `Mathf.MoveTowards`.
+    - Tự động hiển thị và cập nhật cấp độ lên `LevelText` trên Avatar Badge.
+  - **Giao Diện Phân Bổ Điểm Tiềm Năng (`AttributeAllocationUI.cs`):**
+    - Mở / đóng mượt mà từ nút `BtnAttributePoints` ("Cộng Điểm") ở cửa sổ trái của Inventory Screen (hoặc phím `Esc`). Nút tự động hiển thị số điểm khả dụng dạng huy hiệu `(+X)`.
+    - 3 hàng thuộc tính: `Sức Tấn Công (ATK)`, `Máu Tối Đa (HP)`, `Thể Lực (Stamina)` gồm Icon placeholder, giá trị hiện tại và xem trước trực tiếp khi bấm `[+]` và `[-]` (`15 -> 18 (+3)`).
+    - Nút "Xác Nhận": Chính thức trừ điểm khả dụng và áp dụng vĩnh viễn vào nhân vật.
+    - Nút "Hủy Bỏ": Hoàn trả các điểm vừa chọn thử.
+    - **Nút Tẩy Điểm (Reset Stats):** Tiêu tốn X Vàng (mặc định `100 Vàng`, tùy chỉnh trong Inspector). Kiểm tra điều kiện vàng và điểm đã cộng: nếu đủ vàng thì trừ vàng, hoàn lại 100% điểm tiềm năng và xóa sạch chỉ số cộng thêm; nếu không đủ vàng hiển thị cảnh báo đỏ và khóa nút.
+  - **Công Cụ Tự Động Hóa Unity Editor (`ProgressionSetupEditor.cs`):**
+    - Thêm MenuItem: `Infinite Labyrinth -> RPG -> 5. Tự Động Thiết Lập EXP Ring & Bảng Điểm Tiềm Năng Trên Canvas` giúp tự động dựng trọn gói cây UI Modal trên Canvas, liên kết ExpRingFill và LevelText trên PlayerHUD chỉ với 1 click chuột.
 
 - [ ] **RPG-06: Thợ Rèn (Blacksmith) & Cường Hóa Trang Bị tại Làng**
   - Tương tác với NPC Thợ Rèn tại `LandScene` (bấm phím F mở UI Rèn).

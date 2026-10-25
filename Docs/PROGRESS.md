@@ -1,6 +1,6 @@
 # Nhật Ký Tiến Độ Dự Án (Progress Log) - Infinite Labyrinth
 
-> **Cập nhật ngày:** 22/10/2026  
+> **Cập nhật ngày:** 24/10/2026  
 > **Trạng thái đối chiếu:** Đã rà soát trực tiếp 100% mã nguồn C#, Prefabs, Scenes và Git Commits trên ổ đĩa.
 
 ---
@@ -34,24 +34,33 @@
 | **Boss** | Mô hình 3D & Bộ Animation Boss Ice Golem | ✅ Hoàn thành | `Boss_IceGolem.prefab`, Attack, Jump, Roar, Walk |
 | **World** | Chuyển cảnh Làng -> Dungeon (Cổng dịch chuyển) | ✅ Hoàn thành | `PortalController.cs` (Đè phím F) |
 | **World** | Môi trường Làng (`LandScene`) & NPC tuần tra | ✅ Hoàn thành | `LandScene.unity`, `NpcPatrol.cs` |
+| **RPG / Architecture** | Kiến trúc dữ liệu Vật phẩm & Kho đồ (RPG-01) | ✅ Hoàn thành | `ItemData.cs` (ScriptableObject), `InventorySlot.cs`, `InventoryManager.cs` (Singleton/DontDestroyOnLoad, 30 ô, Vàng, Equip/Unequip/Use/Drop, buff trực tiếp ATK vào `PlayerCombat.cs` và DEF vào `Health.cs`), bộ 8 vật phẩm mẫu qua `ItemDatabaseGenerator.cs` |
+| **RPG / Drops** | Rơi đồ vật lý từ Quái, Thùng vỡ & Rương (RPG-02) | ✅ Hoàn thành | `LootDropper.cs` quỹ đạo búng vòng cung Arc Pop; `BreakableProp.cs` nhận sát thương vỡ thùng; `ChestInteractable.cs` rương lật nắp tung đồ; `WorldItemPickup.cs` mô hình 3D xoay lơ lửng hào quang Rarity; Hệ thống 4 mô hình Vàng phân cấp theo số lượng (`coin`, `coin_stack_small/medium/large`) |
+| **RPG / Interaction** | UI Nhặt đồ & Feed thông báo mép trái (RPG-03) | ✅ Hoàn thành | `PickupPromptUI.cs` bảng nhặt đồ nổi (phím F, 2m, tên đổi màu Rarity, CanvasGroup fade); Hút Vàng tự động (Magnetic 4.2m bay vào ngực); `PickupNotificationFeed.cs` thông báo xếp tầng trượt mượt (Slide In/Up/Out) mép trái |
+| **RPG / UI** | Giao diện Túi Đồ 2 Cửa Sổ (RPG-04) | ✅ Hoàn thành | `InventoryUIController.cs` (phím Tab/Esc, khóa chuột/di chuyển/camera); 3D Character Preview xoay 360 độ qua RenderTexture (`CharacterPreviewController.cs`); 2 ô trang bị Weapon & Armor (`EquipmentSlotUI.cs`); Bảng chỉ số thời gian thực (`PlayerStatsPanelUI.cs`); Lưới 30 ô phân loại 4 Tab (`InventorySlotUI.cs`); Popup chi tiết bám theo ô thông minh (`ItemDetailPopupUI.cs`) tự lật góc chống tràn màn hình |
 
 ---
 
 ## 2. Các Tính Năng Đang Thiếu / Cần Thực Hiện Tiếp Theo (Theo Thứ Tự Ưu Tiên)
 
-1. **[Ưu tiên 1 - Task D-02] Cơ chế Boss Arena tại Boss Room:**
+1. **[ƯU TIÊN SỐ 1 HIỆN TẠI - Task RPG-05] Cấp Độ, Kinh Nghiệm (EXP) & Modal Phân Bổ Điểm Tiềm Năng:**
+   - Quản lý Level và thanh EXP trên HUD (`PlayerProgression.cs`).
+   - Tiêu diệt quái nhận EXP -> Cập nhật vòng EXP / thanh EXP.
+   - Khi đầy EXP -> Lên cấp! Tự hồi phục máu/thể lực và thưởng 3 Điểm Tiềm Năng (Attribute Points).
+   - Modal phân bổ điểm tiềm năng mở từ nút `BtnAttributePoints` trên cửa sổ Túi đồ: Cộng vào Sức mạnh (ATK), Sinh lực (Max HP), Thể lực (Max Stamina) với chế độ tăng/giảm xem trước (Preview) và nút [Xác Nhận].
+
+2. **[Ưu tiên 2 - Task RPG-06] Thợ Rèn (Blacksmith) & Cường Hóa Trang Bị:**
+   - Tương tác với NPC Thợ Rèn tại `LandScene` (bấm phím F mở UI Rèn đồ).
+   - Tiêu tốn Vàng và Đá cường hóa để nâng cấp bậc kiếm (+1, +2...), tăng mạnh sát thương chém và hiệu ứng vung kiếm.
+
+3. **[Ưu tiên 3 - Task D-02] Cơ chế Boss Arena tại Boss Room:**
    - Đặt `Boss_IceGolem.prefab` tại trung tâm phòng Boss (`data.bossRoom`).
    - Cơ chế Cửa chặn (Fog Gate / Iron Gate): Tự động đóng cửa khi Player bước vào, hạ gục Boss thì mở cửa và kích hoạt Portal chiến thắng.
 
-2. **[Ưu tiên 2 - Task GM-01 -> GM-03] Hệ thống Day & Floor Loop (`DayManager` / `GameManager`):**
+4. **[Ưu tiên 4 - Task GM-01 -> GM-03] Hệ thống Day & Floor Loop (`DayManager` / `GameManager`):**
    - Quản lý biến tĩnh toàn cục `CurrentDay` (Day 1, Day 2...), `CurrentFloor` (Floor 1, Floor 2...).
    - Cơ chế Chết trong Dungeon -> Tăng Day + 1, Respawn tại Chuông Làng trong `LandScene`.
    - Cơ chế Thắng Boss -> Lựa chọn Về Làng (cất đồ, qua Day mới) hoặc Xuống Tầng Kế Tiếp (Floor + 1).
-
-4. **[Ưu tiên 4 - Task RPG-01 -> RPG-03] Kinh Tế, Loot & Inventory:**
-   - Đập thùng gỗ và tiêu diệt quái rơi Vàng / Nguyên liệu / Bình máu.
-   - Giao diện Túi đồ (Inventory UI - phím Tab/I).
-   - NPC Thợ rèn tại Làng (Blacksmith UI) tiêu Vàng và Đá cường hóa để nâng cấp sát thương kiếm.
 
 5. **[Ưu tiên 5 - Task ML-01 -> ML-03] Trùm Học Máy (Boss ML-Agents):**
    - Tích hợp package `com.unity.ml-agents`.

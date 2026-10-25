@@ -19,7 +19,7 @@ MonoBehaviour:
     l\u1EF1c)."
   icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
   itemType: 0
-  rarity: 3
+  rarity: 4
   maxStack: 1
   goldValue: 500
   bonusAttack: 55

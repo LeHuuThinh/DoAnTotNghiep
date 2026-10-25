@@ -18,7 +18,7 @@ MonoBehaviour:
     ki\xEAn c\u1ED1 d\u01B0\u1EDBi \u0111\xE1y h\u1EA7m ng\u1EE5c (+16 S\xE1t th\u01B0\u01A1ng)."
   icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
   itemType: 0
-  rarity: 0
+  rarity: 1
   maxStack: 1
   goldValue: 75
   bonusAttack: 16

@@ -19,7 +19,7 @@ MonoBehaviour:
     r\xE8n v\xE0 gia t\u0103ng s\xE1t th\u01B0\u01A1ng v\u0169 kh\xED."
   icon: {fileID: 21300000, guid: 0812b073c9fb4f34abef407fbecfa972, type: 3}
   itemType: 3
-  rarity: 1
+  rarity: 2
   maxStack: 99
   goldValue: 50
   bonusAttack: 0

@@ -105,8 +105,8 @@ namespace InfiniteLabyrinth.UI
 
       if (itemNameText != null)
       {
-        itemNameText.text = item.ItemName;
-        itemNameText.color = rarityColor;
+        itemNameText.color = Color.white;
+        itemNameText.text = item.Rarity.FormatWithGradient(item.ItemName);
       }
 
       if (quantityText != null)

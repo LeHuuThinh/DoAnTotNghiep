@@ -83,7 +83,7 @@ namespace InfiniteLabyrinth.Editor
       // 6. Kiếm Hắc Thiết (Common)
       CreateOrUpdateItem("Item_Sword_DarkIron", "weapon_sword_darkiron", "Kiếm Hắc Thiết",
         "Được đúc từ quặng sắt đen kiên cố dưới đáy hầm ngục (+16 Sát thương).",
-        swordIcon, ItemType.Weapon, ItemRarity.Common, maxStack: 1, goldValue: 75,
+        swordIcon, ItemType.Weapon, ItemRarity.Uncommon, maxStack: 1, goldValue: 75,
         bonusAtk: 16f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: darkIronSwordPrefab != null ? darkIronSwordPrefab : fallbackSword);

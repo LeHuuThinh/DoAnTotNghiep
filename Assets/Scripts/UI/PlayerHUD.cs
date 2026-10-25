@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using InfiniteLabyrinth.Progression;
 
 /// <summary>
 /// Quản lý giao diện HUD của Player (Thanh Máu Souls-like có Ghost bar, Thanh Thể Lực, 
-/// Cụm Ngôi Sao Năng Lượng Kỹ Năng và Avatar Chân Dung).
+/// Cụm Ngôi Sao Năng Lượng Kỹ Năng, Exp Ring C-shaped và Level Badge).
 /// Gắn script này trực tiếp lên GameObject "PlayerHUD" trong Canvas.
 /// </summary>
 public class PlayerHUD : MonoBehaviour
@@ -38,6 +40,18 @@ public class PlayerHUD : MonoBehaviour
   [Tooltip("Tốc độ nạp đầy mượt mà của từng ngôi sao")]
   [SerializeField] private float starFillSmoothSpeed = 10f;
 
+  [Header("=== EXP RING & LEVEL (TIẾN TRÌNH RPG-05) ===")]
+  [Tooltip("Thanh EXP dạng vòng tròn/chữ C (ExpRingFill)")]
+  [SerializeField] private Image expRingFill;
+  [Tooltip("Giá trị Fill Amount ứng với 0% cây EXP (Sprite chữ C)")]
+  [SerializeField] private float minExpFill = 0.19f;
+  [Tooltip("Giá trị Fill Amount ứng với 100% cây EXP (Sprite chữ C)")]
+  [SerializeField] private float maxExpFill = 0.58f;
+  [Tooltip("Tốc độ chuyển động mượt mà của thanh EXP")]
+  [SerializeField] private float expSmoothSpeed = 2.0f;
+  [Tooltip("Text hiển thị Cấp độ nhân vật (LevelText)")]
+  [SerializeField] private TextMeshProUGUI levelText;
+
   [Header("=== AVATAR (TÙY CHỌN) ===")]
   [SerializeField] private Image avatarPortrait;
 
@@ -45,6 +59,11 @@ public class PlayerHUD : MonoBehaviour
   private float ghostDelayTimer = 0f;
   private float targetHealthPct = 1f;
   private float targetStaminaPct = 1f;
+
+  // Trạng thái EXP
+  private float targetExpPct = 0f;
+  private float targetExpFillAmount = 0.19f;
+  private bool hasSubscribedProgression = false;
 
   private void Reset()
   {
@@ -64,11 +83,13 @@ public class PlayerHUD : MonoBehaviour
   private void OnEnable()
   {
     SubscribeEvents();
+    SubscribeProgressionEvents();
   }
 
   private void OnDisable()
   {
     UnsubscribeEvents();
+    UnsubscribeProgressionEvents();
   }
 
   private void Update()
@@ -79,9 +100,15 @@ public class PlayerHUD : MonoBehaviour
       FindAndInitializePlayer();
     }
 
+    if (!hasSubscribedProgression && PlayerProgression.HasInstance)
+    {
+      SubscribeProgressionEvents();
+    }
+
     UpdateHealthBarVisual();
     UpdateStaminaBarVisual();
     UpdateSpiritStarsVisual();
+    UpdateExpBarVisual();
   }
 
   // =========================================================================
@@ -114,6 +141,7 @@ public class PlayerHUD : MonoBehaviour
     if (avatarPortrait == null)
     {
       Transform t = transform.Find("Avatar_Container/Avatar_Mask/Avatar_Portrait");
+      if (t == null) t = transform.Find("AvatarContainer/Avatar_Portrait");
       if (t != null) avatarPortrait = t.GetComponent<Image>();
     }
 
@@ -140,6 +168,22 @@ public class PlayerHUD : MonoBehaviour
           spiritStarFills = starList.ToArray();
         }
       }
+    }
+
+    // 5. Tìm ExpRingFill và LevelText (RPG-05)
+    if (expRingFill == null)
+    {
+      Transform t = transform.Find("AvatarContainer/ExpRingMask/ExpRingFill");
+      if (t == null) t = transform.Find("Avatar_Container/ExpRingMask/ExpRingFill");
+      if (t == null) t = transform.Find("AvatarContainer/ExpRingFill");
+      if (t != null) expRingFill = t.GetComponent<Image>();
+    }
+
+    if (levelText == null)
+    {
+      Transform t = transform.Find("AvatarContainer/LevelBadge/LevelText");
+      if (t == null) t = transform.Find("Avatar_Container/LevelBadge/LevelText");
+      if (t != null) levelText = t.GetComponent<TextMeshProUGUI>();
     }
   }
 
@@ -198,6 +242,31 @@ public class PlayerHUD : MonoBehaviour
     }
   }
 
+  private void SubscribeProgressionEvents()
+  {
+    if (PlayerProgression.HasInstance)
+    {
+      PlayerProgression.Instance.OnExpChanged -= HandleExpChanged;
+      PlayerProgression.Instance.OnExpChanged += HandleExpChanged;
+
+      PlayerProgression.Instance.OnLevelUp -= HandleLevelUp;
+      PlayerProgression.Instance.OnLevelUp += HandleLevelUp;
+
+      hasSubscribedProgression = true;
+      InitExpVisualsImmediate();
+    }
+  }
+
+  private void UnsubscribeProgressionEvents()
+  {
+    if (PlayerProgression.HasInstance)
+    {
+      PlayerProgression.Instance.OnExpChanged -= HandleExpChanged;
+      PlayerProgression.Instance.OnLevelUp -= HandleLevelUp;
+      hasSubscribedProgression = false;
+    }
+  }
+
   private void InitVisualsImmediate()
   {
     if (playerHealth != null && playerHealth.MaxHealth > 0f)
@@ -214,6 +283,66 @@ public class PlayerHUD : MonoBehaviour
     }
 
     UpdateSpiritStarsVisual(instant: true);
+    InitExpVisualsImmediate();
+  }
+
+  // =========================================================================
+  // XỬ LÝ EXP RING (SPRITE CHỮ C: FILL AMOUNT 0.19 - 0.58) & CẤP ĐỘ
+  // =========================================================================
+  private void InitExpVisualsImmediate()
+  {
+    if (PlayerProgression.HasInstance)
+    {
+      targetExpPct = PlayerProgression.Instance.ExpNormalized;
+      targetExpFillAmount = Mathf.Lerp(minExpFill, maxExpFill, targetExpPct);
+      if (expRingFill != null)
+      {
+        expRingFill.fillAmount = targetExpFillAmount;
+      }
+      if (levelText != null)
+      {
+        levelText.text = PlayerProgression.Instance.CurrentLevel.ToString();
+      }
+    }
+    else
+    {
+      if (expRingFill != null) expRingFill.fillAmount = minExpFill;
+      if (levelText != null) levelText.text = "1";
+    }
+  }
+
+  private void HandleExpChanged(int current, int required)
+  {
+    if (required <= 0) return;
+    targetExpPct = Mathf.Clamp01((float)current / required);
+    targetExpFillAmount = Mathf.Lerp(minExpFill, maxExpFill, targetExpPct);
+  }
+
+  private void HandleLevelUp(int newLevel)
+  {
+    if (levelText != null)
+    {
+      levelText.text = newLevel.ToString();
+    }
+
+    if (PlayerProgression.HasInstance)
+    {
+      HandleExpChanged(PlayerProgression.Instance.CurrentExp, PlayerProgression.Instance.ExpToNextLevel);
+    }
+  }
+
+  private void UpdateExpBarVisual()
+  {
+    if (expRingFill == null) return;
+
+    if (Mathf.Abs(expRingFill.fillAmount - targetExpFillAmount) > 0.0005f)
+    {
+      expRingFill.fillAmount = Mathf.MoveTowards(
+          expRingFill.fillAmount,
+          targetExpFillAmount,
+          expSmoothSpeed * Time.deltaTime
+      );
+    }
   }
 
   // =========================================================================

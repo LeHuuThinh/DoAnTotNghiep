@@ -68,6 +68,7 @@ MonoBehaviour:
   patrolRadius: 8
   patrolWaitTime: 5
   attackAnimationSpeed: 1.7
+  expReward: 10
   weaponHitbox: {fileID: 594708534279544853}
   attackDamage: 10
   attackKnockback: 0.5

@@ -551,7 +551,10 @@ public class PlayerController : MonoBehaviour
         if (!enableIdleActions || animator == null) return;
 
         bool isAttacking = playerCombat != null && playerCombat.IsAttacking;
-        bool isTrulyIdle = IsGrounded && !isMoving && canMove && !isRolling 
+        bool isInventoryOpen = InfiniteLabyrinth.UI.InventoryUIController.IsOpen;
+
+        // Cho phép đếm giờ Idle ngay cả khi canMove = false do đang mở Inventory UI
+        bool isTrulyIdle = IsGrounded && !isMoving && (canMove || isInventoryOpen) && !isRolling 
                            && !isPreparingJump && !isJumping && !isLocked && !isBlocking && !isAttacking
                            && landingLockTimer <= 0f;
 
@@ -560,10 +563,10 @@ public class PlayerController : MonoBehaviour
         {
             // Kiểm tra xem có bất kỳ input hoặc thay đổi trạng thái nào từ người chơi không
             bool hasMovementInput = isMoving || input.sqrMagnitude > 0.001f;
-            bool hasActionStateChange = !canMove || isRolling || isPreparingJump || isJumping || isLocked || isBlocking || isAttacking;
+            bool hasActionStateChange = (!canMove && !isInventoryOpen) || isRolling || isPreparingJump || isJumping || isLocked || isBlocking || isAttacking;
 
             bool hasKeyInput = false;
-            if (Keyboard.current != null)
+            if (!isInventoryOpen && Keyboard.current != null)
             {
                 hasKeyInput = Keyboard.current.spaceKey.wasPressedThisFrame ||
                               Keyboard.current.leftShiftKey.wasPressedThisFrame ||
@@ -571,8 +574,9 @@ public class PlayerController : MonoBehaviour
                               Keyboard.current.eKey.wasPressedThisFrame;
             }
 
+            // Chỉ nhận chuột để ngắt Idle Action khi KHÔNG mở Inventory (khi mở Inventory, chuột dùng để click UI và xoay model 3D)
             bool hasMouseInput = false;
-            if (Mouse.current != null)
+            if (!isInventoryOpen && Mouse.current != null)
             {
                 hasMouseInput = Mouse.current.leftButton.wasPressedThisFrame ||
                                 Mouse.current.rightButton.wasPressedThisFrame ||
@@ -671,8 +675,9 @@ public class PlayerController : MonoBehaviour
         idleTimer = 0f;
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
 
+        bool isInventoryOpen = InfiniteLabyrinth.UI.InventoryUIController.IsOpen;
         // Chỉ CrossFade về Locomotion nếu không đang bị khóa bởi Jump hay Roll
-        if (animator != null && IsGrounded && canMove && !isRolling && !isPreparingJump)
+        if (animator != null && IsGrounded && (canMove || isInventoryOpen) && !isRolling && !isPreparingJump)
         {
             animator.CrossFadeInFixedTime("Locomotion", 0.15f, 0);
         }

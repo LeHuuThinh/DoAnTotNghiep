@@ -68,6 +68,7 @@ MonoBehaviour:
   patrolRadius: 8
   patrolWaitTime: 3
   attackAnimationSpeed: 1
+  expReward: 15
   groundSpellPrefab: {fileID: 4330468513817889461, guid: 2b8670c3a0c493c4582c812ae2294f2c, type: 3}
   staffTipPoint: {fileID: 7695429859635390306}
   staffAuraVfx: {fileID: 7155408594750781030}

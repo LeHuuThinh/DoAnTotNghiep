@@ -49,6 +49,12 @@ public abstract class EnemyAIBase : MonoBehaviour
   [Tooltip("Tốc độ animation đòn đánh (kết hợp với Multiplier 'AttackSpeedMultiplier' trong Animator)")]
   [SerializeField] protected float attackAnimationSpeed = 1.0f;
 
+  [Header("Progression / Reward")]
+  [Tooltip("Lượng EXP thưởng cho Player khi quái vật bị tiêu diệt")]
+  [SerializeField] protected int expReward = 25;
+
+  public int ExpReward => expReward;
+
   // Runtime State
   protected NavMeshAgent agent;
   protected Health health;
@@ -194,6 +200,12 @@ public abstract class EnemyAIBase : MonoBehaviour
     if (DungeonEnemyOptimizer.Instance != null)
     {
       DungeonEnemyOptimizer.Instance.UnregisterEnemy(this);
+    }
+
+    // Thưởng EXP cho Player khi quái vật bị tiêu diệt
+    if (expReward > 0 && InfiniteLabyrinth.Progression.PlayerProgression.HasInstance)
+    {
+      InfiniteLabyrinth.Progression.PlayerProgression.Instance.GainExp(expReward);
     }
   }
 

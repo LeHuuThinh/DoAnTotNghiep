@@ -62,6 +62,7 @@ public class PlayerStats : MonoBehaviour
 
   // Public Properties
   public float MaxStamina => maxStamina;
+  public float BaseMaxStamina => baseMaxStamina > 0f ? baseMaxStamina : maxStamina;
   public float CurrentStamina => currentStamina;
   public float MaxSpirit => maxSpirit;
   public float CurrentSpirit => currentSpirit;
@@ -80,10 +81,38 @@ public class PlayerStats : MonoBehaviour
   public float SpiritGainOnCounterHit => spiritGainOnCounterHit;
   public float SpiritGainOnParrySuccess => spiritGainOnParrySuccess;
 
+  private float baseMaxStamina = -1f;
+
   private void Awake()
   {
+    baseMaxStamina = maxStamina;
     currentStamina = maxStamina;
     currentSpirit = Mathf.Clamp(currentSpirit, 0f, maxSpirit);
+  }
+
+  /// <summary>
+  /// Cập nhật Thể lực tối đa kết hợp từ Điểm tiềm năng (Progression) và Trang bị (Equipment).
+  /// </summary>
+  public void SetBonusMaxStamina(float progressionBonus, float equipmentBonus = 0f)
+  {
+    if (baseMaxStamina < 0f)
+    {
+      baseMaxStamina = maxStamina;
+    }
+
+    float oldMax = maxStamina;
+    maxStamina = Mathf.Max(10f, baseMaxStamina + progressionBonus + equipmentBonus);
+
+    if (maxStamina > oldMax)
+    {
+      currentStamina += (maxStamina - oldMax);
+    }
+    else
+    {
+      currentStamina = Mathf.Min(currentStamina, maxStamina);
+    }
+
+    onStaminaChanged?.Invoke(currentStamina, maxStamina);
   }
 
   private void Start()

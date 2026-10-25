@@ -100,6 +100,7 @@ MonoBehaviour:
   patrolRadius: 8
   patrolWaitTime: 5
   attackAnimationSpeed: 1.2
+  expReward: 12
   arrowPrefab: {fileID: 6525344702486616341, guid: e8576ad61e13cd9489e796fe33f4c2fc, type: 3}
   arrowSpawnPoint: {fileID: 376090160507323268}
   arrowSpeed: 30
