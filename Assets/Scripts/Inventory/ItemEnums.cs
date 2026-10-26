@@ -54,12 +54,12 @@ namespace InfiniteLabyrinth.Inventory
     {
       switch (rarity)
       {
-        case ItemRarity.Common: return "Thường";
-        case ItemRarity.Uncommon: return "Đặc Biệt";
-        case ItemRarity.Rare: return "Hiếm";
-        case ItemRarity.Epic: return "Sử Thi";
-        case ItemRarity.Legendary: return "Huyền Thoại";
-        default: return "Vô Danh";
+        case ItemRarity.Common: return "Common";
+        case ItemRarity.Uncommon: return "Uncommon";
+        case ItemRarity.Rare: return "Rare";
+        case ItemRarity.Epic: return "Epic";
+        case ItemRarity.Legendary: return "Legendary";
+        default: return "Unknown";
       }
     }
 

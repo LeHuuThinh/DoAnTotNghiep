@@ -65,10 +65,16 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ `ghostShrinkDelay = 0.5s` khi dính đòn.
   * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
   * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
-* **Thanh chịu đòn Poise (`PlayerFeedback.cs`, `EnemyFeedback.cs`):**
-  * Cả người chơi và quái vật đều sở hữu thanh Poise ẩn.
-  * Khi bị đánh liên tục hoặc dính đòn nặng, Poise tụt về 0 sẽ gây ra trạng thái **Stagger (Khựng đòn / Thất thế)**.
-  * Tự động hồi phục sau một khoảng trễ (`poiseRecoveryDelay = 2.5s`).
+* **Thanh chịu đòn Poise (`PlayerFeedback.cs`, `EnemyFeedback.cs`, `PlayerCombat.cs`):**
+  * Cả người chơi và quái vật đều sở hữu thanh Poise ẩn (`maxPoise` = 100 cho Warrior/Minion, 50 cho Rogue/Mage).
+  * **Cấu hình Sát thương Poise độc lập (`PlayerCombat.cs`):** Mỗi đòn đánh của Player sở hữu lượng sát thương Poise riêng đưa ra Inspector (`attack1PoiseDamage = 25`, `attack2PoiseDamage = 25`, `attack3PoiseDamage = 55`, `chargeHit1PoiseDamage = 35`, `chargeHit2PoiseDamage = 80`, `counterAttackPoiseDamage = 120`).
+  * **Super Armor khi còn Poise:** Khi `currentPoise > 0f`, quái vật giữ vững thế đứng chịu đòn, nháy trắng nhận sát thương nhưng KHÔNG bị giật hoạt ảnh `GetHit` và không bị ngắt chiêu (Warrior/Minion đứng vững 2 hit đầu, Rogue/Mage đứng vững 1 hit đầu).
+  * **Vỡ thế (Stagger / Poise Break):** Khi Poise tụt về 0 (`currentPoise <= 0f`), quái vật mới bị vỡ thế: ngắt đòn đánh đang thi triển, kích hoạt animation `GetHit`, bị đẩy lùi (knockback), và hồi phục lại `maxPoise`.
+  * Tự động hồi phục sau một khoảng trễ không bị đánh (`poiseRecoveryDelay = 2.5s`).
+* **Hệ thống Phản hồi Đòn đánh & Khựng Đòn (Hit Feedback & Hitlag - `EnemyFeedback.cs`, `WeaponHitbox.cs`, `PlayerCombat.cs`):**
+  * **Nháy trắng phát quang (Solid White Flash):** Sử dụng `MaterialPropertyBlock` ghi đè `Texture2D.whiteTexture` và kích hoạt `_EMISSION` (cường độ 2.5) trực tiếp trên GPU (0% clone material, giữ nguyên 100% SRP Batcher).
+  * **Đòn kết liễu (Lethal Hit Sequence):** Khi dính đòn tử thủ, quái lập tức nháy trắng toàn thân và giữ màu trắng xuyên suốt thời gian hitlag kết liễu (`lethalFlashDuration = 0.15s` realtime), sau đó trả về màu texture ban đầu rồi mới kích hoạt animation ngã chết (`Die`).
+  * **Hitlag Souls-like:** `WeaponHitbox` làm chậm thế giới xuống còn 5% (`Time.timeScale = 0.05f`) trong thời gian unscaled realtime. Toàn bộ giá trị hitlag từng đòn chém (`attack1Hitlag: 0.035s`, `attack2Hitlag: 0.045s`, `attack3Hitlag: 0.08s`, `chargeHit1Hitlag: 0.05s`, `chargeHit2Hitlag: 0.095s`, `counterAttackHitlag: 0.11s`) và đòn kết liễu (`lethalHitlag: 0.18s`) được đưa ra Inspector `PlayerCombat.cs`.
 * **Hệ thống Tài nguyên Player (`PlayerStats.cs`):**
   * **Máu (Health):** Gắn liền với `Health.cs` và interface `IDamageable.cs`.
   * **Thể lực (Stamina):** Max 100. Tiêu hao khi Lướt/Lăn né (Roll: 20), Chạy nhanh (Sprint: 15/s), Chém thường (15), Chém gồng (30), Giơ thế đỡ hụt (20). Tự động hồi phục sau 0.85s trễ.

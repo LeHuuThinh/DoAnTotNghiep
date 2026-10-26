@@ -19,10 +19,16 @@ namespace InfiniteLabyrinth.Inventory
     [SerializeField] private Transform visualTransform;
     [Tooltip("Đèn hào quang phát sáng theo độ hiếm")]
     [SerializeField] private Light rarityLight;
+    [Tooltip("Bán kính chiếu sáng của đèn (mét) - đã tinh chỉnh nhỏ gọn tinh tế")]
+    [SerializeField] private float lightRange = 1.4f;
+    [Tooltip("Cường độ phát sáng thông thường")]
+    [SerializeField] private float lightIntensity = 1.5f;
+    [Tooltip("Cường độ phát sáng cho đồ Legendary")]
+    [SerializeField] private float legendaryLightIntensity = 2.2f;
     [Tooltip("Tốc độ xoay (độ / giây)")]
     [SerializeField] private float rotationSpeed = 60f;
     [Tooltip("Biên độ nhấp nhô bồng bềnh")]
-    [SerializeField] private float bobAmplitude = 0.08f;
+    [SerializeField] private float bobAmplitude = 0.05f;
     [Tooltip("Tần số nhấp nhô")]
     [SerializeField] private float bobFrequency = 2.5f;
 
@@ -129,12 +135,12 @@ namespace InfiniteLabyrinth.Inventory
 
       Color rarityColor = itemData.Rarity.GetRarityColor();
 
-      // Cập nhật màu đèn hào quang theo phẩm cấp
+      // Cập nhật màu và kích thước đèn hào quang theo phẩm cấp (thu nhỏ gọn gàng, không lóa mắt)
       if (rarityLight != null)
       {
         rarityLight.color = rarityColor;
-        rarityLight.range = 3.0f;
-        rarityLight.intensity = (itemData.Rarity == ItemRarity.Legendary) ? 4.0f : 2.5f;
+        rarityLight.range = lightRange;
+        rarityLight.intensity = (itemData.Rarity == ItemRarity.Legendary) ? legendaryLightIntensity : lightIntensity;
       }
     }
 
@@ -156,6 +162,43 @@ namespace InfiniteLabyrinth.Inventory
 
         transform.position = currentPos;
         yield return null;
+      }
+
+      // Khảo sát kiểm tra mặt sàn thực tế tại điểm rơi để chống tuyệt đối hiện tượng lơ lửng trên không
+      int groundLayerMask = (1 << LayerMask.NameToLayer("NavMessFloor")) | (1 << LayerMask.NameToLayer("Default"));
+      int terrainLayer = LayerMask.NameToLayer("Terrain");
+      if (terrainLayer >= 0) groundLayerMask |= (1 << terrainLayer);
+
+      int playerLayer = LayerMask.NameToLayer("Player");
+      int enemyLayer = LayerMask.NameToLayer("Enemy");
+      int damageableLayer = LayerMask.NameToLayer("Damageable");
+      int itemLayer = LayerMask.NameToLayer("Item");
+      if (playerLayer >= 0) groundLayerMask &= ~(1 << playerLayer);
+      if (enemyLayer >= 0) groundLayerMask &= ~(1 << enemyLayer);
+      if (damageableLayer >= 0) groundLayerMask &= ~(1 << damageableLayer);
+      if (itemLayer >= 0) groundLayerMask &= ~(1 << itemLayer);
+
+      RaycastHit[] hits = Physics.RaycastAll(targetPos + Vector3.up * 0.6f, Vector3.down, 1.8f, groundLayerMask, QueryTriggerInteraction.Ignore);
+      float closestFloorDist = float.MaxValue;
+      float bestFloorY = targetPos.y;
+      bool hasGround = false;
+
+      for (int i = 0; i < hits.Length; i++)
+      {
+        var h = hits[i];
+        if (h.collider == null || h.collider.transform.IsChildOf(transform)) continue;
+        if (h.collider.CompareTag("Player") || h.collider.CompareTag("Enemy")) continue;
+        if (h.normal.y >= 0.55f && h.distance < closestFloorDist)
+        {
+          closestFloorDist = h.distance;
+          bestFloorY = h.point.y;
+          hasGround = true;
+        }
+      }
+
+      if (hasGround)
+      {
+        targetPos.y = bestFloorY + 0.12f;
       }
 
       transform.position = targetPos;

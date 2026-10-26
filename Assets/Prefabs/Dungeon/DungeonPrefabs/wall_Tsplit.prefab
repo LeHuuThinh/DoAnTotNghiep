@@ -55,5 +55,58 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 80b15d76abc9b8241b569f33109d1640, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6985596267267332953}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 80b15d76abc9b8241b569f33109d1640, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8657856635246528481}
   m_SourcePrefab: {fileID: 100100000, guid: 80b15d76abc9b8241b569f33109d1640, type: 3}
+--- !u!1 &5446774054540581855 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 80b15d76abc9b8241b569f33109d1640, type: 3}
+  m_PrefabInstance: {fileID: 5140786359911949966}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &6985596267267332953
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5446774054540581855}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4, y: 4.0000005, z: 0.99563134}
+  m_Center: {x: 0, y: 2.0000002, z: -0.0021855384}
+--- !u!65 &8657856635246528481
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5446774054540581855}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0119727, y: 4.0000005, z: 2.5000625}
+  m_Center: {x: 0, y: 2.0000002, z: 0.75002986}

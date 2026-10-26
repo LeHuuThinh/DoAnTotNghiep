@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -28,9 +28,13 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Khoảng cách đẩy đồ treo tường (đuốc, cờ, khiên) ra khỏi tâm tường để không bị lún vào trong vách đá")]
   public float wallMountOffset = 0.3f;
 
-  [Range(0.1f, 0.8f)]
-  [Tooltip("Khoảng cách từ lưng kệ/tủ/giường đến vách tường (giúp đồ gỗ áp sát tường tự nhiên, không nhô ra quá xa)")]
-  public float furnitureWallOffset = 0.35f;
+  [Range(0.1f, 5.0f)]
+  [Tooltip("Khoảng cách từ lưng kệ/tủ/giường đến vách tường (Tăng lên nếu muốn đồ lùi sâu hơn vào trong phòng)")]
+  public float furnitureWallOffset = 0.85f;
+
+  [Range(0.1f, 5.0f)]
+  [Tooltip("Khoảng cách từ lưng rương báu đến vách tường (Tăng lên để rương không chạm vào vách đá)")]
+  public float chestWallOffset = 0.85f;
 
   [Header("2. Hệ Thống Chiếu Sáng (Lighting)")]
   [Tooltip("Bật/Tắt sinh đuốc trong toàn hầm ngục")]
@@ -187,6 +191,82 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Tự động đồng bộ tầm nhìn xa Camera Far Clip Plane (mét) cho hầm ngục. Với map 300m, 200m là lý tưởng để không thấy khoảng không.")]
   public float cameraFarClipPlane = 200f;
 
+  [Header("10. Thùng Gỗ Đập Được & Rương Báu (Loot & Breakables)")]
+  [Tooltip("Bật/Tắt sinh thùng gỗ đập được và rương báu trong toàn bộ hầm ngục")]
+  public bool enableLootAndBreakables = true;
+
+  [Header("10.1. Tỉ Lệ Sinh Trên Templates (Gắn Socket Sẵn)")]
+  [Tooltip("Bật/Tắt sinh thùng và rương tại các Socket gắn sẵn trong Templates")]
+  public bool enableTemplateLoot = true;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ xuất hiện thùng gỗ tại mỗi [Loot_Barrel_Socket] trong template")]
+  public float templateBarrelSpawnChance = 0.75f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ xuất hiện rương tại mỗi [Loot_Chest_Socket] trong template")]
+  public float templateChestSpawnChance = 0.65f;
+
+  [Header("10.2. Thùng Gỗ Đập Được Rải Rác Trên Sàn (Tầng 1 & Tầng 2)")]
+  [Tooltip("Bật/Tắt sinh cụm thùng gỗ tự do trên sàn phòng")]
+  public bool enableFloorBarrels = true;
+
+  [Range(0, 5)]
+  [Tooltip("Số lượng cụm thùng gỗ tối thiểu mỗi phòng")]
+  public int minBarrelClustersPerRoom = 1;
+
+  [Range(1, 8)]
+  [Tooltip("Số lượng cụm thùng gỗ tối đa mỗi phòng")]
+  public int maxBarrelClustersPerRoom = 3;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ cụm sinh 1 thùng đơn lẻ (Solo)")]
+  public float barrelSoloChance = 0.30f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ cụm sinh 1 cặp 2 thùng đứng cạnh nhau (Pair)")]
+  public float barrelPairChance = 0.50f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ cụm sinh 3 thùng chụm lại tam giác (Trio)")]
+  public float barrelTrioChance = 0.20f;
+
+  [Range(0.3f, 3.0f)]
+  [Tooltip("Khoảng cách lệch tâm của mỗi thùng trong cụm Cặp 2 thùng (Pair). Khoảng cách giữa 2 thùng = 2 * spacing. Mặc định 0.65m -> 2 thùng cách nhau 1.3m)")]
+  public float barrelPairSpacing = 0.65f;
+
+  [Range(0.4f, 3.0f)]
+  [Tooltip("Bán kính cụm 3 thùng hình tam giác đều (Trio). Mặc định 0.70m giúp 3 thùng cách nhau ~1.2m thoáng đãng)")]
+  public float barrelTrioRadius = 0.70f;
+
+  [Header("10.3. Rương Báu Trong Phòng (Chests Tầng 1 & Tầng 2)")]
+  [Tooltip("Bật/Tắt sinh rương báu trong phòng")]
+  public bool enableChests = true;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ xuất hiện rương ở Tầng 1 cho mỗi phòng thông thường (Phòng Treasure luôn là 100%)")]
+  public float floorChestChance = 0.25f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ xuất hiện rương trên Gác Lửng Tầng 2 (Mezzanine)")]
+  public float mezzanineChestChance = 0.70f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ rương sinh ra là Rương Vàng (Interactive_Chest_Gold) so với Rương Thường")]
+  public float goldChestChance = 0.15f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ rương sinh ra là Rương Vàng trong Phòng Kho Báu (Treasure Room)")]
+  public float treasureRoomGoldChestChance = 0.80f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỉ lệ rương sinh ra là Rương Vàng trên Gác Lửng Tầng 2")]
+  public float mezzanineGoldChestChance = 0.25f;
+
+  [Header("Prefabs Thùng Gỗ Đập Được & Rương Báu (Loot Prefabs)")]
+  public List<GameObject> breakableBarrelPrefabs = new List<GameObject>();
+  public GameObject regularChestPrefab;
+  public GameObject goldChestPrefab;
   [Header("Prefabs Mẫu Kiến Trúc & Tiểu Cảnh (Templates)")]
   public List<GameObject> wallTemplatePrefabs = new List<GameObject>();
   public List<GameObject> propTemplatePrefabs = new List<GameObject>();
@@ -232,7 +312,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
   public void EnsurePrefabsLoaded()
   {
 #if UNITY_EDITOR
-    if (wallTorchPrefab == null || floorTorchPrefab == null || bannerPrefabs.Count == 0 || crateBoxPrefabs.Count == 0 || wallTemplatePrefabs.Count == 0 || propTemplatePrefabs.Count == 0)
+    if (wallTorchPrefab == null || floorTorchPrefab == null || bannerPrefabs.Count == 0 || crateBoxPrefabs.Count == 0 || wallTemplatePrefabs.Count == 0 || propTemplatePrefabs.Count == 0 || breakableBarrelPrefabs.Count == 0 || regularChestPrefab == null)
     {
       LoadAllPrefabsFromProject();
     }
@@ -336,6 +416,36 @@ public partial class DungeonPropDecorator : MonoBehaviour
       }
     }
 
+    // Tự động quét và nạp toàn bộ Thùng gỗ đập được và Rương báu từ Assets/Prefabs/RPG
+    breakableBarrelPrefabs.Clear();
+    regularChestPrefab = null;
+    goldChestPrefab = null;
+
+    string[] rpgGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/RPG" });
+    if (rpgGuids != null && rpgGuids.Length > 0)
+    {
+      foreach (string g in rpgGuids)
+      {
+        string p = UnityEditor.AssetDatabase.GUIDToAssetPath(g);
+        string n = System.IO.Path.GetFileNameWithoutExtension(p);
+        GameObject go = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(p);
+        if (go == null) continue;
+
+        if (n.StartsWith("Breakable_Barrel"))
+        {
+          breakableBarrelPrefabs.Add(go);
+        }
+        else if (n == "Interactive_Chest")
+        {
+          regularChestPrefab = go;
+        }
+        else if (n == "Interactive_Chest_Gold")
+        {
+          goldChestPrefab = go;
+        }
+      }
+    }
+
     templateBoundsCache.Clear();
     Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs thường, <b>{wallTemplatePrefabs.Count}</b> wall templates, <b>{propTemplatePrefabs.Count}</b> prop templates từ '{folder}'.");
   }
@@ -377,7 +487,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
     }
 
     // 4. TỰ ĐỘNG TẮT SHADOW CASTER CHO DIRECTIONAL LIGHT CƯỜNG ĐỘ 0 ĐỂ GIẢI PHÓNG 4 SHADOW PASSES
-    Light[] sceneLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+    Light[] sceneLights = Object.FindObjectsByType<Light>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
     foreach (var l in sceneLights)
     {
       if (l != null && l.type == LightType.Directional && l.intensity <= 0.01f)
@@ -413,6 +523,10 @@ public partial class DungeonPropDecorator : MonoBehaviour
     GameObject tempStaticProps = new GameObject("Temp_StaticProps");
     tempStaticProps.transform.SetParent(roomPropsObj.transform, false);
 
+    // Nhóm chứa toàn bộ đạo cụ tương tác (Thùng đập được, Rương báu) - TUYỆT ĐỐI KHÔNG GỘP MESH
+    Transform interactablesGroup = new GameObject("Interactables").transform;
+    interactablesGroup.SetParent(roomPropsObj.transform, false);
+
     HashSet<Vector2Int> forbiddenTiles = BuildForbiddenTiles(room, data);
     List<GameObject> roomBanners = GetRoomBannerFamily(room.id);
 
@@ -421,7 +535,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
 
     // 1.5. CỤM TƯỜNG TÀN TÍCH (WALL TEMPLATES) & TIỂU CẢNH ĐẠO CỤ (PROP TEMPLATES)
     // Đặt các cụm kiến trúc và tiểu cảnh trước, chiếm dụng các ô tương ứng vào forbiddenTiles
-    DecorateRoomTemplates(room, tempStaticProps.transform, lightsGroup, forbiddenTiles, theme, data, tileSize);
+    DecorateRoomTemplates(room, tempStaticProps.transform, lightsGroup, interactablesGroup, forbiddenTiles, theme, data, tileSize);
 
     // 2. ĐUỐC ĐỨNG TRÊN SÀN (FLOOR TORCHES - Chân cầu thang, không chắn cửa)
     if (enableLighting && enableFloorTorches)
@@ -447,6 +561,18 @@ public partial class DungeonPropDecorator : MonoBehaviour
       DecorateRoomCenter(room, tempStaticProps.transform, lightsGroup, forbiddenTiles, theme, tileSize);
     }
 
+    // 5.5. CỤM THÙNG GỖ ĐẬP ĐƯỢC TRÊN SÀN (TẦNG 1 - Tự do rải rác: solo, pair, trio)
+    if (enableLootAndBreakables && enableFloorBarrels)
+    {
+      DecorateBreakableBarrels(room, interactablesGroup, forbiddenTiles, tileSize);
+    }
+
+    // 5.6. RƯƠNG BÁU TẦNG 1 (Áp sát tường hoặc góc phòng, Phòng Treasure luôn có rương)
+    if (enableLootAndBreakables && enableChests)
+    {
+      DecorateFloorChest(room, interactablesGroup, forbiddenTiles, data, tileSize);
+    }
+
     // 6. RẢI RÁC ĐỒ VẬT TRÊN SÀN PHÒNG (FLOOR SCATTER - Thùng, hộp, rương, keg, chai lọ, nến, đuốc sàn ngẫu nhiên)
     if (enableFloorScatter)
     {
@@ -456,7 +582,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
     // 7. TRANG TRÍ GÁC LỬNG TẦNG 2 (Khớp chuẩn cao độ 8m: Cờ, khiên, kệ sách, rương, bàn ngắm cảnh lan can, đuốc sàn)
     if (room.hasMezzanine && enableMezzanineDecor)
     {
-      DecorateMezzanine(room, tempStaticProps.transform, lightsGroup, forbiddenTiles, roomBanners, theme, data, tileSize);
+      DecorateMezzanine(room, tempStaticProps.transform, lightsGroup, interactablesGroup, forbiddenTiles, roomBanners, theme, data, tileSize);
     }
 
     // 8. GỘP MESH TOÀN BỘ PROPS TĨNH VÀ TEMPLATES TRONG PHÒNG THÀNH 1 DRAW CALL DUY NHẤT
@@ -472,5 +598,18 @@ public partial class DungeonPropDecorator : MonoBehaviour
       navMod.area = 1; // 1 = Not Walkable
       navMod.applyToChildren = true;
     }
+  }
+
+  /// <summary>
+  /// Đảm bảo một GameObject đạo cụ tương tác (Thùng đập được, Rương) được NavMesh nướng chính xác là vùng Not Walkable
+  /// </summary>
+  public static void EnsureNavMeshObstacleModifier(GameObject instance)
+  {
+    if (instance == null) return;
+    Unity.AI.Navigation.NavMeshModifier mod = instance.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+    if (mod == null) mod = instance.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+    mod.overrideArea = true;
+    mod.area = 1; // 1 = Not Walkable
+    mod.applyToChildren = true;
   }
 }

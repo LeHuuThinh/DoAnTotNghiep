@@ -237,7 +237,7 @@ namespace InfiniteLabyrinth.EditorTools
       titleRect.sizeDelta = new Vector2(-40f, 32f);
       TextMeshProUGUI titleText = titleObj.AddComponent<TextMeshProUGUI>();
       if (font != null) titleText.font = font;
-      titleText.text = "ĐIỂM TIỀM NĂNG";
+      titleText.text = "ATTRIBUTE POINTS";
       titleText.fontSize = 20f;
       titleText.fontStyle = FontStyles.Bold;
       titleText.color = new Color(1f, 0.88f, 0.51f);
@@ -263,7 +263,7 @@ namespace InfiniteLabyrinth.EditorTools
       pointsRect.sizeDelta = new Vector2(-40f, 28f);
       TextMeshProUGUI pointsText = pointsObj.AddComponent<TextMeshProUGUI>();
       if (font != null) pointsText.font = font;
-      pointsText.text = "Điểm khả dụng: <color=#FFE082><b>0</b></color>";
+      pointsText.text = "Available Points: <color=#FFE082><b>0</b></color>";
       pointsText.fontSize = 15f;
       pointsText.alignment = TextAlignmentOptions.Center;
 
@@ -285,13 +285,13 @@ namespace InfiniteLabyrinth.EditorTools
       vlg.childForceExpandHeight = false;
 
       // Hàng 1: ATK
-      var atkRow = CreateStatRow("Row_ATK", rowsContainer.transform, "Tấn Công", new Color(1f, 0.54f, 0.50f), rowBgSprite, buttonSprite, font);
+      var atkRow = CreateStatRow("Row_ATK", rowsContainer.transform, "Attack Damage", new Color(1f, 0.54f, 0.50f), rowBgSprite, buttonSprite, font);
 
       // Hàng 2: HP
-      var hpRow = CreateStatRow("Row_HP", rowsContainer.transform, "Máu Tối Đa", new Color(0.94f, 0.33f, 0.31f), rowBgSprite, buttonSprite, font);
+      var hpRow = CreateStatRow("Row_HP", rowsContainer.transform, "Max Health", new Color(0.94f, 0.33f, 0.31f), rowBgSprite, buttonSprite, font);
 
       // Hàng 3: Stamina
-      var stamRow = CreateStatRow("Row_Stamina", rowsContainer.transform, "Thể Lực", new Color(0.40f, 0.73f, 0.42f), rowBgSprite, buttonSprite, font);
+      var stamRow = CreateStatRow("Row_Stamina", rowsContainer.transform, "Max Stamina", new Color(0.40f, 0.73f, 0.42f), rowBgSprite, buttonSprite, font);
 
       // 5. Status Feedback Text
       GameObject statusObj = new GameObject("StatusMessageText");
@@ -318,23 +318,23 @@ namespace InfiniteLabyrinth.EditorTools
       footerRect.anchoredPosition = new Vector2(0f, 16f);
       footerRect.sizeDelta = new Vector2(-36f, 86f);
 
-      // Hàng nút trên: Xác Nhận & Hủy
-      GameObject confirmBtnObj = CreateButton("BtnConfirm", footerObj.transform, new Vector2(174f, 38f), "Xác Nhận", 14f, buttonSprite, font, new Color(0.20f, 0.55f, 0.25f));
+      // Hàng nút trên: Confirm & Cancel
+      GameObject confirmBtnObj = CreateButton("BtnConfirm", footerObj.transform, new Vector2(174f, 38f), "Confirm", 14f, buttonSprite, font, new Color(0.20f, 0.55f, 0.25f));
       RectTransform confirmRect = confirmBtnObj.GetComponent<RectTransform>();
       confirmRect.anchorMin = new Vector2(0f, 1f);
       confirmRect.anchorMax = new Vector2(0f, 1f);
       confirmRect.pivot = new Vector2(0f, 1f);
       confirmRect.anchoredPosition = new Vector2(0f, 0f);
 
-      GameObject cancelBtnObj = CreateButton("BtnCancel", footerObj.transform, new Vector2(174f, 38f), "Hủy Bỏ", 14f, buttonSprite, font, new Color(0.35f, 0.35f, 0.40f));
+      GameObject cancelBtnObj = CreateButton("BtnCancel", footerObj.transform, new Vector2(174f, 38f), "Cancel", 14f, buttonSprite, font, new Color(0.35f, 0.35f, 0.40f));
       RectTransform cancelRect = cancelBtnObj.GetComponent<RectTransform>();
       cancelRect.anchorMin = new Vector2(1f, 1f);
       cancelRect.anchorMax = new Vector2(1f, 1f);
       cancelRect.pivot = new Vector2(1f, 1f);
       cancelRect.anchoredPosition = new Vector2(0f, 0f);
 
-      // Hàng nút dưới: Tẩy Điểm (X Vàng)
-      GameObject resetBtnObj = CreateButton("BtnResetStats", footerObj.transform, new Vector2(358f, 38f), "Tẩy Điểm (100 Vàng)", 14f, buttonSprite, font, new Color(0.65f, 0.20f, 0.20f));
+      // Hàng nút dưới: Reset All
+      GameObject resetBtnObj = CreateButton("BtnResetStats", footerObj.transform, new Vector2(358f, 38f), "Reset All", 14f, buttonSprite, font, new Color(0.65f, 0.20f, 0.20f));
       RectTransform resetRect = resetBtnObj.GetComponent<RectTransform>();
       resetRect.anchorMin = new Vector2(0.5f, 0f);
       resetRect.anchorMax = new Vector2(0.5f, 0f);
@@ -509,6 +509,8 @@ namespace InfiniteLabyrinth.EditorTools
       ColorBlock cb = btn.colors;
       cb.highlightedColor = new Color(1.2f, 1.2f, 1.2f, 1f);
       cb.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+      Color baseColor = tintColor ?? new Color(0.24f, 0.22f, 0.30f);
+      cb.disabledColor = new Color(baseColor.r * 0.7f, baseColor.g * 0.7f, baseColor.b * 0.7f, 0.45f);
       btn.colors = cb;
 
       GameObject textObj = new GameObject("Text");

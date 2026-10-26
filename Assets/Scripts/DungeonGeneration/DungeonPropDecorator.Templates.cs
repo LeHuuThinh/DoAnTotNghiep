@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public partial class DungeonPropDecorator
@@ -7,7 +7,7 @@ public partial class DungeonPropDecorator
   /// Bố trí các cụm tường tàn tích (Wall Templates) và tiểu cảnh đạo cụ (Prop Templates) vào các phòng đủ lớn.
   /// Tự động chiếm dụng toàn bộ diện tích footprint vào forbiddenTiles để tuyệt đối không bị đồ khác đè lên.
   /// </summary>
-  private void DecorateRoomTemplates(RoomData room, Transform staticPropsGroup, Transform lightsGroup, HashSet<Vector2Int> forbiddenTiles, RoomTheme theme, DungeonData data, float tileSize)
+  private void DecorateRoomTemplates(RoomData room, Transform staticPropsGroup, Transform lightsGroup, Transform interactablesGroup, HashSet<Vector2Int> forbiddenTiles, RoomTheme theme, DungeonData data, float tileSize)
   {
     RectInt b = room.bounds;
     // Phòng quá nhỏ (< 7x7) không nên nhét cụm kiến trúc lớn để tránh cản đường
@@ -41,7 +41,7 @@ public partial class DungeonPropDecorator
       for (int attempt = 0; attempt < 20 && placed < maxWallTemplates; attempt++)
       {
         GameObject prefab = pool[Random.Range(0, pool.Count)];
-        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, forbiddenTiles, tileSize))
+        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, interactablesGroup, forbiddenTiles, tileSize))
         {
           placed++;
         }
@@ -56,7 +56,7 @@ public partial class DungeonPropDecorator
       for (int attempt = 0; attempt < 20 && placed < maxPropTemplates; attempt++)
       {
         GameObject prefab = pool[Random.Range(0, pool.Count)];
-        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, forbiddenTiles, tileSize))
+        if (TryPlaceTemplate(prefab, room, staticPropsGroup, lightsGroup, interactablesGroup, forbiddenTiles, tileSize))
         {
           placed++;
         }
@@ -68,7 +68,7 @@ public partial class DungeonPropDecorator
   /// Thử nghiệm tìm vị trí và góc xoay thích hợp để đặt 1 cụm Template.
   /// Kiểm tra 100% diện tích footprint không va chạm cửa, đường đi chính, cầu thang, tường bao và mezzanine.
   /// </summary>
-  private bool TryPlaceTemplate(GameObject prefab, RoomData room, Transform staticPropsGroup, Transform lightsGroup, HashSet<Vector2Int> forbiddenTiles, float tileSize)
+  private bool TryPlaceTemplate(GameObject prefab, RoomData room, Transform staticPropsGroup, Transform lightsGroup, Transform interactablesGroup, HashSet<Vector2Int> forbiddenTiles, float tileSize)
   {
     if (prefab == null) return false;
 
@@ -205,6 +205,64 @@ public partial class DungeonPropDecorator
             {
               if (!ps.isPlaying) ps.Play();
             }
+          }
+
+          // 4. QUÉT VÀ KÍCH HOẠT CÁC SOCKET LOOT (Thùng gỗ đập được & Rương báu)
+          List<Transform> barrelSockets = new List<Transform>();
+          List<Transform> chestSockets = new List<Transform>();
+
+          foreach (Transform child in instance.GetComponentsInChildren<Transform>(true))
+          {
+            if (child == null) continue;
+            string cName = child.name;
+            if (cName.IndexOf("Loot_Barrel_Socket", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                cName.IndexOf("Barrel_Socket", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                cName.IndexOf("Socket_Barrel", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+              barrelSockets.Add(child);
+            }
+            else if (cName.IndexOf("Loot_Chest_Socket", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     cName.IndexOf("Chest_Socket", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     cName.IndexOf("Socket_Chest", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+              chestSockets.Add(child);
+            }
+          }
+
+          // A. Xử lý các Socket Thùng gỗ
+          foreach (Transform socket in barrelSockets)
+          {
+            if (enableLootAndBreakables && enableTemplateLoot && breakableBarrelPrefabs.Count > 0 && Random.value < templateBarrelSpawnChance)
+            {
+              GameObject barrelPrefab = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject barrelObj = Instantiate(barrelPrefab, socket.position, socket.rotation, interactablesGroup);
+              EnsureNavMeshObstacleModifier(barrelObj);
+
+              int sx = Mathf.FloorToInt(socket.position.x / tileSize);
+              int sy = Mathf.FloorToInt(socket.position.z / tileSize);
+              forbiddenTiles.Add(new Vector2Int(sx, sy));
+            }
+            socket.gameObject.SetActive(false);
+          }
+
+          // B. Xử lý các Socket Rương báu
+          foreach (Transform socket in chestSockets)
+          {
+            if (enableLootAndBreakables && enableTemplateLoot && (regularChestPrefab != null || goldChestPrefab != null) && Random.value < templateChestSpawnChance)
+            {
+              bool isGold = (Random.value < goldChestChance && goldChestPrefab != null);
+              GameObject chestPrefab = (isGold && goldChestPrefab != null) ? goldChestPrefab : (regularChestPrefab ?? goldChestPrefab);
+              if (chestPrefab != null)
+              {
+                GameObject chestObj = Instantiate(chestPrefab, socket.position, socket.rotation, interactablesGroup);
+                EnsureNavMeshObstacleModifier(chestObj);
+
+                int sx = Mathf.FloorToInt(socket.position.x / tileSize);
+                int sy = Mathf.FloorToInt(socket.position.z / tileSize);
+                forbiddenTiles.Add(new Vector2Int(sx, sy));
+              }
+            }
+            socket.gameObject.SetActive(false);
           }
 
           // ĐÁNH DẤU TOÀN BỘ CÁC Ô ĐÃ CHIẾM DỤNG VÀO FORBIDDENTILES ĐỂ KHÔNG BỊ PROPS KHÁC ĐÈ LÊN

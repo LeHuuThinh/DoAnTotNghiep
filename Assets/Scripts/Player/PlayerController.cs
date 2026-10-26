@@ -8,9 +8,9 @@ public class PlayerController : MonoBehaviour
     public bool canMove = true;
 
     [Header("Movement Speeds")]
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float strafeSpeed = 3.8f;      // Tốc độ khi bước ngang/lùi vờn quái
-    [SerializeField] private float runSpeed = 9f;
+    [SerializeField] private float runSpeed = 8f;
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float rotationSpeed = 12f;
 
@@ -135,6 +135,12 @@ public class PlayerController : MonoBehaviour
         if (thirdPersonCamera == null && Camera.main != null)
         {
             thirdPersonCamera = Camera.main.GetComponent<ThirdPersonCamera>();
+        }
+
+        // Tự động đảm bảo PlayerInteraction luôn có mặt trên Player
+        if (!TryGetComponent<InfiniteLabyrinth.Player.PlayerInteraction>(out _))
+        {
+            gameObject.AddComponent<InfiniteLabyrinth.Player.PlayerInteraction>();
         }
 
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
@@ -332,7 +338,7 @@ public class PlayerController : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(rollDirection);
                 verticalVelocity += gravity * Time.deltaTime;
                 Vector3 rollVelocity = rollDirection * rollSpeed;
-                rollVelocity.y = verticalVelocity;
+                rollVelocity.y = isGrounded ? -6f : verticalVelocity;
                 characterController.Move(rollVelocity * Time.deltaTime);
                 return;
             }
@@ -343,8 +349,7 @@ public class PlayerController : MonoBehaviour
         // =====================================================================
         if (isGrounded)
         {
-            // Lực bám sàn -5f giúp CharacterController không bị trượt/chớp tắt isGrounded trên lan can và cầu thang
-            if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -5f;
+            if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -4f;
 
             if (!isPreparingJump)
             {
@@ -394,6 +399,7 @@ public class PlayerController : MonoBehaviour
                 if (jumpTimer <= 0f)
                 {
                     isPreparingJump = false;
+                    UnlockMovement(); // Giải phóng điều khiển khi phóng lên không trung
                     verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     lockedAirVelocity = pendingJumpVelocity;
                 }
@@ -415,7 +421,22 @@ public class PlayerController : MonoBehaviour
         }
 
         Vector3 finalVelocity = lockedAirVelocity;
-        finalVelocity.y = verticalVelocity;
+        if (isGrounded && !isPreparingJump && verticalVelocity <= 0.1f)
+        {
+            // Lực bám sàn động theo tốc độ di chuyển:
+            // Chỉ áp dụng khi ĐANG TIẾP ĐẤT và KHÔNG ĐANG PHÓNG NHẢY LÊN (verticalVelocity <= 0.1f)!
+            // Khi di chuyển trên dốc 45 độ, dốc tụt xuống theo phương đứng bằng đúng vận tốc ngang.
+            // Lực ép xuống cần nhanh hơn vận tốc ngang một chút (tốc độ * 1.35f, tối thiểu 6f).
+            // Với Walk = 4m/s -> ép -6f (nhẹ nhàng, mượt mà).
+            // Với Run = 8m/s -> ép -11f (chân luôn dính khít mặt dốc, không bao giờ bị nhảy cóc hay tách rời sàn).
+            float curSpeed = IsRunning ? runSpeed : moveSpeed;
+            float groundStick = Mathf.Max(6f, curSpeed * 1.35f);
+            finalVelocity.y = -groundStick;
+        }
+        else
+        {
+            finalVelocity.y = verticalVelocity;
+        }
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 

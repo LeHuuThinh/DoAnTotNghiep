@@ -45,60 +45,60 @@ namespace InfiniteLabyrinth.Editor
       Sprite swordIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI RPG/PlayerHUD 2/Bar_Corner.png");
 
       // 1. Tiền Vàng
-      CreateOrUpdateItem("Item_Gold_Coin", "currency_gold", "Đồng Tiền Vàng",
-        "Đơn vị tiền tệ lưu hành khắp vương quốc. Dùng để nâng cấp vũ khí tại Thợ Rèn hoặc mua nhu yếu phẩm.",
+      CreateOrUpdateItem("Item_Gold_Coin", "currency_gold", "Gold Coin",
+        "Common currency used throughout the realm. Used to forge weapons at the Blacksmith or purchase supplies.",
         coinIcon, ItemType.Currency, ItemRarity.Common, maxStack: 9999, goldValue: 1,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       // 2. Bình Máu Nhỏ
-      CreateOrUpdateItem("Item_Potion_Health", "potion_health_small", "Bình Máu Nhỏ",
-        "Chiết xuất từ thảo mộc phát sáng trong hầm ngục. Hồi phục ngay lập tức 35 điểm Máu.",
+      CreateOrUpdateItem("Item_Potion_Health", "potion_health_small", "Small Health Potion",
+        "Brewed from glowing dungeon herbs. Instantly restores 35 Health Points.",
         potionIcon, ItemType.Consumable, ItemRarity.Common, maxStack: 10, goldValue: 20,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 35f,
         worldPrefab: worldPickup, visualPrefab: null);
 
       // 3. Đá Nâng Cấp Kiếm
-      CreateOrUpdateItem("Item_Stone_Upgrade", "mat_upgrade_stone", "Đá Hầm Ngục Cường Hóa",
-        "Khoáng thạch cổ xưa tỏa ra ánh sáng ma thuật. Nguyên liệu chính để Thợ Rèn trui rèn và gia tăng sát thương vũ khí.",
+      CreateOrUpdateItem("Item_Stone_Upgrade", "mat_upgrade_stone", "Dungeon Enhancement Stone",
+        "An ancient mineral emitting magical energy. Used by the Blacksmith to reinforce and enhance weapon damage.",
         starIcon, ItemType.Material, ItemRarity.Rare, maxStack: 99, goldValue: 50,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       // 4. Giáp Da Chiến Binh
-      CreateOrUpdateItem("Item_Armor_Leather", "armor_warrior_leather", "Giáp Da Thám Hiểm",
-        "Bộ giáp da dẻo dai giúp giảm sát thương nhận vào (+6 DEF) và tăng sức bền (+25 Max HP).",
+      CreateOrUpdateItem("Item_Armor_Leather", "armor_warrior_leather", "Explorer Leather Armor",
+        "Durable leather armor that reduces incoming damage (+6 DEF) and increases vitality (+25 Max HP).",
         shieldIcon, ItemType.Armor, ItemRarity.Common, maxStack: 1, goldValue: 60,
         bonusAtk: 0, bonusDef: 6f, bonusHp: 25f, bonusStamina: 15f, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       // 5. Kiếm Gỗ Tập Sự (Common)
-      CreateOrUpdateItem("Item_Sword_Wooden", "weapon_sword_wooden", "Kiếm Gỗ Tập Sự",
-        "Thanh kiếm gỗ dành cho các tân binh mới bước chân vào mê cung (+6 Sát thương).",
+      CreateOrUpdateItem("Item_Sword_Wooden", "weapon_sword_wooden", "Apprentice Wooden Sword",
+        "A wooden practice sword crafted for recruits venturing into the labyrinth (+6 Attack).",
         swordIcon, ItemType.Weapon, ItemRarity.Common, maxStack: 1, goldValue: 15,
         bonusAtk: 6f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: woodenSwordPrefab != null ? woodenSwordPrefab : fallbackSword);
 
       // 6. Kiếm Hắc Thiết (Common)
-      CreateOrUpdateItem("Item_Sword_DarkIron", "weapon_sword_darkiron", "Kiếm Hắc Thiết",
-        "Được đúc từ quặng sắt đen kiên cố dưới đáy hầm ngục (+16 Sát thương).",
+      CreateOrUpdateItem("Item_Sword_DarkIron", "weapon_sword_darkiron", "Dark Iron Sword",
+        "Forged from sturdy dark iron ore found deep within the dungeon (+16 Attack).",
         swordIcon, ItemType.Weapon, ItemRarity.Uncommon, maxStack: 1, goldValue: 75,
         bonusAtk: 16f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: darkIronSwordPrefab != null ? darkIronSwordPrefab : fallbackSword);
 
       // 7. Kiếm Xương Quỷ (Rare)
-      CreateOrUpdateItem("Item_Sword_Bone", "weapon_sword_bone", "Cốt Ma Kiếm",
-        "Rèn từ xương sọ của Chiến Binh Bộ Xương cổ xưa (+28 Sát thương, +10 Thể lực).",
+      CreateOrUpdateItem("Item_Sword_Bone", "weapon_sword_bone", "Bone Demon Sword",
+        "Forged from the skull of an ancient Skeleton Warrior (+28 Attack, +10 Stamina).",
         swordIcon, ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 180,
         bonusAtk: 28f, bonusDef: 0, bonusHp: 0, bonusStamina: 10f, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: boneSwordPrefab != null ? boneSwordPrefab : fallbackSword);
 
       // 8. Hỏa Long Thần Kiếm (Legendary)
-      CreateOrUpdateItem("Item_Sword_Dragonic", "weapon_sword_dragonic", "Hỏa Long Kiếm",
-        "Thần khí mang linh hồn của Rồng Lửa Viễn Cổ (+55 Sát thương, +50 Máu tối đa, +25 Thể lực).",
+      CreateOrUpdateItem("Item_Sword_Dragonic", "weapon_sword_dragonic", "Dragonfire Sword",
+        "A mythical blade infused with the soul of an Ancient Fire Dragon (+55 Attack, +50 Max HP, +25 Stamina).",
         swordIcon, ItemType.Weapon, ItemRarity.Legendary, maxStack: 1, goldValue: 500,
         bonusAtk: 55f, bonusDef: 0, bonusHp: 50f, bonusStamina: 25f, heal: 0,
         worldPrefab: worldPickup,
@@ -156,8 +156,8 @@ namespace InfiniteLabyrinth.Editor
 
       Light glow = lightObj.AddComponent<Light>();
       glow.type = LightType.Point;
-      glow.range = 3.2f;
-      glow.intensity = 3.0f;
+      glow.range = 1.4f;
+      glow.intensity = 1.5f;
       glow.shadows = LightShadows.None;
       glow.color = Color.white;
 
@@ -224,8 +224,8 @@ namespace InfiniteLabyrinth.Editor
 
       Light glow = lightObj.AddComponent<Light>();
       glow.type = LightType.Point;
-      glow.range = 2.8f;
-      glow.intensity = 3.2f;
+      glow.range = 1.4f;
+      glow.intensity = 1.5f;
       glow.shadows = LightShadows.None;
       glow.color = new Color(1.0f, 0.82f, 0.12f, 1f);
 

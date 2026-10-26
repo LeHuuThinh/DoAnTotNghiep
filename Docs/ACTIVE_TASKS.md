@@ -47,6 +47,17 @@
   - Bổ sung cơ chế `ResolveDungeonFolder` thông minh trong [`DungeonPropDecorator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonPropDecorator.cs) và [`DungeonRenderer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRenderer.cs), tự động phát hiện đường dẫn mới và hỗ trợ fallback.
   - Triệt tiêu 6 warnings "Folder not found" và lỗi `NullReferenceException` của Unity UIElements ListView khi render Inspector.
 
+- [x] **PCG-03: Hệ thống sinh Thùng Gỗ Đập Được & Rương Báu (Interactive Chests & Breakable Barrels)**
+  - Tự động nạp các Prefabs từ Assets/Prefabs/RPG/ (Breakable_Barrel_Small/Medium/Large, Interactive_Chest, Interactive_Chest_Gold).
+  - **Khai thác Template Sockets:** Nhận diện toàn bộ các socket user gắn sẵn ([Loot_Barrel_Socket], [Loot_Chest_Socket]), roll xúc xắc theo tỉ lệ Inspector và sinh thùng/rương chính xác tại tọa độ socket.
+  - **Phân bổ Tầng 1 (Sàn chính):**
+    + Cụm thùng gỗ rải rác tự do trên toàn bộ mặt sàn (không chỉ ở góc hay tường) theo các dạng: Solo (1 thùng), Pair (cặp 2 thùng), Trio (tam giác 3 thùng).
+    + Rương báu xuất hiện theo tỉ lệ hoặc cố định 100% trong phòng Kho báu (Treasure Room) với tỉ lệ rương vàng cao.
+  - **Phân bổ Tầng 2 (Gác lửng Mezzanine):** Tỉ lệ xuất hiện rương cao ở bức tường sau gác lửng và rải rác các cụm thùng gỗ trên sàn gác lửng.
+  - **Phòng Khởi Đầu & Phòng Tiếp Giáp:** Phòng khởi đầu tĩnh (pre-built) giữ nguyên an toàn; phòng đầu tiên nối với sảnh lối vào được trang trí thùng và rương như một phòng bình thường.
+  - **Bảo Vệ Tính Tương Tác & NavMesh:**
+    + Toàn bộ thùng gỗ đập được và rương báu được đưa vào nhóm riêng Interactables, **TUYỆT ĐỐI KHÔNG GỘP MESH**, giữ nguyên IDamageable, BreakableProp, ChestInteractable, LootDropper và animations.
+    + Gắn NavMeshModifier(area = 1 - Not Walkable) và mở rộng layerMask của NavMeshSurface gồm cả Layer 8 (Damageable) và Layer 7 (Obstacle), đảm bảo NavMesh bake quanh thùng/rương, quái không đi xuyên qua.
 - [x] **OPT-01: Tối ưu hóa hiệu năng URP & Hệ thống Ánh sáng (Phục hồi 40 FPS -> 110+ FPS)**
   - Triệt tiêu Shadow Caster Pass của Directional Light cường độ 0 (giải phóng 4 cascades 2048x2048 vô ích, tiết kiệm 4-6ms GPU).
   - Viết lại `DungeonLightOptimizer.cs`: Culling kép cả `Light` lẫn `ParticleSystem` (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
@@ -81,7 +92,11 @@
       + Vùng Thức tỉnh (< 40m): Kích hoạt toàn bộ AI, NavMeshAgent, Animator tính toán chuyển động và bật lại toàn bộ Renderers.
       + Vùng Đệm Hysteresis (40m - 48m, buffer 8m): Chống hiện tượng bật/tắt chập chờn khi người chơi đứng ở ranh giới.
       + Vùng Ngủ đông (> 48m): Ngắt `Update()` AI, dừng `NavMeshAgent` (tắt Obstacle Avoidance), tắt `animator.enabled = false` (ngắt hoàn toàn tính toán ma trận xương), tắt toàn bộ `renderer.enabled = false` (triệt tiêu 100% Draw Calls và Dynamic Shadow Passes cho quái ở xa).
-    - **Tối ưu Material bằng `MaterialPropertyBlock`:** Chớp đỏ trúng đòn trên GPU không clone material, bảo toàn 100% SRP Batcher & GPU Instancing.
+    - **Tối ưu Material & Visual Feedback bằng `MaterialPropertyBlock`:**
+      + Nháy trắng đanh thép (`solidWhiteFlash = true`, override `Texture2D.whiteTexture` và kích hoạt phát quang `_EMISSION` với `emissionIntensity = 2.5f`) không clone Material, bảo toàn 100% SRP Batcher & GPU Instancing.
+      + **Quy trình Đòn Kết Liễu (Lethal Hit Flash & Death Routine):** Khi quái cạn máu, thực thi `DeathRoutine`: Quái lập tức nháy trắng toàn thân và giữ màu trắng xuyên suốt thời gian hitlag kết liễu (`WaitForSecondsRealtime(lethalFlashDuration)`). Sau khi hết thời gian nháy, quái trả về màu và texture bình thường rồi mới kích hoạt animation ngã chết (`animator.SetTrigger("Die")`).
+      + **Hệ thống Hitlag Linh hoạt (Combat Hitlag System):** Tích hợp hitlag kết liễu (`lethalHitlag = 0.18s`), tự động ưu tiên đòn kết liễu khi chém trúng nhiều quái; đồng thời đưa toàn bộ giá trị hitlag của các đòn đánh (`attack1Hitlag`, `attack2Hitlag`, `attack3Hitlag`, `chargeHit1Hitlag`, `chargeHit2Hitlag`, `counterAttackHitlag`, `lethalHitlag`) ra Inspector [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs) để tinh chỉnh trực tiếp.
+      + **Hệ thống Sát thương Poise Chuẩn Souls-like (Poise Damage Tuning):** Tách biệt hoàn toàn Poise damage khỏi knockback distance; cấu hình chi tiết `attack1PoiseDamage = 25`, `attack2PoiseDamage = 25`, `attack3PoiseDamage = 55`, `chargeHit2PoiseDamage = 80`, `counterAttackPoiseDamage = 120`. Đồng bộ `maxPoise` quái cận chiến = 100 (đứng vững 2 hit đầu, vỡ thế ở hit 3), quái tầm xa = 50 (đứng vững hit 1, vỡ thế ở hit 2).
     - **Time-Slicing Batching (4 Batches, 0.12s):** Chia nhỏ quái thành 4 nhóm để quét cự ly luân phiên, triệt tiêu hoàn toàn CPU micro-stutter.
     - **Combat Awakening:** Nếu quái đang ngủ bị trúng đòn tầm xa hoặc dính sát thương (`OnTakeDamageAggro`), quái sẽ lập tức thức tỉnh 100% phản xạ chiến đấu.
   - Đã gắn component và liên kết hoàn chỉnh trong `DungeonScene.unity`.
@@ -129,7 +144,8 @@
   - Hỗ trợ cơ chế tự động bay hút (Magnetic Auto-pickup) cho Tiền Vàng khi người chơi lại gần trong bán kính 4.2m, và bấm phím `[F]` để nhặt đồ thường vào `InventoryManager`.
   - `BreakableProp.cs`: Kế thừa `IDamageable`, gắn vào các thùng gỗ (`Breakable_Barrel_Small`, `Breakable_Barrel_Large`), nhận sát thương từ `WeaponHitbox` vung kiếm, kích hoạt rơi loot và tự hủy.
   - `ChestInteractable.cs`: Gắn vào rương kho báu (`Interactive_Chest`, `Interactive_Chest_Gold`), người chơi lại gần bấm phím `[F]` để mở nắp lật ra sau và tung các món đồ ra xung quanh.
-  - `LootDropper.cs`: Tích hợp trên Quái vật (`SkeletonWarrior`, `SkeletonMinion`, `SkeletonRogue`, `SkeletonMage`), Thùng gỗ và Rương.
+  - `LootDropper.cs`: Tích hợp trên Quái vật (`SkeletonWarrior`, `SkeletonMinion`, `SkeletonRogue`, `SkeletonMage`), Thùng gỗ và Rương. Thuật toán đa lớp chống rơi lọt vào tường (quét cản 8 hướng, quạt góc phía trước cho Rương, nắn tọa độ lên NavMesh) và triệt tiêu lỗi lơ lửng (loại trừ collider nhân vật/quái/rương, đo chuẩn cao độ mặt sàn +0.12m).
+  - Tinh chỉnh hào quang độ hiếm (`WorldItemPickup.cs`): Thu nhỏ bán kính PointLight (`lightRange = 1.4f`, `lightIntensity = 1.5f`) giúp ánh sáng tập trung quanh vật phẩm, không bị chói lóa.
   - Tích hợp 2 MenuItem tự động hóa trong Unity Editor:
     * `Infinite Labyrinth -> RPG -> 2. Tạo Prefab Rơi Đồ (WorldItemPickup Prefab)`
     * `Infinite Labyrinth -> RPG -> 3. Cấu Hình Tự Động Rơi Đồ (Setup Props & Monsters Loot)` để tự động cấu hình 100% Loot và 4 cấp độ Vàng cho toàn bộ Thùng, Rương và Quái vật.
@@ -177,6 +193,14 @@
     - **Nút Tẩy Điểm (Reset Stats):** Tiêu tốn X Vàng (mặc định `100 Vàng`, tùy chỉnh trong Inspector). Kiểm tra điều kiện vàng và điểm đã cộng: nếu đủ vàng thì trừ vàng, hoàn lại 100% điểm tiềm năng và xóa sạch chỉ số cộng thêm; nếu không đủ vàng hiển thị cảnh báo đỏ và khóa nút.
   - **Công Cụ Tự Động Hóa Unity Editor (`ProgressionSetupEditor.cs`):**
     - Thêm MenuItem: `Infinite Labyrinth -> RPG -> 5. Tự Động Thiết Lập EXP Ring & Bảng Điểm Tiềm Năng Trên Canvas` giúp tự động dựng trọn gói cây UI Modal trên Canvas, liên kết ExpRingFill và LevelText trên PlayerHUD chỉ với 1 click chuột.
+
+- [x] **SYS-01: Hệ Thống Tương Tác Đa Năng Universal Interaction System (`IInteractable`, `PlayerInteraction`, `InteractPromptUI`)**
+  - **Interface `IInteractable` & `InteractableRegistry`:** Chuẩn hóa toàn bộ đối tượng tương tác trong game. Hỗ trợ tùy chỉnh câu lệnh gợi ý `InteractionPrompt`, bật/tắt `RequiresHold` (Hold hoặc Tap), thời lượng giữ `HoldDuration` và bán kính `InteractionRadius`.
+  - **Component `PlayerInteraction` (trên Player):** Quét đối tượng tương tác gần nhất trước mặt theo góc nón và cự ly; tự động hủy khi mở Túi đồ (`InventoryUIController.IsOpen`); xử lý bấm Tap (F) hoặc đè Hold (F) mượt mà với New Input System. Tự động kiểm tra và thêm vào Player nếu thiếu.
+  - **Giao diện `InteractPromptUI` (trên Canvas `InteractUI`):** Hiển thị câu lệnh hành động và điều khiển thanh `HoldFill` (Image Type: Filled, Method: Vertical, Origin: Bottom) dâng từ dưới lên khi đè giữ phím F. Tự động ẩn hiện Fade In/Out qua `CanvasGroup`.
+  - **Tái cấu trúc `PortalController.cs`:** Kế thừa `IInteractable`, thời lượng đè phím 2.0s với thanh fill dọc trước khi chuyển cảnh giữa `DungeonScene` và `LandScene`.
+  - **Tái cấu trúc `ChestInteractable.cs`:** Kế thừa `IInteractable`, chuyển sang chế độ giữ nhẹ 0.8s (tùy chỉnh được trong Inspector) để mở nắp rương và tung đồ ra đất.
+  - **Component `GenericInteractable.cs`:** Thành phần đa năng có sẵn `UnityEvent<GameObject>` sẵn sàng gắn vào bất kỳ NPC, Đòn bẩy, Thợ rèn hay Bia đá nào mà không cần viết code mới.
 
 - [ ] **RPG-06: Thợ Rèn (Blacksmith) & Cường Hóa Trang Bị tại Làng**
   - Tương tác với NPC Thợ Rèn tại `LandScene` (bấm phím F mở UI Rèn).

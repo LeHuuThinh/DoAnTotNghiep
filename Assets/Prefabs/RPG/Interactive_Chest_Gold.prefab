@@ -54,8 +54,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.2, y: 0.9, z: 0.8}
-  m_Center: {x: 0, y: 0.45, z: 0}
+  m_Size: {x: 1.65, y: 1.15, z: 1.15}
+  m_Center: {x: 0, y: 0.5763291, z: 0}
 --- !u!114 &1833634212003524286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,9 +68,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ae890a832d91b144a7638e413365248, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ChestInteractable
-  chestLid: {fileID: 0}
-  openEulerOffset: {x: -95, y: 0, z: 0}
+  chestLid: {fileID: 936953849531030340}
+  openEulerOffset: {x: -120, y: 0, z: 0}
   openSpeed: 3.5
+  interactionPrompt: Open
+  requiresHold: 1
+  holdDuration: 1
   interactionRadius: 2.5
   openSound: {fileID: 0}
   openVfxPrefab: {fileID: 0}
@@ -166,11 +169,19 @@ PrefabInstance:
       propertyPath: m_Name
       value: Model
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5887514129304290953, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}
+    - {fileID: 6192914633812974845, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}
+    - {fileID: 4344549653521582890, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}
+--- !u!4 &936953849531030340 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8017238098858671826, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}
+  m_PrefabInstance: {fileID: 7080301954123539862}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5949336516463780196 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3517877657576195314, guid: 76cee2a4aa39ac6469a5f55851117502, type: 3}

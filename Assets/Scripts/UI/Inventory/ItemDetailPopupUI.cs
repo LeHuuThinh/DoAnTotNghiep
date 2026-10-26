@@ -319,47 +319,47 @@ namespace InfiniteLabyrinth.UI
 
       if (item.BonusAttack > 0f)
       {
-        sb.AppendLine($"<color=#FFD54F>+ {item.BonusAttack} Sát thương tấn công</color>");
+        sb.AppendLine($"<color=#FFD54F>+ {item.BonusAttack} Attack Damage</color>");
       }
 
       if (item.BonusDefense > 0f)
       {
-        sb.AppendLine($"<color=#81D4FA>+ {item.BonusDefense} Điểm phòng thủ</color>");
+        sb.AppendLine($"<color=#81D4FA>+ {item.BonusDefense} Defense</color>");
       }
 
       if (item.BonusHealth > 0f)
       {
-        sb.AppendLine($"<color=#EF5350>+ {item.BonusHealth} Máu tối đa</color>");
+        sb.AppendLine($"<color=#EF5350>+ {item.BonusHealth} Max Health</color>");
       }
 
       if (item.BonusStamina > 0f)
       {
-        sb.AppendLine($"<color=#66BB6A>+ {item.BonusStamina} Thể lực tối đa</color>");
+        sb.AppendLine($"<color=#66BB6A>+ {item.BonusStamina} Max Stamina</color>");
       }
 
       if (item.HealAmount > 0f)
       {
-        sb.AppendLine($"<color=#81C784>Hồi phục {item.HealAmount} HP ngay tức thì</color>");
+        sb.AppendLine($"<color=#81C784>Restores {item.HealAmount} HP Instantly</color>");
       }
 
       if (item.GoldValue > 0)
       {
-        sb.AppendLine($"<color=#FFE082>Giá trị: {item.GoldValue} Vàng</color>");
+        sb.AppendLine($"<color=#FFE082>Value: {item.GoldValue} Gold</color>");
       }
 
-      return sb.Length > 0 ? sb.ToString().TrimEnd() : "Không có thuộc tính đặc biệt.";
+      return sb.Length > 0 ? sb.ToString().TrimEnd() : "No special attributes.";
     }
 
     private string GetItemTypeName(ItemType type)
     {
       switch (type)
       {
-        case ItemType.Weapon: return "Vũ khí";
-        case ItemType.Armor: return "Giáp phòng ngự";
-        case ItemType.Consumable: return "Tiêu hao";
-        case ItemType.Material: return "Nguyên liệu";
-        case ItemType.Currency: return "Tiền tệ";
-        default: return "Vật phẩm";
+        case ItemType.Weapon: return "Weapon";
+        case ItemType.Armor: return "Armor";
+        case ItemType.Consumable: return "Consumable";
+        case ItemType.Material: return "Material";
+        case ItemType.Currency: return "Currency";
+        default: return "Item";
       }
     }
 

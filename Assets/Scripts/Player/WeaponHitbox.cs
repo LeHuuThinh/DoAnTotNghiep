@@ -9,15 +9,27 @@ public class WeaponHitbox : MonoBehaviour
   [Tooltip("Chỉ gây sát thương lên các Layer được chọn (ví dụ: Enemy, Breakable)")]
   [SerializeField] private LayerMask targetLayers;
 
+  [Header("Hitlag Settings")]
+  [Tooltip("Tốc độ thời gian khi khựng (Time.timeScale). 0.05 = làm chậm 95%")]
+  [Range(0f, 0.2f)]
+  [SerializeField] private float hitlagTimeScale = 0.05f;
+
+  [Tooltip("Thời gian hitlag mặc định cho đòn kết liễu (giây) nếu không được chỉ định riêng")]
+  [SerializeField] private float defaultLethalHitlag = 0.18f;
+
   private Collider hitCollider;
   private float currentDamage = 10f;
   private float currentKnockback = 0f;
   private float currentHitlag = 0f; // Biến lưu thời gian hitlag của nhát chém
+  private float currentLethalHitlag = 0.18f; // Biến lưu thời gian hitlag khi kết liễu
+  private float currentPoiseDamage = -1f; // Biến lưu sát thương Poise (làm mất thăng bằng) của nhát chém
   private Transform attacker;
 
   // Danh sách lưu các mục tiêu đã trúng đòn trong 1 lần vung kiếm (chống lặp dame)
   private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
   private static Coroutine activeHitlagCoroutine;
+  private static WeaponHitbox activeRunner;
+  private static float activeHitlagEndTime;
 
   // Event thông báo chém trúng mục tiêu (dùng cho tích nộ/spirit, lifesteal...)
   public event System.Action<IDamageable, float> OnHitTarget;
@@ -37,12 +49,23 @@ public class WeaponHitbox : MonoBehaviour
   /// <summary>
   /// Bật hitbox khi kiếm bắt đầu vung trúng đích.
   /// hitlag = 0f làm mặc định để quái vật dùng chung không bị ảnh hưởng.
+  /// lethalHitlag = -1f để tự động kế thừa hoặc dùng defaultLethalHitlag.
+  /// poiseDamage = -1f để dùng mặc định nếu không truyền từ đòn đánh.
   /// </summary>
-  public void EnableHitbox(float damage, float knockback, float hitlag = 0f)
+  public void EnableHitbox(float damage, float knockback, float hitlag = 0f, float lethalHitlag = -1f, float poiseDamage = -1f)
   {
     currentDamage = damage;
     currentKnockback = knockback;
     currentHitlag = hitlag;
+    currentPoiseDamage = poiseDamage;
+    if (lethalHitlag >= 0f)
+    {
+      currentLethalHitlag = lethalHitlag;
+    }
+    else
+    {
+      currentLethalHitlag = hitlag > 0f ? defaultLethalHitlag : 0f;
+    }
     hitTargets.Clear();
     if (hitCollider != null) hitCollider.enabled = true;
   }
@@ -75,44 +98,72 @@ public class WeaponHitbox : MonoBehaviour
       Vector3 hitPoint = other.ClosestPoint(transform.position);
       Vector3 hitDirection = attacker != null ? attacker.forward : transform.forward;
 
+      // Kiểm tra trạng thái sống trước khi trừ máu
+      Health targetHealth = damageable as Health ?? (damageable as Component)?.GetComponentInParent<Health>();
+      bool wasAlive = targetHealth == null || !targetHealth.IsDead;
+
+      // Truyền sát thương Poise tùy chỉnh của nhát chém tới mục tiêu
+      if (targetHealth != null)
+      {
+        targetHealth.SetIncomingPoiseDamage(currentPoiseDamage);
+      }
+
       // Gây sát thương (kèm tham chiếu attacker để hệ thống Parry nhận diện chính xác kẻ tấn công)
       damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback, attacker);
       OnHitTarget?.Invoke(damageable, currentDamage);
 
+      // Nhận diện đòn đánh có phải là đòn kết liễu hạ gục mục tiêu không
+      bool isLethalHit = wasAlive && targetHealth != null && targetHealth.IsDead;
+
       // 3. KÍCH HOẠT HITLAG NẾU ĐÒN ĐÁNH CÓ CÀI ĐẶT THỜI GIAN KHỰNG
-      if (currentHitlag > 0f)
+      float hitlagToApply = isLethalHit
+        ? (currentLethalHitlag > 0f ? currentLethalHitlag : defaultLethalHitlag)
+        : currentHitlag;
+
+      if (hitlagToApply > 0f)
       {
-        TriggerHitlag(currentHitlag);
+        TriggerHitlag(hitlagToApply);
       }
     }
   }
 
   private void TriggerHitlag(float duration)
   {
-    if (activeHitlagCoroutine != null)
+    float expectedEndTime = Time.unscaledTime + duration;
+    // Không cho hitlag ngắn đè lên hitlag dài (ví dụ đòn kết liễu) đang chạy
+    if (activeHitlagCoroutine != null && expectedEndTime < activeHitlagEndTime)
     {
-      StopCoroutine(activeHitlagCoroutine);
+      return;
+    }
+
+    if (activeHitlagCoroutine != null && activeRunner != null)
+    {
+      activeRunner.StopCoroutine(activeHitlagCoroutine);
       Time.timeScale = 1f;
     }
 
+    activeRunner = this;
+    activeHitlagEndTime = expectedEndTime;
     activeHitlagCoroutine = StartCoroutine(HitlagRoutine(duration));
   }
 
   private IEnumerator HitlagRoutine(float duration)
   {
-    Time.timeScale = 0.05f; // Làm chậm thế giới xuống còn 5% để tạo độ khựng đanh
+    Time.timeScale = hitlagTimeScale; // Làm chậm thế giới xuống còn 5% để tạo độ khựng đanh
     yield return new WaitForSecondsRealtime(duration);
     Time.timeScale = 1f;    // Trả lại tốc độ bình thường
     activeHitlagCoroutine = null;
+    activeRunner = null;
   }
 
   private void OnDisable()
   {
-    // Failsafe: Đảm bảo thời gian không bao giờ bị kẹt lại 0.05 nếu kiếm bị tắt đột ngột
-    if (activeHitlagCoroutine != null)
+    // Failsafe: Đảm bảo thời gian không bao giờ bị kẹt lại nếu kiếm bị tắt đột ngột
+    if (activeRunner == this && activeHitlagCoroutine != null)
     {
       Time.timeScale = 1f;
       activeHitlagCoroutine = null;
+      activeRunner = null;
     }
   }
 }

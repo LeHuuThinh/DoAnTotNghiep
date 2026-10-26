@@ -1,91 +1,80 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // 1. Thêm namespace này
+using InfiniteLabyrinth.Interaction;
 
-public class PortalController : MonoBehaviour
+/// <summary>
+/// Cổng dịch chuyển giữa các Scene (ví dụ: DungeonScene <-> LandScene)
+/// Kế thừa IInteractable hỗ trợ đè giữ phím F với thanh HoldFill từ dưới lên trên InteractUI.
+/// </summary>
+public class PortalController : MonoBehaviour, IInteractable
 {
-    [Header("Scene Settings")]
-    [SerializeField] private string targetSceneName = "DungeonScene";
+  [Header("=== CẤU HÌNH DỊCH CHUYỂN ===")]
+  [Tooltip("Tên Scene đích muốn tải (ví dụ: DungeonScene hoặc LandScene)")]
+  [SerializeField] private string targetSceneName = "LandScene";
 
-    [Header("Hold Settings")]
-    [SerializeField] private float requiredHoldTime = 2.0f;
+  [Tooltip("Câu gợi ý hiển thị trên UI")]
+  [SerializeField] private string interactionPrompt = "Vào Cổng Dịch Chuyển";
 
-    [Header("UI Feedback (Tùy chọn)")]
-    [SerializeField] private GameObject interactionUI;
-    [SerializeField] private Image fillProgressImage;
+  [Tooltip("Tên đối tượng")]
+  [SerializeField] private string targetName = "Cổng Không Gian";
 
-    private float currentHoldTimer = 0f;
-    private bool isPlayerInRange = false;
+  [Tooltip("Bật chế độ đè giữ phím")]
+  [SerializeField] private bool requiresHold = true;
 
-    private void Start()
+  [Tooltip("Thời gian cần đè giữ phím F (giây)")]
+  [SerializeField] private float requiredHoldTime = 2.0f;
+
+  [Tooltip("Bán kính có thể tương tác")]
+  [SerializeField] private float interactionRadius = 4.5f;
+
+  [Header("=== HIỆU ỨNG TÙY CHỌN ===")]
+  [SerializeField] private AudioClip teleportSound;
+  [SerializeField] private GameObject teleportVfxPrefab;
+
+  // Triển khai IInteractable
+  public string InteractionPrompt => interactionPrompt;
+  public string TargetName => targetName;
+  public bool RequiresHold => requiresHold;
+  public float HoldDuration => requiresHold ? Mathf.Max(0.01f, requiredHoldTime) : 0f;
+  public float InteractionRadius => interactionRadius;
+  public Transform InteractionTransform => transform;
+
+  private bool isTransitioning = false;
+
+  private void OnEnable()
+  {
+    InteractableRegistry.Register(this);
+  }
+
+  private void OnDisable()
+  {
+    InteractableRegistry.Unregister(this);
+  }
+
+  public bool CanInteract(GameObject player)
+  {
+    return !isTransitioning && enabled && gameObject.activeInHierarchy;
+  }
+
+  public void OnInteract(GameObject player)
+  {
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    if (teleportSound != null)
     {
-        if (interactionUI != null)
-            interactionUI.SetActive(false);
-
-        if (fillProgressImage != null)
-            fillProgressImage.fillAmount = 0f;
+      AudioSource.PlayClipAtPoint(teleportSound, transform.position);
     }
 
-    private void Update()
+    if (teleportVfxPrefab != null)
     {
-        if (!isPlayerInRange) return;
-
-        // 2. Kiểm tra bàn phím và trạng thái đè phím F bằng New Input System
-        var keyboard = Keyboard.current;
-        if (keyboard != null && keyboard.fKey.isPressed)
-        {
-            currentHoldTimer += Time.deltaTime;
-
-            if (fillProgressImage != null)
-            {
-                fillProgressImage.fillAmount = Mathf.Clamp01(currentHoldTimer / requiredHoldTime);
-            }
-
-            if (currentHoldTimer >= requiredHoldTime)
-            {
-                LoadDungeonScene();
-            }
-        }
-        else
-        {
-            if (currentHoldTimer > 0f)
-            {
-                currentHoldTimer = 0f;
-                if (fillProgressImage != null)
-                    fillProgressImage.fillAmount = 0f;
-            }
-        }
+      Instantiate(teleportVfxPrefab, transform.position, Quaternion.identity);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = true;
-            if (interactionUI != null)
-                interactionUI.SetActive(true);
-        }
-    }
+    SceneManager.LoadScene(targetSceneName);
+  }
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = false;
-            currentHoldTimer = 0f;
-
-            if (interactionUI != null)
-                interactionUI.SetActive(false);
-
-            if (fillProgressImage != null)
-                fillProgressImage.fillAmount = 0f;
-        }
-    }
-
-    private void LoadDungeonScene()
-    {
-        isPlayerInRange = false;
-        SceneManager.LoadScene(targetSceneName);
-    }
+  // Tương thích ngược với các Trigger cũ nếu có
+  private void OnTriggerEnter(Collider other) { }
+  private void OnTriggerExit(Collider other) { }
 }

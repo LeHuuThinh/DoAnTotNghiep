@@ -32,7 +32,9 @@
 | **Monster PCG** | Bộ sinh quái tự động cho hầm ngục (`ProceduralEnemySpawner.cs`) | ✅ Hoàn thành | Sinh quái theo Biệt đội chuẩn RPG: Phòng nhỏ/vừa 1 nhóm T1 + 1 nhóm T2 (nếu có); Phòng lớn 1-2 nhóm T1 + 1-2 nhóm T2; Kho báu 1 nhóm nhỏ; Sinh quái cả phòng đầu vào (`data.startRoom`); Chỉ chừa trống Boss Room; Điểm neo R=3m cách nhau >=8.5m; Chống kẹt props & cửa |
 | **Monster / Optimization** | Tối ưu hóa hiệu năng quái vật hầm ngục (`DungeonEnemyOptimizer.cs`) | ✅ Hoàn thành | AI, Animation, Mesh & Shadow Hibernation: Cự ly <40m thức tỉnh đầy đủ, >48m ngủ đông (0% CPU/GPU, tắt Animator.enabled, tắt Renderers, tắt Shadow, tắt NavMesh, tắt AI Update); Tối ưu `EnemyFeedback` bằng `MaterialPropertyBlock` không clone material; Time-slicing 4 batch; Thức tỉnh tức thì khi dính đòn |
 | **Boss** | Mô hình 3D & Bộ Animation Boss Ice Golem | ✅ Hoàn thành | `Boss_IceGolem.prefab`, Attack, Jump, Roar, Walk |
-| **World** | Chuyển cảnh Làng -> Dungeon (Cổng dịch chuyển) | ✅ Hoàn thành | `PortalController.cs` (Đè phím F) |
+| **RPG / Progression** | Cấp độ, Kinh nghiệm & Cộng Điểm Tiềm Năng (RPG-05) | ✅ Hoàn thành | `PlayerProgression.cs` (Singleton/DontDestroyOnLoad, Level 1-50, EXP mượt, thưởng 3 điểm/cấp, tẩy điểm bằng Vàng); Vòng EXP chữ C trên PlayerHUD (`ExpRingFill`); Modal phân bổ điểm tiềm năng (`AttributeAllocationUI.cs`) mở từ nút `BtnAttributePoints` trên Inventory |
+| **System / Interaction** | Hệ thống Tương Tác Đa Năng (SYS-01) | ✅ Hoàn thành | `IInteractable.cs`, `InteractableRegistry.cs`, `PlayerInteraction.cs` (quét đối tượng trước mặt, xử lý Tap/Hold phím F); `InteractPromptUI.cs` điều khiển `InteractUI` với thanh `HoldFill` dọc từ dưới lên; Nâng cấp `PortalController.cs` (Hold 2.0s chuyển cảnh); Nâng cấp `ChestInteractable.cs` (Hold 0.8s mở rương); `GenericInteractable.cs` sẵn sàng cho NPC/Thợ rèn |
+| **World** | Chuyển cảnh Làng <-> Dungeon (Cổng dịch chuyển) | ✅ Hoàn thành | `PortalController.cs` (Hold 2.0s F, kết nối tự động với `InteractUI`) |
 | **World** | Môi trường Làng (`LandScene`) & NPC tuần tra | ✅ Hoàn thành | `LandScene.unity`, `NpcPatrol.cs` |
 | **RPG / Architecture** | Kiến trúc dữ liệu Vật phẩm & Kho đồ (RPG-01) | ✅ Hoàn thành | `ItemData.cs` (ScriptableObject), `InventorySlot.cs`, `InventoryManager.cs` (Singleton/DontDestroyOnLoad, 30 ô, Vàng, Equip/Unequip/Use/Drop, buff trực tiếp ATK vào `PlayerCombat.cs` và DEF vào `Health.cs`), bộ 8 vật phẩm mẫu qua `ItemDatabaseGenerator.cs` |
 | **RPG / Drops** | Rơi đồ vật lý từ Quái, Thùng vỡ & Rương (RPG-02) | ✅ Hoàn thành | `LootDropper.cs` quỹ đạo búng vòng cung Arc Pop; `BreakableProp.cs` nhận sát thương vỡ thùng; `ChestInteractable.cs` rương lật nắp tung đồ; `WorldItemPickup.cs` mô hình 3D xoay lơ lửng hào quang Rarity; Hệ thống 4 mô hình Vàng phân cấp theo số lượng (`coin`, `coin_stack_small/medium/large`) |
@@ -43,11 +45,9 @@
 
 ## 2. Các Tính Năng Đang Thiếu / Cần Thực Hiện Tiếp Theo (Theo Thứ Tự Ưu Tiên)
 
-1. **[ƯU TIÊN SỐ 1 HIỆN TẠI - Task RPG-05] Cấp Độ, Kinh Nghiệm (EXP) & Modal Phân Bổ Điểm Tiềm Năng:**
-   - Quản lý Level và thanh EXP trên HUD (`PlayerProgression.cs`).
-   - Tiêu diệt quái nhận EXP -> Cập nhật vòng EXP / thanh EXP.
-   - Khi đầy EXP -> Lên cấp! Tự hồi phục máu/thể lực và thưởng 3 Điểm Tiềm Năng (Attribute Points).
-   - Modal phân bổ điểm tiềm năng mở từ nút `BtnAttributePoints` trên cửa sổ Túi đồ: Cộng vào Sức mạnh (ATK), Sinh lực (Max HP), Thể lực (Max Stamina) với chế độ tăng/giảm xem trước (Preview) và nút [Xác Nhận].
+1. **[ƯU TIÊN SỐ 1 HIỆN TẠI - Task RPG-06] Thợ Rèn (Blacksmith) & Cường Hóa Trang Bị tại Làng:**
+   - Tương tác với NPC Thợ Rèn tại `LandScene` (bấm phím F mở UI Rèn).
+   - Công thức cường hóa: Vũ khí hiện tại + [X] Vàng + [Y] Đá cường hóa kiếm -> Nâng cấp bậc kiếm (+1, +2...), tăng mạnh sát thương chém và đổi màu hiệu ứng vung kiếm.
 
 2. **[Ưu tiên 2 - Task RPG-06] Thợ Rèn (Blacksmith) & Cường Hóa Trang Bị:**
    - Tương tác với NPC Thợ Rèn tại `LandScene` (bấm phím F mở UI Rèn đồ).

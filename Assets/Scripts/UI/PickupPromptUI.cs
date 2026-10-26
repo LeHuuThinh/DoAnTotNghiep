@@ -225,11 +225,11 @@ namespace InfiniteLabyrinth.UI
       {
         if (quantity > 1)
         {
-          promptKeyText.text = $"[<color=#FFCC00>F</color>] Nhặt x{quantity}";
+          promptKeyText.text = $"Pick up x{quantity}";
         }
         else
         {
-          promptKeyText.text = "[<color=#FFCC00>F</color>] Nhặt";
+          promptKeyText.text = "Pick up";
         }
       }
     }

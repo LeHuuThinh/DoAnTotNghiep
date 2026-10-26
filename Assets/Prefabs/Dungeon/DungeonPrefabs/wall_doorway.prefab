@@ -59,6 +59,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2269480fba97f31419571b557e29b12f, type: 3}
       insertIndex: -1
       addedObject: {fileID: -8981924948689021224}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2269480fba97f31419571b557e29b12f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2841924948689021225}
   m_SourcePrefab: {fileID: 100100000, guid: 2269480fba97f31419571b557e29b12f, type: 3}
 --- !u!1 &4431865807315375022 stripped
 GameObject:
@@ -86,3 +89,29 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4, y: 4, z: 1.0000006}
   m_Center: {x: 0, y: 2, z: -0.00000031292439}
+--- !u!114 &2841924948689021225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4431865807315375022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0611680a3fb34b30af075dc8f7b1903b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Interaction.DoorInteractable
+  doorTransform: {fileID: 0}
+  closedEuler: {x: 0, y: 0, z: 0}
+  openedEuler: {x: 0, y: -120, z: 0}
+  rotationDuration: 1.6
+  canToggleClose: 1
+  openPrompt: "M\u1EDF C\u1EEDa"
+  closePrompt: "\u0110\u00F3ng C\u1EEDa"
+  targetName: "C\u1EEDa H\u1EA7m Ng\u1EE5c"
+  requiresHold: 1
+  holdDuration: 1
+  interactionRadius: 2.8
+  doorObstacleCollider: {fileID: -8981924948689021224}
+  openSound: {fileID: 0}
+  closeSound: {fileID: 0}

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_Sword_Wooden
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_wooden
-  itemName: "Ki\u1EBFm G\u1ED7 T\u1EADp S\u1EF1"
-  description: "Thanh ki\u1EBFm g\u1ED7 d\xE0nh cho c\xE1c t\xE2n binh m\u1EDBi b\u01B0\u1EDBc
-    ch\xE2n v\xE0o m\xEA cung (+6 S\xE1t th\u01B0\u01A1ng)."
+  itemName: Apprentice Wooden Sword
+  description: A wooden practice sword crafted for recruits venturing into the labyrinth
+    (+6 Attack).
   icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
   itemType: 0
   rarity: 0

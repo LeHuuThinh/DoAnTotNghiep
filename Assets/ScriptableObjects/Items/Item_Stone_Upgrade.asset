@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Item_Stone_Upgrade
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: mat_upgrade_stone
-  itemName: "\u0110\xE1 H\u1EA7m Ng\u1EE5c C\u01B0\u1EDDng H\xF3a"
-  description: "Kho\xE1ng th\u1EA1ch c\u1ED5 x\u01B0a t\u1ECFa ra \xE1nh s\xE1ng
-    ma thu\u1EADt. Nguy\xEAn li\u1EC7u ch\xEDnh \u0111\u1EC3 Th\u1EE3 R\xE8n trui
-    r\xE8n v\xE0 gia t\u0103ng s\xE1t th\u01B0\u01A1ng v\u0169 kh\xED."
+  itemName: Dungeon Enhancement Stone
+  description: An ancient mineral emitting magical energy. Used by the Blacksmith
+    to reinforce and enhance weapon damage.
   icon: {fileID: 21300000, guid: 0812b073c9fb4f34abef407fbecfa972, type: 3}
   itemType: 3
   rarity: 2

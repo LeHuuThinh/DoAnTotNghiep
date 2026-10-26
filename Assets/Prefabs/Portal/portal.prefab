@@ -4982,11 +4982,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: bd1b98edaed629949aafba8cae339988, type: 3}
       propertyPath: m_LocalScale.x
-      value: 800
+      value: 800.00006
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bd1b98edaed629949aafba8cae339988, type: 3}
       propertyPath: m_LocalScale.y
-      value: 800
+      value: 800.00006
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bd1b98edaed629949aafba8cae339988, type: 3}
       propertyPath: m_LocalScale.z
@@ -4998,7 +4998,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bd1b98edaed629949aafba8cae339988, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.9921875
+      value: 3.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bd1b98edaed629949aafba8cae339988, type: 3}
       propertyPath: m_LocalPosition.z
@@ -5094,15 +5094,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2528847772716446089}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3d5a66aabfd0bb4eb8c7cb55abd91d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
   targetSceneName: LandScene
-  requiredHoldTime: 1.25
-  interactionUI: {fileID: 0}
-  fillProgressImage: {fileID: 0}
+  interactionPrompt: Enter the Portal
+  targetName: DungeonPortal
+  requiresHold: 1
+  requiredHoldTime: 2
+  interactionRadius: 3.5
+  teleportSound: {fileID: 0}
+  teleportVfxPrefab: {fileID: 0}
 --- !u!65 &3196271246632131303
 BoxCollider:
   m_ObjectHideFlags: 0
