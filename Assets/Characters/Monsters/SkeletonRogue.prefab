@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 6935930874999778004}
   - component: {fileID: 8316317591851585195}
   - component: {fileID: 6904120551395480210}
+  - component: {fileID: 1857117514927411627}
   m_Layer: 9
   m_Name: SkeletonRogue
   m_TagString: Untagged
@@ -99,7 +100,8 @@ MonoBehaviour:
   patrolRadius: 8
   patrolWaitTime: 5
   attackAnimationSpeed: 1.2
-  arrowPrefab: {fileID: 134217584828346005, guid: fc9c1104d28498e438b860d03dd8accc, type: 3}
+  expReward: 12
+  arrowPrefab: {fileID: 6525344702486616341, guid: e8576ad61e13cd9489e796fe33f4c2fc, type: 3}
   arrowSpawnPoint: {fileID: 376090160507323268}
   arrowSpeed: 30
   arrowDamage: 15
@@ -198,6 +200,42 @@ CapsuleCollider:
   m_Height: 2.0130198
   m_Direction: 1
   m_Center: {x: 0, y: 1.0095273, z: 0}
+--- !u!114 &1857117514927411627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4989933198260461715}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e913b3634397f2744bb0dc9ecaf9497a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.LootDropper
+  worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
+  lootTable:
+  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    dropChance: 0.3
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    dropChance: 0.25
+    minQuantity: 1
+    maxQuantity: 2
+  - item: {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+    dropChance: 0.12
+    minQuantity: 1
+    maxQuantity: 1
+  goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
+  goldDropChance: 0.75
+  minGold: 5
+  maxGold: 25
+  minDropRadius: 0.8
+  maxDropRadius: 2
+  arcHeight: 1.3
+  arcDuration: 0.5
+  autoDropOnDeath: 1
 --- !u!1001 &5174647191802805201
 PrefabInstance:
   m_ObjectHideFlags: 0

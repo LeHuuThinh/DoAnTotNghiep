@@ -49,6 +49,12 @@ public abstract class EnemyAIBase : MonoBehaviour
   [Tooltip("Tốc độ animation đòn đánh (kết hợp với Multiplier 'AttackSpeedMultiplier' trong Animator)")]
   [SerializeField] protected float attackAnimationSpeed = 1.0f;
 
+  [Header("Progression / Reward")]
+  [Tooltip("Lượng EXP thưởng cho Player khi quái vật bị tiêu diệt")]
+  [SerializeField] protected int expReward = 25;
+
+  public int ExpReward => expReward;
+
   // Runtime State
   protected NavMeshAgent agent;
   protected Health health;
@@ -77,6 +83,13 @@ public abstract class EnemyAIBase : MonoBehaviour
   protected static readonly int AttackSpeedMultiplierHash = Animator.StringToHash("AttackSpeedMultiplier");
   protected bool hasAttackSpeedMultiplierParam = false;
 
+  // Optimization & Hibernation State
+  protected bool isSleeping = false;
+  public bool IsSleeping => isSleeping;
+  protected Renderer[] cachedRenderers;
+  protected ParticleSystem[] cachedParticles;
+  protected Light[] cachedLights;
+
   // Public Properties
   public abstract EnemyCombatRole CombatRole { get; }
   public abstract bool IsAttacking { get; }
@@ -88,8 +101,16 @@ public abstract class EnemyAIBase : MonoBehaviour
     health = GetComponent<Health>();
     if (animator == null) animator = GetComponentInChildren<Animator>();
 
+    // Cache components phục vụ tối ưu hóa LOD / Hibernation
+    cachedRenderers = GetComponentsInChildren<Renderer>(true);
+    cachedParticles = GetComponentsInChildren<ParticleSystem>(true);
+    cachedLights = GetComponentsInChildren<Light>(true);
+
     if (animator != null)
     {
+      // Tối ưu hóa ma trận xương khi ngoài camera (tiết kiệm 75% GPU/CPU rigging)
+      animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+
       foreach (var param in animator.parameters)
       {
         if (param.nameHash == AttackSpeedMultiplierHash)
@@ -111,14 +132,27 @@ public abstract class EnemyAIBase : MonoBehaviour
 
     spawnPoint = transform.position;
 
-    GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-    if (playerObj != null)
+    if (playerTransform == null)
     {
-      playerTransform = playerObj.transform;
+      GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+      if (playerObj != null)
+      {
+        playerTransform = playerObj.transform;
+      }
+      else
+      {
+        var pc = Object.FindFirstObjectByType<PlayerController>();
+        if (pc != null) playerTransform = pc.transform;
+      }
     }
 
     strafeDirection = Random.value > 0.5f ? 1 : -1;
     individualPreferredDistance = preferredDistance + Random.Range(-distanceVariance, distanceVariance);
+
+    if (DungeonEnemyOptimizer.Instance != null)
+    {
+      DungeonEnemyOptimizer.Instance.RegisterEnemy(this);
+    }
   }
 
   protected virtual void OnEnable()
@@ -146,19 +180,39 @@ public abstract class EnemyAIBase : MonoBehaviour
     {
       AttackTokenDirector.Instance.UnregisterEnemy(this);
     }
+    if (DungeonEnemyOptimizer.Instance != null)
+    {
+      DungeonEnemyOptimizer.Instance.UnregisterEnemy(this);
+    }
   }
 
   protected virtual void OnDeath()
   {
+    if (isSleeping)
+    {
+      SetHibernation(false);
+    }
     ReleaseToken();
     if (AttackTokenDirector.HasInstance)
     {
       AttackTokenDirector.Instance.UnregisterEnemy(this);
     }
+    if (DungeonEnemyOptimizer.Instance != null)
+    {
+      DungeonEnemyOptimizer.Instance.UnregisterEnemy(this);
+    }
+
+    // Thưởng EXP cho Player khi quái vật bị tiêu diệt
+    if (expReward > 0 && InfiniteLabyrinth.Progression.PlayerProgression.HasInstance)
+    {
+      InfiniteLabyrinth.Progression.PlayerProgression.Instance.GainExp(expReward);
+    }
   }
 
   protected virtual void Update()
   {
+    if (isSleeping) return; // Ngủ đông khi ở xa người chơi: 0% CPU!
+
     if (agent == null || !agent.isOnNavMesh) return;
 
     if (!hasInitializedOnNavMesh)
@@ -366,8 +420,118 @@ public abstract class EnemyAIBase : MonoBehaviour
     return center;
   }
 
+  /// <summary>
+  /// Bật/Tắt chế độ ngủ đông khi ở xa người chơi để giải phóng tối đa tài nguyên CPU/GPU.
+  /// Ngủ đông bao gồm:
+  /// 1. Tắt Update() AI và dừng NavMeshAgent (0% CPU Logic & Vật lý).
+  /// 2. Tắt Animator (dừng 100% chi phí tính toán chuyển động xương, State Machine).
+  /// 3. Tắt Renderers (loại bỏ 100% SkinnedMeshRenderer, Draw Calls và Shadow Caster Passes).
+  /// 4. Tắt Particle Systems và Point Lights (nếu có).
+  /// </summary>
+  public virtual void SetHibernation(bool sleep)
+  {
+    if (isSleeping == sleep) return;
+
+    // Failsafe: Nếu đang trong chuỗi ra đòn hoặc đang giữ Token tấn công, hoãn ngủ đông
+    if (sleep && (currentState == AIState.Attack || hasAttackToken || IsAttacking)) return;
+
+    isSleeping = sleep;
+
+    if (isSleeping)
+    {
+      // 1. Dừng NavMeshAgent và tắt né tránh va chạm (0% CPU NavMesh)
+      if (agent != null && agent.isOnNavMesh)
+      {
+        agent.isStopped = true;
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.NoObstacleAvoidance;
+      }
+
+      // 2. Tắt hoàn toàn Animator (dừng 100% tính toán chuyển động xương)
+      if (animator != null)
+      {
+        animator.enabled = false;
+      }
+
+      // 3. Tắt Renderers (loại bỏ 100% Draw Calls và Shadow Passes)
+      if (cachedRenderers != null)
+      {
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+          if (cachedRenderers[i] != null) cachedRenderers[i].enabled = false;
+        }
+      }
+
+      // 4. Dừng các hiệu ứng Particle nếu có
+      if (cachedParticles != null)
+      {
+        for (int i = 0; i < cachedParticles.Length; i++)
+        {
+          if (cachedParticles[i] != null) cachedParticles[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+      }
+
+      // 5. Tắt nguồn sáng nếu có
+      if (cachedLights != null)
+      {
+        for (int i = 0; i < cachedLights.Length; i++)
+        {
+          if (cachedLights[i] != null) cachedLights[i].enabled = false;
+        }
+      }
+    }
+    else
+    {
+      // 1. Phục hồi NavMeshAgent
+      if (agent != null && agent.isOnNavMesh)
+      {
+        agent.isStopped = false;
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
+      }
+
+      // 2. Bật lại Animator
+      if (animator != null)
+      {
+        animator.enabled = true;
+        animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+      }
+
+      // 3. Bật lại Renderers
+      if (cachedRenderers != null)
+      {
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+          if (cachedRenderers[i] != null) cachedRenderers[i].enabled = true;
+        }
+      }
+
+      // 4. Phát lại hiệu ứng Particle
+      if (cachedParticles != null)
+      {
+        for (int i = 0; i < cachedParticles.Length; i++)
+        {
+          if (cachedParticles[i] != null) cachedParticles[i].Play();
+        }
+      }
+
+      // 5. Bật lại nguồn sáng
+      if (cachedLights != null)
+      {
+        for (int i = 0; i < cachedLights.Length; i++)
+        {
+          if (cachedLights[i] != null) cachedLights[i].enabled = true;
+        }
+      }
+    }
+  }
+
   protected virtual void OnTakeDamageAggro(Vector3 hitPoint, Vector3 hitDirection, float knockback)
   {
+    // Bị người chơi tấn công (kể cả từ xa bằng cung/phép) -> Lập tức thức tỉnh!
+    if (isSleeping)
+    {
+      SetHibernation(false);
+    }
+
     if (knockback > 0f)
     {
       InterruptAttack();

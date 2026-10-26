@@ -20,6 +20,12 @@ public class EnemyProjectile : MonoBehaviour
   [SerializeField] private GameObject hitVfxPrefab;
   [SerializeField] private float spawnGracePeriod = 0.05f;
 
+  [Header("Visual Decoupling (Tùy chọn)")]
+  [Tooltip("Kéo GameObject con chứa Model/Mesh vào đây (ví dụ: ArrowModel). Nếu để trống, code tự tìm con đầu tiên.")]
+  [SerializeField] private Transform visualTransform;
+  [Tooltip("Góc xoay bù trừ cho Visual con nếu cần tinh chỉnh thêm")]
+  [SerializeField] private Vector3 visualRotationOffset = Vector3.zero;
+
   private Rigidbody rb;
   private Collider projCollider;
   private Transform attacker;
@@ -34,6 +40,26 @@ public class EnemyProjectile : MonoBehaviour
 
     projCollider = GetComponent<Collider>();
     projCollider.isTrigger = true;
+
+    // Tự động tìm Visual/ArrowModel con nếu chưa gán thủ công
+    if (visualTransform == null && transform.childCount > 0)
+    {
+      Transform foundChild = transform.Find("ArrowModel");
+      if (foundChild == null) foundChild = transform.Find("Visual");
+      visualTransform = foundChild != null ? foundChild : transform.GetChild(0);
+    }
+
+    if (visualTransform != null && visualRotationOffset != Vector3.zero)
+    {
+      visualTransform.localEulerAngles += visualRotationOffset;
+    }
+
+    // Đảm bảo tất cả ParticleSystem con (ví dụ: Flame Thrower) đều kích hoạt
+    ParticleSystem[] particles = GetComponentsInChildren<ParticleSystem>();
+    foreach (ParticleSystem p in particles)
+    {
+      if (!p.isPlaying) p.Play();
+    }
 
     // Tự động hủy sau thời gian bay tối đa nếu không trúng gì
     Destroy(gameObject, lifeTime);
@@ -55,7 +81,10 @@ public class EnemyProjectile : MonoBehaviour
       Collider[] attackerColliders = attackerRoot.GetComponentsInChildren<Collider>();
       foreach (Collider col in attackerColliders)
       {
-        Physics.IgnoreCollision(projCollider, col, true);
+        if (projCollider != null && col != null)
+        {
+          Physics.IgnoreCollision(projCollider, col, true);
+        }
       }
     }
 
@@ -74,18 +103,16 @@ public class EnemyProjectile : MonoBehaviour
     Vector3 moveStep = transform.forward * moveDistance;
 
     // =========================================================================
-    // QUÉT TIA DÒ ĐƯỜNG LIÊN TỤC CHỐNG XUYÊN TƯỜNG / VẬT CẢN Ở TỐC ĐỘ CAO
+    // QUÉT TIA DÒ ĐƯỜNG LIÊN TỤC CHỐNG XUYÊN TƯỜNG / VẬT CẢN & MỤC TIÊU Ở TỐC ĐỘ CAO
     // =========================================================================
     if (aliveTimer >= spawnGracePeriod)
     {
-      if (Physics.Raycast(transform.position, transform.forward, out RaycastHit wallHit, moveDistance + 0.15f, obstacleLayers))
+      LayerMask hitMask = obstacleLayers | targetLayers;
+      if (Physics.Raycast(transform.position, transform.forward, out RaycastHit sweepHit, moveDistance + 0.15f, hitMask))
       {
-        if (attacker == null || wallHit.transform.root != attacker)
+        if (attacker == null || sweepHit.transform.root != attacker)
         {
-          hasHit = true;
-          transform.position = wallHit.point;
-          SpawnHitEffect(wallHit.point, wallHit.normal);
-          Destroy(gameObject);
+          HandleHit(sweepHit.collider, sweepHit.point, sweepHit.normal);
           return;
         }
       }
@@ -99,6 +126,15 @@ public class EnemyProjectile : MonoBehaviour
     if (hasHit) return;
     if (attacker != null && other.transform.root == attacker) return;
 
+    Vector3 hitPoint = GetClosestHitPoint(other);
+    HandleHit(other, hitPoint, -transform.forward);
+  }
+
+  private void HandleHit(Collider other, Vector3 hitPoint, Vector3 hitNormal)
+  {
+    if (hasHit) return;
+    if (attacker != null && other.transform.root == attacker) return;
+
     // 1. Trúng Player (hoặc mục tiêu nhận sát thương)
     if ((targetLayers.value & (1 << other.gameObject.layer)) != 0)
     {
@@ -106,12 +142,11 @@ public class EnemyProjectile : MonoBehaviour
       if (damageable != null)
       {
         hasHit = true;
-        Vector3 hitPoint = GetClosestHitPoint(other);
         
-        // Gọi TakeDamage -> Nếu Player đang Parry hoặc Block, hệ thống Health & PlayerFeedback sẽ tự động bắt lấy
-        damageable.TakeDamage(damage, hitPoint, transform.forward, knockback);
+        // Gọi TakeDamage -> Truyền rõ kẻ tấn công để hệ thống Feedback, Parry & Aggro hoạt động chuẩn xác
+        damageable.TakeDamage(damage, hitPoint, transform.forward, knockback, attacker);
 
-        SpawnHitEffect(hitPoint, -transform.forward);
+        SpawnHitEffect(hitPoint, hitNormal.sqrMagnitude > 0.001f ? hitNormal : -transform.forward);
         Destroy(gameObject);
         return;
       }
@@ -123,8 +158,7 @@ public class EnemyProjectile : MonoBehaviour
       if (aliveTimer < spawnGracePeriod) return;
 
       hasHit = true;
-      Vector3 hitPoint = GetClosestHitPoint(other);
-      SpawnHitEffect(hitPoint, -transform.forward);
+      SpawnHitEffect(hitPoint, hitNormal.sqrMagnitude > 0.001f ? hitNormal : -transform.forward);
       Destroy(gameObject);
     }
   }
@@ -147,4 +181,12 @@ public class EnemyProjectile : MonoBehaviour
       Instantiate(hitVfxPrefab, spawnPos, spawnRot);
     }
   }
+
+#if UNITY_EDITOR
+  private void OnDrawGizmosSelected()
+  {
+    Gizmos.color = Color.yellow;
+    Gizmos.DrawRay(transform.position, transform.forward * 1.5f);
+  }
+#endif
 }

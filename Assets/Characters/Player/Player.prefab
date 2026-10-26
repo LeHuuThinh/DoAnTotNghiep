@@ -1959,9 +1959,15 @@ MonoBehaviour:
   speedDampTime: 0.15
   jumpHeight: 1
   jumpDelay: 0.6
+  airControl: 0.35
   rollSpeed: 6
   rollDuration: 1
   rollIFrameDuration: 0.45
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  softLandLockDuration: 0.1
+  hardLandLockDuration: 0.2
   animator: {fileID: 3586210189879081407}
   thirdPersonCamera: {fileID: 0}
   targetLockSystem: {fileID: 759275986569051391}
@@ -1988,8 +1994,8 @@ CharacterController:
   serializedVersion: 3
   m_Height: 2.16
   m_Radius: 0.36
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_SlopeLimit: 55
+  m_StepOffset: 0.45
   m_SkinWidth: 0.01
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1.08, z: 0}
@@ -2082,7 +2088,7 @@ MonoBehaviour:
   lockRange: 14
   breakLockRange: 18
   viewAngleLimit: 75
-  wallLostGraceTime: 0.8
+  wallLostGraceTime: 1.5
   autoSwitchOnTargetDeath: 1
   switchTargetRange: 16
   lockOnReticle: {fileID: 0}
@@ -3163,11 +3169,11 @@ MonoBehaviour:
   playerFeedback: {fileID: 6269426121722460428}
   playerStats: {fileID: 4698226416880465567}
   weaponHitbox: {fileID: 7164169299375368469}
-  attack1Damage: 15
-  attack2Damage: 15
-  attack3Damage: 20
-  chargeAttackDamage: 10
-  counterAttackDamage: 40
+  attack1Damage: 25
+  attack2Damage: 25
+  attack3Damage: 40
+  chargeAttackDamage: 25
+  counterAttackDamage: 75
   slashProjectilePrefab: {fileID: 1574271572835420843, guid: 855685a51bd1d6c41b21c09c0becf7f3, type: 3}
   projectileSpawnPoint: {fileID: 3075534017654103088}
   aoeSpellPrefab: {fileID: 6547965365630005983, guid: f8c946e92f6f0ec42873179368db598c, type: 3}

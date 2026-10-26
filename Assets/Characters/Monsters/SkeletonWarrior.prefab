@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6841203782640174366}
   - component: {fileID: 1565550510966275929}
   - component: {fileID: 4703182412023202275}
+  - component: {fileID: 3417118192412773922}
   m_Layer: 9
   m_Name: SkeletonWarrior
   m_TagString: Untagged
@@ -50,35 +51,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   animator: {fileID: 5992742559750042838}
-  weaponHitbox: {fileID: 2550425182332717077}
   chaseRange: 14
   combatStanceRange: 8
   preferredDistance: 5
   attackRange: 2
   attackCooldown: 5
-  attackDamage: 15
-  attackKnockback: 0.5
-  attackAnimationSpeed: 1.3
+  walkSpeed: 1.8
+  strafeSpeed: 2
+  runSpeed: 5
+  rotationSpeed: 8
   circleDuration: 5
   directionChangeInterval: 2
   distanceVariance: 1.5
   crowdRepulsionRadius: 2.4
   crowdRepulsionForce: 1.5
-  walkSpeed: 1.8
-  strafeSpeed: 2
+  patrolRadius: 8
+  patrolWaitTime: 5
+  attackAnimationSpeed: 1.3
+  expReward: 15
+  weaponHitbox: {fileID: 2550425182332717077}
+  attackDamage: 15
+  attackKnockback: 0.5
   retreatSpeed: 1
   postAttackRetreatSpeed: 2
-  runSpeed: 5
-  rotationSpeed: 8
+  counterAttackIfReady: 1
   closeCombatTriggerRange: 2
   stepBackDistance: 2
   reactionDuration: 1.5
   standGuardChance: 35
   sidestepChance: 35
   stepBackChance: 30
-  counterAttackIfReady: 1
-  patrolRadius: 8
-  patrolWaitTime: 5
 --- !u!114 &3167275676395035288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,6 +171,42 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &3417118192412773922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3329707019587242983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e913b3634397f2744bb0dc9ecaf9497a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.LootDropper
+  worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
+  lootTable:
+  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    dropChance: 0.3
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    dropChance: 0.25
+    minQuantity: 1
+    maxQuantity: 2
+  - item: {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
+    dropChance: 0.15
+    minQuantity: 1
+    maxQuantity: 1
+  goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
+  goldDropChance: 0.75
+  minGold: 5
+  maxGold: 25
+  minDropRadius: 0.8
+  maxDropRadius: 2
+  arcHeight: 1.3
+  arcDuration: 0.5
+  autoDropOnDeath: 1
 --- !u!1001 &162387089395321159
 PrefabInstance:
   m_ObjectHideFlags: 0

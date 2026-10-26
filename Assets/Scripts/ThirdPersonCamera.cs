@@ -136,8 +136,13 @@ public class ThirdPersonCamera : MonoBehaviour
     collisionLayers = LayerMask.GetMask("Default", "Terrain", "Obstacle", "NavMessFloor");
     if (collisionLayers.value == 0)
     {
-      collisionLayers = ~LayerMask.GetMask("Player", "Enemy", "Ignore Raycast", "UI", "TransparentFX");
+      collisionLayers = ~LayerMask.GetMask("Player", "Enemy", "Ignore Raycast", "UI", "TransparentFX", "Item");
     }
+
+    int itemLayerIndex = LayerMask.NameToLayer("Item");
+    if (itemLayerIndex >= 0) collisionLayers &= ~(1 << itemLayerIndex);
+    int ignoreRaycastIndex = LayerMask.NameToLayer("Ignore Raycast");
+    if (ignoreRaycastIndex >= 0) collisionLayers &= ~(1 << ignoreRaycastIndex);
   }
 
   private void OnValidate()
@@ -188,9 +193,14 @@ public class ThirdPersonCamera : MonoBehaviour
       collisionLayers = LayerMask.GetMask("Default", "Terrain", "Obstacle", "NavMessFloor");
       if (collisionLayers.value == 0)
       {
-        collisionLayers = ~LayerMask.GetMask("Player", "Enemy", "Ignore Raycast", "UI", "TransparentFX");
+        collisionLayers = ~LayerMask.GetMask("Player", "Enemy", "Ignore Raycast", "UI", "TransparentFX", "Item");
       }
     }
+
+    int itemLayerIndex = LayerMask.NameToLayer("Item");
+    if (itemLayerIndex >= 0) collisionLayers &= ~(1 << itemLayerIndex);
+    int ignoreRaycastIndex = LayerMask.NameToLayer("Ignore Raycast");
+    if (ignoreRaycastIndex >= 0) collisionLayers &= ~(1 << ignoreRaycastIndex);
 
     if (target != null)
     {
@@ -589,6 +599,16 @@ public class ThirdPersonCamera : MonoBehaviour
 
     if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
     {
+      if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+      {
+        return;
+      }
+
+      if (InfiniteLabyrinth.UI.InventoryUIController.IsOpen)
+      {
+        return;
+      }
+
       Cursor.lockState = CursorLockMode.Locked;
       Cursor.visible = false;
     }

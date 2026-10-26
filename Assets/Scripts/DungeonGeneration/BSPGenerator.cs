@@ -22,6 +22,9 @@ public class BSPGenerator : MonoBehaviour
   public Transform startDoorMarker;
   public float tileSize = 2f;
 
+  [Header("Cài đặt Tầng 2 (Gác Lửng Mezzanine)")]
+  public MezzanineSettings mezzanineSettings = new MezzanineSettings();
+
   public DungeonData Generate()
   {
     DungeonData data = new DungeonData
@@ -38,6 +41,9 @@ public class BSPGenerator : MonoBehaviour
     CreateCorridors(data.rootNode, data);
     ConnectStartRoom(data);
     BakeGrid(data);
+
+    // Phân tích đồ thị phòng, chạy BFS tìm Boss Room, phân loại phòng & tính toán tầng 2 (Mezzanine)
+    DungeonRoomAnalyzer.Analyze(data, startDoorMarker, tileSize, corridorThickness, mezzanineSettings);
 
     return data;
   }

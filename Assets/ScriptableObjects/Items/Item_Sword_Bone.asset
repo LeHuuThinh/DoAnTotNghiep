@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Sword_Bone
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: weapon_sword_bone
+  itemName: "C\u1ED1t Ma Ki\u1EBFm"
+  description: "R\xE8n t\u1EEB x\u01B0\u01A1ng s\u1ECD c\u1EE7a Chi\u1EBFn Binh B\u1ED9
+    X\u01B0\u01A1ng c\u1ED5 x\u01B0a (+28 S\xE1t th\u01B0\u01A1ng, +10 Th\u1EC3 l\u1EF1c)."
+  icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
+  itemType: 0
+  rarity: 2
+  maxStack: 1
+  goldValue: 180
+  bonusAttack: 28
+  bonusDefense: 0
+  bonusHealth: 0
+  bonusStamina: 10
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 2668362591727377572, guid: dcfbf50d5365b2a4bbc2a9d91800c6ed, type: 3}

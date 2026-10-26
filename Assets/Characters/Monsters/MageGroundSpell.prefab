@@ -55,6 +55,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   explosionVfxPrefab: {fileID: 7064883253219195277, guid: d2028f046e0a0f54c8a3e4a16bd8749a, type: 3}
+  explosionVfxLifetime: 4
   borderColor: {r: 1, g: 0.15, b: 0.15, a: 0.95}
   fillColor: {r: 1, g: 0.15, b: 0.15, a: 0.35}
   customOuterRing: {fileID: 0}

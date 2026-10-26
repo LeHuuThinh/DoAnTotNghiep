@@ -116,11 +116,30 @@ public class PlayerCombat : MonoBehaviour
     }
   }
 
+  private void OnDisable()
+  {
+    SetCounterAttackActive(false);
+  }
+
   private void OnDestroy()
   {
     if (weaponHitbox != null)
     {
       weaponHitbox.OnHitTarget -= HandleWeaponHitTarget;
+    }
+  }
+
+  /// <summary>
+  /// Bật/Tắt trạng thái Counter Attack và đồng bộ I-Frames bảo vệ người chơi
+  /// </summary>
+  private void SetCounterAttackActive(bool active)
+  {
+    if (isCounterAttackActive == active) return;
+    isCounterAttackActive = active;
+
+    if (health != null)
+    {
+      health.SetInvulnerable(active);
     }
   }
 
@@ -400,7 +419,7 @@ public class PlayerCombat : MonoBehaviour
     attackTimer = 0f;
 
     isChargeAttackActive = false;
-    isCounterAttackActive = true;
+    SetCounterAttackActive(true);
 
     targetLayerWeight = 0f;
     if (animator != null) animator.SetLayerWeight(swordLayerIndex, 0f);
@@ -426,7 +445,7 @@ public class PlayerCombat : MonoBehaviour
     }
 
     isChargeAttackActive = false;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     isAttacking = true;
     canCombo = false;
@@ -459,7 +478,7 @@ public class PlayerCombat : MonoBehaviour
     }
 
     isChargeAttackActive = true;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     isAttacking = true;
     comboStep = 0;
@@ -525,7 +544,7 @@ public class PlayerCombat : MonoBehaviour
     targetLayerWeight = 1f;
 
     isChargeAttackActive = false;
-    isCounterAttackActive = false;
+    SetCounterAttackActive(false);
 
     if (playerFeedback != null) playerFeedback.IsParrying = false;
     if (animator != null)
@@ -649,29 +668,45 @@ public class PlayerCombat : MonoBehaviour
     }
   }
 
+  // Bonus sát thương từ trang bị và điểm tiềm năng
+  public float BaseAttackDamage => attack1Damage;
+  public float CurrentAttackBonus => TotalAttackBonus;
+  public float TotalAttackDamage => attack1Damage + TotalAttackBonus;
+
+  private float AttackBonus => InfiniteLabyrinth.Inventory.InventoryManager.HasInstance 
+    ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalAttackBonus() 
+    : 0f;
+
+  private float ProgressionAttackBonus => InfiniteLabyrinth.Progression.PlayerProgression.HasInstance
+    ? InfiniteLabyrinth.Progression.PlayerProgression.Instance.BonusAttack
+    : 0f;
+
+  private float TotalAttackBonus => AttackBonus + ProgressionAttackBonus;
+
   // =========================================================================
   // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG CHUẨN
   // =========================================================================
 
   // Đòn 1: Nhanh, mượt (Hitlag = 0.035s)
-  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage, attack1Knockback, 0.035f);
+  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, 0.035f);
 
   // Đòn 2: Nhanh, dứt khoát (Hitlag = 0.045s)
-  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage, attack2Knockback, 0.045f);
+  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, 0.045f);
 
   // Đòn 3: Đòn kết đầm tay (Hitlag = 0.08s)
-  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage, attack3Knockback, 0.08f);
+  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, 0.08f);
 
   // Charge Attack - Hit 1: Chém mở màn (Hitlag = 0.05s)
-  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.4f, 0f, 0.05f);
+  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, 0.05f);
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm (Hitlag = 0.095s)
-  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox(chargeAttackDamage * 0.6f, chargeAttackKnockback, 0.095f);
+  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, 0.095f);
 
   // Counter Attack: Nhát chém trừng phạt cực nặng (Hitlag = 0.11s)
-  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage, counterAttackKnockback, 0.11f);
+  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, 0.11f);
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
   // Thêm vào PlayerCombat để PlayerController có thể đọc được
   public bool IsBlockingOrParrying => isParryActive;
+  public bool IsAttacking => isAttacking;
 }

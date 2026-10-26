@@ -28,6 +28,7 @@ public class TargetLockSystem : MonoBehaviour
 
   private Transform currentTarget;
   private Health targetHealth;
+  private Health playerHealth;
   private Camera mainCamera;
 
   public bool IsLockedOn => currentTarget != null;
@@ -37,10 +38,30 @@ public class TargetLockSystem : MonoBehaviour
   {
     mainCamera = Camera.main;
     if (lockOnReticle != null) lockOnReticle.SetActive(false);
+
+    playerHealth = GetComponent<Health>();
+    if (playerHealth == null) playerHealth = GetComponentInParent<Health>();
+  }
+
+  private void OnEnable()
+  {
+    if (playerHealth != null) playerHealth.onDeath.AddListener(UnlockTarget);
+  }
+
+  private void OnDisable()
+  {
+    if (playerHealth != null) playerHealth.onDeath.RemoveListener(UnlockTarget);
+    UnlockTarget();
   }
 
   private void Update()
   {
+    if (playerHealth != null && playerHealth.IsDead)
+    {
+      if (IsLockedOn) UnlockTarget();
+      return;
+    }
+
     HandleLockInput();
     ValidateCurrentTarget();
     UpdateReticlePosition();
@@ -48,6 +69,8 @@ public class TargetLockSystem : MonoBehaviour
 
   private void HandleLockInput()
   {
+    if (playerHealth != null && playerHealth.IsDead) return;
+
     // Bấm Chuột giữa HOẶC phím Q để Bật/Tắt khóa mục tiêu
     bool togglePressed = false;
     if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame) togglePressed = true;
@@ -67,6 +90,8 @@ public class TargetLockSystem : MonoBehaviour
 
   private void LockClosestTarget()
   {
+    if (playerHealth != null && playerHealth.IsDead) return;
+
     Transform bestTarget = FindBestTarget();
     if (bestTarget != null)
     {
@@ -88,7 +113,12 @@ public class TargetLockSystem : MonoBehaviour
 
     foreach (Collider col in colliders)
     {
-      Transform candidate = col.transform.root;
+      // Ưu tiên tìm component Health trên chính collider hoặc các object cha của nó
+      Health candidateHealth = col.GetComponentInParent<Health>();
+      if (candidateHealth == null) candidateHealth = col.GetComponentInChildren<Health>();
+
+      // Lấy đúng Transform của con quái (GameObject chứa Health), tránh lấy nhầm container cha nếu quái được nhóm
+      Transform candidate = (candidateHealth != null) ? candidateHealth.transform : col.transform.root;
 
       // Bỏ qua mục tiêu bị loại trừ (ví dụ quái vừa bị tiêu diệt)
       if (excludeTarget != null && candidate == excludeTarget) continue;
@@ -97,8 +127,6 @@ public class TargetLockSystem : MonoBehaviour
       if (candidate == bestTarget) continue;
 
       // Kiểm tra máu: Quái chết thì bỏ qua
-      Health candidateHealth = candidate.GetComponent<Health>();
-      if (candidateHealth == null) candidateHealth = candidate.GetComponentInChildren<Health>();
       if (candidateHealth != null && candidateHealth.IsDead) continue;
 
       // Kiểm tra góc nhìn: Nới lỏng góc nhìn khi chuyển mục tiêu (lên 85 độ) để bao quát tốt hơn
@@ -131,6 +159,12 @@ public class TargetLockSystem : MonoBehaviour
   /// </summary>
   public bool TrySwitchToNextTarget()
   {
+    if (playerHealth != null && playerHealth.IsDead)
+    {
+      UnlockTarget();
+      return false;
+    }
+
     Transform oldTarget = currentTarget;
     Transform nextTarget = FindBestTarget(excludeTarget: oldTarget, searchRadius: switchTargetRange);
 
@@ -152,6 +186,12 @@ public class TargetLockSystem : MonoBehaviour
 
   public void SetTarget(Transform newTarget)
   {
+    if (newTarget != null && playerHealth != null && playerHealth.IsDead)
+    {
+      UnlockTarget();
+      return;
+    }
+
     currentTarget = newTarget;
     if (newTarget != null)
     {
@@ -214,7 +254,10 @@ public class TargetLockSystem : MonoBehaviour
     if (Physics.Linecast(rayStart, rayEnd, out RaycastHit hit, obstacleLayer, QueryTriggerInteraction.Ignore))
     {
       // Nếu vật cản không phải là bản thân Player và cũng không phải con Quái đang khóa
-      if (hit.transform.root != transform.root && hit.transform.root != currentTarget.root)
+      bool isPlayer = hit.transform == transform || hit.transform.IsChildOf(transform) || hit.transform.root == transform.root;
+      bool isTarget = hit.transform == currentTarget || hit.transform.IsChildOf(currentTarget) || hit.transform.root == currentTarget.root;
+
+      if (!isPlayer && !isTarget)
       {
         wallOccludedTimer += Time.deltaTime;
         if (wallOccludedTimer >= wallLostGraceTime)

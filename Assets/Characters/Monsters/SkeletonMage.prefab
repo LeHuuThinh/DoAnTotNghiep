@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8296066504280250592}
   - component: {fileID: 2306932638526182848}
   - component: {fileID: 7099254032977224130}
+  - component: {fileID: 6103386101145930031}
   m_Layer: 9
   m_Name: SkeletonMage
   m_TagString: Untagged
@@ -67,12 +68,13 @@ MonoBehaviour:
   patrolRadius: 8
   patrolWaitTime: 3
   attackAnimationSpeed: 1
+  expReward: 15
   groundSpellPrefab: {fileID: 4330468513817889461, guid: 2b8670c3a0c493c4582c812ae2294f2c, type: 3}
   staffTipPoint: {fileID: 7695429859635390306}
   staffAuraVfx: {fileID: 7155408594750781030}
   spellRadius: 2.8
   spellChargeDuration: 1.3
-  spellDamage: 35
+  spellDamage: 30
   obstacleLayerMask:
     serializedVersion: 2
     m_Bits: 1
@@ -168,6 +170,42 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &6103386101145930031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5525494674731852896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e913b3634397f2744bb0dc9ecaf9497a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.LootDropper
+  worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
+  lootTable:
+  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    dropChance: 0.3
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    dropChance: 0.25
+    minQuantity: 1
+    maxQuantity: 2
+  - item: {fileID: 11400000, guid: d3d64b16a9d03e749abe5fc57238dfc6, type: 2}
+    dropChance: 0.18
+    minQuantity: 1
+    maxQuantity: 1
+  goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
+  goldDropChance: 0.75
+  minGold: 5
+  maxGold: 25
+  minDropRadius: 0.8
+  maxDropRadius: 2
+  arcHeight: 1.3
+  arcDuration: 0.5
+  autoDropOnDeath: 1
 --- !u!1001 &1337766878687292378
 PrefabInstance:
   m_ObjectHideFlags: 0

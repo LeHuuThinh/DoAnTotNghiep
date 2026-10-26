@@ -25,6 +25,8 @@ public class PlayerFeedback : MonoBehaviour
   [Header("Stagger / Knockback")]
   [SerializeField] private float staggerDuration = 0.5f;
   [SerializeField] private float knockbackDuration = 0.15f;
+  [Tooltip("Thời gian bất tử (I-frames) khi bị vỡ Poise / Stagger để chống bị quái hội đồng ép góc chết sốc")]
+  [SerializeField] private float staggerIFrameDuration = 0.35f;
 
   public bool HasHyperArmor { get; set; } = false;
   public bool IsParrying { get; set; } = false;
@@ -90,6 +92,13 @@ public class PlayerFeedback : MonoBehaviour
     health.onDeath.RemoveListener(HandleDeath);
     if (health != null && health.onCheckParryOrBlock == TryParry) health.onCheckParryOrBlock = null;
 
+    if (staggerCoroutine != null)
+    {
+      StopCoroutine(staggerCoroutine);
+      staggerCoroutine = null;
+      if (health != null) health.SetInvulnerable(false);
+    }
+
     if (hitStopCoroutine != null)
     {
       Time.timeScale = 1f;
@@ -120,7 +129,7 @@ public class PlayerFeedback : MonoBehaviour
 
   private void HandleTakeDamage(Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance)
   {
-    if (health.IsDead) return;
+    if (health.IsDead || health.CurrentHealth <= 0f) return;
 
     lastHitTime = Time.time;
 
@@ -249,7 +258,28 @@ public class PlayerFeedback : MonoBehaviour
   private IEnumerator StaggerRoutine()
   {
     playerController.LockMovement();
-    yield return new WaitForSeconds(staggerDuration);
+
+    // Bật I-frames cứu sinh khi vỡ Poise
+    if (health != null && staggerIFrameDuration > 0f)
+    {
+      health.SetInvulnerable(true);
+    }
+
+    float elapsed = 0f;
+    bool iFrameActive = staggerIFrameDuration > 0f;
+
+    while (elapsed < staggerDuration)
+    {
+      elapsed += Time.deltaTime;
+      if (iFrameActive && elapsed >= staggerIFrameDuration)
+      {
+        iFrameActive = false;
+        if (health != null) health.SetInvulnerable(false);
+      }
+      yield return null;
+    }
+
+    if (health != null) health.SetInvulnerable(false);
     playerController.UnlockMovement();
     staggerCoroutine = null;
   }
@@ -276,13 +306,25 @@ public class PlayerFeedback : MonoBehaviour
   {
     if (staggerCoroutine != null) StopCoroutine(staggerCoroutine);
     if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+    if (health != null) health.SetInvulnerable(false);
 
+    // Xóa ngay lập tức trigger GetHit để không bị tranh chấp hoặc đè lên hoạt ảnh chết
+    animator.ResetTrigger(GetHitHash);
     animator.SetTrigger(DieHash);
+    animator.CrossFadeInFixedTime("Death", 0.1f, 0);
+
     playerController.LockMovement();
     playerController.enabled = false;
     characterController.enabled = false;
 
-    if (targetLockSystem != null) targetLockSystem.UnlockTarget();
+    if (targetLockSystem != null)
+    {
+      targetLockSystem.UnlockTarget();
+      targetLockSystem.enabled = false;
+    }
+
+    RHandAdjust rHand = GetComponentInChildren<RHandAdjust>();
+    if (rHand != null) rHand.enabled = false;
 
     Debug.Log("<color=red>[YOU DIED]</color>");
   }

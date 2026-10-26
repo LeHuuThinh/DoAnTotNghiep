@@ -23,13 +23,10 @@ public class EnemyFeedback : MonoBehaviour
   [Header("Knockback Settings")]
   [SerializeField] private float knockbackDuration = 0.15f;
 
-  // Lưu từng material và màu gốc của nó
-  private class MaterialCache
-  {
-    public Material mat;
-    public Color originalColor;
-    public string propName;
-  }
+  // Sử dụng MaterialPropertyBlock để chớp đỏ trực tiếp trên GPU: Không clone Material, 100% tương thích SRP Batcher & GPU Instancing!
+  private static MaterialPropertyBlock flashPropertyBlock;
+  private static readonly int BaseColorProp = Shader.PropertyToID("_BaseColor");
+  private static readonly int ColorProp = Shader.PropertyToID("_Color");
 
   private Health health;
   private EnemyAIBase enemyAI;
@@ -37,7 +34,6 @@ public class EnemyFeedback : MonoBehaviour
   private float lastHitTime;
   private Coroutine knockbackCoroutine;
   private Coroutine flashCoroutine;
-  private readonly List<MaterialCache> cachedMaterials = new List<MaterialCache>();
 
   private static readonly int GetHitTriggerHash = Animator.StringToHash("GetHit");
   private static readonly int HitTypeHash = Animator.StringToHash("HitType");
@@ -54,32 +50,10 @@ public class EnemyFeedback : MonoBehaviour
 
     currentPoise = maxPoise;
 
-    // 1. Tự tìm tất cả SkinnedMeshRenderer và MeshRenderer ở mọi object con nếu chưa kéo tay
+    // Tự tìm tất cả SkinnedMeshRenderer và MeshRenderer ở mọi object con nếu chưa kéo tay
     if (bodyRenderers == null || bodyRenderers.Length == 0)
     {
       bodyRenderers = GetComponentsInChildren<Renderer>(true);
-    }
-
-    // 2. Lưu lại toàn bộ Material và màu gốc của từng bộ phận
-    foreach (Renderer rend in bodyRenderers)
-    {
-      if (rend == null || rend is ParticleSystemRenderer || rend is TrailRenderer) continue;
-
-      foreach (Material m in rend.materials)
-      {
-        if (m == null) continue;
-
-        string prop = m.HasProperty("_BaseColor") ? "_BaseColor" : "_Color";
-        if (m.HasProperty(prop))
-        {
-          cachedMaterials.Add(new MaterialCache
-          {
-            mat = m,
-            originalColor = m.GetColor(prop),
-            propName = prop
-          });
-        }
-      }
     }
   }
 
@@ -98,6 +72,9 @@ public class EnemyFeedback : MonoBehaviour
 
   private void Update()
   {
+    // Tối ưu hóa: Khi quái ngủ đông, bỏ qua cập nhật Poise để tiết kiệm CPU
+    if (enemyAI != null && enemyAI.IsSleeping) return;
+
     if (currentPoise < maxPoise && Time.time >= lastHitTime + poiseRecoveryDelay)
     {
       currentPoise = Mathf.Min(maxPoise, currentPoise + poiseRecoveryRate * Time.deltaTime);
@@ -142,12 +119,12 @@ public class EnemyFeedback : MonoBehaviour
   }
 
   // =========================================================================
-  // XỬ LÝ NHÁY ĐỎ TRỰC TIẾP TRÊN MATERIAL
+  // XỬ LÝ NHÁY ĐỎ TRỰC TIẾP QUA MATERIAL PROPERTY BLOCK
   // =========================================================================
 
   private void FlashDamageFeedback()
   {
-    if (cachedMaterials.Count == 0) return;
+    if (bodyRenderers == null || bodyRenderers.Length == 0) return;
 
     if (flashCoroutine != null) StopCoroutine(flashCoroutine);
     flashCoroutine = StartCoroutine(FlashRedRoutine());
@@ -155,26 +132,36 @@ public class EnemyFeedback : MonoBehaviour
 
   private IEnumerator FlashRedRoutine()
   {
-    // Đổi màu tất cả bộ phận sang đỏ
-    for (int i = 0; i < cachedMaterials.Count; i++)
+    if (flashPropertyBlock == null)
     {
-      if (cachedMaterials[i].mat != null)
-        cachedMaterials[i].mat.SetColor(cachedMaterials[i].propName, flashColor);
+      flashPropertyBlock = new MaterialPropertyBlock();
+    }
+    flashPropertyBlock.SetColor(BaseColorProp, flashColor);
+    flashPropertyBlock.SetColor(ColorProp, flashColor);
+
+    for (int i = 0; i < bodyRenderers.Length; i++)
+    {
+      if (bodyRenderers[i] != null && bodyRenderers[i].enabled)
+      {
+        bodyRenderers[i].SetPropertyBlock(flashPropertyBlock);
+      }
     }
 
     yield return new WaitForSeconds(flashDuration);
 
-    // Trả lại màu gốc cho tất cả bộ phận
     ResetColors();
     flashCoroutine = null;
   }
 
   private void ResetColors()
   {
-    for (int i = 0; i < cachedMaterials.Count; i++)
+    if (bodyRenderers == null) return;
+    for (int i = 0; i < bodyRenderers.Length; i++)
     {
-      if (cachedMaterials[i].mat != null)
-        cachedMaterials[i].mat.SetColor(cachedMaterials[i].propName, cachedMaterials[i].originalColor);
+      if (bodyRenderers[i] != null)
+      {
+        bodyRenderers[i].SetPropertyBlock(null);
+      }
     }
   }
 
@@ -203,9 +190,6 @@ public class EnemyFeedback : MonoBehaviour
   private void HandleDeath()
   {
     if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
-
-    // Phát chém kết liễu: Không ngắt flashCoroutine giữa chừng để nó tự chạy nốt
-    // 0.1 giây rồi trả lại màu gốc bình thường cho cái xác.
 
     int randomDeath = Random.Range(0, 2);
     animator.SetInteger(DeathTypeHash, randomDeath);

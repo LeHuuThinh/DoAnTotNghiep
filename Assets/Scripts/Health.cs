@@ -18,15 +18,44 @@ public class Health : MonoBehaviour, IDamageable
 
   public float CurrentHealth => currentHealth;
   public float MaxHealth => maxHealth;
+  public float BaseMaxHealth => baseMaxHealth > 0f ? baseMaxHealth : maxHealth;
   public bool IsDead => isDead;
   public Transform LastAttacker { get; private set; }
 
   // Callback kiểm tra Parry hoặc Block trước khi trừ máu (trả về true nếu chặn/parry thành công -> không trừ máu)
   public Func<Transform, Vector3, Vector3, float, bool> onCheckParryOrBlock;
 
+  private float baseMaxHealth = -1f;
+
   private void Awake()
   {
+    baseMaxHealth = maxHealth;
     currentHealth = maxHealth;
+  }
+
+  /// <summary>
+  /// Cập nhật Máu tối đa kết hợp từ Điểm tiềm năng (Progression) và Trang bị (Equipment).
+  /// </summary>
+  public void SetBonusMaxHealth(float progressionBonus, float equipmentBonus = 0f)
+  {
+    if (baseMaxHealth < 0f)
+    {
+      baseMaxHealth = maxHealth;
+    }
+
+    float oldMax = maxHealth;
+    maxHealth = Mathf.Max(1f, baseMaxHealth + progressionBonus + equipmentBonus);
+
+    if (maxHealth > oldMax)
+    {
+      currentHealth += (maxHealth - oldMax);
+    }
+    else
+    {
+      currentHealth = Mathf.Min(currentHealth, maxHealth);
+    }
+
+    onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
   public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null)
@@ -41,17 +70,31 @@ public class Health : MonoBehaviour, IDamageable
       return;
     }
 
-    // 2. Nếu không parry thì trừ máu bình thường
-    currentHealth = Mathf.Max(0f, currentHealth - damage);
-    Debug.Log($"[Trúng đòn!] Mục tiêu dính {damage} sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
+    // 2. Tính giảm trừ sát thương từ Giáp trang bị (nếu là Player)
+    float actualDamage = damage;
+    if (CompareTag("Player") && InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      float defense = InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalDefenseBonus();
+      if (defense > 0f)
+      {
+        actualDamage = Mathf.Max(1f, actualDamage - defense);
+      }
+    }
+
+    // 3. Nếu không parry thì trừ máu bình thường
+    currentHealth = Mathf.Max(0f, currentHealth - actualDamage);
+    Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);
-    onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
 
     if (currentHealth <= 0f)
     {
       Die();
+    }
+    else
+    {
+      onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
     }
   }
 
