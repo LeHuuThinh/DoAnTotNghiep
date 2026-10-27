@@ -103,29 +103,19 @@ public static class SpringManagerHelper
         Debug.Log($"<color=green>[HOÀN TẤT THÀNH CÔNG!]</color> Đã gỡ {removedCount} SpringBone lỗi ở các đốt ngọn, dọn sạch Null trong SpringManager, và tối ưu thông số mềm mại cho áo choàng! Số lượng xương hợp lệ: {manager.springBones.Length}");
     }
 
-    [InitializeOnLoadMethod]
-    private static void AutoRunDiagnose()
-    {
-        EditorApplication.delayCall += () =>
-        {
-            DiagnoseSinking();
-        };
-    }
-
     [MenuItem("Tools/RedIgnis/Chẩn Đoán Lún Đất (Diagnose Sinking)")]
     public static void DiagnoseSinking()
     {
+        GameObject ignis = GameObject.Find("Boss_RedIgnis");
+        if (ignis == null)
+        {
+            return;
+        }
+
         // 1. Force reimport model and walk animation with updated settings
         AssetDatabase.ImportAsset("Assets/Characters/Boss/IgnisDo/RedIgnis.fbx", ImportAssetOptions.ForceUpdate);
         AssetDatabase.ImportAsset("Assets/Characters/Boss/IgnisDo/animation/Ignis_Walk.fbx", ImportAssetOptions.ForceUpdate);
         Debug.Log("<color=yellow>[Diagnose]</color> Đã Force Reimport RedIgnis.fbx và Ignis_Walk.fbx!");
-
-        GameObject ignis = GameObject.Find("Boss_RedIgnis");
-        if (ignis == null)
-        {
-            Debug.LogError("[Diagnose] Không tìm thấy Boss_RedIgnis trong Scene!");
-            return;
-        }
 
         Debug.Log($"=== CHẨN ĐOÁN BOSS_REDIGNIS ===\n" +
                   $"Boss_RedIgnis Pos World: {ignis.transform.position}, Local: {ignis.transform.localPosition}, Scale: {ignis.transform.localScale}");

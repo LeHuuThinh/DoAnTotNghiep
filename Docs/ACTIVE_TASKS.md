@@ -1,4 +1,4 @@
-# Danh Sách Nhiệm Vụ Phát Triển (Active Tasks Roadmap) - Infinite Labyrinth
+﻿# Danh Sách Nhiệm Vụ Phát Triển (Active Tasks Roadmap) - Infinite Labyrinth
 
 > [!TIP]
 > **Hướng dẫn gọi việc cho AI:** Mỗi khi mở một phiên chat mới, chỉ cần gõ đúng mã nhiệm vụ.  
@@ -184,23 +184,102 @@
 
 ---
 
-## 🚩 GIAI ĐOẠN 4: Điểm Nhấn Đồ Án - Trùm Học Máy (Boss ML-Agents)
+## 🚩 GIAI ĐOẠN 4: Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & Trùm Học Máy (Boss ML-Agents)
 
-- [ ] **ML-01: Tích hợp Unity ML-Agents Package**
-  - Cài đặt package `com.unity.ml-agents` qua Unity Package Manager.
-  - Chuẩn bị môi trường Python (PyTorch + mlagents) để phục vụ huấn luyện.
+- [x] **BOSS-01: Hoàn thiện Bộ Kỹ Năng & VFX Trùm Ice Golem (`Boss_IceGolem.prefab`)**
+  - **Đồng bộ trực tiếp lên Prefab gốc (`Boss_IceGolem.prefab`):**
+    + Gắn component `IceGolemController` với cấu hình tham chiếu xương tay (`leftHandBone: BossHitboxT`, `rightHandBone: BossHitboxP`), miệng (`mouthBone: Mieng`), Animator, và Tag `Enemy`.
+    + Cấu hình Máu Boss: `Health.maxHealth = 800 HP` chuẩn trùm Souls-like (loại bỏ Persistent Call gọi `SetActive(false)` lỗi thời).
+    + Cơ chế tự bảo vệ trong `Awake()`: Tự động phát hiện và hủy mọi instance `IceGolemController` bị gắn trùng trên cùng GameObject để chống nhân đôi chiêu thức.
+  - **Chuẩn Hóa 100% Hoạt Ảnh Humanoid Rig & Khắc Phục Triệt Để Lỗi Chôn Chân:**
+    + Khắc phục triệt để lỗi hoạt ảnh Generic (`AttackLT_IG.anim`, `WalkBackIG.anim`, `WalkLeftIG.anim`, `WalkRightIG.anim`) làm tụt xương `mixamorig:Hips` xuống Y = 0.88m khiến Boss cao 5.12m bị chìm nửa người xuống đất và đóng băng di chuyển.
+    + Trỏ toàn bộ các State trong `BossController.controller` sang sub-asset Humanoid chuẩn bên trong các file FBX (`AttackLT_IG.fbx`, `WalkBackIG.fbx`, `WalkLeftIG.fbx`, `WalkRightIG.fbx`), đưa toàn bộ 14 State trong Animator Controller thành 100% Humanoid chuẩn xác.
+  - **Tích hợp trọn bộ 7 chiêu thức chiến đấu & Tùy biến VFX Prefabs chuyên biệt:**
+    + `Attack1` *(Phím 1)*: Đấm thẳng cận chiến (`attack1Damage = 25`, `hitDelay = 1.23s`, Scale 1.2x) kết hợp `Impact.prefab`.
+    + `GumoGumo Slam` *(Phím 2)*: Đấm sàn rung đất liên hoàn 2 tay (`gumoSlamDamage = 18`, bán kính 12m, Scale 2.0x, nhịp 0.35s) kết hợp `Attack1 Effect.prefab` bùng nổ tại từng vị trí bàn tay tiếp đất.
+    + `FlameBreath` *(Phím 3)*: Phun lửa nón tầm trung 15.5m (`flameConeAngle = 49°`, `flameDamagePerTick = 12`, mật độ hạt 1.9x, visual dài 3.58x, rộng 2.9x, thời lượng 3.2s) kết hợp `Flame Thrower.prefab`, khóa xoay dọc và độ cao ngọn lửa.
+    + `JumpAttack` *(Phím 4)*: Lao bổ áp sát tầm xa 20m (`jumpAttackDamage = 40`, đỉnh cung 2.8m, delay đập đất 0.23s, bán kính 18m) kết hợp `Ice Impact.prefab` và Vòng xoáy xung kích phát sáng xoay kim đồng hồ.
+    + `RunAttack` *(Phím 5)*: Boss lao nhanh về phía trước húc thẳng vào Player (`runAttackSpeed = 12m/s`, `runAttackDamage = 35`, knockback `5.0`), hỗ trợ slot `Run Aura Vfx Prefab` trống (`None`) để người dùng tự do gán hiệu ứng hào quang bao quanh Boss khi chạy, loại bỏ hoàn toàn vệt xanh lá kéo dài cũ.
+    + `AttackLT_IG` *(Phím 6)*: Chuỗi combo 3 đòn đánh thường liên hoàn cực đẹp (`AttackLT_IG.anim`), gây sát thương tăng dần (20, 20, 30 HP) kèm rung chấn camera nhẹ, hỗ trợ slot `Hand Aura Vfx Prefab` trống (`None`) trên Inspector để người dùng tự do kéo thả VFX bao quanh 2 bàn tay, loại bỏ hoàn toàn khói và vòng tròn xanh lỗi.
+    + `IceBallIG` *(Phím 7)*: Boss giơ hai tay lên cao tụ quả cầu năng lượng `Purple Orb.prefab` **lơ lửng chính giữa hai bàn tay trên trời** (`GetBetweenHandsPosition()`) kết hợp 2 quả cầu nhỏ ở 2 lòng bàn tay phát sáng; quả cầu bám theo nhịp tay vươn lên cao và phình to dần từ 0.4 lên 2.2 trong 1.15s tụ lực, sau đó Boss bổ hai tay phóng quả cầu bay thẳng tới Player với vận tốc 16m/s và phát nổ diện rộng khi va chạm (35 HP + rung màn hình).
+    + `JumpDown` *(Mở màn duy nhất 1 lần khi phát hiện Player / One-Time Intro Cutscene)*: Cú đáp đất giáng trần rền vang từ trên cao (`jumpDownDamage = 35`, rơi 1.25s, bán kính 16m) kết hợp `Ground Impact.prefab` và Vòng sóng xung kích lan tỏa từ chân Boss. Tự động kích hoạt khi Boss lần đầu tiên phát hiện Player bước vào phòng hầm ngục (`playerDetectionRange = 35m`). Sau khi tiếp đất thành công, cờ `hasTriggeredJumpDown = true` khóa vĩnh viễn chiêu thức này trong toàn bộ trận đấu, không thể dùng đi dùng lại (đã loại bỏ phím Space để tránh spam lại). Mọi cú nhảy áp sát trong giao tranh được chuyển giao hoàn toàn cho `JumpAttack` (Phím 4) có cooldown chuẩn Souls-like.
+    + `Di chuyển 4 hướng thông minh`: Tự động nhận diện hướng di chuyển `MoveType` (0 = Idle, 1 = Tiến `Walk`, 2 = Lùi `WalkBackIG`, 3 = Trái `WalkLeftIG`, 4 = Phải `WalkRightIG`) kết hợp cơ chế vờn quanh khóa mặt bám sát Player (`strafeMode = true`). Hỗ trợ điều khiển thủ công bằng **4 phím mũi tên (Arrow Keys: Up, Down, Left, Right)** tách biệt 100% với phím W, A, S, D của Player.
+  - **Phản Hồi Combat Souls-like & Chuẩn Bị Cho ML-Agents (ML-02):**
+    + *Chớp đỏ GPU khi trúng kiếm:* Tự động liên kết `Health.onTakeDamage` và điều khiển toàn bộ MeshRenderers/SkinnedMeshRenderers qua `MaterialPropertyBlock` (thời gian 0.12s, màu đỏ tươi), bảo toàn 100% SRP Batcher.
+    + *Xử lý tử trận chuẩn xác:* Tự động liên kết `Health.onDeath` -> `Die()` kích hoạt trigger animation `Dead`, vô hiệu hóa Collider và Rigidbody để ngưng nhận đòn, dọn dẹp effect lửa/aura.
+    + *Hệ thống Cooldowns & API cho AI / ML-Agents:* Bổ sung thời gian hồi chiêu cho 7 kỹ năng (`attack1: 1.5s`, `gumo: 6.0s`, `flame: 8.0s`, `jump: 7.0s`, `run: 6.0s`, `attackLT: 5.0s`, `iceBall: 7.0s`) cùng các API `CanCastAttack`, `GetCooldownNormalized`, `GetRemainingCooldown` phục vụ trực tiếp vector quan sát cho Agent ML-02.
+    + *Khóa mục tiêu & Di chuyển thông minh:* `autoFindPlayer = true`, `alwaysFacePlayer = true`, `facePlayerSpeed = 240 deg/s`, `facePlayerOnAttack = true`, `strafeMode = true`.
+  - **Công Cụ Tự Động Hóa Unity Editor:** Tích hợp tool `IceGolemSetupEditor.cs` tại 3 menu:
+    * `Infinite Labyrinth -> Boss -> 1. Cấu Hình Hoàn Thiện Prefab Boss Ice Golem (BOSS-01)`
+    * `Infinite Labyrinth -> Boss -> 2. Tự Động Nối Dây Animator Boss (BossController)` hỗ trợ nối dây tự động 1 click toàn bộ 4 hướng di chuyển và 3 kỹ năng mới vào Animator.
+    * `Infinite Labyrinth -> Boss -> 3. Dọn Dẹp Scene & Khắc Phục Lỗi Ice Golem` tự động quét sạch các GameObject lỗi thời (như Purple Orb lơ lửng), clone thừa, và dọn dẹp component trùng lặp trong Scene.
 
-- [ ] **ML-02: Thiết kế `IceGolemAgent.cs`**
-  - **Observations:** Vị trí tương đối so với Player, góc quay, khoảng cách, trạng thái hành động của Player (đang chém, đang roll, đang parry).
-  - **Actions (Discrete/Continuous):** Quyết định tung đòn tấn công thường, dậm đất (JumpAttack), gầm (Roar), hoặc di chuyển bao vây.
-  - **Reward Signal:**
-    - `+1.0` khi đánh trúng Player; `+2.0` khi hạ gục Player.
-    - `-0.5` khi đánh trượt; `-1.0` khi bị Player Parry thành công.
-    - `+0.01` khi giữ khoảng cách combat tối ưu.
+- [x] **BOSS-02: Chuẩn Hóa Khung Xương, Vật Lý Áo Choàng & Vũ Khí Trùm Red Ignis (`Boss_RedIgnis.prefab`)**
+  - Khắc phục triệt để lỗi vật lý tà áo `UnityChanSpringBone`: Dọn sạch mảng null (19 -> 12 xương), gỡ bỏ 4 xương ngọn leaf bones lỗi, vô hiệu hóa khóa góc xoay và sàn ảo ảo giác, viết tool tự động `SpringManagerHelper.cs`.
+  - Khắc phục lỗi lún đất & co ngắn chiều cao: Ánh xạ chuẩn xương `Hips -> mixamorig:Hips` trong `RedIgnis.fbx`, chuẩn hóa hoạt ảnh bước đi `Ignis_Walk.fbx` với `Based Upon = Feet / Center of Mass` và bù trừ cao độ Offset Y.
+  - Tích hợp Vũ khí Kiếm Siu Nhân Đỏ (`KiemSiuNhanDo.fbx`): Cài đặt Import Settings chuẩn vật thể tĩnh (`Animation Type: None`), gắn vào lòng bàn tay phải qua `RightHand_Socket` trên xương `mixamorig:RightHand`.
 
-- [ ] **ML-03: Huấn luyện & Đóng gói Model ONNX**
-  - Dựng sàn đấu arena phụ trong scene `IceGolem.unity` để huấn luyện tự động với bot đối thủ hoặc player mô phỏng.
-  - Xuất file `.onnx` và nhúng vào `Model` của `Behavior Parameters` trong Unity để chạy thời gian thực (Inference) không cần cài Python.
+- [x] **ML-01: Tích hợp Unity ML-Agents Package & Môi Trường Huấn Luyện**
+  - Đã tích hợp gói chính thức com.unity.ml-agents: 4.1.0 (khớp chuẩn Unity 6 và Unity AI Inference 2.6.1) vào thư mục Packages/com.unity.ml-agents.
+  - Cấu hình môi trường Python 3.10 thành công với mlagents: 1.1.0, PyTorch 	orch: 2.14.1, và setuptools: 69.5.1. Kiểm tra lệnh mlagents-learn --help hoạt động hoàn hảo.
+  - Chuẩn bị file cấu hình huấn luyện PPO: [MLAgents/Config/IceGolem_PPO.yaml](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/MLAgents/Config/IceGolem_PPO.yaml) (Behavior: IceGolemSoulsAI, batch_size: 256, buffer_size: 2048, hidden_units: 256, num_layers: 3).
+
+- [x] **ML-02: Thiết kế Agent Trùm Băng Khống Chế & Souls-like (IceGolemAgent.cs & IceGolemBattleArena.cs)**
+  - **Kiến trúc Brain - Body tách biệt:**
+    + Body: [IceGolemController.cs](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/Script_Boss/IceGolemController.cs) quản lý 7 chiêu thức, VFX, hoạt ảnh, di chuyển 4 hướng qua Move(horiz, vert) và CastAttack(skillIndex), bổ sung ResetAllCooldowns().
+    + Brain: [IceGolemAgent.cs](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/Script_Boss/IceGolemAgent.cs) kế thừa Unity.MLAgents.Agent.
+  - **TUYỆT ĐỐI KHÔNG SỬA BẤT KỲ SCRIPT NÀO CỦA PLAYER:**
+    + Toàn bộ thông tin đối thủ Player (Health, PlayerController, PlayerCombat, PlayerStats) chỉ được đọc qua các public properties có sẵn dạng **Read-Only 100%**.
+  - **Vector Observations (29 chiều toàn diện):**
+    + Vị trí tương đối tới Player (X, Z chuẩn hóa), Cự ly thực tế tới Player.
+    + Góc quay mặt Boss so với Player (Cos & Sin liên tục).
+    + Máu hiện tại của Boss và trạng thái bận IsBusy.
+    + Thời gian hồi chiêu chuẩn hóa của cả 7 chiêu thức (0 = sẵn sàng, 1 = đang hồi).
+    + Máu và Thể lực (Stamina) hiện tại của Player.
+    + Trạng thái Player: IsAttacking, IsBlockingOrParrying, IsRolling (I-Frames), IsInRollRecovery (cửa sổ Roll-Catch 0.4s), IsGrounded.
+    + Vận tốc di chuyển tương đối của Player (dọc & ngang theo góc nhìn Boss).
+    + 4 tia cảm biến Raycast khoảng cách tới tường đấu trường (Trước, Sau, Trái, Phải).
+    + Vị trí Boss so với tâm đấu trường (Arena Center).
+  - **Action Space (3 Discrete Branches linh hoạt):**
+    + Nhánh 0 - Di chuyển & Vờn quanh (5 lựa chọn): 0 = Đứng yên, 1 = Tiến áp sát, 2 = Lùi giữ khoảng cách, 3 = Dạt trái (Circling), 4 = Dạt phải (Circling).
+    + Nhánh 1 - Ra đòn chiến đấu (8 lựa chọn): 0 = Quan sát/Không đánh, 1 = Attack 1 (đấm cận chiến), 2 = GumoGumo (đấm đất liên hoàn), 3 = Flame Breath (phun lửa nón), 4 = Jump Attack (vồ áp sát), 5 = Run Attack (chạy húc 12m/s), 6 = Attack LT (combo 3 đòn), 7 = Ice Ball (ném cầu tím tầm xa).
+    + Nhánh 2 - Điều tiết nhịp độ (Timing Mixup - 2 lựa chọn): 0 = Ra đòn lập tức, 1 = Hoãn đòn 0.35s (Delayed Attack - bẫy roll panic của Player).
+  - **Souls-like Reward Shaping:**
+    + +1.5 Thưởng Roll-Catching khi đánh trúng Player ngay lúc vừa kết thúc I-Frames lăn né.
+    + +2.0 Thưởng Heal-Punish khi trừng phạt Player đang cố uống máu/hồi phục.
+    + +1.0 Thưởng khi gây sát thương lên Player; +5.0 Thưởng lớn khi hạ gục Player.
+    + -0.5 Phạt khi tung đòn vào lúc Player đang lăn né (I-Frames); -0.4 Phạt đánh trượt xa (Whiffing).
+    + -0.8 Phạt khi bị Player chém trúng; -3.0 Phạt khi Boss bị hạ gục.
+    + +0.002/step Khuyến khích giữ cự ly lý tưởng (3.5m - 8m) và vờn quanh (Circling).
+  - **Cơ Chế Đấu Hiệp Liên Hoàn Không Game Over (IceGolemBattleArena.cs):**
+    + Dành riêng cho trải nghiệm Người Chơi tự tay cầm kiếm đánh với Boss.
+    + Khi Player tụt máu <= 5 HP, đấu trường chặn lại, trao chiến thắng cho Boss, tự động hồi đầy máu cho cả 2 và xếp lại vị trí cách nhau 12m để bắt đầu hiệp mới mượt mà.
+    + Khi Boss cạn máu, tự động hồi máu cho Boss và bắt đầu hiệp tiếp. Không bao giờ làm chết kẹt Player hay cần reload Scene.
+  - **Công Cụ Tự Động Hóa Unity Editor:**
+    + Thêm menu Infinite Labyrinth -> Boss -> 5. Tự Động Gắn & Cấu Hình ML-Agents Cho Boss Ice Golem trong [IceGolemSetupEditor.cs](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Scripts/Editor/IceGolemSetupEditor.cs).
+    + Tự động gắn và cấu hình IceGolemAgent, BehaviorParameters (29 obs, [5, 8, 2] actions), và DecisionRequester (Period = 5) trên cả Prefab lẫn Scene.
+    - **Tích hợp Bot Tự Động Chiến Đấu (PlayerBotAI.cs) Phục Vụ Tự Luyện ML-Agents:**
+    + Viết script [PlayerBotAI.cs](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Scripts/Player/PlayerBotAI.cs): Bot tự động chiến đấu (Sparring Partner) với Boss thông qua FSM đa dạng (tiến áp sát, chém combo 1-2-3, lùi giữ cự ly hồi thể lực, lăn né khi Boss vung đòn, giơ kiếm parry, và lùi xa uống máu để kích hoạt thử thách Heal-Punish cho Boss).
+    + Cơ chế công tắc phím nóng B (Toggle Bot Mode): Nhấn phím [B] để Bật/Tắt tức thì. Khi tắt, bot ngủ đông 100%, trả lại quyền điều khiển bàn phím/chuột cho người chơi.
+    + Bảo toàn 100% code gốc Player: Sử dụng Reflection an toàn để gọi các hàm chiến đấu mà không sửa dù chỉ 1 dòng code trong PlayerController.cs hay PlayerCombat.cs.
+    + Tích hợp menu Editor Infinite Labyrinth -> Boss -> 6. Gắn Bot AI Cho Player (Phím B Bật/Tắt Sparring) tự động gắn vào cả Prefab lẫn Scene.
+  - **Chế Độ Điều Khiển Thủ Công (Heuristic Mode):**
+    + Người dùng có thể tự lái Boss bằng 4 phím Mũi Tên và phím 1..7 (giữ Right Shift để đánh trễ) bất kỳ lúc nào để thử nghiệm phản xạ và hành vi.
+
+- [ ] **ML-03: Thiết kế Agent Kiếm Thuật Cơ Động & Tái Sinh Đổi Dạng 2 Pha (`RedIgnisAgent.cs`)**
+  - **Cơ Chế Tái Sinh Đổi Diện Mạo (Phase 2 Rebirth & Appearance Transformation):**
+    - Khi thanh máu Phase 1 chạm 0 -> Kích hoạt animation quỵ ngã, bật cờ bất tử tạm thời (`invulnerable = true`), phát nổ sóng nhiệt đẩy lùi Player.
+    - **Lột xác diện mạo mới:** Hoán đổi sang Model/Mesh thức tỉnh (hoặc kích hoạt hào quang lửa bùng cháy, cánh lửa, kiếm rực lửa), hồi đầy 100% máu và mở khóa danh hiệu Phase 2.
+  - **Observations (27 chiều):** Bổ sung biến đầu vào `isPhase2` (0 hoặc 1) để mạng nơ-ron nhận thức hình thái hiện tại.
+  - **Actions & Phong cách chiến đấu 2 Pha:**
+    - *Phase 1 (The Crimson Duelist):* Vờn quanh cự ly 4-6m, lướt chém đơn, combo 3 nhát, rình sơ hở.
+    - *Phase 2 (True Flame Ignis):* Tốc độ di chuyển tăng 30%, mở khóa chiêu lướt chém để lại vệt lửa bốc cháy mặt sàn (Fire Trail), combo cuồng bạo liên tục phá thủ, bắt nhịp lăn (Roll-Catch) cực gắt.
+  - **Reward Function:** Thưởng dồn ép phá vỡ thế thủ, thưởng đánh trúng bằng vệt lửa diện rộng, thưởng bắt roll, phạt chém hụt.
+
+- [ ] **ML-04: Huấn Luyện Đa Sàn Đấu & Đóng Gói Model ONNX Thời Gian Thực**
+  - Dựng 8 đến 16 sàn đấu Arena chạy song song trong Scene huấn luyện để tăng tốc độ hội tụ gấp 10 lần (`--time-scale=10`).
+  - Huấn luyện PPO qua `mlagents-learn` với file cấu hình `icegolem_config.yaml` và `redignis_config.yaml`.
+  - Đóng gói file `.onnx` xuất xưởng, nạp vào `Behavior Parameters` (chế độ `Inference Only`) chạy mượt mà 100% không phụ thuộc Python.
 
 ---
 
