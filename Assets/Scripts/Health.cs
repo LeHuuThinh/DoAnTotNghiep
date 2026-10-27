@@ -115,6 +115,16 @@ public class Health : MonoBehaviour, IDamageable
     isInvulnerable = state;
   }
 
+  /// <summary>
+  /// Hồi sinh đối tượng (reset cờ isDead và nạp đầy máu) - Dùng khi bắt đầu hiệp đấu / Episode mới trong Arena hoặc ML-Agents
+  /// </summary>
+  public void Revive(float targetHealth = -1f)
+  {
+    isDead = false;
+    currentHealth = (targetHealth > 0f) ? Mathf.Min(targetHealth, maxHealth) : maxHealth;
+    onHealthChanged?.Invoke(currentHealth, maxHealth);
+  }
+
   private void Die()
   {
     if (isDead) return;

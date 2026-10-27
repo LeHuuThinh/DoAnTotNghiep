@@ -1913,6 +1913,7 @@ GameObject:
   - component: {fileID: 759275986569051391}
   - component: {fileID: 6269426121722460428}
   - component: {fileID: 4698226416880465567}
+  - component: {fileID: 6398846446710257264}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -2159,6 +2160,35 @@ MonoBehaviour:
   onSpiritChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6398846446710257264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3cd82e468d3fa44a17a9bf447fdab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBotAI
+  botEnabled: 0
+  currentState: 0
+  attackRange: 2.8
+  preferredMinDist: 3.5
+  preferredMaxDist: 6
+  retreatDistance: 5
+  rollDuration: 0.65
+  rollIFrameDuration: 0.35
+  rollSpeed: 8.5
+  bossTransform: {fileID: 0}
+  bossController: {fileID: 0}
+  playerHealth: {fileID: 0}
+  playerController: {fileID: 0}
+  playerCombat: {fileID: 0}
+  playerStats: {fileID: 0}
+  characterController: {fileID: 0}
+  animator: {fileID: 0}
 --- !u!1 &5454798165073531583
 GameObject:
   m_ObjectHideFlags: 0

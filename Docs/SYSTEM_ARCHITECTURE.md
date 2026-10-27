@@ -119,13 +119,133 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   2. `SkeletonMinion`: Quái cận chiến số lượng đông, máu yếu nhưng đánh bọc lót.
   3. `SkeletonRogue`: Thích khách cơ động, bắn cung tầm xa (`Skeleton_Arrow.prefab`), biết giữ khoảng cách.
   4. `SkeletonMage`: Pháp sư bắn đạn ma pháp cầu đuổi (`Light Star.prefab`), thi triển vùng đất bốc cháy (`MageGroundSpell.prefab`) và cột sáng trừng phạt (`LightPillarSkill.prefab`).
-* **Trùm Hầm Ngục: Ice Golem (`Boss_IceGolem.prefab`):**
-  * Bộ animation hoàn chỉnh: `GolemAttack`, `GolemJumpAttack`, `GolemRoaring`, `GolemWalking`, `GolemDead`.
-  * **Định hướng Học máy (Unity ML-Agents):**
-    * Tích hợp Agent Reinforcement Learning (PPO).
-    * **Observation:** Khoảng cách tới Player, hướng nhìn, trạng thái Player (đang chém, đang roll, đang parry, lượng máu/stamina).
-    * **Action:** Chọn combo đòn (Vung tay, Dậm đất diện rộng JumpAttack, Gầm tăng nộ Roar, Tiếp cận).
-    * **Reward Function:** Thưởng khi đánh trúng người chơi, phạt khi đánh hụt hoặc bị Parry, thưởng khi dồn ép người chơi vào góc tường.
+* **Bộ Đôi Trùm Hầm Ngục & Cặp Đấu Souls-like (Dual Boss Encounters):**
+  1. **Trùm Băng: Ice Golem (`Boss_IceGolem.prefab` - The Frost Juggernaut):**
+     * **Định vị chiến đấu & Cơ cấu Pha:** **Đơn pha (Single Phase - Không có Phase 2)**. Đỡ đòn hạng nặng, khống chế diện rộng, độ khó và sức mạnh ổn định nhất quán từ đầu đến cuối trận đấu để làm Boss thử thách cự ly và khả năng căn nhịp né đòn đập sàn.
+     * **Bộ chiêu thức hoàn chỉnh (7 Kỹ năng chiến đấu trên `IceGolemController.cs`):**
+       * `Attack1` *(Phím 1)*: Đấm thẳng cận chiến kết hợp hiệu ứng va đập Impact VFX (`A VFX Prefabs/Explossion/Impact`).
+       * `GumoGumo Slam` *(Phím 2)*: Đấm liên hoàn xuống sàn rung đất, phát sinh hiệu ứng `Attack1 Effect` chấn động mặt sàn.
+       * `FlameBreath` *(Phím 3)*: Phun lửa hình nón (Flame Cone) tầm trung đa tầng sát thương.
+       * `JumpAttack` *(Phím 4)*: Lao bổ / vồ tới mục tiêu từ cự ly xa 20m, phát sinh sóng chấn động tỏa vòng tròn (Radial Shockwave).
+       * `RunAttack` *(Phím 5)*: Chạy lao húc thẳng vào Player với vận tốc 12m/s và đẩy văng mạnh mục tiêu; hỗ trợ slot trống `runAuraVfxPrefab` để người dùng tự do kéo thả VFX hào quang xanh quanh thân.
+       * `AttackLT_IG` *(Phím 6)*: Chuỗi combo 3 đòn đánh thường liên hoàn cực đẹp; hỗ trợ slot trống `handAuraVfxPrefab` để kéo thả VFX bao quanh 2 bàn tay.
+       * `IceBallIG` *(Phím 7)*: Gồng tụ quả cầu ma lực tím `Purple Orb` lơ lửng chính giữa hai bàn tay trên trời (`GetBetweenHandsPosition()`), bám theo tay vươn cao và phình to dần từ 0.4 lên 2.2, sau đó bổ hai tay ném thẳng về phía Player với vận tốc 16m/s và phát nổ diện rộng khi va chạm.
+       * `JumpDown` *(Mở màn duy nhất 1 lần khi phát hiện Player / One-Time Intro Cutscene)*: Đáp đất mở màn ấn tượng từ trên cao 12-16m kèm shockwave rền vang lan tỏa từ chân Boss. Tự động kích hoạt khi lần đầu phát hiện Player trong tầm 35m và khóa vĩnh viễn sau cú đáp đất đầu tiên (`hasTriggeredJumpDown = true`), không cho phép dùng đi dùng lại trong trận đấu (đã gỡ bỏ phím Space để tránh spam).
+     * **Hệ thống Di chuyển 4 hướng & Chuẩn Hóa Rig Humanoid:**
+       * Chuẩn hóa 100% 14 State trong `BossController.controller` sang Humanoid Sub-asset trong file FBX (`internalID: -203655887218126122`), triệt tiêu hoàn toàn lỗi chìm nửa người xuống đất của các file animation Generic cũ.
+       * Nhận diện 4 hướng di chuyển: Tiến (`Walk`), Lùi (`WalkBackIG`), Dạt Trái (`WalkLeftIG`), Dạt Phải (`WalkRightIG`) trong khi vẫn khóa mặt bám sát Player (`strafeMode = true`). Điều khiển thủ công qua **4 phím mũi tên (Arrow Keys)** tách biệt độc lập với phím W, A, S, D của Player.
+     * **Khóa mục tiêu & Tự động hóa an toàn:**
+       * Tự động phát hiện Player (`autoFindPlayer`), tự xoay mặt đối diện đối thủ (`alwaysFacePlayer`, `facePlayerOnAttack`, tốc độ `facePlayerSpeed = 240 deg/s`).
+       * Cơ chế tự bảo vệ chống duplicate component trong `Awake()` và Menu dọn dẹp Scene Editor (`Infinite Labyrinth -> Boss -> 3. Dọn Dẹp Scene & Khắc Phục Lỗi Ice Golem`).
+
+  2. **Trùm Lửa: Red Ignis (`Boss_RedIgnis.prefab` - The Crimson Duelist):**
+     * **Định vị chiến đấu:** Kiếm sĩ tốc độ cao, phản xạ nhanh, áp sát chớp nhoáng, vờn đối thủ.
+     * **Cơ Chế 2 Pha Đột Biến (Two-Phase Boss - Rebirth on Death with New Appearance):**
+       * **Phase 1 (The Crimson Duelist):** Thanh kiếm đơn, dáng đứng thanh thoát, di chuyển vờn (strafing) ở cự ly 4-6m, chém nhanh, lướt sườn bọc lót.
+       * **Thời Khắc Chuyển Pha (Phase Transition on Death):** Khi thanh máu Phase 1 tụt về 0, Boss **không chết ngay** mà kích hoạt chuỗi Tái Sinh (Resurrection):
+         - Quỵ gối rơi vào trạng thái bất tử tạm thời (`invulnerable = true`).
+         - Bùng nổ vụ nổ sóng nhiệt (Heat Wave Explosion) đẩy lùi Player ra xa.
+         - **LỘT XÁC DIỆN MẠO MỚI (New Appearance Transformation):** Hoán đổi Mesh/Model hoặc kích hoạt hào quang lửa rực cháy (Flaming Wings / Dark Flame Aura), vũ khí bao phủ bởi ngọn lửa cuồng nộ (Blazing Blade), phục hồi 100% thanh máu với danh xưng mới.
+       * **Phase 2 (True Flame Ignis - The Awakened):** Tốc độ di chuyển tăng 30%, nhịp vung kiếm dồn dập, mở khóa chiêu thức tối thượng (Sóng lửa chém xa, Lướt chém để lại vệt lửa rực cháy mặt sàn).
+     * **Hệ thống Vật lý Áo choàng (`UnityChanSpringBone`):**
+       * Quản lý bằng `SpringManager.cs` và `SpringBone.cs` đã được vá mã nguồn triệt tiêu 100% lỗi `NullReferenceException`.
+       * Tối ưu hóa chuỗi 12 xương hợp lệ (loại bỏ 4 xương ngọn leaf bones `Bone.013`, `Bone.025`, `Bone.035`, `Bone.037` để triệt tiêu lỗi quẹo 90 độ; dọn sạch 7 ô null trong mảng).
+       * Tắt `Enable Angle Limits` và `Collide With Ground` để tà áo buông rủ mềm mại theo trọng lực tự nhiên, tối ưu `stiffnessForce = 50`, `dragForce = 0.4`.
+     * **Chuẩn Hóa Khung Xương Humanoid & Animation:**
+       * Sửa lỗi gốc tự động map nhầm `Hips -> Armature` trong `RedIgnis.fbx`, trỏ chuẩn xác về `mixamorig:Hips`.
+       * Chuẩn hóa hoạt ảnh bước đi `Ignis_Walk.fbx` với `Based Upon = Feet / Center of Mass`, nâng Offset cao độ chống hiện tượng lún đất hoặc co ngắn chiều cao thân thể.
+     * **Vũ Khí Kiếm Siu Nhân Đỏ (`KiemSiuNhanDo.fbx`):**
+       * Thiết lập Import Settings chuẩn vũ khí tĩnh: `Animation Type: None` (tab Rig), tắt `Import Animation`.
+       * Gắn vào tay phải qua điểm neo `RightHand_Socket` trên xương `mixamorig:RightHand`, đồng bộ chuyển động 100% theo mọi cử động bàn tay.
+
+---
+
+### D. Kiến Trúc AI Souls-like & Học Máy Tăng Cường (Boss ML-Agents Architecture)
+
+#### 1. Triết Lý Thiết Kế Hành Vi Trùm Souls-like (Souls-like Combat Dynamics)
+Để tạo ra trải nghiệm giác đấu nghẹt thở chuẩn phong cách Souls-like (*Elden Ring, Dark Souls, Sekiro*), AI không được phép là "bot xả chiêu vô tội vạ" mà phải tuân thủ nghiêm ngặt 5 nguyên lý:
+
+```mermaid
+flowchart TD
+    subgraph SoulsCombatLoop ["Vòng Lặp Chiến Đấu Souls-like"]
+        Stalking["1. Thăm Dò & Vờn (Pacing / Strafing)<br/>Dạt vòng quanh khóa mục tiêu, giữ cự ly 4-7m"] --> DetectAction{"Phát hiện hành động Player"}
+        
+        DetectAction -->|Player Uống Máu / Dùng Thuốc| HealPunish["2. Trừng Phạt Hồi Máu (Heal-Punish)<br/>Lao vồ / Chém lướt lập tức ngắt chiêu"]
+        DetectAction -->|Player Lăn Né Hoảng Loạn| RollCatch["3. Bắt Nhịp Lộn (Roll-Catching)<br/>Giữ đòn gồng delay, chém trúng khi hết I-frame"]
+        DetectAction -->|Player Giơ Khiên Đỡ Đòn| FlankBreak["4. Luồn Sườn & Phá Thủ (Flank & Guard Break)<br/>Dạt ra góc chết sau lưng / Dậm đất phá Poise"]
+        DetectAction -->|Player Thăm Dò / Đứng Yên| TelegraphAttack["5. Ra Chiêu Báo Hiệu (Telegraphed Attack)<br/>Wind-up rõ ràng -> Tung đòn -> Recovery hở sườn"]
+    end
+    
+    TelegraphAttack --> PunishWindow["Cửa Sổ Trừng Phạt (Player Punish Window)<br/>Boss khựng 0.8s - 1.5s cho Player phản công"]
+    PunishWindow --> Stalking
+```
+
+1. **Báo Hiệu Đòn Đánh (Tell & Telegraphing):** Mỗi chiêu thức chia làm 3 pha rõ rệt:
+   * *Pha Gồng (Wind-up):* Giơ cao tay / ngửa cổ lấy đà rõ ràng, kèm âm thanh và VFX tụ lực để người chơi kịp phán đoán né hoặc Parry.
+   * *Pha Tung Đòn (Active/Release):* Chém chớp nhoáng hoặc dậm sàn uy lực, gây sát thương.
+   * *Pha Hồi Chiêu Khựng Đòn (Recovery Window):* Sau khi ra đòn, Boss có 0.8s - 1.5s thở/thu thế (Punish Window) để người chơi giỏi có cơ hội lao vào phản kích trừng phạt.
+2. **Nhịp Thở & Vờn Đối Thủ (Pacing & Circling/Strafing):** Boss không cắm đầu chạy thẳng. Boss biết **bước dạt ngang (Strafe Left / Right)** vòng quanh người chơi ở cự ly trung bình, quan sát thể lực và thế thủ của người chơi để tạo áp lực tâm lý như một kẻ săn mồi.
+3. **Bắt Nhịp Lộn Hoảng Loạn (Roll-Catching):** Khi Player hoảng loạn bấm Lăn né liên tục (Panic Roll), AI học được cách **giữ đòn trễ nhịp (Delayed Attack / Tracking Swing)** để vung đòn trúng ngay khoảnh khắc Player vừa chạm đất hết thời gian bất tử (I-frames).
+4. **Trừng Phạt Khi Dùng Bình Máu (Heal-Punish / Input Reading):** Khi phát hiện Player lùi xa uống máu (`isHealing = true`), Boss lập tức kích hoạt chiêu áp sát nhanh (`JumpAttack` của Golem hoặc Lướt kiếm của Ignis) để trừng phạt sơ hở.
+5. **Phân Định Cơ Chế Giai Đoạn (Single Phase vs Two-Phase Rebirth):**
+   * **Ice Golem (Đơn Pha - Single Phase):** Hoàn toàn **không có Phase 2**. Boss duy trì nhịp độ và phong cách đỡ đòn dậm sàn vững chắc từ đầu đến cuối trận đấu để rèn luyện kỹ năng giữ khoảng cách và phản xạ nhảy/né chấn động của người chơi.
+   * **Red Ignis (2 Pha - Tái Sinh Khi Chết & Lột Xác Diện Mạo Mới):** Sở hữu cơ chế 2 Pha kinh điển Souls-like (*Malenia, Sister Friede*). Khi thanh máu Phase 1 về 0, Boss quỵ ngã -> bùng nổ ngọn lửa địa ngục đẩy lùi người chơi -> hồi sinh 100% máu và **lột xác sang diện mạo mới** (New Appearance Model / Flaming VFX / Blazing Sword), kích hoạt bộ não AI Phase 2 với nhịp độ áp sát và combo hủy diệt.
+
+---
+
+#### 2. Thiết Kế Mạng Nơ-ron ML-Agents (Reinforcement Learning with PPO)
+
+* **Không Gian Quan Sát (Observation Vector - 26 floats):**
+  | Nhóm dữ liệu | Số chiều | Ý nghĩa chi tiết |
+  | :--- | :---: | :--- |
+  | **Không gian & Vị trí** | 3 | Vector hướng chuẩn hóa tới Player (`dirToPlayer.x, y, z`) |
+  | **Khoảng cách** | 1 | Khoảng cách thực tế chuẩn hóa (`distance / maxArenaRadius`) |
+  | **Góc quay đối diện** | 2 | Tích vô hướng hướng nhìn (`Dot forward` & `Dot right` tới Player) |
+  | **Sinh mệnh Boss** | 1 | Tỷ lệ máu hiện tại của Boss (`bossHealth / bossMaxHealth`) |
+  | **Sinh mệnh Player** | 1 | Tỷ lệ máu hiện tại của Player (`playerHealth / playerMaxHealth`) |
+  | **Thể lực Player** | 1 | Tỷ lệ Stamina của Player (`playerStamina / 100f`) |
+  | **Trạng thái Player** | 4 | `isAttacking`, `isRolling` (I-frame), `isParrying`, `isHealing` (0 hoặc 1) |
+  | **Thời gian hồi chiêu** | 4 | Tỷ lệ sẵn sàng của 4 kỹ năng (`cooldownRemaining / maxCooldown`) |
+  | **Giai đoạn trận đấu** | 1 | Phase 1 (0) hay Phase 2 Cuồng nộ (1) |
+  | **Cảm biến địa hình** | 8 | Raycast Sensor 8 hướng phát hiện khoảng cách tới tường đấu trường |
+
+* **Không Gian Hành Động (Action Space - Discrete Branches):**
+  * **Branch 0 - Di chuyển & Vờn đối thủ (5 lựa chọn):**
+    * `0`: Đứng thủ thế / Thăm dò (Idle)
+    * `1`: Tiến thẳng áp sát (Move Forward)
+    * `2`: Lùi lại giữ cự ly an toàn (Move Backward)
+    * `3`: Dạt trái vòng quanh Player (Strafe Left)
+    * `4`: Dạt phải vòng quanh Player (Strafe Right)
+  * **Branch 1 - Quyết định Ra đòn (5 lựa chọn):**
+    * `0`: Không đánh (Chờ thời cơ hoặc giữ nhịp thở)
+    * `1`: Đòn đánh thường cận chiến (Attack 1)
+    * `2`: Đòn liên hoàn / Đấm sàn rung đất (GumoGumo Slam / Combo Slash)
+    * `3`: Đòn nhảy vồ / Lướt áp sát tầm xa (Jump Attack / Dash Thrust)
+    * `4`: Đòn đặc biệt / Phun lửa diện rộng (Flame Breath / Flaming Whirlwind)
+  * **Branch 2 - Tùy biến Nhịp đòn (3 lựa chọn):**
+    * `0`: Đánh tốc độ chuẩn (Normal timing)
+    * `1`: Đánh gồng trễ nhịp (Delayed Attack / Roll-catcher)
+    * `2`: Nhử đòn / Hủy đòn thăm dò (Feint)
+
+* **Thiết Lập Hàm Thưởng / Phạt (Reward Function):**
+  | Hành vi | Điểm thưởng/phạt | Mục đích huấn luyện |
+  | :--- | :---: | :--- |
+  | **Đánh trúng Player (khi không bị né/parry)** | `+1.0 * (damage / 20f)` | Khuyến khích tấn công chính xác |
+  | **Trừng phạt thành công khi Player uống máu** | `+2.0` | Tạo phản xạ Heal-Punish kinh điển Souls-like |
+  | **Bắt trúng đòn khi Player vừa hết Roll I-frame** | `+1.5` | Huấn luyện kỹ năng Roll-Catching |
+  | **Hạ gục Player (Player HP = 0)** | `+5.0` ➔ `EndEpisode()` | Mục tiêu tối thượng của trận đấu |
+  | **Duy trì khoảng cách combat lý tưởng (3m - 6m)** | `+0.001` per step | Khuyến khích vờn quanh, không chạy ra góc lag |
+  | **Tung chiêu trượt vào không khí** | `-0.3` | Tránh spam chiêu vô tội vạ |
+  | **Tung chiêu khi Player đang trong I-frame né đòn** | `-0.5` | Dạy AI không đánh vào lúc đối thủ bất tử |
+  | **Bị Player Parry thành công (Bị choáng)** | `-1.5` | Dạy AI biết sợ thế thủ và không ra đòn dễ đoán |
+  | **Bị Player chém trúng** | `-0.4 * (damage / 20f)` | Dạy AI biết né tránh, dạt sườn giữ khoảng cách |
+  | **Boss tử trận (Boss HP = 0)** | `-5.0` ➔ `EndEpisode()` | Trừng phạt thất bại |
+  | **Phạt thời gian tồn tại (`Existence Penalty`)** | `-0.0005` per step | Ép Boss chủ động kết liễu trận, chống cù nhây |
+
+* **Quy Trình Đào Tạo Đa Sàn Đấu (Multi-Arena Parallel Training):**
+  * Trong Scene huấn luyện, nhân bản **8 hoặc 16 sàn đấu Arena** chạy song song.
+  * Huấn luyện thông qua `mlagents-learn` với thuật toán PPO trên môi trường Python ảo (`venv`), xuất ra file **`.onnx`** (ví dụ `IceGolem_SoulsAI.onnx` và `RedIgnis_SoulsAI.onnx`).
+  * Nạp file `.onnx` vào component `Behavior Parameters` (chế độ `Inference Only`) để chạy mượt mà 100% thời gian thực trong game cuối cùng mà người chơi không cần cài Python hay PyTorch.
 
 ---
 

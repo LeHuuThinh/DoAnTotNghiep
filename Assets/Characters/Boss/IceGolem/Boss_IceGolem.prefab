@@ -122,9 +122,13 @@ GameObject:
   - component: {fileID: 6089623062479419419}
   - component: {fileID: 50411829461822159}
   - component: {fileID: 8264288593899820189}
+  - component: {fileID: 8951256888404947621}
+  - component: {fileID: 2596180506842291286}
+  - component: {fileID: 670959683440925740}
+  - component: {fileID: 7629390967331010991}
   m_Layer: 9
   m_Name: Boss_IceGolem
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -168,19 +172,7 @@ MonoBehaviour:
       m_Calls: []
   onDeath:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8850410555655432218}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!136 &50411829461822159
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -200,10 +192,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.5261993
+  m_Radius: 1.52
   m_Height: 5.12
   m_Direction: 1
-  m_Center: {x: 0.14419556, y: 2.4500003, z: -0.25460052}
+  m_Center: {x: 0.14, y: 2.45, z: -0.25}
 --- !u!54 &8264288593899820189
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -212,8 +204,8 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8850410555655432218}
   serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
+  m_Mass: 100
+  m_LinearDamping: 0.05
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -231,6 +223,266 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &8951256888404947621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8850410555655432218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae62f4da93e50b9438de08d25fde83eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IceGolemController
+  anim: {fileID: 4683911688809379091}
+  moveSpeed: 3.5
+  rotationSpeed: 120
+  strafeMode: 1
+  attack1Cooldown: 1.5
+  gumoGumoCooldown: 6
+  flameBreathCooldown: 8
+  jumpAttackCooldown: 7
+  runAttackCooldown: 6
+  attackLTCooldown: 5
+  iceBallCooldown: 7
+  specialSkillGlobalCooldown: 3
+  runAttackSpeed: 12
+  runAttackDuration: 1.25
+  runAttackDamage: 35
+  runAttackKnockback: 5
+  runAttackHitRadius: 2.2
+  runAuraVfxPrefab: {fileID: 0}
+  handAuraVfxPrefab: {fileID: 0}
+  attackLTDamage: 20
+  attackLTFinalDamage: 30
+  attackLTKnockback: 1.8
+  attackLTFinalKnockback: 3.5
+  attackLTHitTime1: 0.8
+  attackLTHitTime2: 1.7
+  attackLTHitTime3: 2.6
+  attackLTTotalDuration: 3.5
+  iceBallPrefab: {fileID: 2912649582257537473, guid: a40488617941dc34399bca8359e6fe26, type: 3}
+  iceBallCastDelay: 1.15
+  iceBallTotalDuration: 3
+  iceBallSpeed: 16
+  iceBallDamage: 35
+  iceBallExplosionRadius: 3.5
+  iceBallKnockback: 2.5
+  iceBallLifeTime: 4
+  iceBallExplodeVfxPrefab: {fileID: 0}
+  hitFlashDuration: 0.12
+  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  playerTarget: {fileID: 0}
+  autoFindPlayer: 1
+  alwaysFacePlayer: 1
+  facePlayerSpeed: 240
+  facePlayerOnAttack: 1
+  minFaceDistance: 0.5
+  jumpDownOnStart: 1
+  triggerJumpDownOnDetectPlayer: 1
+  playerDetectionRange: 35
+  jumpDownDistance: 10
+  jumpDownHeight: 12
+  jumpDownArcHeight: 0
+  jumpDownStartDelay: 0.1
+  jumpDownFallDuration: 1.25
+  jumpDownTarget: {fileID: 0}
+  autoTargetPlayerOnJumpDown: 0
+  jumpDownFallCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  jumpDownShockwaveDelay: 0
+  jumpDownShockwaveRadius: 16
+  jumpDownShockwaveSpeed: 14
+  jumpDownShockwaveDamage: 35
+  jumpDownShockwaveKnockback: 3
+  jumpDownShockwaveColor: {r: 0.2, g: 0.9, b: 1, a: 0.95}
+  jumpAttackDistance: 20
+  jumpAttackArcHeight: 2.8
+  jumpTakeoffDelay: 0.65
+  jumpFlightDuration: 0.85
+  jumpAttackTarget: {fileID: 0}
+  autoTargetPlayer: 1
+  targetOffsetDistance: 1.8
+  jumpAttackShockwaveDelay: 0.23
+  jumpAttackShockwaveRadius: 18
+  jumpAttackShockwaveSpeed: 16
+  jumpAttackDamage: 40
+  jumpAttackKnockback: 3.5
+  jumpAttackShockwaveColor: {r: 0.15, g: 0.85, b: 1, a: 0.95}
+  attack1Damage: 25
+  attack1Knockback: 2.5
+  attack1HitDistance: 2.4
+  attack1HitHeight: 1.3
+  attack1HitRadius: 1.8
+  attack1HitDelay: 1.23
+  attack1VfxDelay: 0
+  attack1ImpactVfxScale: 1.2
+  attack1ImpactVfxPrefab: {fileID: 76078083177719801, guid: 44f0b01fbe834a74e82a27ae8e7fe80b, type: 3}
+  attack1HitSfx: {fileID: 0}
+  leftHandBone: {fileID: 6607775300521178199}
+  rightHandBone: {fileID: 4904379116028943908}
+  handSlamImpactVfx: {fileID: 186731537552307344, guid: fc014707b582176468fc71c9933a0c57, type: 3}
+  gumoSlamVfxScale: 2
+  gumoShockwaveRadius: 12
+  gumoSlamDamage: 18
+  gumoSlamKnockback: 1.2
+  gumoSlamStartTime: 0.55
+  gumoSlamEndTime: 3.3
+  gumoSlamInterval: 0.35
+  enableGumoProceduralRing: 0
+  gumoShockwaveSpeed: 12
+  gumoShockwaveColor: {r: 0.3, g: 0.85, b: 1, a: 0.9}
+  mouthBone: {fileID: 349060590830027777}
+  mouthForwardAxis: 0
+  lockVerticalRotation: 1
+  lockFlameHeight: 1
+  flamePositionOffset: {x: 0, y: 0.05, z: 0.45}
+  flameRotationOffset: {x: 0, y: 0, z: 0}
+  flameVisualLength: 3.58
+  flameVisualWidth: 2.9
+  flameDensity: 1.9
+  flameRange: 15.5
+  flameConeAngle: 49
+  flameStartTime: 0.75
+  flameDuration: 3.2
+  flameDamagePerTick: 12
+  flameDamageTickInterval: 0.2
+  flameKnockback: 0.6
+  enableFlameShake: 1
+  flameShakeMagnitude: 0.025
+  flameShakeDuration: 0.05
+  enableShockwaveRingVisual: 0
+  jumpDodgeHeightThreshold: 0.5
+  clockwiseSpinSpeed: 280
+  shockwaveLineWidth: 0.35
+  flameVfxPrefab: {fileID: 8764043878647920493, guid: c4ed38c72957f2241ad144a1614956d9, type: 3}
+  flameHitVfxPrefab: {fileID: 0}
+  jumpDownShockwaveVfx: {fileID: 0}
+  jumpAttackShockwaveVfx: {fileID: 0}
+  gumoShockwaveVfx: {fileID: 0}
+  jumpDownImpactVfx: {fileID: 3432958286849152088, guid: 87ee7299dd44ed747af24dbb91bcd33b, type: 3}
+  jumpAttackImpactVfx: {fileID: 5112403345868107898, guid: 6f34ef0d986e9db4199cf75805f79753, type: 3}
+  flameBreathSfx: {fileID: 0}
+  jumpDownImpactSfx: {fileID: 0}
+  jumpAttackImpactSfx: {fileID: 0}
+  handSlamImpactSfx: {fileID: 0}
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 264
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 1
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 1
+--- !u!114 &2596180506842291286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8850410555655432218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
+  m_BrainParameters:
+    VectorObservationSize: 29
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 0
+      BranchSizes: 050000000800000002000000
+    VectorActionSize: 050000000800000002000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 0
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: IceGolemSoulsAI
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_DeterministicInference: 0
+  m_ObservableAttributeHandling: 0
+--- !u!114 &670959683440925740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8850410555655432218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e45a53bfd0af86459594441bc614b08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IceGolemAgent
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  controller: {fileID: 0}
+  bossHealth: {fileID: 0}
+  playerTransform: {fileID: 0}
+  playerHealth: {fileID: 0}
+  playerController: {fileID: 0}
+  playerCombat: {fileID: 0}
+  playerStats: {fileID: 0}
+  arenaCenter: {x: 0, y: 0, z: 0}
+  arenaRadius: 25
+  optimalDistanceMin: 3.5
+  optimalDistanceMax: 8
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1
+  rollCatchReward: 1.5
+  healPunishReward: 2
+  hitPlayerReward: 1
+  defeatPlayerReward: 5
+  hitIFramePenalty: -0.5
+  whiffAttackPenalty: -0.4
+  takeDamagePenalty: -0.8
+  deathPenalty: -3
+  lockNormalSpeed: 1
+--- !u!114 &7629390967331010991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8850410555655432218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.DecisionRequester
+  DecisionPeriod: 5
+  DecisionStep: 0
+  TakeActionsBetweenDecisions: 1
 --- !u!1001 &1182772646841469058
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -470,6 +722,11 @@ PrefabInstance:
       addedObject: {fileID: 6607775300521178199}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
+--- !u!4 &349060590830027777 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -7732098134166483837, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
+  m_PrefabInstance: {fileID: 1182772646841469058}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1050641204255506340 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6989958327492839642, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
@@ -483,5 +740,10 @@ Transform:
 --- !u!4 &3087438806271546929 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4993713222602547533, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
+  m_PrefabInstance: {fileID: 1182772646841469058}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &4683911688809379091 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
   m_PrefabInstance: {fileID: 1182772646841469058}
   m_PrefabAsset: {fileID: 0}
