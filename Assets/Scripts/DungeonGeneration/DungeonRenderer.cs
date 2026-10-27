@@ -129,6 +129,12 @@ public class DungeonRenderer : MonoBehaviour
       }
     }
 
+    // 2.5. Dựng 4 cây cột to chịu lực tại Đấu Trường Boss (cao 16m, scale 2.5x, có MeshCollider để núp né đòn)
+    if (data.bossRoom != null)
+    {
+      BuildBossArenaPillars(data.bossRoom, data);
+    }
+
     // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Sinh TRƯỚC khi Bake NavMesh để NavMesh tự động đục lỗ né vật cản)
     if (propDecorator == null) propDecorator = GetComponent<DungeonPropDecorator>();
     if (propDecorator == null) propDecorator = gameObject.AddComponent<DungeonPropDecorator>();
@@ -814,6 +820,48 @@ public class DungeonRenderer : MonoBehaviour
   }
 
   /// <summary>
+  /// Dựng 4 cây cột to đồ sộ tại Đấu Trường Boss (vươn cao 16m, scale 2.5x, có MeshCollider làm vật cản chiến thuật)
+  /// </summary>
+  private void BuildBossArenaPillars(RoomData bossRoom, DungeonData data)
+  {
+    if (bossRoom == null || bossRoom.pillarPositions == null || bossRoom.pillarPositions.Count == 0) return;
+    if (pillarPrefab == null) EnsurePrefabsAssigned();
+    if (pillarPrefab == null) return;
+
+    GameObject bossPillarsGroup = new GameObject("BossArena_Pillars");
+    bossPillarsGroup.transform.SetParent(dungeonParent, false);
+
+    // Cột gốc trong prefab cao 4m. Phòng Boss trần cao 16m -> scale Y = 16 / 4 = 4.0
+    // Độ dày cột scale 2.5x để tạo thành cột đá cổ đồ sộ uy nghi chuẩn Souls-like
+    Vector3 bossPillarScale = new Vector3(2.5f, bossRoom.ceilingHeight / 4.0f, 2.5f);
+
+    foreach (var pPos in bossRoom.pillarPositions)
+    {
+      GameObject pillarObj = Instantiate(pillarPrefab, pPos, Quaternion.identity, bossPillarsGroup.transform);
+      pillarObj.name = "BossArena_Pillar";
+      pillarObj.transform.localScale = bossPillarScale;
+      pillarObj.layer = 0; // Default layer
+
+      // Đảm bảo có MeshCollider để Player có thể núp né đòn và chặn đạn
+      MeshCollider mc = pillarObj.GetComponent<MeshCollider>();
+      if (mc == null)
+      {
+        mc = pillarObj.AddComponent<MeshCollider>();
+        MeshFilter mf = pillarObj.GetComponentInChildren<MeshFilter>();
+        if (mf != null) mc.sharedMesh = mf.sharedMesh;
+      }
+
+      // Gắn NavMeshModifier để NavMesh tự động đục lỗ quanh 4 cây cột
+      var navMod = pillarObj.GetComponent<NavMeshModifier>();
+      if (navMod == null) navMod = pillarObj.AddComponent<NavMeshModifier>();
+      navMod.overrideArea = true;
+      navMod.area = 1; // Not Walkable
+    }
+
+    Debug.Log($"<color=cyan>[DungeonRenderer]</color> 🏛️ Đã dựng thành công 4 cây cột đồ sộ tại Đấu Trường Boss (Scale 2.5x, cao {bossRoom.ceilingHeight}m)");
+  }
+
+  /// <summary>
   /// Tự động Bake NavMeshSurface toàn map và kiểm định tính liên thông đường đi (Pathfinding) giữa sàn trệt và tầng 2
   /// </summary>
   public void BakeAndValidateNavMesh(DungeonData data)
@@ -860,15 +908,11 @@ public class DungeonRenderer : MonoBehaviour
         {
           mezzanineCount++;
 
-          // Điểm xuất phát A: Dưới sàn trệt ngay trước chân cầu thang (chân dốc 8.3m)
-          Vector3 groundPos = (r.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z - 9.0f)
-            : new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z + 9.0f);
+          // Điểm xuất phát A: Dưới sàn trệt ngay trước bậc đầu tiên của nhịp dưới cầu thang (cách đỉnh thang 8.5m về phía Nam)
+          Vector3 groundPos = new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z - 8.5f);
 
-          // Điểm đích B: Trên sàn tầng 2 sau khi bước lên khỏi cầu thang
-          Vector3 floor2Pos = (r.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z + tileSize)
-            : new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z - tileSize);
+          // Điểm đích B: Trên sàn tầng 2 ngay sau khi bước lên khỏi bậc cuối cùng (cách đỉnh thang 1.5m về phía Bắc)
+          Vector3 floor2Pos = new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z + 1.5f);
 
           NavMeshPath path = new NavMeshPath();
           bool hasSampleA = NavMesh.SamplePosition(groundPos, out NavMeshHit hitA, 3.0f, NavMesh.AllAreas);

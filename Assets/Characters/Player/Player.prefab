@@ -571,6 +571,8 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
+  hitlagTimeScale: 0.05
+  defaultLethalHitlag: 0.18
 --- !u!1 &1388358114080068217
 GameObject:
   m_ObjectHideFlags: 0
@@ -2118,7 +2120,7 @@ MonoBehaviour:
   playerCombat: {fileID: 2224738506303633511}
   thirdPersonCamera: {fileID: 0}
   maxPoise: 150
-  poiseRecoveryDelay: 7
+  poiseRecoveryDelay: 5
   poiseRecoveryRate: 30
   parryHitlagDuration: 0.2
   parryTimeScale: 0.05
@@ -3207,31 +3209,31 @@ MonoBehaviour:
   playerFeedback: {fileID: 6269426121722460428}
   playerStats: {fileID: 4698226416880465567}
   weaponHitbox: {fileID: 7164169299375368469}
-  attack1Damage: 25
-  attack2Damage: 25
-  attack3Damage: 40
+  attack1Damage: 22
+  attack2Damage: 22
+  attack3Damage: 28
   chargeAttackDamage: 25
-  counterAttackDamage: 75
+  counterAttackDamage: 80
   slashProjectilePrefab: {fileID: 1574271572835420843, guid: 855685a51bd1d6c41b21c09c0becf7f3, type: 3}
   projectileSpawnPoint: {fileID: 3075534017654103088}
   aoeSpellPrefab: {fileID: 6547965365630005983, guid: f8c946e92f6f0ec42873179368db598c, type: 3}
   swordAuraVfx: {fileID: 4914798154512801455}
   swordAuraBlueVfx: {fileID: 4914798154512801455}
   swordAuraOrangeVfx: {fileID: 4760956275858655070}
-  skillECooldown: 2
-  skillQCooldown: 2
-  attack1Knockback: 0
-  attack2Knockback: 0
+  skillECooldown: 4
+  skillQCooldown: 8
+  attack1Knockback: 0.05
+  attack2Knockback: 0.1
   attack3Knockback: 0.4
   chargeAttackKnockback: 0.3
   counterAttackKnockback: 0.5
-  attack1Hitlag: 0.035
-  attack2Hitlag: 0.045
-  attack3Hitlag: 0.08
+  attack1Hitlag: 0.05
+  attack2Hitlag: 0.07
+  attack3Hitlag: 0.1
   chargeHit1Hitlag: 0.05
-  chargeHit2Hitlag: 0.095
-  counterAttackHitlag: 0.11
-  lethalHitlag: 0.18
+  chargeHit2Hitlag: 0.07
+  counterAttackHitlag: 0.12
+  lethalHitlag: 0.2
   attack1PoiseDamage: 25
   attack2PoiseDamage: 25
   attack3PoiseDamage: 55

@@ -159,6 +159,9 @@ public partial class DungeonPropDecorator
 
     foreach (var corr in data.corridors)
     {
+      // Bỏ qua Đại Lộ Boss vì đã được DecorateBossAvenueCorridor trang trí chuyên biệt 2 hàng đuốc đối xứng uy nghiêm
+      if (data.bossCorridor.width > 0 && corr.Equals(data.bossCorridor)) continue;
+
       if (corr.width >= corr.height) // Hành lang ngang (chạy dọc X)
       {
         for (int x = corr.x + 3; x < corr.x + corr.width - 3; x += corridorTorchSpacing)

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -274,6 +274,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Header("Prefabs Chiếu Sáng (Lighting)")]
   public GameObject wallTorchPrefab;       // torch_wall_lit.prefab
   public GameObject floorTorchPrefab;      // torch_lit.prefab
+  public GameObject bossCauldronPrefab;    // Cauldron_Fire.prefab (Vạc lửa khổng lồ rực cháy)
   public List<GameObject> candlePrefabs = new List<GameObject>();
 
   [Header("Prefabs Đồ Treo Tường (Wall Decor)")]
@@ -357,6 +358,10 @@ public partial class DungeonPropDecorator : MonoBehaviour
 
     wallTorchPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/torch_wall_lit.prefab");
     floorTorchPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/torch_lit.prefab");
+    if (bossCauldronPrefab == null)
+    {
+      bossCauldronPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/Cauldron_Fire.prefab");
+    }
 
     candlePrefabs.Clear();
     bannerPrefabs.Clear();
@@ -510,9 +515,15 @@ public partial class DungeonPropDecorator : MonoBehaviour
 
   private void DecorateRoom(RoomData room, Transform propsRoot, DungeonData data, float tileSize)
   {
+    // Nếu là phòng Boss: Chuyển sang quy trình trang trí Đấu Trường Boss riêng biệt (sàn sạch, đuốc cột, không rác)
+    if (room == data.bossRoom || room.type == RoomType.Boss)
+    {
+      DecorateBossRoom(room, propsRoot, data, tileSize);
+      return;
+    }
+
     RoomTheme theme = (RoomTheme)(Mathf.Abs(room.id) % 6);
     if (room == data.startRoom) theme = RoomTheme.GrandHall;
-    else if (room == data.bossRoom) theme = RoomTheme.GrandHall;
 
     GameObject roomPropsObj = new GameObject($"Room_{room.id}_{theme}");
     roomPropsObj.transform.SetParent(propsRoot, false);
@@ -597,6 +608,218 @@ public partial class DungeonPropDecorator : MonoBehaviour
       navMod.overrideArea = true;
       navMod.area = 1; // 1 = Not Walkable
       navMod.applyToChildren = true;
+    }
+  }
+
+  /// <summary>
+  /// Quy trình trang trí chuyên biệt cho Đấu Trường Boss:
+  /// - Giữ 100% lòng sàn trung tâm sạch sẽ, bằng phẳng, không bàn ghế/thùng cản trở combat.
+  /// - TẦNG 1: Giếng trời ánh trăng từ vòm trần 24m chiếu thẳng xuống tâm sàn đấu (Moonlight Spotlight).
+  /// - TẦNG 2: 4 Vạc lửa Cauldron_Fire rực cháy vàng cam đặt tại chân 4 cây cột chống trời (đặt trên sàn đất).
+  /// - Bố trí cờ hiệu và đuốc tường cao cấp dọc 4 bức tường cao 24m.
+  /// - Bố trí 2 hàng đuốc đối xứng uy nghiêm dọc đại lộ hành lang dài 12m dẫn vào phòng Boss.
+  /// </summary>
+  private void DecorateBossRoom(RoomData room, Transform propsRoot, DungeonData data, float tileSize)
+  {
+    GameObject roomPropsObj = new GameObject($"BossArena_Room_{room.id}");
+    roomPropsObj.transform.SetParent(propsRoot, false);
+
+    Transform lightsGroup = new GameObject("Lights").transform;
+    lightsGroup.SetParent(roomPropsObj.transform, false);
+
+    GameObject tempStaticProps = new GameObject("Temp_StaticProps");
+    tempStaticProps.transform.SetParent(roomPropsObj.transform, false);
+
+    HashSet<Vector2Int> forbiddenTiles = BuildForbiddenTiles(room, data);
+
+    // Đánh dấu khu vực 3x3 quanh 4 cây cột to vào forbiddenTiles để không đặt đồ đè lên
+    if (room.pillarPositions != null)
+    {
+      foreach (var pPos in room.pillarPositions)
+      {
+        int px = Mathf.FloorToInt(pPos.x / tileSize);
+        int py = Mathf.FloorToInt(pPos.z / tileSize);
+        for (int dx = -1; dx <= 1; dx++)
+        {
+          for (int dy = -1; dy <= 1; dy++)
+          {
+            forbiddenTiles.Add(new Vector2Int(px + dx, py + dy));
+          }
+        }
+      }
+    }
+
+    // 1. ĐUỐC TƯỜNG & CỜ HIỆU ĐẠI SẢNH DỌC 4 BỨC TƯỜNG CAO 24M
+    List<GameObject> roomBanners = GetRoomBannerFamily(room.id);
+    DecorateRoomWalls(room, lightsGroup, tempStaticProps.transform, forbiddenTiles, roomBanners, RoomTheme.GrandHall, data, tileSize);
+
+    Vector3 roomCenter = room.WorldCenter(tileSize);
+
+    // --- TẦNG 1 ÁNH SÁNG: GIẾNG TRỜI ÁNH TRĂNG TỪ VÒM TRẦN 24M (MOONLIGHT SPOTLIGHT) ---
+    if (enableLighting)
+    {
+      GameObject skylightObj = new GameObject("BossArena_Moonlight");
+      skylightObj.transform.SetParent(lightsGroup, false);
+      skylightObj.transform.position = new Vector3(roomCenter.x, room.ceilingHeight - 0.5f, roomCenter.z);
+      skylightObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Chiếu thẳng xuống tâm sàn
+
+      Light skyLight = skylightObj.AddComponent<Light>();
+      skyLight.type = LightType.Spot;
+      skyLight.spotAngle = 72f;
+      skyLight.innerSpotAngle = 45f;
+      skyLight.range = room.ceilingHeight + 8f; // 24m + 8m = 32m, rọi sáng toàn bộ vùng tâm đấu trường
+      skyLight.color = new Color(0.68f, 0.84f, 1.0f); // Xanh ánh trăng dịu mát (Pale Moonlight Blue)
+      skyLight.intensity = 5.5f;
+      skyLight.shadows = LightShadows.Soft;
+    }
+
+    // --- TẦNG 2 ÁNH SÁNG: 4 VẠC LỬA KHỔNG LỒ RỰC CHÁY TẠI CHÂN 4 CỘT CHỐNG TRỜI ---
+    GameObject cauldronPrefab = bossCauldronPrefab != null ? bossCauldronPrefab : floorTorchPrefab;
+    if (enableLighting && cauldronPrefab != null && room.pillarPositions != null)
+    {
+      foreach (var pPos in room.pillarPositions)
+      {
+        Vector3 dirToCenter = (roomCenter - pPos).normalized;
+        // Đặt vạc lửa ngay trước chân cột chống trời, lệch về phía tâm 2.8m, nằm trên sàn đất (Y = 0)
+        Vector3 cauldronPos = pPos + dirToCenter * 2.8f;
+        cauldronPos.y = 0f;
+
+        GameObject cauldronObj = Instantiate(cauldronPrefab, cauldronPos, Quaternion.LookRotation(dirToCenter), lightsGroup);
+        cauldronObj.name = "BossArena_Cauldron";
+
+        // Tự động kiểm tra và cấu hình đèn Point Light rực sáng lửa vàng cam ấm áp
+        Transform lightChild = cauldronObj.transform.Find("Light");
+        Light cLight = lightChild != null ? lightChild.GetComponent<Light>() : null;
+        if (cLight == null && lightChild != null) cLight = lightChild.gameObject.AddComponent<Light>();
+        if (cLight == null) cLight = cauldronObj.GetComponentInChildren<Light>();
+        if (cLight == null)
+        {
+          GameObject newLightObj = new GameObject("Light");
+          newLightObj.transform.SetParent(cauldronObj.transform, false);
+          newLightObj.transform.localPosition = new Vector3(0f, 3.3f, 0f);
+          cLight = newLightObj.AddComponent<Light>();
+        }
+
+        if (cLight != null)
+        {
+          cLight.type = LightType.Point;
+          cLight.color = new Color(1.0f, 0.58f, 0.16f); // Vàng cam ấm áp rực lửa (Warm Amber Fire)
+          // Đấu trường 120m x 120m cần bán kính 35m và cường độ 18 để ngọn lửa rực sáng lung linh khắp sàn đấu
+          if (cLight.range < 30f) cLight.range = 35.0f;
+          if (cLight.intensity < 10f) cLight.intensity = 18.0f;
+        }
+
+        // Đảm bảo có CapsuleCollider ôm sát thân vạc
+        BoxCollider oldBc = cauldronObj.GetComponent<BoxCollider>();
+        if (oldBc != null) Destroy(oldBc);
+
+        CapsuleCollider cc = cauldronObj.GetComponent<CapsuleCollider>();
+        if (cc == null)
+        {
+          cc = cauldronObj.AddComponent<CapsuleCollider>();
+          cc.radius = 1.25f;
+          cc.height = 3.2f;
+          cc.center = new Vector3(0f, 1.6f, 0f);
+        }
+        else
+        {
+          // Phòng ngừa trường hợp prefab chưa bọc parent mà để scale gốc to (ví dụ 200x)
+          float scaleX = cauldronObj.transform.lossyScale.x;
+          if (scaleX > 1.5f && cc.radius * scaleX > 5f)
+          {
+            cc.radius = 1.25f / scaleX;
+            cc.height = 3.2f / scaleX;
+            cc.center = new Vector3(0f, 1.6f / scaleX, 0f);
+          }
+        }
+
+        EnsureNavMeshObstacleModifier(cauldronObj);
+      }
+    }
+
+    // 2.5 TRANG TRÍ 2 HÀNG ĐUỐC DỌC ĐẠI LỘ HÀNH LANG DẪN VÀO PHÒNG BOSS
+    DecorateBossAvenueCorridor(data, lightsGroup, tempStaticProps.transform, tileSize);
+
+    // TUYỆT ĐỐI KHÔNG GỌI:
+    // - DecorateRoomTemplates (không sinh tường vỡ, lều trại)
+    // - DecorateRoomFurniture (không sinh bàn ghế, kệ tủ bừa bãi)
+    // - DecorateRoomInteractables (không rải thùng gỗ lung tung giữa sàn đấu)
+    // -> Giữ toàn bộ lòng sàn đấu trường sạch bóng, phẳng phiu 100% chuẩn Souls-like
+
+    // 3. GỘP MESH ĐỒ TĨNH TRÊN TƯỜNG
+    if (combineStaticProps)
+    {
+      DungeonStaticPropCombiner.CombineStaticPropsInRoom(tempStaticProps, roomPropsObj.transform, room.id);
+    }
+    else
+    {
+      tempStaticProps.name = "StaticProps";
+      Unity.AI.Navigation.NavMeshModifier navMod = tempStaticProps.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      navMod.overrideArea = true;
+      navMod.area = 1; // 1 = Not Walkable
+      navMod.applyToChildren = true;
+    }
+
+    Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> 🏛️ Đã trang trí hoàn tất Đấu Trường Boss (Room {room.id}, cao {room.ceilingHeight}m): Giếng trời ánh trăng, 4 vạc lửa cột chống trời, sàn sạch bóng.");
+  }
+
+  /// <summary>
+  /// Bố trí 2 hàng đuốc đối xứng uy nghiêm dọc hai bên tường của đại lộ hành lang dẫn vào phòng Boss
+  /// </summary>
+  private void DecorateBossAvenueCorridor(DungeonData data, Transform lightsGroup, Transform staticPropsGroup, float tileSize)
+  {
+    if (wallTorchPrefab == null || !enableLighting) return;
+    RectInt avenue = data.bossCorridor;
+    if (avenue.width <= 0 || avenue.height <= 0) return;
+
+    float halfTile = tileSize / 2f;
+    int step = 4; // Cắm đuốc mỗi 4 tiles (8m) dọc hành lang
+
+    if (avenue.height >= avenue.width)
+    {
+      // Đại lộ dọc: Đuốc cắm ở vách Tây (chiếu về Đông) và vách Đông (chiếu về Tây)
+      int startY = avenue.y + 2;
+      int endY = avenue.y + avenue.height - 2;
+
+      for (int y = startY; y <= endY; y += step)
+      {
+        float worldZ = y * tileSize + halfTile;
+
+        // Vách Tây: x = avenue.x
+        float leftX = avenue.x * tileSize + 0.1f;
+        Vector3 leftPos = new Vector3(leftX, 2.5f, worldZ);
+        GameObject leftTorch = Instantiate(wallTorchPrefab, leftPos, Quaternion.Euler(0f, 90f, 0f), lightsGroup);
+        leftTorch.name = "BossAvenue_Torch_West";
+
+        // Vách Đông: x = avenue.x + avenue.width - 1
+        float rightX = (avenue.x + avenue.width) * tileSize - 0.1f;
+        Vector3 rightPos = new Vector3(rightX, 2.5f, worldZ);
+        GameObject rightTorch = Instantiate(wallTorchPrefab, rightPos, Quaternion.Euler(0f, 270f, 0f), lightsGroup);
+        rightTorch.name = "BossAvenue_Torch_East";
+      }
+    }
+    else
+    {
+      // Đại lộ ngang: Đuốc cắm ở vách Nam và vách Bắc
+      int startX = avenue.x + 2;
+      int endX = avenue.x + avenue.width - 2;
+
+      for (int x = startX; x <= endX; x += step)
+      {
+        float worldX = x * tileSize + halfTile;
+
+        // Vách Nam
+        float bottomZ = avenue.y * tileSize + 0.1f;
+        Vector3 botPos = new Vector3(worldX, 2.5f, bottomZ);
+        GameObject botTorch = Instantiate(wallTorchPrefab, botPos, Quaternion.Euler(0f, 0f, 0f), lightsGroup);
+        botTorch.name = "BossAvenue_Torch_South";
+
+        // Vách Bắc
+        float topZ = (avenue.y + avenue.height) * tileSize - 0.1f;
+        Vector3 topPos = new Vector3(worldX, 2.5f, topZ);
+        GameObject topTorch = Instantiate(wallTorchPrefab, topPos, Quaternion.Euler(0f, 180f, 0f), lightsGroup);
+        topTorch.name = "BossAvenue_Torch_North";
+      }
     }
   }
 

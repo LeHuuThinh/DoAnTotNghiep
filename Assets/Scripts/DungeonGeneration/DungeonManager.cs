@@ -128,6 +128,16 @@ public class DungeonManager : MonoBehaviour
 
         Gizmos.DrawWireCube(rCenter, rSize);
 
+        // Vẽ 4 cột đỡ phòng Boss
+        if (r.type == RoomType.Boss && r.pillarPositions != null)
+        {
+          Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.8f);
+          foreach (var pPos in r.pillarPositions)
+          {
+            Gizmos.DrawWireCube(pPos + Vector3.up * (r.ceilingHeight / 2f), new Vector3(2.5f * tSize, r.ceilingHeight, 2.5f * tSize));
+          }
+        }
+
         // Vẽ sàn gác lửng tầng 2
         if (r.hasMezzanine)
         {

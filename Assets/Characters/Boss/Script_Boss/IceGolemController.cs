@@ -24,6 +24,13 @@ public class IceGolemController : MonoBehaviour
     public float rotationSpeed = 120f;
     public bool strafeMode = true;
 
+    [Header("=== TẦNG 3 ÁNH SÁNG: HÀO QUANG BĂNG GIÁ (BOSS BODY LIGHT) ===")]
+    [Tooltip("Bật đèn hào quang xanh băng tự thân bám theo thân Boss Ice Golem trong bóng tối")]
+    [SerializeField] private bool enableBodyAuraLight = true;
+    [SerializeField] private Color bodyAuraColor = new Color(0.25f, 0.75f, 1.0f);
+    [SerializeField] private float bodyAuraRange = 16f;
+    [SerializeField] private float bodyAuraIntensity = 3.0f;
+
     [Header("=== THỜI GIAN HỒI CHIÊU (COOLDOWNS) ===")]
     [Tooltip("Thời gian hồi chiêu Attack 1 (đấm thường)")]
     [SerializeField] private float attack1Cooldown = 1.8f;
@@ -491,6 +498,11 @@ public class IceGolemController : MonoBehaviour
 
     void Start()
     {
+        if (enableBodyAuraLight)
+        {
+            EnsureBodyAuraLight();
+        }
+
         // Tự tìm Player làm mục tiêu nếu chưa gán
         if (playerTarget == null && autoFindPlayer)
         {
@@ -2988,5 +3000,23 @@ public class IceGolemController : MonoBehaviour
 
         float endRadius = flameRange * Mathf.Tan(halfAng * Mathf.Deg2Rad);
         Gizmos.DrawWireSphere(fOrigin + fDir * flameRange, endRadius);
+    }
+
+    private void EnsureBodyAuraLight()
+    {
+        Transform auraTrans = transform.Find("Boss_Aura_Light");
+        if (auraTrans == null)
+        {
+            GameObject auraObj = new GameObject("Boss_Aura_Light");
+            auraObj.transform.SetParent(transform, false);
+            auraObj.transform.localPosition = new Vector3(0f, 2.5f, 0f); // Ngang ngực Boss cao 5m
+
+            Light auraLight = auraObj.AddComponent<Light>();
+            auraLight.type = LightType.Point;
+            auraLight.color = bodyAuraColor;
+            auraLight.range = bodyAuraRange;
+            auraLight.intensity = bodyAuraIntensity;
+            auraLight.shadows = LightShadows.None;
+        }
     }
 }

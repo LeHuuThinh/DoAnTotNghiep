@@ -43,21 +43,21 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
   [Header("Quy Mô Phòng & Số Cụm Quái (Squad Counts Per Room)")]
   [Tooltip("Ngưỡng diện tích (số ô tile) để phòng được coi là Đại sảnh lớn")]
-  public int largeRoomTileThreshold = 220;
+  public int largeRoomTileThreshold = 160;
 
   [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
+  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường (nhỏ/vừa: 1 - 2 nhóm)")]
   public int minGroundSquadsStandard = 1;
   [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
-  public int maxGroundSquadsStandard = 1;
+  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường (nhỏ/vừa: 1 - 2 nhóm)")]
+  public int maxGroundSquadsStandard = 2;
 
-  [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng lớn")]
-  public int minGroundSquadsLarge = 1;
   [Range(1, 4)]
+  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng lớn")]
+  public int minGroundSquadsLarge = 2;
+  [Range(1, 5)]
   [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng lớn")]
-  public int maxGroundSquadsLarge = 2;
+  public int maxGroundSquadsLarge = 3;
 
   [Header("Tầng 2 Gác Lửng (Mezzanine Floor)")]
   [Range(1, 2)]
@@ -236,7 +236,7 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
       int roomSpawnedBefore = activeEnemies.Count;
       int roomAreaTiles = room.bounds.width * room.bounds.height;
-      bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 16 && room.bounds.height >= 16);
+      bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 13 && room.bounds.height >= 13);
 
       // Danh sách vị trí các quái đã sinh trong phòng này (để kiểm tra khoảng cách)
       List<Vector3> roomSpawnedPositions = new List<Vector3>();
@@ -553,12 +553,11 @@ public class ProceduralEnemySpawner : MonoBehaviour
         // Tránh cửa ra vào
         if (room.IsNearDoor(tile, doorClearanceTiles)) continue;
 
-        // Nếu phòng có gác lửng và yêu cầu loại trừ sàn tầng 2 (để quái cận chiến sinh ở khoảng thông tầng)
+        // Nếu phòng có gác lửng:
+        // TUYỆT ĐỐI KHÔNG loại trừ ô sàn trệt dưới gác lửng (khoảng không dưới gác lửng trần cao 8m hoàn toàn đi lại được và là nơi quái cận chiến đứng mai phục!)
+        // CHỈ loại trừ đúng footprint cầu thang để quái không sinh đè lên bậc thang
         if (excludeMezzanine && room.hasMezzanine)
         {
-          if (room.IsInMezzanine(x, y)) continue;
-
-          // Tránh khu vực chân cầu thang
           if (Mathf.Abs(x - room.stairGridPos.x) <= 2 && Mathf.Abs(y - room.stairGridPos.y) <= 3)
           {
             continue;

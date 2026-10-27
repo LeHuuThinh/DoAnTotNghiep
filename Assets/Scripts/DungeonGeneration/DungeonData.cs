@@ -17,6 +17,10 @@ public class DungeonData
   public List<RoomData> roomDataList = new List<RoomData>();
   public RoomData startRoom;
   public RoomData bossRoom;
+  public RoomData bossPrevRoom;   // Phòng kề trước phòng Boss
+  public RectInt bossRoomBounds;   // Giới hạn căn phòng Boss Khổng Lồ do BSP tạo ra
+  public RectInt bossPrevRoomBounds; // Giới hạn căn phòng kề nối vào cửa ngõ Đại Lộ Boss
+  public RectInt bossCorridor;     // Hành lang nối trực tiếp vào phòng Boss (được mở rộng gấp đôi)
 
   // Kiểm tra an toàn xem tọa độ có lọt ra ngoài mảng không
   public bool IsInBounds(int x, int y)

@@ -161,7 +161,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 1000
+  maxHealth: 800
   currentHealth: 0
   isInvulnerable: 0
   onHealthChanged:
@@ -239,6 +239,10 @@ MonoBehaviour:
   moveSpeed: 3.5
   rotationSpeed: 120
   strafeMode: 1
+  enableBodyAuraLight: 1
+  bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
+  bodyAuraRange: 16
+  bodyAuraIntensity: 3
   attack1Cooldown: 1.5
   gumoGumoCooldown: 6
   flameBreathCooldown: 8

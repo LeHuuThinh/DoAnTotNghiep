@@ -102,8 +102,26 @@
   - Đã gắn component và liên kết hoàn chỉnh trong `DungeonScene.unity`.
 
 - [ ] **D-02: Cơ chế Boss Arena tại Boss Room** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
-  - Đặt Boss `Boss_IceGolem.prefab` tại trung tâm `data.bossRoom`.
-  - Cửa chặn phòng (Fog Gate / Iron Gate): Khi người chơi bước vào phòng Boss, cửa tự động đóng lại; hạ gục Boss thì mở cửa và kích hoạt Cổng dịch chuyển chiến thắng.
+  - [x] **D02-1: Sinh Phòng Boss Khổng Lồ (x3-x5), Đại Lộ Hành Lang Dài 40m Uy Nghi, 4 Cột Trụ & 3 Tầng Ánh Sáng (PCG Geometry & Lighting):**
+    - Cấp phát phân vùng lá BSP lớn chuyên biệt (bossNodeMinSize = 48, bossRoomMinSize = 26, bossRoomMaxSize = 30) tại điểm neo xa nhất so với cửa khởi đầu (bossTargetPoint), neo phòng Boss sát biên Bắc (trên cùng) để chừa trọn vẹn khoảng không phía Nam làm Đại Lộ. Diện tích phòng Boss đạt 676 - 900 tiles (52m - 60m), gấp 3 - 5 lần phòng thường (~200 tiles) với vòm trần đồ sộ cao 24m chuẩn thánh đường Souls-like.
+    - Kiến tạo Đại Lộ Hành Lang uy nghi thẳng tắp dẫn vào phòng Boss: Rộng 12m (6 tiles), Dài 40m (20 tiles) độc lập, kết nối cửa ngõ phía Nam với phòng kế cận (bossPrevRoom) và nướng lại vào mapGrid.
+    - Dựng 4 cây cột đá cổ đồ sộ chịu lực tại 4 góc phòng Boss (vươn cao 24m chạm trần, scale 2.5x), gắn MeshCollider và NavMeshModifier(area = 1 - Not Walkable) làm điểm núp chiến thuật né đòn IceBall và FlameBreath.
+    - Dọn sạch 100% bàn ghế, rương đồ, thùng gỗ bừa bãi ở lòng sàn đấu trường; bố trí hệ thống 3 Tầng Ánh Sáng nghệ thuật (Atmospheric Souls Lighting):
+      + Tầng 1: Giếng trời ánh trăng (Pale Moonlight Spotlight) rọi thẳng từ trần 23.5m xuống tâm sàn đấu.
+      + Tầng 2: 4 Vạc lửa khổng lồ rực cháy (Cauldron_Fire.prefab) đặt trang trọng trên mặt sàn đất (Y = 0) tại chân 4 cột chống trời, tỏa ánh lửa vàng cam ấm áp (Point Light range 24m, intensity 3.8f).
+      + Tầng 3: Vòng hào quang băng xanh tự thân (Body Aura Light) trên Boss Ice Golem.
+      + Hàng đuốc Đại Lộ: 2 hàng đuốc đối xứng uy nghi cắm dọc hai vách tường của đại lộ 40m mỗi 4 tiles.
+  - [ ] **D02-2: Cơ Chế Tế Đàn & Sinh Chìa Khóa Hầm Ngục (Shrine Key PCG):**
+    - Nhận diện phòng nhánh cụt keyRoom, ép buộc sinh wallset_shrine.prefab.
+    - Quét socket [Key_Socket] trên bàn nhỏ của shrine và sinh Chìa Khóa Hầm Ngục lơ lửng phát quang.
+    - Nhặt chìa khóa (phím F) lưu vào InventoryManager (ItemData: Dungeon_Key).
+  - [ ] **D02-3: Đại Môn Phong Ấn (Boss Door) & Cổng Sương Mù (Fog Gate Lock-in):**
+    - Dựng cửa lớn scale 2.5x tại lối vào phòng Boss, yêu cầu Chìa Khóa Hầm Ngục và giữ F (2.5s) để mở.
+    - Tự động đóng cửa và kích hoạt rào chắn sương mù khi người chơi bước vào đấu trường, khóa chặt đường lui.
+  - [ ] **D02-4: Đạo Diễn Đấu Trường (Arena Director), Boss JumpDown Giáng Trần & Thanh Máu Souls HUD:**
+    - Intro hoành tráng: Boss Ice Golem tung chiêu JumpDown từ độ cao 16m giáng xuống rung đất, kích hoạt thanh máu Boss khổng lồ ở cạnh dưới màn hình.
+  - [ ] **D02-5: Hoàn Tất Chiến Thắng (Victory Fanfare), Rơi Thưởng Đại Lượng & Cổng Dịch Chuyển Tầng Kế:**
+    - Hiển thị biểu ngữ 'VICTORY ACHIEVED', nổ tung vàng/đồ quý, mở lại cửa và kích hoạt Cổng Dịch Chuyển lựa chọn Về Làng hoặc Xuống Tầng 2.
 
 ---
 

@@ -440,6 +440,21 @@ public class PlayerController : MonoBehaviour
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 
+    private float lastCollisionLogTime = 0f;
+    private GameObject lastHitObject = null;
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.normal.y > 0.7f) return; // Bỏ qua sàn trệt dưới chân và mặt dốc leo được
+
+        // Log mọi chướng ngại vật chặn đường (tường thẳng, tường chéo, mép sàn, lan can...)
+        if (Time.time - lastCollisionLogTime > 0.5f || hit.gameObject != lastHitObject)
+        {
+            lastCollisionLogTime = Time.time;
+            lastHitObject = hit.gameObject;
+            Debug.LogWarning($"<color=yellow>[Player Obstacle Hit]</color> Object: <b>{hit.gameObject.name}</b> ({hit.collider.GetType().Name}), Normal: ({hit.normal.x:F2}, {hit.normal.y:F2}, {hit.normal.z:F2}), Point: {hit.point}");
+        }
+    }
+
     private void TriggerRoll(Vector3 desiredMoveDirection)
     {
         landingLockTimer = 0f;
