@@ -17,6 +17,7 @@ public enum BoneForwardAxis
 
 public class IceGolemController : MonoBehaviour
 {
+    public static event System.Action OnBossDefeated;
     [Header("=== THAM CHIẾU & DI CHUYỂN ===")]
     [Tooltip("Kéo đối tượng con IceGolemModel vào đây nếu script không tự tìm thấy")]
     public Animator anim;
@@ -1208,6 +1209,7 @@ public class IceGolemController : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
+        OnBossDefeated?.Invoke();
 
         if (activeFlameInstance != null)
         {

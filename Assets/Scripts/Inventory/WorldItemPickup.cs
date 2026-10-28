@@ -106,6 +106,21 @@ namespace InfiniteLabyrinth.Inventory
     {
       LocatePlayer();
       ApplyRarityVisuals();
+      if (!isLanded && itemData != null)
+      {
+        isLanded = true;
+      }
+    }
+
+    /// <summary>
+    /// Khởi tạo vật phẩm đặt tĩnh (hoặc lơ lửng trên bệ/tế đàn) không cần nảy parabol
+    /// </summary>
+    public void InitializeStatic(ItemData data, int count = 1)
+    {
+      itemData = data;
+      quantity = count;
+      isLanded = true;
+      ApplyRarityVisuals();
     }
 
     private void LocatePlayer()

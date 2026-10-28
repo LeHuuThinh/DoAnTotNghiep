@@ -17,9 +17,17 @@ public class DungeonManager : MonoBehaviour
   [Tooltip("Bật để tự động sinh 1 quái vật trên tầng 2 để kiểm tra xem quái có biết leo cầu thang xuống đuổi player không")]
   public bool spawnTestEnemyOnMezzanine = false;
 
+  public static DungeonManager Instance { get; private set; }
+  public event System.Action<DungeonData> OnDungeonGenerated;
+
   // Data chứa toàn bộ lưới sau khi render
   [System.NonSerialized]
   public DungeonData currentData;
+
+  void Awake()
+  {
+    Instance = this;
+  }
 
   void Start()
   {
@@ -48,6 +56,7 @@ public class DungeonManager : MonoBehaviour
     SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");
+    OnDungeonGenerated?.Invoke(currentData);
   }
 
   private void SpawnTestEnemies()

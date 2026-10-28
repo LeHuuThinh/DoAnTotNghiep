@@ -32,6 +32,10 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Khoảng cách từ lưng kệ/tủ/giường đến vách tường (Tăng lên nếu muốn đồ lùi sâu hơn vào trong phòng)")]
   public float furnitureWallOffset = 0.85f;
 
+  [Range(0.1f, 1.0f)]
+  [Tooltip("Khoảng cách đặt kệ sách/tủ sát tường (ăn theo khoảng cách đồ treo tường như đuốc, cờ, khiên - mặc định 0.3m)")]
+  public float shelfWallOffset = 0.3f;
+
   [Range(0.1f, 5.0f)]
   [Tooltip("Khoảng cách từ lưng rương báu đến vách tường (Tăng lên để rương không chạm vào vách đá)")]
   public float chestWallOffset = 0.85f;
@@ -270,11 +274,16 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Header("Prefabs Mẫu Kiến Trúc & Tiểu Cảnh (Templates)")]
   public List<GameObject> wallTemplatePrefabs = new List<GameObject>();
   public List<GameObject> propTemplatePrefabs = new List<GameObject>();
+  [Header("Prefabs Chìa Khóa Hầm Ngục & Tế Đàn (Shrine Key PCG)")]
+  public GameObject dungeonKeyPrefab;
+  public InfiniteLabyrinth.Inventory.ItemData dungeonKeyItemData;
+  public GameObject shrineTemplatePrefab;
 
   [Header("Prefabs Chiếu Sáng (Lighting)")]
   public GameObject wallTorchPrefab;       // torch_wall_lit.prefab
   public GameObject floorTorchPrefab;      // torch_lit.prefab
   public GameObject bossCauldronPrefab;    // Cauldron_Fire.prefab (Vạc lửa khổng lồ rực cháy)
+  public GameObject bossGatePrefab;        // BossGate.prefab (Đại Môn Phong Ấn & Cổng Sương Mù)
   public List<GameObject> candlePrefabs = new List<GameObject>();
 
   [Header("Prefabs Đồ Treo Tường (Wall Decor)")]
@@ -316,6 +325,12 @@ public partial class DungeonPropDecorator : MonoBehaviour
     if (wallTorchPrefab == null || floorTorchPrefab == null || bannerPrefabs.Count == 0 || crateBoxPrefabs.Count == 0 || wallTemplatePrefabs.Count == 0 || propTemplatePrefabs.Count == 0 || breakableBarrelPrefabs.Count == 0 || regularChestPrefab == null)
     {
       LoadAllPrefabsFromProject();
+    }
+    // Lọc bỏ triệt để các prefab tường bị nạp nhầm vào kệ props
+    shelfPrefabs.RemoveAll(p => p == null || p.name.StartsWith("wall_") || p.name.Contains("wall_"));
+    if (bossGatePrefab == null)
+    {
+      bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/BossGate.prefab");
     }
 #endif
   }
@@ -362,6 +377,10 @@ public partial class DungeonPropDecorator : MonoBehaviour
     {
       bossCauldronPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{folder}/Cauldron_Fire.prefab");
     }
+    if (bossGatePrefab == null)
+    {
+      bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/BossGate.prefab");
+    }
 
     candlePrefabs.Clear();
     bannerPrefabs.Clear();
@@ -386,9 +405,9 @@ public partial class DungeonPropDecorator : MonoBehaviour
       else if (name.Contains("sword") || name.Contains("shield")) wallWeaponPrefabs.Add(prefab);
       else if (name.Contains("rubble")) rubblePrefabs.Add(prefab);
       else if (name.Contains("box") || name.Contains("crate") || name.Contains("barrel_small_stack") || name.Contains("keg") || name.Contains("trunk")) crateBoxPrefabs.Add(prefab);
-      else if (name.Contains("table")) tablePrefabs.Add(prefab);
+      else if (name.Contains("table") && !name.Equals("table_small_decorated_B", System.StringComparison.OrdinalIgnoreCase)) tablePrefabs.Add(prefab);
       else if (name.Contains("chair") || name.Contains("stool")) chairPrefabs.Add(prefab);
-      else if (name.Contains("shelf") || name.Contains("shelves")) shelfPrefabs.Add(prefab);
+      else if ((name.Contains("shelf") || name.Contains("shelves")) && !name.StartsWith("wall_") && !name.Contains("wall_")) shelfPrefabs.Add(prefab);
       else if (name.Contains("bed")) bedPrefabs.Add(prefab);
       else if (name.Contains("bottle") || name.Contains("plate")) tabletopPrefabs.Add(prefab);
     }
@@ -449,6 +468,20 @@ public partial class DungeonPropDecorator : MonoBehaviour
           goldChestPrefab = go;
         }
       }
+    }
+
+    // Nạp tự động Chìa Khóa Hầm Ngục & Tế Đàn
+    if (dungeonKeyPrefab == null)
+    {
+      dungeonKeyPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/DungeonKeyPickup.prefab");
+    }
+    if (dungeonKeyItemData == null)
+    {
+      dungeonKeyItemData = UnityEditor.AssetDatabase.LoadAssetAtPath<InfiniteLabyrinth.Inventory.ItemData>("Assets/ScriptableObjects/Items/Item_Key_Dungeon.asset");
+    }
+    if (shrineTemplatePrefab == null)
+    {
+      shrineTemplatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Templates/Walls/wallset_shrine.prefab");
     }
 
     templateBoundsCache.Clear();
@@ -524,6 +557,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
 
     RoomTheme theme = (RoomTheme)(Mathf.Abs(room.id) % 6);
     if (room == data.startRoom) theme = RoomTheme.GrandHall;
+    if (room == data.keyRoom) theme = RoomTheme.GrandHall;
 
     GameObject roomPropsObj = new GameObject($"Room_{room.id}_{theme}");
     roomPropsObj.transform.SetParent(propsRoot, false);
@@ -740,6 +774,9 @@ public partial class DungeonPropDecorator : MonoBehaviour
     // 2.5 TRANG TRÍ 2 HÀNG ĐUỐC DỌC ĐẠI LỘ HÀNH LANG DẪN VÀO PHÒNG BOSS
     DecorateBossAvenueCorridor(data, lightsGroup, tempStaticProps.transform, tileSize);
 
+    // 2.6 DỰNG ĐẠI MÔN PHONG ẤN (BOSS GATE SCALE 2.5X) TẠI CỬA NGÕ PHÒNG BOSS (TASK D02-3)
+    SpawnBossGate(data, room, roomPropsObj.transform, tileSize);
+
     // TUYỆT ĐỐI KHÔNG GỌI:
     // - DecorateRoomTemplates (không sinh tường vỡ, lều trại)
     // - DecorateRoomFurniture (không sinh bàn ghế, kệ tủ bừa bãi)
@@ -834,5 +871,200 @@ public partial class DungeonPropDecorator : MonoBehaviour
     mod.overrideArea = true;
     mod.area = 1; // 1 = Not Walkable
     mod.applyToChildren = true;
+  }
+
+  /// <summary>
+  /// Dựng Đại Môn Phong Ấn (Boss Gate scale 2.5x) tại cửa ngõ đại lộ hành lang nối vào Đấu Trường Boss.
+  /// Tích hợp khóa mở bằng Chìa Khóa Hầm Ngục [Hold F 2.5s] và Cổng Sương Mù (Fog Gate) khóa chặt lối lui khi người chơi bước vào đấu trường.
+  /// </summary>
+  private void SpawnBossGate(DungeonData data, RoomData room, Transform roomPropsRoot, float tileSize)
+  {
+    if (data.bossCorridor.width <= 0 || data.bossCorridor.height <= 0) return;
+
+    RectInt avenue = data.bossCorridor;
+
+    // Vị trí ngưỡng cửa giữa Đại lộ hành lang và Đấu trường Boss:
+    // Căn giữa theo trục X của đại lộ, Z nằm ngay tại mép Nam của phòng Boss (bounds.y)
+    float gateX = (avenue.x + avenue.width / 2.0f) * tileSize;
+    float gateZ = room.bounds.y * tileSize;
+    Vector3 gatePos = new Vector3(gateX, 0f, gateZ);
+
+    // Cổng quay mặt về hướng Nam (đón người chơi đi từ đại lộ hành lang tiến về phía Bắc)
+    Quaternion gateRot = Quaternion.identity;
+
+    if (bossGatePrefab == null)
+    {
+#if UNITY_EDITOR
+      bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/BossGate.prefab");
+#endif
+    }
+
+    if (bossGatePrefab != null)
+    {
+      GameObject gateObj = Instantiate(bossGatePrefab, gatePos, gateRot, roomPropsRoot);
+      gateObj.name = "BossArena_GrandGate";
+      gateObj.transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+      Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> 🚪 Đã dựng Đại Môn Phong Ấn (Boss Gate) tại {gatePos} (Scale 2.5x, khóa bằng dungeon_key, có Fog Gate)");
+    }
+    else
+    {
+      BuildDynamicBossGate(gatePos, gateRot, roomPropsRoot);
+    }
+  }
+
+  /// <summary>
+  /// Khởi tạo động Đại Môn Boss dự phòng nếu prefab chưa được biên dịch kịp
+  /// </summary>
+  private void BuildDynamicBossGate(Vector3 gatePos, Quaternion gateRot, Transform parent)
+  {
+    Material textureMat = null;
+    Material smokeMat = null;
+    Mesh doorwayMesh = null;
+    Mesh doorMesh = null;
+    Mesh pillarMesh = null;
+    GameObject torchPrefab = wallTorchPrefab;
+
+#if UNITY_EDITOR
+    textureMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Prefabs/Dungeon/DungeonPrefabs/texture.mat");
+    smokeMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/VFX/Origin/Polygonal Particles/Assets/Materials/WhiteSmoke.mat")
+            ?? UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/VFX/Eric VFX Studio/Resource/Materials/FX_smoke_02.mat");
+    GameObject doorwayPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/wall_doorway.prefab");
+    GameObject pillarPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/pillar.prefab");
+
+    doorwayMesh = doorwayPrefab != null ? doorwayPrefab.GetComponentInChildren<MeshFilter>()?.sharedMesh : null;
+    if (doorwayMesh == null) doorwayMesh = UnityEditor.AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Prefabs/Dungeon/Assets/obj/wall_doorway.obj");
+    doorMesh = UnityEditor.AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Prefabs/Dungeon/Assets/obj/wall_doorway_door.obj");
+    pillarMesh = pillarPrefab != null ? pillarPrefab.GetComponentInChildren<MeshFilter>()?.sharedMesh : null;
+#endif
+
+    GameObject root = new GameObject("BossArena_GrandGate");
+    root.transform.SetParent(parent, false);
+    root.transform.position = gatePos;
+    root.transform.rotation = gateRot;
+    root.transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+
+    var navMod = root.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+    navMod.ignoreFromBuild = true;
+
+    BoxCollider doorCol = root.AddComponent<BoxCollider>();
+    doorCol.center = new Vector3(0f, 1.4f, 0f);
+    doorCol.size = new Vector3(2.2f, 2.8f, 0.6f);
+
+    UnityEngine.AI.NavMeshObstacle doorNav = root.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+    doorNav.center = new Vector3(0f, 1.4f, 0f);
+    doorNav.size = new Vector3(2.2f, 2.8f, 0.6f);
+    doorNav.carving = true;
+
+    GameObject frameObj = new GameObject("Frame");
+    frameObj.transform.SetParent(root.transform, false);
+    if (doorwayMesh != null)
+    {
+      MeshFilter frameMf = frameObj.AddComponent<MeshFilter>();
+      frameMf.sharedMesh = doorwayMesh;
+      MeshRenderer frameMr = frameObj.AddComponent<MeshRenderer>();
+      if (textureMat != null) frameMr.sharedMaterial = textureMat;
+    }
+
+    if (pillarMesh != null)
+    {
+      GameObject leftPillar = new GameObject("Left_Pillar");
+      leftPillar.transform.SetParent(frameObj.transform, false);
+      leftPillar.transform.localPosition = new Vector3(-2.1f, 0f, 0f);
+      MeshFilter lpMf = leftPillar.AddComponent<MeshFilter>();
+      lpMf.sharedMesh = pillarMesh;
+      MeshRenderer lpMr = leftPillar.AddComponent<MeshRenderer>();
+      if (textureMat != null) lpMr.sharedMaterial = textureMat;
+
+      GameObject rightPillar = new GameObject("Right_Pillar");
+      rightPillar.transform.SetParent(frameObj.transform, false);
+      rightPillar.transform.localPosition = new Vector3(2.1f, 0f, 0f);
+      MeshFilter rpMf = rightPillar.AddComponent<MeshFilter>();
+      rpMf.sharedMesh = pillarMesh;
+      MeshRenderer rpMr = rightPillar.AddComponent<MeshRenderer>();
+      if (textureMat != null) rpMr.sharedMaterial = textureMat;
+
+      if (torchPrefab != null)
+      {
+        GameObject leftTorch = Instantiate(torchPrefab, leftPillar.transform);
+        leftTorch.name = "Pillar_Torch";
+        leftTorch.transform.localPosition = new Vector3(0f, 2.2f, -0.45f);
+        leftTorch.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
+        GameObject rightTorch = Instantiate(torchPrefab, rightPillar.transform);
+        rightTorch.name = "Pillar_Torch";
+        rightTorch.transform.localPosition = new Vector3(0f, 2.2f, -0.45f);
+        rightTorch.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+      }
+    }
+
+    GameObject leftHinge = new GameObject("Left_Hinge");
+    leftHinge.transform.SetParent(root.transform, false);
+    leftHinge.transform.localPosition = new Vector3(-1.0f, 0f, 0f);
+
+    GameObject leftDoor = new GameObject("Left_Door_Wing");
+    leftDoor.transform.SetParent(leftHinge.transform, false);
+    leftDoor.transform.localPosition = new Vector3(0.5f, 0f, 0f);
+    leftDoor.transform.localScale = new Vector3(0.5f, 1f, 1f);
+    if (doorMesh != null)
+    {
+      MeshFilter ldMf = leftDoor.AddComponent<MeshFilter>();
+      ldMf.sharedMesh = doorMesh;
+      MeshRenderer ldMr = leftDoor.AddComponent<MeshRenderer>();
+      if (textureMat != null) ldMr.sharedMaterial = textureMat;
+    }
+
+    GameObject rightHinge = new GameObject("Right_Hinge");
+    rightHinge.transform.SetParent(root.transform, false);
+    rightHinge.transform.localPosition = new Vector3(1.0f, 0f, 0f);
+
+    GameObject rightDoor = new GameObject("Right_Door_Wing");
+    rightDoor.transform.SetParent(rightHinge.transform, false);
+    rightDoor.transform.localPosition = new Vector3(-0.5f, 0f, 0f);
+    rightDoor.transform.localScale = new Vector3(-0.5f, 1f, 1f);
+    if (doorMesh != null)
+    {
+      MeshFilter rdMf = rightDoor.AddComponent<MeshFilter>();
+      rdMf.sharedMesh = doorMesh;
+      MeshRenderer rdMr = rightDoor.AddComponent<MeshRenderer>();
+      if (textureMat != null) rdMr.sharedMaterial = textureMat;
+    }
+
+    GameObject interactPt = new GameObject("InteractionPoint");
+    interactPt.transform.SetParent(root.transform, false);
+    interactPt.transform.localPosition = new Vector3(0f, 1.2f, -1.0f);
+
+    GameObject triggerObj = new GameObject("ArenaTrigger");
+    triggerObj.transform.SetParent(root.transform, false);
+    triggerObj.transform.localPosition = new Vector3(0f, 1.5f, 2.6f);
+
+    BoxCollider trigCol = triggerObj.AddComponent<BoxCollider>();
+    trigCol.isTrigger = true;
+    trigCol.center = Vector3.zero;
+    trigCol.size = new Vector3(4.8f, 3.5f, 2.0f);
+
+    var arenaTrig = triggerObj.AddComponent<InfiniteLabyrinth.Interaction.BossArenaTrigger>();
+
+    var controller = root.AddComponent<InfiniteLabyrinth.Interaction.BossGateController>();
+    controller.InitializeReferences(
+      leftHinge.transform, rightHinge.transform,
+      doorCol, doorNav,
+      null, null, null,
+      interactPt.transform
+    );
+    arenaTrig.SetGateController(controller);
+
+#if UNITY_EDITOR
+    string prefabPath = "Assets/Prefabs/Dungeon/Interactable/BossGate.prefab";
+    if (!System.IO.File.Exists(prefabPath))
+    {
+      string dir = System.IO.Path.GetDirectoryName(prefabPath);
+      if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+      UnityEditor.PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+      bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+      Debug.Log($"<color=green>[DungeonPropDecorator]</color> 💾 Đã lưu BossGate.prefab tại {prefabPath}");
+    }
+#endif
+
+    Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> 🚪 Đã khởi tạo hoàn chỉnh Đại Môn Boss tại {gatePos} (Scale 2.5x)");
   }
 }

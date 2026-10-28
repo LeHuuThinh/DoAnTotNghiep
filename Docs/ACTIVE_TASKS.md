@@ -1,4 +1,4 @@
-﻿# Danh Sách Nhiệm Vụ Phát Triển (Active Tasks Roadmap) - Infinite Labyrinth
+# Danh Sách Nhiệm Vụ Phát Triển (Active Tasks Roadmap) - Infinite Labyrinth
 
 > [!TIP]
 > **Hướng dẫn gọi việc cho AI:** Mỗi khi mở một phiên chat mới, chỉ cần gõ đúng mã nhiệm vụ.  
@@ -111,11 +111,12 @@
       + Tầng 2: 4 Vạc lửa khổng lồ rực cháy (Cauldron_Fire.prefab) đặt trang trọng trên mặt sàn đất (Y = 0) tại chân 4 cột chống trời, tỏa ánh lửa vàng cam ấm áp (Point Light range 24m, intensity 3.8f).
       + Tầng 3: Vòng hào quang băng xanh tự thân (Body Aura Light) trên Boss Ice Golem.
       + Hàng đuốc Đại Lộ: 2 hàng đuốc đối xứng uy nghi cắm dọc hai vách tường của đại lộ 40m mỗi 4 tiles.
-  - [ ] **D02-2: Cơ Chế Tế Đàn & Sinh Chìa Khóa Hầm Ngục (Shrine Key PCG):**
-    - Nhận diện phòng nhánh cụt keyRoom, ép buộc sinh wallset_shrine.prefab.
-    - Quét socket [Key_Socket] trên bàn nhỏ của shrine và sinh Chìa Khóa Hầm Ngục lơ lửng phát quang.
-    - Nhặt chìa khóa (phím F) lưu vào InventoryManager (ItemData: Dungeon_Key).
-  - [ ] **D02-3: Đại Môn Phong Ấn (Boss Door) & Cổng Sương Mù (Fog Gate Lock-in):**
+  - [x] **D02-2: Cơ Chế Tế Đàn & Sinh Chìa Khóa Hầm Ngục (Shrine Key PCG):**
+    - Nhận diện phòng nhánh cụt keyRoom (graphDistance xa nhất trong các nhánh cụt connections <= 1, diện tích 1 tầng độc lập hasMezzanine = false, trần cao 8m chuẩn nơi tôn nghiêm).
+    - Ép buộc sinh wallset_shrine.prefab tại vị trí trung tâm hướng mặt về phía lối vào cửa.
+    - Quét socket [Key_Socket] trên bàn nhỏ tế đàn và sinh Chìa Khóa Hầm Ngục (DungeonKeyPickup.prefab) lơ lửng, phát quang ánh vàng Legendary (range = 3.5m, intensity = 3.5f) kèm hiệu ứng xoay tròn nhấp nhô.
+    - Nhặt chìa khóa (phím F) lưu thẳng vào InventoryManager (ItemData: dungeon_key), kích hoạt popup thông báo nhặt đồ.
+  - [x] **D02-3: Đại Môn Phong Ấn (Boss Door) & Cổng Sương Mù (Fog Gate Lock-in):**
     - Dựng cửa lớn scale 2.5x tại lối vào phòng Boss, yêu cầu Chìa Khóa Hầm Ngục và giữ F (2.5s) để mở.
     - Tự động đóng cửa và kích hoạt rào chắn sương mù khi người chơi bước vào đấu trường, khóa chặt đường lui.
   - [ ] **D02-4: Đạo Diễn Đấu Trường (Arena Director), Boss JumpDown Giáng Trần & Thanh Máu Souls HUD:**

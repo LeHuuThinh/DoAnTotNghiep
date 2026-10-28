@@ -42,6 +42,8 @@
 | **RPG / Drops** | Rơi đồ vật lý từ Quái, Thùng vỡ & Rương (RPG-02) | ✅ Hoàn thành | `LootDropper.cs` quỹ đạo búng vòng cung Arc Pop; `BreakableProp.cs` nhận sát thương vỡ thùng; `ChestInteractable.cs` rương lật nắp tung đồ; `WorldItemPickup.cs` mô hình 3D xoay lơ lửng hào quang Rarity; Hệ thống 4 mô hình Vàng phân cấp theo số lượng (`coin`, `coin_stack_small/medium/large`) |
 | **RPG / Interaction** | UI Nhặt đồ & Feed thông báo mép trái (RPG-03) | ✅ Hoàn thành | `PickupPromptUI.cs` bảng nhặt đồ nổi (phím F, 2m, tên đổi màu Rarity, CanvasGroup fade); Hút Vàng tự động (Magnetic 4.2m bay vào ngực); `PickupNotificationFeed.cs` thông báo xếp tầng trượt mượt (Slide In/Up/Out) mép trái |
 | **RPG / UI** | Giao diện Túi Đồ 2 Cửa Sổ (RPG-04) | ✅ Hoàn thành | `InventoryUIController.cs` (phím Tab/Esc, khóa chuột/di chuyển/camera); 3D Character Preview xoay 360 độ qua RenderTexture (`CharacterPreviewController.cs`); 2 ô trang bị Weapon & Armor (`EquipmentSlotUI.cs`); Bảng chỉ số thời gian thực (`PlayerStatsPanelUI.cs`); Lưới 30 ô phân loại 4 Tab (`InventorySlotUI.cs`); Popup chi tiết bám theo ô thông minh (`ItemDetailPopupUI.cs`) tự lật góc chống tràn màn hình |
+| **PCG / Dungeon** | Phòng Tế Đàn & Chìa Khóa Hầm Ngục (D02-2) | ✅ Hoàn thành | Nhận diện `keyRoom` xa nhất nhánh cụt; sinh `wallset_shrine`; Chìa Khóa Hầm Ngục `DungeonKeyPickup` lơ lửng, phát quang Legendary vàng, nhặt F lưu `dungeon_key` vào `InventoryManager` |
+| **PCG / Boss Arena** | Đại Môn Phong Ấn & Cổng Sương Mù (D02-3) | ✅ Hoàn thành | `BossGate` scale 2.5x tại lối vào phòng Boss (`BossGateController.cs`), yêu cầu Chìa Khóa Hầm Ngục (Hold F 2.5s) để mở; Cổng Sương Mù Fog Gate (`BossArenaTrigger.cs`) khóa chặt đường lui khi bước vào arena, chặn NavMesh & vật cản |
 
 ---
 

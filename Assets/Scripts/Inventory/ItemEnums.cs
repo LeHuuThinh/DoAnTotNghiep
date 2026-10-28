@@ -11,7 +11,8 @@ namespace InfiniteLabyrinth.Inventory
     Armor,      // Giáp (Áo giáp, khiên...)
     Consumable, // Vật phẩm tiêu hao (Bình máu, bình thể lực...)
     Material,   // Nguyên liệu (Đá nâng cấp kiếm, xương quái, quặng...)
-    Currency    // Tiền tệ (Đồng tiền vàng)
+    Currency,   // Tiền tệ (Đồng tiền vàng)
+    Key         // Chìa khóa & Vật phẩm nhiệm vụ (Chìa khóa Hầm ngục...)
   }
 
   /// <summary>

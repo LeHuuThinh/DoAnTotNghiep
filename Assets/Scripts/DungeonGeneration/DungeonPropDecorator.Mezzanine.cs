@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public partial class DungeonPropDecorator
@@ -174,12 +174,15 @@ public partial class DungeonPropDecorator
         // A. Ô sát tường sau: Kê kệ sách hoặc rương/keg áp sát vách (ngẫu nhiên đa dạng)
         if (isBackWall && placedFurniture < maxFurniture)
         {
+          bool spawnShelf = (placedFurniture % 2 == 0 && shelfPrefabs.Count > 0);
+          float offset = spawnShelf ? shelfWallOffset : furnitureWallOffset;
+
           Vector3 pos = (room.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(tile.x * tileSize + halfTile, mY, (b.y + b.height) * tileSize - furnitureWallOffset)
-            : new Vector3(tile.x * tileSize + halfTile, mY, b.y * tileSize + furnitureWallOffset);
+            ? new Vector3(tile.x * tileSize + halfTile, mY, (b.y + b.height) * tileSize - offset)
+            : new Vector3(tile.x * tileSize + halfTile, mY, b.y * tileSize + offset);
           Quaternion rot = (room.mezzanineSide == MezzanineWallSide.North) ? Quaternion.Euler(0, 180, 0) : Quaternion.identity;
 
-          if (placedFurniture % 2 == 0 && shelfPrefabs.Count > 0)
+          if (spawnShelf)
           {
             GameObject shelf = shelfPrefabs[Random.Range(0, shelfPrefabs.Count)];
             Instantiate(shelf, pos, rot, staticPropsGroup);
@@ -201,7 +204,7 @@ public partial class DungeonPropDecorator
 
           if (placedFurniture % 2 == 0 && tablePrefabs.Count > 0)
           {
-            List<GameObject> smTables = tablePrefabs.FindAll(t => t.name.Contains("small") || t.name.Contains("medium"));
+            List<GameObject> smTables = tablePrefabs.FindAll(t => (t.name.Contains("small") || t.name.Contains("medium")) && !t.name.Contains("decorated_B") && !t.name.Contains("decorated_b"));
             GameObject smTable = (smTables.Count > 0) ? smTables[Random.Range(0, smTables.Count)] : tablePrefabs[0];
             Instantiate(smTable, pos, Quaternion.identity, staticPropsGroup);
 

@@ -11164,6 +11164,114 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &2734119791306359114
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3373331128048762153}
+  - component: {fileID: 7214403522628848671}
+  - component: {fileID: 7905401707014994973}
+  m_Layer: 5
+  m_Name: DungeonMap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3373331128048762153
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2734119791306359114}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7921417554720684148}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &7214403522628848671
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2734119791306359114}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &7905401707014994973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2734119791306359114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475b6e8aeb8dd8f4196f90bd6acb1012, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.DungeonMapManager
+  toggleKey: 109
+  freezePlayerWhenOpen: 0
+  unlockCursorWhenOpen: 1
+  autoFitScreenOnOpen: 1
+  backgroundDimAlpha: 0.9
+  roomBorderSprite: {fileID: 21300000, guid: 20fc858a9b32cad4da9c8346723ae3c7, type: 3}
+  roomFillSprite: {fileID: 21300000, guid: 8ed4918b74dc64a4dad3d9e81bc86cd3, type: 3}
+  corridorBorderSprite: {fileID: 21300000, guid: 9578be4232afe15449594cff3de4519b, type: 3}
+  corridorFillSprite: {fileID: 21300000, guid: a1fbc4efa8f8f5f4cbed36ab36668266, type: 3}
+  playerIconSprite: {fileID: 21300000, guid: 171b8150f00a72340b1b7aad375c084a, type: 3}
+  bossIconSprite: {fileID: 21300000, guid: a60a6d83a445adc4cb7d2c3a20068894, type: 3}
+  keyIconSprite: {fileID: 21300000, guid: c3b9783531a05c64eb13ef3cfad819e1, type: 3}
+  treasureIconSprite: {fileID: 21300000, guid: f1a255fea8fb21246b607fef8aa3b6f9, type: 3}
+  startRoomIconSprite: {fileID: 0}
+  roomUnexplored:
+    fillColor: {r: 0.06, g: 0.06, b: 0.07, a: 1}
+    borderColor: {r: 0.2754717, g: 0.22312051, b: 0.19906726, a: 1}
+  roomAdjacent:
+    fillColor: {r: 0.10188681, g: 0.098859034, b: 0.08977573, a: 1}
+    borderColor: {r: 0.4716981, g: 0.3616915, b: 0.25542897, a: 1}
+  roomExplored:
+    fillColor: {r: 0.22264141, g: 0.19495392, b: 0.14576711, a: 1}
+    borderColor: {r: 0.83396226, g: 0.66789365, b: 0.21871834, a: 1}
+  roomCurrent:
+    fillColor: {r: 0.3962264, g: 0.33644113, b: 0.24147381, a: 1}
+    borderColor: {r: 0.8490566, g: 0.7802972, b: 0.40850833, a: 1}
+  corridorUnexplored:
+    fillColor: {r: 0.05882353, g: 0.05882353, b: 0.07058824, a: 1}
+    borderColor: {r: 0.27450982, g: 0.22352941, b: 0.2, a: 1}
+  corridorAdjacent:
+    fillColor: {r: 0.1254902, g: 0.11764706, b: 0.10980392, a: 1}
+    borderColor: {r: 0.47058824, g: 0.36078432, b: 0.25490198, a: 1}
+  corridorExplored:
+    fillColor: {r: 0.22352941, g: 0.19607843, b: 0.14509805, a: 1}
+    borderColor: {r: 0.8352941, g: 0.6666667, b: 0.21960784, a: 1}
+  roomBorderMultiplier: 16
+  corridorBorderMultiplier: 16
+  minCorridorThickness: 22
+  corridorOverlapExtension: 5
+  pixelsPerTile: 8
+  roomIconSize: 60
+  playerIconSize: 60
+  zoomSpeed: 0.15
+  minZoom: 1
+  maxZoom: 3
+  includeStarterRoom: 1
+  starterRoomTileSize: {x: 14, y: 11}
 --- !u!1 &2756956990576264447
 GameObject:
   m_ObjectHideFlags: 0
@@ -21690,6 +21798,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3373331128048762153}
   - {fileID: 2652981221567117985}
   - {fileID: 7599759071567993588}
   - {fileID: 2368747996293664058}

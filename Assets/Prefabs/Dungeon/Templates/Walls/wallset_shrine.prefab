@@ -755,7 +755,8 @@ PrefabInstance:
       value: candle_lit
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1008215617634628326, guid: 6e1f321783056fc45baaae84913add86, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6e1f321783056fc45baaae84913add86, type: 3}

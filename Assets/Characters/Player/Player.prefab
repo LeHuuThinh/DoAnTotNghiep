@@ -1984,6 +1984,7 @@ MonoBehaviour:
   playerCombat: {fileID: 2224738506303633511}
   playerStats: {fileID: 4698226416880465567}
   health: {fileID: 1443231080541979558}
+  enableCollisionLogging: 0
 --- !u!143 &4791678739667565749
 CharacterController:
   m_ObjectHideFlags: 0

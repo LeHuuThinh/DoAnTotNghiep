@@ -164,12 +164,77 @@ public class BSPGenerator : MonoBehaviour
     }
   }
 
-  Vector2Int GetNodeCenter(BSPNode node)
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Hệ thống nối hành lang thông minh: kết nối phòng GẦN BIÊN NHẤT của 2 node anh em
+  // thay vì nối tâm node đệ quy luôn trả về góc xa nhất → tránh hành lang ứ lộn xộn
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  /// <summary>
+  /// Thu thập toàn bộ phòng lá (leaf rooms) trong cây con của node này
+  /// </summary>
+  void CollectLeafRooms(BSPNode node, System.Collections.Generic.List<RectInt> result)
   {
-    if (node.IsLeaf()) return new Vector2Int(node.roomBounds.x + node.roomBounds.width / 2, node.roomBounds.y + node.roomBounds.height / 2);
-    if (node.leftChild != null) return GetNodeCenter(node.leftChild);
-    if (node.rightChild != null) return GetNodeCenter(node.rightChild);
-    return Vector2Int.zero;
+    if (node == null) return;
+    if (node.IsLeaf())
+    {
+      if (node.roomBounds.width > 0) result.Add(node.roomBounds);
+      return;
+    }
+    CollectLeafRooms(node.leftChild, result);
+    CollectLeafRooms(node.rightChild, result);
+  }
+
+  /// <summary>
+  /// Tìm phòng gần đường biên cắt BSP nhất trong node này.
+  /// splitIsVertical = true  → biên là đường dọc X = splitVal → tìm phòng gần nhất theo trục X
+  /// splitIsVertical = false → biên là đường ngang Y = splitVal → tìm phòng gần nhất theo trục Y
+  /// fromRight = true → node nằm bên phải/trên biên, lấy mép phòng gần biên nhất từ phía đó
+  /// </summary>
+  RectInt FindClosestRoomToSplit(BSPNode node, bool splitIsVertical, int splitVal, bool fromRight)
+  {
+    var rooms = new System.Collections.Generic.List<RectInt>();
+    CollectLeafRooms(node, rooms);
+    if (rooms.Count == 0) return default;
+
+    RectInt best = rooms[0];
+    int bestDist = int.MaxValue;
+
+    foreach (var r in rooms)
+    {
+      // Khoảng cách từ mép phòng gần biên đến đường biên cắt
+      int edgePos = splitIsVertical
+        ? (fromRight ? r.x : r.x + r.width - 1)
+        : (fromRight ? r.y : r.y + r.height - 1);
+      int dist = Mathf.Abs(edgePos - splitVal);
+      if (dist < bestDist) { bestDist = dist; best = r; }
+    }
+    return best;
+  }
+
+  /// <summary>
+  /// Tính điểm kết nối trên mép phòng (gần biên cắt BSP nhất) với jitter nhỏ để tạo
+  /// sự tự nhiên. jitter ∈ [-jitterRange, +jitterRange] theo trục vuông góc với hành lang.
+  /// </summary>
+  Vector2Int GetConnectionPoint(RectInt room, bool splitIsVertical, bool fromRight, int jitterRange = 0)
+  {
+    if (splitIsVertical)
+    {
+      // Hành lang nằm ngang → lấy tọa độ X mép phòng, Y ngẫu nhiên trong thân phòng
+      int edgeX = fromRight ? room.x : room.x + room.width - 1;
+      int centerY = room.y + room.height / 2;
+      int jitter = (jitterRange > 0) ? Random.Range(-jitterRange, jitterRange + 1) : 0;
+      int clampedY = Mathf.Clamp(centerY + jitter, room.y + 1, room.y + room.height - 2);
+      return new Vector2Int(edgeX, clampedY);
+    }
+    else
+    {
+      // Hành lang nằm dọc → lấy tọa độ Y mép phòng, X ngẫu nhiên trong thân phòng
+      int edgeY = fromRight ? room.y : room.y + room.height - 1;
+      int centerX = room.x + room.width / 2;
+      int jitter = (jitterRange > 0) ? Random.Range(-jitterRange, jitterRange + 1) : 0;
+      int clampedX = Mathf.Clamp(centerX + jitter, room.x + 1, room.x + room.width - 2);
+      return new Vector2Int(clampedX, edgeY);
+    }
   }
 
   void CreateCorridorSegment(int x1, int y1, int x2, int y2, DungeonData data)
@@ -196,18 +261,65 @@ public class BSPGenerator : MonoBehaviour
     CreateCorridors(node.leftChild, data);
     CreateCorridors(node.rightChild, data);
 
-    Vector2Int leftCenter = GetNodeCenter(node.leftChild);
-    Vector2Int rightCenter = GetNodeCenter(node.rightChild);
+    // Xác định đường biên cắt BSP giữa 2 node anh em
+    // → cắt dọc (vertical split): leftChild.bounds.xMax == rightChild.bounds.x
+    // → cắt ngang (horizontal split): leftChild.bounds.yMax == rightChild.bounds.y
+    bool splitIsVertical = (node.leftChild.bounds.xMax == node.rightChild.bounds.x);
+    bool splitIsHorizontal = (node.leftChild.bounds.yMax == node.rightChild.bounds.y);
 
-    if (Random.value > 0.5f)
+    // Safety: nếu không xác định được kiểu cắt, bỏ qua node này (tránh lỗi runtime)
+    if (!splitIsVertical && !splitIsHorizontal) return;
+
+    int splitVal = splitIsVertical ? node.leftChild.bounds.xMax : node.leftChild.bounds.yMax;
+
+    // Tìm phòng GẦN BIÊN NHẤT trong mỗi nhánh (không đệ quy về góc xa nhất nữa)
+    // fromRight=false: node bên trái/dưới → muốn mép phòng GẦN BIÊN từ phía phải/trên
+    // fromRight=true: node bên phải/trên → muốn mép phòng GẦN BIÊN từ phía trái/dưới
+    RectInt leftRoom  = FindClosestRoomToSplit(node.leftChild,  splitIsVertical, splitVal, fromRight: false);
+    RectInt rightRoom = FindClosestRoomToSplit(node.rightChild, splitIsVertical, splitVal, fromRight: true);
+
+    if (leftRoom.width == 0 || rightRoom.width == 0) return;
+
+    // Jitter nhỏ (±25% bề ngang phòng nhỏ hơn) để hành lang không luôn thẳng giữa mà vẫn "organic"
+    int smallerSize = splitIsVertical
+      ? Mathf.Min(leftRoom.height, rightRoom.height)
+      : Mathf.Min(leftRoom.width,  rightRoom.width);
+    int jitter = Mathf.Max(0, Mathf.FloorToInt(smallerSize * 0.25f) - 1);
+
+    Vector2Int ptL = GetConnectionPoint(leftRoom,  splitIsVertical, fromRight: false, jitterRange: jitter);
+    Vector2Int ptR = GetConnectionPoint(rightRoom, splitIsVertical, fromRight: true,  jitterRange: jitter);
+
+    if (splitIsVertical)
     {
-      CreateCorridorSegment(leftCenter.x, leftCenter.y, rightCenter.x, leftCenter.y, data);
-      CreateCorridorSegment(rightCenter.x, leftCenter.y, rightCenter.x, rightCenter.y, data);
+      // Hành lang ngang nối ptL → ptR, có thể thêm đoạn dọc ngắn nếu Y không khớp
+      if (ptL.y == ptR.y)
+      {
+        // Thẳng hàng → 1 đoạn ngang duy nhất
+        CreateCorridorSegment(ptL.x, ptL.y, ptR.x, ptR.y, data);
+      }
+      else
+      {
+        // Lệch Y → chữ L qua điểm uốn tại biên cắt (splitVal)
+        CreateCorridorSegment(ptL.x, ptL.y, splitVal, ptL.y, data);
+        CreateCorridorSegment(splitVal, ptL.y, splitVal, ptR.y, data);
+        CreateCorridorSegment(splitVal, ptR.y, ptR.x, ptR.y, data);
+      }
     }
     else
     {
-      CreateCorridorSegment(leftCenter.x, leftCenter.y, leftCenter.x, rightCenter.y, data);
-      CreateCorridorSegment(leftCenter.x, rightCenter.y, rightCenter.x, rightCenter.y, data);
+      // Hành lang dọc nối ptL → ptR (ptL bên dưới, ptR bên trên)
+      if (ptL.x == ptR.x)
+      {
+        // Thẳng cột → 1 đoạn dọc duy nhất
+        CreateCorridorSegment(ptL.x, ptL.y, ptR.x, ptR.y, data);
+      }
+      else
+      {
+        // Lệch X → chữ L qua điểm uốn tại biên cắt (splitVal)
+        CreateCorridorSegment(ptL.x, ptL.y, ptL.x, splitVal, data);
+        CreateCorridorSegment(ptL.x, splitVal, ptR.x, splitVal, data);
+        CreateCorridorSegment(ptR.x, splitVal, ptR.x, ptR.y, data);
+      }
     }
   }
 

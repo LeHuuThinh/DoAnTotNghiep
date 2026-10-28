@@ -440,10 +440,15 @@ public class PlayerController : MonoBehaviour
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 
+    [Header("=== DEBUG & DIAGNOSTICS ===")]
+    [Tooltip("Bật để hiển thị log mọi vật cản va chạm với Player trong Console. Mặc định tắt để tránh spam.")]
+    [SerializeField] private bool enableCollisionLogging = false;
+
     private float lastCollisionLogTime = 0f;
     private GameObject lastHitObject = null;
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
+        if (!enableCollisionLogging) return;
         if (hit.normal.y > 0.7f) return; // Bỏ qua sàn trệt dưới chân và mặt dốc leo được
 
         // Log mọi chướng ngại vật chặn đường (tường thẳng, tường chéo, mép sàn, lan can...)

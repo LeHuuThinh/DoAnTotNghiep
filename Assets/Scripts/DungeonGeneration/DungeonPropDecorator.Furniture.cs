@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public partial class DungeonPropDecorator
@@ -92,7 +92,7 @@ public partial class DungeonPropDecorator
   }
 
   /// <summary>
-  /// Bố trí nội thất áp sát các vách tường trống bằng furnitureWallOffset (giường, kệ sách, rương, keg)
+  /// Bố trí nội thất áp sát các vách tường trống (kệ sách dùng shelfWallOffset 0.3m ăn theo đồ treo tường, giường/tủ dùng furnitureWallOffset 0.85m)
   /// </summary>
   private void DecorateWallAdjacentTiles(RoomData room, Transform staticPropsGroup, HashSet<Vector2Int> forbiddenTiles, RoomTheme theme, DungeonData data, float tileSize)
   {
@@ -105,8 +105,7 @@ public partial class DungeonPropDecorator
       Vector2Int tile = new Vector2Int(x, b.y);
       if (!forbiddenTiles.Contains(tile) && HasSolidWall(x, b.y, 1, data, room) && Random.value < wallFurnitureChance)
       {
-        Vector3 pos = new Vector3(x * tileSize + halfTile, 0f, b.y * tileSize + furnitureWallOffset);
-        SpawnThemeFurniture(theme, pos, Quaternion.identity, staticPropsGroup);
+        SpawnWallAdjacentFurniture(theme, x, b.y, 1, b, tileSize, halfTile, staticPropsGroup);
         forbiddenTiles.Add(tile);
       }
     }
@@ -117,8 +116,7 @@ public partial class DungeonPropDecorator
       Vector2Int tile = new Vector2Int(x, b.y + b.height - 1);
       if (!forbiddenTiles.Contains(tile) && HasSolidWall(x, b.y + b.height - 1, 0, data, room) && Random.value < wallFurnitureChance)
       {
-        Vector3 pos = new Vector3(x * tileSize + halfTile, 0f, (b.y + b.height) * tileSize - furnitureWallOffset);
-        SpawnThemeFurniture(theme, pos, Quaternion.Euler(0, 180, 0), staticPropsGroup);
+        SpawnWallAdjacentFurniture(theme, x, b.y + b.height - 1, 0, b, tileSize, halfTile, staticPropsGroup);
         forbiddenTiles.Add(tile);
       }
     }
@@ -129,8 +127,7 @@ public partial class DungeonPropDecorator
       Vector2Int tile = new Vector2Int(b.x, y);
       if (!forbiddenTiles.Contains(tile) && HasSolidWall(b.x, y, 2, data, room) && Random.value < wallFurnitureChance)
       {
-        Vector3 pos = new Vector3(b.x * tileSize + furnitureWallOffset, 0f, y * tileSize + halfTile);
-        SpawnThemeFurniture(theme, pos, Quaternion.Euler(0, 90, 0), staticPropsGroup);
+        SpawnWallAdjacentFurniture(theme, b.x, y, 2, b, tileSize, halfTile, staticPropsGroup);
         forbiddenTiles.Add(tile);
       }
     }
@@ -141,11 +138,86 @@ public partial class DungeonPropDecorator
       Vector2Int tile = new Vector2Int(b.x + b.width - 1, y);
       if (!forbiddenTiles.Contains(tile) && HasSolidWall(b.x + b.width - 1, y, 3, data, room) && Random.value < wallFurnitureChance)
       {
-        Vector3 pos = new Vector3((b.x + b.width) * tileSize - furnitureWallOffset, 0f, y * tileSize + halfTile);
-        SpawnThemeFurniture(theme, pos, Quaternion.Euler(0, 270, 0), staticPropsGroup);
+        SpawnWallAdjacentFurniture(theme, b.x + b.width - 1, y, 3, b, tileSize, halfTile, staticPropsGroup);
         forbiddenTiles.Add(tile);
       }
     }
+  }
+
+  private void SpawnWallAdjacentFurniture(RoomTheme theme, int gridX, int gridY, int wallDir, RectInt b, float tileSize, float halfTile, Transform parent)
+  {
+    GameObject prefab = GetThemeWallFurniturePrefab(theme);
+    if (prefab == null) return;
+
+    bool isShelf = shelfPrefabs.Contains(prefab) || prefab.name.IndexOf("shelf", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    float offset = isShelf ? shelfWallOffset : furnitureWallOffset;
+
+    Vector3 pos;
+    Quaternion rot;
+
+    switch (wallDir)
+    {
+      case 1: // Nam (quay mặt về hướng Bắc)
+        pos = new Vector3(gridX * tileSize + halfTile, 0f, b.y * tileSize + offset);
+        rot = Quaternion.identity;
+        break;
+      case 0: // Bắc (quay mặt về hướng Nam)
+        pos = new Vector3(gridX * tileSize + halfTile, 0f, (b.y + b.height) * tileSize - offset);
+        rot = Quaternion.Euler(0, 180, 0);
+        break;
+      case 2: // Tây (quay mặt về hướng Đông)
+        pos = new Vector3(b.x * tileSize + offset, 0f, gridY * tileSize + halfTile);
+        rot = Quaternion.Euler(0, 90, 0);
+        break;
+      case 3: // Đông (quay mặt về hướng Tây)
+        pos = new Vector3((b.x + b.width) * tileSize - offset, 0f, gridY * tileSize + halfTile);
+        rot = Quaternion.Euler(0, 270, 0);
+        break;
+      default:
+        pos = new Vector3(gridX * tileSize + halfTile, 0f, gridY * tileSize + halfTile);
+        rot = Quaternion.identity;
+        break;
+    }
+
+    Instantiate(prefab, pos, rot, parent);
+  }
+
+  private GameObject GetThemeWallFurniturePrefab(RoomTheme theme)
+  {
+    switch (theme)
+    {
+      case RoomTheme.Barracks:
+        if (bedPrefabs.Count > 0) return bedPrefabs[Random.Range(0, bedPrefabs.Count)];
+        if (crateBoxPrefabs.Count > 0) return crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)];
+        break;
+
+      case RoomTheme.LibraryStudy:
+        if (shelfPrefabs.Count > 0) return shelfPrefabs[Random.Range(0, shelfPrefabs.Count)];
+        if (tablePrefabs.Count > 0) return tablePrefabs[Random.Range(0, tablePrefabs.Count)];
+        break;
+
+      case RoomTheme.ArmoryStorage:
+        if (crateBoxPrefabs.Count > 0) return crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)];
+        break;
+
+      default:
+        float r = Random.value;
+        if (r < 0.4f && shelfPrefabs.Count > 0)
+        {
+          return shelfPrefabs[Random.Range(0, shelfPrefabs.Count)];
+        }
+        else if (r < 0.7f && crateBoxPrefabs.Count > 0)
+        {
+          return crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)];
+        }
+        else if (tablePrefabs.Count > 0)
+        {
+          List<GameObject> smTables = tablePrefabs.FindAll(t => (t.name.Contains("small") || t.name.Contains("medium")) && !t.name.Contains("decorated_B") && !t.name.Contains("decorated_b"));
+          return (smTables.Count > 0) ? smTables[Random.Range(0, smTables.Count)] : tablePrefabs[Random.Range(0, tablePrefabs.Count)];
+        }
+        break;
+    }
+    return null;
   }
 
   /// <summary>
@@ -354,61 +426,7 @@ public partial class DungeonPropDecorator
     }
   }
 
-  private void SpawnThemeFurniture(RoomTheme theme, Vector3 pos, Quaternion rot, Transform parent)
-  {
-    switch (theme)
-    {
-      case RoomTheme.Barracks:
-        if (bedPrefabs.Count > 0)
-        {
-          GameObject bed = bedPrefabs[Random.Range(0, bedPrefabs.Count)];
-          Instantiate(bed, pos, rot, parent);
-        }
-        else if (crateBoxPrefabs.Count > 0)
-        {
-          Instantiate(crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)], pos, rot, parent);
-        }
-        break;
 
-      case RoomTheme.LibraryStudy:
-        if (shelfPrefabs.Count > 0)
-        {
-          GameObject shelf = shelfPrefabs[Random.Range(0, shelfPrefabs.Count)];
-          Instantiate(shelf, pos, rot, parent);
-        }
-        else if (tablePrefabs.Count > 0)
-        {
-          Instantiate(tablePrefabs[Random.Range(0, tablePrefabs.Count)], pos, rot, parent);
-        }
-        break;
-
-      case RoomTheme.ArmoryStorage:
-        if (crateBoxPrefabs.Count > 0)
-        {
-          GameObject box = crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)];
-          Instantiate(box, pos, rot, parent);
-        }
-        break;
-
-      default:
-        float r = Random.value;
-        if (r < 0.4f && shelfPrefabs.Count > 0)
-        {
-          Instantiate(shelfPrefabs[Random.Range(0, shelfPrefabs.Count)], pos, rot, parent);
-        }
-        else if (r < 0.7f && crateBoxPrefabs.Count > 0)
-        {
-          Instantiate(crateBoxPrefabs[Random.Range(0, crateBoxPrefabs.Count)], pos, rot, parent);
-        }
-        else if (tablePrefabs.Count > 0)
-        {
-          List<GameObject> smTables = tablePrefabs.FindAll(t => t.name.Contains("small") || t.name.Contains("medium"));
-          GameObject smTable = (smTables.Count > 0) ? smTables[Random.Range(0, smTables.Count)] : tablePrefabs[Random.Range(0, tablePrefabs.Count)];
-          Instantiate(smTable, pos, rot, parent);
-        }
-        break;
-    }
-  }
 
   /// <summary>
   /// Rải rác các cụm thùng gỗ đập được (Breakable Barrels) trên mặt sàn Tầng 1.
