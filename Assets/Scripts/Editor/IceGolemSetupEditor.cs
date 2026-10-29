@@ -195,12 +195,12 @@ namespace InfiniteLabyrinth.EditorTools
                 rb.isKinematic = false;
                 rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
 
-                // 4. Cấu hình Health (Souls-like Boss HP = 800)
+                // 4. Cấu hình Health (Souls-like Boss HP = 1500)
                 Health health = root.GetComponent<Health>();
                 if (health == null) health = root.AddComponent<Health>();
 
                 SerializedObject soHealth = new SerializedObject(health);
-                soHealth.FindProperty("maxHealth").floatValue = 800f;
+                soHealth.FindProperty("maxHealth").floatValue = 1500f;
                 soHealth.FindProperty("isInvulnerable").boolValue = false;
 
                 // Xóa toàn bộ Persistent Calls cũ trong onDeath (loại bỏ SetActive(false) lỗi thời)

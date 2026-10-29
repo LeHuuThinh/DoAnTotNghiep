@@ -829,6 +829,14 @@ PrefabInstance:
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1283349118}
+    - target: {fileID: 4698226416880465567, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: maxSpirit
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 4698226416880465567, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: currentSpirit
+      value: 1000
+      objectReference: {fileID: 0}
     - target: {fileID: 5452323325029716220, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: m_Name
       value: Player
@@ -1015,6 +1023,34 @@ PrefabInstance:
     - target: {fileID: 8850410555655432218, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
       propertyPath: m_TagString
       value: Enemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: flameRange
+      value: 16.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: playerTarget
+      value: 
+      objectReference: {fileID: 1548859874}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: iceBallDamage
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: flameConeAngle
+      value: 53
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: flameKnockback
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: gumoGumoCooldown
+      value: 15.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951256888404947621, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
+      propertyPath: flameVisualLength
+      value: 3.5766013
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

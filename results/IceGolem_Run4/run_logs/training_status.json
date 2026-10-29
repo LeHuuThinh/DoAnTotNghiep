@@ -1,0 +1,29 @@
+{
+    "IceGolemSoulsAI": {
+        "checkpoints": [
+            {
+                "steps": 6474,
+                "file_path": "results\\IceGolem_Run4\\IceGolemSoulsAI\\IceGolemSoulsAI-6474.onnx",
+                "reward": null,
+                "creation_time": 1793131869.379863,
+                "auxillary_file_paths": [
+                    "results\\IceGolem_Run4\\IceGolemSoulsAI\\IceGolemSoulsAI-6474.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 6474,
+            "file_path": "results\\IceGolem_Run4\\IceGolemSoulsAI.onnx",
+            "reward": null,
+            "creation_time": 1793131869.379863,
+            "auxillary_file_paths": [
+                "results\\IceGolem_Run4\\IceGolemSoulsAI\\IceGolemSoulsAI-6474.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

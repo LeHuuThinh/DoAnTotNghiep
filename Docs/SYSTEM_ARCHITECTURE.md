@@ -65,10 +65,15 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ `ghostShrinkDelay = 0.5s` khi dính đòn.
   * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
   * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
-* **Thanh chịu đòn Poise (`PlayerFeedback.cs`, `EnemyFeedback.cs`):**
-  * Cả người chơi và quái vật đều sở hữu thanh Poise ẩn.
-  * Khi bị đánh liên tục hoặc dính đòn nặng, Poise tụt về 0 sẽ gây ra trạng thái **Stagger (Khựng đòn / Thất thế)**.
-  * Tự động hồi phục sau một khoảng trễ (`poiseRecoveryDelay = 2.5s`).
+* **Thanh chịu đòn Poise (PlayerFeedback.cs, EnemyFeedback.cs, IceGolemController.cs):**
+  * **Người chơi & Quái thường:** Cả người chơi và quái vật đều sở hữu thanh Poise (100). Khi bị đánh liên tục hoặc dính đòn nặng, Poise tụt về 0 sẽ gây ra trạng thái **Stagger (Khựng đòn / Thất thế)**. Tự động hồi phục sau một khoảng trễ (poiseRecoveryDelay = 2.5s). Sát thương Poise nhận vào được tính theo lực xô (knockbackDistance) của đòn đánh.
+  * **Trùm Ice Golem (Boss Poise = 500):** Sở hữu thanh Poise dày 500 điểm, **không tự hồi phục** trong suốt trận chiến.
+    * Sát thương Poise trừ theo độ uy lực và Knockback của từng đòn đánh từ Player:
+      + Đòn chém thường 1 & 2 (knockback = 0): trừ 35 Poise.
+      + Đòn chém 3 & Charge 1 (knockback > 0): trừ 50 Poise.
+      + Đòn chém gồng 2 & Skill E (knockback >= 1.0): trừ 70 Poise.
+      + Đòn Counter & Phép nổ Q (knockback >= 1.8): trừ 100 Poise.
+    * Khi Poise của Boss về 0: Kích hoạt trạng thái **Suy yếu (WeakenIG)** duy nhất 1 lần (Boss thực hiện động tác bước lùi Weaken hết trọn vẹn clip hoạt ảnh và lập tức tiếp tục chiến đấu ngay tại vị trí mới). Nếu trong lúc đang chạy Weaken mà máu Boss tụt xuống <= 50% HP thì lập tức hủy suy yếu và kích hoạt chuỗi Phase 2 cuồng nộ.
 * **Hệ thống Tài nguyên Player (`PlayerStats.cs`):**
   * **Máu (Health):** Gắn liền với `Health.cs` và interface `IDamageable.cs`.
   * **Thể lực (Stamina):** Max 100. Tiêu hao khi Lướt/Lăn né (Roll: 20), Chạy nhanh (Sprint: 15/s), Chém thường (15), Chém gồng (30), Giơ thế đỡ hụt (20). Tự động hồi phục sau 0.85s trễ.

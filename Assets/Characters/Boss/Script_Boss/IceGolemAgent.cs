@@ -63,6 +63,10 @@ public class IceGolemAgent : Agent
     [Tooltip("Phạt khi Boss bị hạ gục (-3.0)")]
     [SerializeField] private float deathPenalty = -3.0f;
 
+    [Header("=== CÀI ĐẶT HỒI SINH (RESPAWN) ===")]
+    [Tooltip("Nếu false, khi Boss chết sẽ nằm gục luôn trên sàn, KHÔNG hồi sinh để tiếp tục train")]
+    [SerializeField] private bool respawnBossOnDeath = true;
+
     [Header("=== ĐIỀU KHIỂN TỐC ĐỘ GAME (TIME SCALE) ===")]
     [Tooltip("Khóa tốc độ game ở mức 1x bình thường để người chơi kịp quan sát / tự đánh")]
     [SerializeField] private bool lockNormalSpeed = true;
@@ -164,21 +168,24 @@ public class IceGolemAgent : Agent
     /// </summary>
     private void RespawnAndResetEntities()
     {
-        // 1. Hồi sinh Boss
-        if (bossHealth != null)
+        // 1. Hồi sinh Boss (chỉ hồi sinh nếu bật cờ respawnBossOnDeath)
+        if (respawnBossOnDeath)
         {
-            bossHealth.Revive();
-        }
-        if (controller != null)
-        {
-            controller.Revive();
-            controller.CleanupResidualShockwaves();
-        }
+            if (bossHealth != null)
+            {
+                bossHealth.Revive();
+            }
+            if (controller != null)
+            {
+                controller.Revive();
+                controller.CleanupResidualShockwaves();
+            }
 
-        if (initialBossPosition != Vector3.zero)
-        {
-            transform.position = initialBossPosition;
-            transform.rotation = initialBossRotation;
+            if (initialBossPosition != Vector3.zero)
+            {
+                transform.position = initialBossPosition;
+                transform.rotation = initialBossRotation;
+            }
         }
 
         // 2. Hồi sinh Player
@@ -449,7 +456,7 @@ public class IceGolemAgent : Agent
     /// </summary>
     public override void OnActionReceived(ActionBuffers actions)
     {
-        if (controller == null || playerTransform == null) return;
+        if (controller == null || playerTransform == null || controller.IsDead || controller.IsWeakened) return;
 
         int moveAction = actions.DiscreteActions[0];
         int attackAction = actions.DiscreteActions[1];
@@ -613,6 +620,12 @@ public class IceGolemAgent : Agent
     {
         AddReward(defeatPlayerReward); // +5.0
         Debug.Log("<color=cyan>[ML-Agents]</color> 🏆 BOSS CHIẾN THẮNG HIỆP ĐẤU! Thưởng +" + defeatPlayerReward);
+        StartCoroutine(DelayedEpisodeReset(1.2f));
+    }
+
+    private System.Collections.IEnumerator DelayedEpisodeReset(float delay)
+    {
+        yield return new WaitForSeconds(delay);
         EndEpisode();
     }
 
@@ -625,7 +638,17 @@ public class IceGolemAgent : Agent
     {
         AddReward(deathPenalty); // -3.0
         Debug.Log("<color=red>[ML-Agents]</color> 💀 Boss bị hạ gục! Phạt " + deathPenalty);
-        EndEpisode();
+        if (respawnBossOnDeath)
+        {
+            StartCoroutine(DelayedEpisodeReset(1.2f));
+        }
+        else
+        {
+            // Boss chết thì chết luôn trên sàn, không hồi sinh để tiếp tục train
+            enabled = false;
+            var requester = GetComponent<Unity.MLAgents.DecisionRequester>();
+            if (requester != null) requester.enabled = false;
+        }
     }
 
     /// <summary>
@@ -702,6 +725,32 @@ public class IceGolemAgent : Agent
         if (controller == null || playerTransform == null) return;
 
         float dist = Vector3.Distance(transform.position, playerTransform.position);
+
+        // Khóa toàn bộ hành động (di chuyển & kỹ năng) nếu Boss đang bị Weaken (suy yếu)
+        if (controller.IsWeakened)
+        {
+            for (int m = 1; m <= 4; m++) actionMask.SetActionEnabled(0, m, false);
+            for (int i = 1; i <= 7; i++) actionMask.SetActionEnabled(1, i, false);
+            return;
+        }
+
+        // Khóa toàn bộ 7 kỹ năng tấn công nếu đang trong thời gian nghỉ Combat Pacing (6-7s Phase 1, 4-5s Phase 2)
+        // hoặc đang diễn hoạt chuyển pha 50% HP -> Ép Boss đi bộ vờn quanh và giữ cự ly
+        if (controller.IsPhase2Transitioning || Time.time < controller.NextAttackAllowedTime)
+        {
+            for (int i = 1; i <= 7; i++)
+            {
+                actionMask.SetActionEnabled(1, i, false);
+            }
+            return;
+        }
+
+        // Khóa cứng Kỹ năng 3 (Flame Breath - Action 3) và Kỹ năng 7 (Ice Ball - Action 7) ở Phase 1 (HP > 50%)
+        if (!controller.IsPhase2)
+        {
+            actionMask.SetActionEnabled(1, 3, false);
+            actionMask.SetActionEnabled(1, 7, false);
+        }
 
         // Branch 1: Kỹ năng chiến đấu (0=Không đánh, 1..7 tương ứng Chiêu 1..7)
         for (int skillIdx = 0; skillIdx < 7; skillIdx++)

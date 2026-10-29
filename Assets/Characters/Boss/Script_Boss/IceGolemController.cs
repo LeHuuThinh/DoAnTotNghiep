@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
 
 public enum BoneForwardAxis
 {
@@ -95,6 +96,40 @@ public class IceGolemController : MonoBehaviour
     [SerializeField] private float iceBallLifeTime = 4.0f;
     [Tooltip("Prefab hiệu ứng khi quả cầu phát nổ (nếu để trống tự động dùng Impact VFX)")]
     [SerializeField] private GameObject iceBallExplodeVfxPrefab;
+
+    [Header("=== BANG THONG SO BOSS (CHINH TRUC TIEP TRONG UNITY INSPECTOR) ===")]
+    [Tooltip("Mau toi da cua Boss (Tu dong dong bo vao Health component khi chay game va trong Editor)")]
+    [SerializeField] private float bossMaxHealth = 1500f;
+    [Tooltip("Thanh chiu don Poise toi da cua Boss (500) - Tieu hao khi bi danh theo do uy luc don danh, ve 0 se gay suy yeu WeakenIG")]
+    [SerializeField] private float maxPoise = 500f;
+    [Tooltip("Diem Poise chiu don hien tai cua Boss")]
+    [SerializeField] private float currentPoise = 500f;
+    [Tooltip("Thoi gian dung yen bat dong SAU KHI ket thuc clip WeakenIG (giay)")]
+    [SerializeField] private float weakenFreezeAfterDuration = 0.0f;
+    [Tooltip("Bu dap do cao nang model khi chao dao 50% HP (m) - Chong lun chan xuong san")]
+    [SerializeField] private float phase2StaggerVisualHeightOffset = 0.0f;
+    [Tooltip("Bu dap do cao nang model khi suy yeu Weaken (m) - Chong lun chan xuong san")]
+    [SerializeField] private float weakenVisualHeightOffset = 0.0f;
+    [Tooltip("Thoi luong cua clip WeakenIG (giay)")]
+    [SerializeField] private float weakenAnimDuration = 3.6f;
+    [Tooltip("Ten State hoat canh Weaken trong Animator")]
+    [SerializeField] private string weakenStateName = "WeakenIG";
+
+    [Header("=== EVENTS SỰ KIỆN BOSS ===")]
+    public UnityEvent<float, float> onPoiseChanged; // (currentPoise, maxPoise) cho UI kết nối
+    public UnityEvent<float, float> onStaminaChanged; // Alias tương thích ngược
+
+    private bool isWeakened = false;
+    private bool hasTriggeredWeaken = false;
+    private Coroutine weakenCoroutine = null;
+
+    public float BossMaxHealth => bossMaxHealth;
+    public float CurrentPoise => currentPoise;
+    public float MaxPoise => maxPoise;
+    public float CurrentStamina => currentPoise;
+    public float MaxStamina => maxPoise;
+    public bool IsWeakened => isWeakened;
+    public bool HasTriggeredWeaken => hasTriggeredWeaken;
 
     [Header("=== PHẢN HỒI NHẬN SÁT THƯƠNG & CHỚP ĐỎ GPU ===")]
     [Tooltip("Thời gian nháy đỏ mỗi khi dính đòn (giây)")]
@@ -226,7 +261,19 @@ public class IceGolemController : MonoBehaviour
     [Tooltip("Lực đẩy nhẹ mục tiêu dính sóng")]
     [SerializeField] private float gumoSlamKnockback = 1.2f;
 
-    [Header("GumoGumo Timing (Nhịp Đập Tự Động)")]
+    [Header("GumoGumo Hand-To-Ground Contact Settings (Bắt Điểm Chạm Đất Bàn Tay - Chiêu 2)")]
+    [Tooltip("Nâng độ cao model Boss khi thực hiện chiêu 2 (m) - Giúp bù đắp hoạt ảnh để chân không bị lún xuống sàn (mặc định 0.35m)")]
+    [SerializeField] private float gumoVisualHeightOffset = 0.35f;
+    [Tooltip("Độ cao bàn tay so với mặt sàn để bắt đầu vào vùng sẵn sàng va chạm (m)")]
+    [SerializeField] private float gumoHandContactHeight = 0.55f;
+    [Tooltip("Độ cao bàn tay chạm sát sàn coi như chạm đất ngay lập tức (m)")]
+    [SerializeField] private float gumoHandMinHeight = 0.30f;
+    [Tooltip("Độ cao bàn tay cần nhấc lên để nạp lại cú đập tiếp theo (m)")]
+    [SerializeField] private float gumoHandReleaseHeight = 0.95f;
+    [Tooltip("Độ lệch tiến về phía trước theo hướng mặt của bàn tay để đặt hiệu ứng nổ ngay tâm nắm đấm (m)")]
+    [SerializeField] private float gumoHandForwardOffset = 0.20f;
+
+    [Header("GumoGumo Timing (Dự phòng thời gian)")]
     [Tooltip("Thời điểm bắt đầu đập tay xuống đất (giây từ đầu animation)")]
     [SerializeField] private float gumoSlamStartTime = 0.55f;
     [Tooltip("Thời điểm kết thúc đập tay (giây)")]
@@ -313,6 +360,30 @@ public class IceGolemController : MonoBehaviour
     [SerializeField] private GameObject jumpAttackShockwaveVfx;
     [Tooltip("Prefab hiệu ứng vòng sóng chấn của Động tác 2 GumoGumo (nếu có kéo vào đây)")]
     [SerializeField] private GameObject gumoShockwaveVfx;
+
+    [Header("=== GIAI ĐOẠN 2 CUỒNG NỘ (50% HP) & NHỊP THỞ COMBAT PACING ===")]
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 1 (Máu > 50%): 6.0 giây")]
+    [SerializeField] private float phase1PacingMin = 6.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 1 (Máu > 50%): 7.0 giây")]
+    [SerializeField] private float phase1PacingMax = 7.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 4.0 giây")]
+    [SerializeField] private float phase2PacingMin = 4.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 5.0 giây")]
+    [SerializeField] private float phase2PacingMax = 5.0f;
+    [Tooltip("Tên State hoạt cảnh chao đảo khi chạm 50% HP")]
+    [SerializeField] private string phase2StaggerStateName = "50%HP";
+    [Tooltip("Thời lượng hoạt cảnh chao đảo 50% HP (giây) trước khi hất văng và phun lửa")]
+    [SerializeField] private float phase2StaggerDuration = 4.2f;
+    [Tooltip("Bán kính kiểm tra Player ở gần để hất văng khi dứt chao đảo (mét)")]
+    [SerializeField] private float phase2PushRadius = 5.0f;
+    [Tooltip("Cự ly đẩy lùi Player ra xa (mét) để vào đúng tầm phun lửa")]
+    [SerializeField] private float phase2PushDistance = 4.5f;
+    [Tooltip("Thời gian thực hiện cú đẩy lùi Player (giây)")]
+    [SerializeField] private float phase2PushDuration = 0.25f;
+    [Tooltip("TỰ CHỌN: Prefab VFX sóng chấn động khi hất văng Player (Để trống = Tự dùng VFX Gumo/Jump)")]
+    [SerializeField] private GameObject phase2ShockwaveVfxPrefab;
+    [Tooltip("TỰ CHỌN: Âm thanh gầm phát lực khi hất văng Player")]
+    [SerializeField] private AudioClip phase2PushSfx;
     [Tooltip("Prefab hiệu ứng va đập khi JumpDown tiếp đất")]
     [SerializeField] private GameObject jumpDownImpactVfx;
     [Tooltip("Prefab hiệu ứng va đập khi JumpAttack đập đất")]
@@ -344,6 +415,22 @@ public class IceGolemController : MonoBehaviour
     private bool isRunAttacking = false;
     private bool isAttackLTActive = false;
     private bool isIceBallCasting = false;
+    // Trạng thái Giai đoạn 2 & Chuyển pha
+    private bool isPhase2 = false;
+    private bool isPhase2Triggered = false;
+    private bool isPhase2Transitioning = false;
+    private float nextAttackAllowedTime = 0f;
+
+    public bool IsPhase2 => isPhase2;
+    public bool IsPhase2Transitioning => isPhase2Transitioning;
+    public float NextAttackAllowedTime => nextAttackAllowedTime;
+    public bool IsGumoGumoAttacking => isGumoGumoAttacking;
+    public Transform TargetPlayer => playerTarget;
+    public Vector3 GetAccurateGroundPosition(Vector3 searchPos) => GetGroundPosition(searchPos);
+
+    private float lastLeftSlamTime = -1f;
+    private float lastRightSlamTime = -1f;
+
     private bool isInitialStartJumpDown = true;
     private bool hasTriggeredJumpDown = false;
     private Rigidbody rb;
@@ -392,6 +479,7 @@ public class IceGolemController : MonoBehaviour
     private static readonly int AttackLTIGHash = Animator.StringToHash("AttackLT_IG");
     private static readonly int IceBallHash = Animator.StringToHash("IceBall");
     private static readonly int IceBallIGHash = Animator.StringToHash("IceBallIG");
+    private static readonly int WeakenHash = Animator.StringToHash("Weaken");
 
     private void Reset()
     {
@@ -413,6 +501,53 @@ public class IceGolemController : MonoBehaviour
         EnsureTargetLayersIncludePlayer();
         cachedBoneAxisIndex = -1;
         cachedInitialMouthHeightOffset = -1f;
+
+        // Dong bo ngay trong Unity Editor khi nguoi dung chinh sua thong so tren Inspector!
+        SyncHealthToComponent();
+    }
+
+    /// <summary>
+    /// Dong bo truc tiep thong so bossMaxHealth vao Health component
+    /// </summary>
+    public void ApplyBossStats()
+    {
+        SyncHealthToComponent();
+        currentPoise = maxPoise;
+        hasTriggeredWeaken = false;
+        onPoiseChanged?.Invoke(currentPoise, maxPoise);
+        onStaminaChanged?.Invoke(currentPoise, maxPoise);
+    }
+
+    private void SyncHealthToComponent()
+    {
+        if (health == null)
+        {
+            health = GetComponent<Health>();
+            if (health == null) health = GetComponentInParent<Health>();
+        }
+
+        if (health != null && bossMaxHealth > 0f)
+        {
+            var maxHpField = typeof(Health).GetField("maxHealth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            if (maxHpField != null)
+            {
+                maxHpField.SetValue(health, bossMaxHealth);
+            }
+
+            var curHpField = typeof(Health).GetField("currentHealth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            if (curHpField != null)
+            {
+                curHpField.SetValue(health, bossMaxHealth);
+            }
+
+            var baseHpField = typeof(Health).GetField("baseMaxHealth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            if (baseHpField != null)
+            {
+                baseHpField.SetValue(health, bossMaxHealth);
+            }
+
+            health.onHealthChanged?.Invoke(bossMaxHealth, bossMaxHealth);
+        }
     }
 
     private void OnEnable()
@@ -432,6 +567,7 @@ public class IceGolemController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (anim != null) anim.transform.localPosition = Vector3.zero;
         if (health != null)
         {
             health.onTakeDamage.RemoveListener(HandleOnTakeDamage);
@@ -466,14 +602,17 @@ public class IceGolemController : MonoBehaviour
 
         rb = GetComponent<Rigidbody>();
         bossCollider = GetComponent<Collider>();
+        ApplyCombatPacing();
         health = GetComponent<Health>();
         if (health == null) health = GetComponentInParent<Health>();
         bossRenderers = GetComponentsInChildren<Renderer>(true);
+        ApplyBossStats();
 
         // Tự động tìm & xác thực xương bàn tay và miệng
         FindBones();
         ValidateMouthBone();
         ValidateHandBones();
+        SetupHandHitboxes();
 
 #if UNITY_EDITOR
         AutoAssignVfx();
@@ -491,6 +630,7 @@ public class IceGolemController : MonoBehaviour
 
     void Start()
     {
+        ApplyBossStats();
         // Tự tìm Player làm mục tiêu nếu chưa gán
         if (playerTarget == null && autoFindPlayer)
         {
@@ -687,7 +827,7 @@ public class IceGolemController : MonoBehaviour
     /// </summary>
     public bool IsBusy()
     {
-        if (anim == null || isDead) return true;
+        if (anim == null || isDead || isWeakened) return true;
         if (isAttack1Active || isJumpingDown || isJumpingAttack || isGumoGumoAttacking || isFlameBreathing 
             || isRunAttacking || isAttackLTActive || isIceBallCasting) return true;
 
@@ -727,12 +867,17 @@ public class IceGolemController : MonoBehaviour
         float horizontal = 0f;
         float vertical = 0f;
 
-        if (keyboard.upArrowKey.isPressed) vertical += 1f;
-        if (keyboard.downArrowKey.isPressed) vertical -= 1f;
-        if (keyboard.leftArrowKey.isPressed) horizontal -= 1f;
-        if (keyboard.rightArrowKey.isPressed) horizontal += 1f;
+        bool hasArrowInput = keyboard.upArrowKey.isPressed || keyboard.downArrowKey.isPressed ||
+                             keyboard.leftArrowKey.isPressed || keyboard.rightArrowKey.isPressed;
+        if (hasArrowInput)
+        {
+            if (keyboard.upArrowKey.isPressed) vertical += 1f;
+            if (keyboard.downArrowKey.isPressed) vertical -= 1f;
+            if (keyboard.leftArrowKey.isPressed) horizontal -= 1f;
+            if (keyboard.rightArrowKey.isPressed) horizontal += 1f;
 
-        Move(horizontal, vertical);
+            Move(horizontal, vertical);
+        }
 
         // 2. Tung chiêu khi không bận (Hỗ trợ cả Hàng phím số lẫn Bàn phím số Numpad)
         if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) CastAttack(0); // Attack 1
@@ -754,6 +899,30 @@ public class IceGolemController : MonoBehaviour
     private void HandleOnTakeDamage(Vector3 hitPoint, Vector3 hitDirection, float knockback)
     {
         if (isDead) return;
+
+        // 1. Tinh sat thuong Poise theo gia tri Knockback cua don danh (chuan theo co che Poise trong PlayerFeedback & EnemyFeedback)
+        // - Heavy/Counter (knockback >= 1.8f): Counter Attack (2.0f), Skill Q AoeSpell (2.5f) -> 100 Poise
+        // - Medium-Heavy (knockback >= 1.0f): Charge Attack Hit 2 (1.2f), Skill E ProjectileSlash (1.0f) -> 70 Poise
+        // - Medium (knockback > 0f): Attack 3 (0.8f), Charge Attack Hit 1 (0.6f) -> 50 Poise
+        // - Light (knockback == 0f): Attack 1 & Attack 2 -> 35 Poise
+        float poiseDmg = 35f;
+        if (knockback >= 1.8f) poiseDmg = 100f;
+        else if (knockback >= 1.0f) poiseDmg = 70f;
+        else if (knockback > 0f) poiseDmg = 50f;
+
+        TakePoiseDamage(poiseDmg);
+
+        // 2. Neu dang trong trang thai Weaken ma mau tut xuong <= 50% HP:
+        // Huy trang thai Weaken/dung yen va kich hoat ngay chuoi Phase 2!
+        if (isWeakened && health != null && health.CurrentHealth <= health.MaxHealth * 0.5f)
+        {
+            CancelWeakenForPhase2();
+        }
+        else if (!isWeakened)
+        {
+            CheckPhase2Transition();
+        }
+
         FlashHitFeedback();
     }
 
@@ -767,7 +936,7 @@ public class IceGolemController : MonoBehaviour
         flashCoroutine = StartCoroutine(FlashHitRoutine());
     }
 
-    private IEnumerator FlashHitRoutine()
+    private System.Collections.IEnumerator FlashHitRoutine()
     {
         if (flashMpb == null) flashMpb = new MaterialPropertyBlock();
         flashMpb.SetColor(BaseColorProp, hitFlashColor);
@@ -799,16 +968,499 @@ public class IceGolemController : MonoBehaviour
         }
     }
 
-    // =========================================================================
-    // HỆ THỐNG THỜI GIAN HỒI CHIÊU (COOLDOWN SYSTEM CHO AI & ML-AGENTS)
-    // =========================================================================
+    /// <summary>
+    /// Nhận sát thương Poise (thanh chịu đòn) từ các đòn đánh của Player theo kiến trúc Souls-like.
+    /// Khi Poise tụt về 0 (<= 0.01f), Boss sẽ kích hoạt trạng thái suy yếu WeakenIG (duy nhất 1 lần).
+    /// </summary>
+    public void TakePoiseDamage(float poiseDamage)
+    {
+        if (isDead || hasTriggeredWeaken || poiseDamage <= 0f) return;
+
+        currentPoise = Mathf.Max(0f, currentPoise - poiseDamage);
+        onPoiseChanged?.Invoke(currentPoise, maxPoise);
+        onStaminaChanged?.Invoke(currentPoise, maxPoise);
+
+        if (currentPoise <= 0.01f)
+        {
+            TriggerWeaken();
+        }
+    }
 
     /// <summary>
-    /// Kiểm tra kỹ năng có sẵn sàng thi triển không (không bận và đã hồi chiêu)
+    /// Các hàm tương thích ngược và alias phụ trợ
     /// </summary>
-    public bool CanCastAttack(int attackIndex)
+    public void TakeStaminaDamage(float amount) => TakePoiseDamage(amount);
+    public void DeductPoise(float amount) => TakePoiseDamage(amount);
+    public void DeductStamina(float amount) => TakePoiseDamage(amount);
+
+    public void TriggerWeaken()
     {
-        if (IsBusy()) return false;
+        if (hasTriggeredWeaken || isDead || isPhase2Transitioning) return;
+        hasTriggeredWeaken = true;
+        if (weakenCoroutine != null) StopCoroutine(weakenCoroutine);
+        weakenCoroutine = StartCoroutine(WeakenRoutine());
+    }
+
+    private void CancelWeakenForPhase2()
+    {
+        if (weakenCoroutine != null)
+        {
+            StopCoroutine(weakenCoroutine);
+            weakenCoroutine = null;
+        }
+        isWeakened = false;
+        if (anim != null)
+        {
+            anim.speed = 1f;
+            anim.transform.localPosition = Vector3.zero;
+        }
+        CheckPhase2Transition();
+    }
+
+    private void CommitWeakenPosition(Transform modelTransform, Vector3 originalModelLocalPos)
+    {
+        if (modelTransform == null) return;
+
+        // 1. Lay vi tri the gioi thuc te ma model/hips da buoc lui toi
+        Vector3 targetWorldPos = modelTransform.position;
+
+        // Kiem tra du phong neu root motion tac dong len xuong Hips thay vi modelTransform
+        Transform hips = anim != null && anim.isHuman ? anim.GetBoneTransform(HumanBodyBones.Hips) : null;
+        if (hips == null && anim != null) hips = anim.transform.Find("mixamorig:Hips");
+        if (hips != null && Vector3.Distance(new Vector3(modelTransform.position.x, 0f, modelTransform.position.z), new Vector3(transform.position.x, 0f, transform.position.z)) < 0.1f)
+        {
+            float hipsDist = Vector3.Distance(new Vector3(hips.position.x, 0f, hips.position.z), new Vector3(transform.position.x, 0f, transform.position.z));
+            if (hipsDist > 0.1f)
+            {
+                targetWorldPos = new Vector3(hips.position.x, transform.position.y, hips.position.z);
+            }
+        }
+
+        // 2. Bat mat san an toan tai vi tri moi de khong bi lo lung hay lun
+        Vector3 groundPos = GetGroundPosition(targetWorldPos);
+        Vector3 finalRootPos = new Vector3(targetWorldPos.x, groundPos.y, targetWorldPos.z);
+
+        // 3. Cap nhat vi tri moi vao ROOT transform cua Boss (keo theo Collider, Rigidbody va AI)
+        transform.position = finalRootPos;
+
+        // 4. Dat lai localPosition cua model ve goc de model nam khop 100% voi Collider tai vi tri moi
+        modelTransform.localPosition = originalModelLocalPos + Vector3.up * weakenVisualHeightOffset;
+
+        // 5. Triet tieu van toc vat ly
+        if (rb != null && !rb.isKinematic)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    private System.Collections.IEnumerator WeakenRoutine()
+    {
+        isWeakened = true;
+
+        // Dung cac don danh dang thi trien do dang
+        CancelActiveAttackCoroutines();
+
+        if (facePlayerOnAttack)
+        {
+            SnapFaceTarget();
+        }
+
+        // Triet tieu van toc vat ly de khong bi truot
+        if (rb != null && !rb.isKinematic)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        bool prevRootMotion = anim != null && anim.applyRootMotion;
+        if (anim != null)
+        {
+            anim.applyRootMotion = true;
+        }
+
+        Transform modelTransform = anim != null ? anim.transform : null;
+        Vector3 originalModelLocalPos = modelTransform != null ? modelTransform.localPosition : Vector3.zero;
+
+        if (modelTransform != null && weakenVisualHeightOffset != 0f)
+        {
+            modelTransform.localPosition = originalModelLocalPos + Vector3.up * weakenVisualHeightOffset;
+        }
+
+        // Xoa sach trigger ton dong truoc khi kich hoat de khong bao gio bi lap lai
+        SafeResetTrigger(WeakenHash);
+
+        // 1. Kich hoat hoat canh WeakenIG truc tiep bang CrossFadeInFixedTime
+        int weakenHash = Animator.StringToHash(weakenStateName);
+        if (anim != null)
+        {
+            anim.SetFloat(SpeedHash, 0f);
+            if (anim.HasState(0, weakenHash))
+            {
+                anim.CrossFadeInFixedTime(weakenStateName, 0.15f);
+            }
+            else
+            {
+                anim.Play(weakenStateName, 0, 0f);
+            }
+        }
+
+        // Xoa ngay trigger Weaken de AnyState khong bao gio nhan trigger lan nua
+        SafeResetTrigger(WeakenHash);
+
+        // 2. Cho Animator vao state WeakenIG
+        yield return null;
+        float enterTimeout = 0.6f;
+        while (enterTimeout > 0f && anim != null)
+        {
+            AnimatorStateInfo info = anim.GetCurrentAnimatorStateInfo(0);
+            if (info.shortNameHash == weakenHash || info.IsName(weakenStateName))
+            {
+                break;
+            }
+            enterTimeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        // 3. Cho dong tac WeakenIG chay HET TOAN BO do dai clip theo dung toc do ban tua cham (speed = 0.5)
+        float maxTimeout = 20f; // Timeout an toan phong ngua
+        while (maxTimeout > 0f && !isDead)
+        {
+            // Neu bi danh tut xuong <= 50% HP trong luc dang Weaken thi lap tuc chot vi tri va chuyen Phase 2
+            if (health != null && health.CurrentHealth <= health.MaxHealth * 0.5f)
+            {
+                CommitWeakenPosition(modelTransform, originalModelLocalPos);
+                SafeResetTrigger(WeakenHash);
+                if (anim != null)
+                {
+                    anim.applyRootMotion = prevRootMotion;
+                }
+                CancelWeakenForPhase2();
+                yield break;
+            }
+
+            if (anim != null)
+            {
+                AnimatorStateInfo info = anim.GetCurrentAnimatorStateInfo(0);
+                if (info.shortNameHash == weakenHash || info.IsName(weakenStateName))
+                {
+                    // Khi clip da chay gan het (normalizedTime >= 0.95f) hoac Animator dang transition sang Idle
+                    if (info.normalizedTime >= 0.95f || anim.IsInTransition(0))
+                    {
+                        break;
+                    }
+                }
+                else if (enterTimeout <= 0f)
+                {
+                    // Da thoat sang state Idle
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+
+            maxTimeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (isDead)
+        {
+            CommitWeakenPosition(modelTransform, originalModelLocalPos);
+            SafeResetTrigger(WeakenHash);
+            if (anim != null) anim.applyRootMotion = prevRootMotion;
+            isWeakened = false;
+            yield break;
+        }
+
+        // 4. CHỐT VỊ TRÍ LÙI: Chuyen toan bo toa do buoc lui vao ROOT transform cua Boss (chong giat nguoc)
+        CommitWeakenPosition(modelTransform, originalModelLocalPos);
+
+        // Xoa trigger de tuyet doi khong the lap lai
+        SafeResetTrigger(WeakenHash);
+
+        // 5. KET THUC WEAKEN: Khoi phuc root motion goc, chuyen sang Idle va cho Boss tiep tuc danh NGAY LAP TUC!
+        if (anim != null)
+        {
+            anim.applyRootMotion = prevRootMotion;
+            AnimatorStateInfo currentInfo = anim.GetCurrentAnimatorStateInfo(0);
+            if (currentInfo.shortNameHash == weakenHash || currentInfo.IsName(weakenStateName))
+            {
+                anim.CrossFadeInFixedTime("Idle", 0.25f);
+            }
+        }
+
+        if (modelTransform != null)
+        {
+            modelTransform.localPosition = originalModelLocalPos;
+        }
+
+        isWeakened = false;
+        weakenCoroutine = null;
+
+        if (isDead) yield break;
+
+        // Neu sau khi het Weaken ma mau da <= 50% HP thi kich hoat Phase 2 ngay
+        if (health != null && health.CurrentHealth <= health.MaxHealth * 0.5f)
+        {
+            CheckPhase2Transition();
+        }
+        else
+        {
+            ApplyCombatPacing();
+        }
+    }
+
+    private void CheckPhase2Transition()
+    {
+        if (isPhase2Triggered || isDead || isPhase2Transitioning) return;
+        if (health != null && health.CurrentHealth <= health.MaxHealth * 0.5f)
+        {
+            StartCoroutine(Phase2TransitionRoutine());
+        }
+    }
+
+    private IEnumerator Phase2TransitionRoutine()
+    {
+        isPhase2Triggered = true;
+        isPhase2Transitioning = true;
+
+        // Dừng và dọn dẹp các đòn đánh đang thi triển dở dang
+        CancelActiveAttackCoroutines();
+
+        if (facePlayerOnAttack)
+        {
+            SnapFaceTarget();
+        }
+
+        // 1. Kích hoạt hoạt cảnh chao đảo 50%HP
+        Transform staggerModelTf = anim != null ? anim.transform : null;
+        Vector3 origStaggerLocalPos = staggerModelTf != null ? staggerModelTf.localPosition : Vector3.zero;
+
+        // Bu dap do cao model de triet tieu viec chan bi lun xuong dat khi chao dao 50% HP
+        if (staggerModelTf != null && phase2StaggerVisualHeightOffset != 0f)
+        {
+            staggerModelTf.localPosition = origStaggerLocalPos + Vector3.up * phase2StaggerVisualHeightOffset;
+        }
+
+        if (anim != null)
+        {
+            anim.SetFloat(SpeedHash, 0f);
+            anim.SetTrigger("50%HP");
+            int staggerHash = Animator.StringToHash(phase2StaggerStateName);
+            if (anim.HasState(0, staggerHash))
+            {
+                anim.CrossFadeInFixedTime(phase2StaggerStateName, 0.15f);
+            }
+            else
+            {
+                anim.Play(phase2StaggerStateName, 0, 0f);
+            }
+        }
+
+        // Chờ hết thời lượng hoạt ảnh chao đảo (có kiểm tra hoàn tất normalizedTime)
+        float staggerTimer = 0f;
+        yield return new WaitForSeconds(0.25f);
+        staggerTimer += 0.25f;
+
+        while (staggerTimer < phase2StaggerDuration && !isDead)
+        {
+            if (anim != null)
+            {
+                AnimatorStateInfo stInfo = anim.GetCurrentAnimatorStateInfo(0);
+                if (stInfo.IsName(phase2StaggerStateName) && stInfo.normalizedTime >= 0.95f)
+                {
+                    break;
+                }
+            }
+            staggerTimer += Time.deltaTime;
+            yield return null;
+        }
+
+        // Tra lai do cao goc cua model sau khi dut dong tac chao dao 50% HP
+        if (staggerModelTf != null)
+        {
+            staggerModelTf.localPosition = origStaggerLocalPos;
+        }
+
+        if (isDead)
+        {
+            isPhase2Transitioning = false;
+            yield break;
+        }
+
+        // 2. Dứt động tác 50%HP: Tự động hất văng Player ra xa 1 khoảng nếu đang ở gần (< 5m)
+        Transform playerTf = GetPlayerTarget();
+        if (playerTf != null)
+        {
+            float dist = Vector3.Distance(transform.position, playerTf.position);
+            if (dist < phase2PushRadius)
+            {
+                Vector3 pushDir = (playerTf.position - transform.position);
+                pushDir.y = 0f;
+                if (pushDir.sqrMagnitude < 0.001f) pushDir = transform.forward;
+                else pushDir.Normalize();
+
+                StartCoroutine(PushPlayerBackRoutine(playerTf, pushDir, phase2PushDistance, phase2PushDuration));
+
+                // Sóng chấn động và âm thanh phát lực hất văng
+                SpawnPhase2PushVfx(transform.position + Vector3.up * 0.5f);
+                if (phase2PushSfx != null)
+                {
+                    AudioSource.PlayClipAtPoint(phase2PushSfx, transform.position);
+                }
+            }
+        }
+
+        // 3. Đánh dấu chính thức kích hoạt Phase 2 (Mở khóa Skill 3 & Skill 7)
+        isPhase2 = true;
+        isPhase2Transitioning = false;
+
+        // Xóa trigger chao đảo để tránh kích hoạt lại
+        if (anim != null)
+        {
+            anim.ResetTrigger(phase2StaggerStateName);
+        }
+
+        // Đợi cú hất văng kết thúc để Player lùi về đúng cự ly phun lửa
+        yield return new WaitForSeconds(phase2PushDuration);
+
+        if (isDead)
+        {
+            isPhase2Transitioning = false;
+            yield break;
+        }
+
+        // 4. Bước 1: Tung ngay Kỹ năng Roaring (Phun lửa Flame Breath)
+        if (facePlayerOnAttack)
+        {
+            SnapFaceTarget();
+        }
+        TriggerAttackCooldown(2);
+        yield return StartCoroutine(FlameBreathRoutine());
+
+        if (isDead)
+        {
+            isPhase2Transitioning = false;
+            yield break;
+        }
+
+        // 5. Bước 2: Sau Roaring thì chờ đúng 4 giây (giữ cự ly, nhìn Player)
+        float wait4s = 3.0f; // Da doi thanh cho dung 3s theo yeu cau
+        while (wait4s > 0f && !isDead)
+        {
+            wait4s -= Time.deltaTime;
+            Transform target = GetPlayerTarget();
+            if (target != null)
+            {
+                SmoothFaceTarget(target, 120f);
+            }
+            yield return null;
+        }
+
+        if (isDead)
+        {
+            isPhase2Transitioning = false;
+            yield break;
+        }
+
+        // 6. Bước 3: Sau 4s, thực hiện kỹ năng 7 ném cầu (Ice Ball - bắn 3 quả cầu băng)
+        if (facePlayerOnAttack)
+        {
+            SnapFaceTarget();
+        }
+        TriggerAttackCooldown(6);
+        yield return StartCoroutine(IceBallRoutine());
+
+        // 7. Bước 4: Hoàn tất chuỗi mở màn Phase 2! Trả quyền để Boss tiếp tục tự tính toán sử dụng skill hợp lý
+        isPhase2Transitioning = false;
+        ApplyCombatPacing();
+    }
+
+    private void CancelActiveAttackCoroutines()
+    {
+        isAttack1Active = false;
+        isGumoGumoAttacking = false;
+        isFlameBreathing = false;
+        isJumpingAttack = false;
+        isRunAttacking = false;
+        isAttackLTActive = false;
+        isIceBallCasting = false;
+
+        if (activeFlameInstance != null)
+        {
+            Destroy(activeFlameInstance);
+            activeFlameInstance = null;
+        }
+        if (activeIceBallChargeInstance != null)
+        {
+            Destroy(activeIceBallChargeInstance);
+            activeIceBallChargeInstance = null;
+        }
+
+        DisableHandAuras();
+        DisableRunAura();
+    }
+
+    private IEnumerator PushPlayerBackRoutine(Transform playerTf, Vector3 pushDir, float distance, float duration)
+    {
+        if (playerTf == null) yield break;
+        CharacterController cc = playerTf.GetComponent<CharacterController>();
+        float elapsed = 0f;
+        float speed = distance / Mathf.Max(duration, 0.05f);
+
+        while (elapsed < duration && playerTf != null)
+        {
+            float step = speed * Time.deltaTime;
+            if (cc != null && cc.enabled)
+            {
+                cc.Move(pushDir * step);
+            }
+            else
+            {
+                playerTf.position += pushDir * step;
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void SpawnPhase2PushVfx(Vector3 position)
+    {
+        GameObject vfxPrefab = phase2ShockwaveVfxPrefab != null 
+            ? phase2ShockwaveVfxPrefab 
+            : (gumoShockwaveVfx != null ? gumoShockwaveVfx : jumpAttackShockwaveVfx);
+            
+        if (vfxPrefab != null)
+        {
+            GameObject vfxInstance = Instantiate(vfxPrefab, position, Quaternion.identity);
+            vfxInstance.transform.localScale = Vector3.one * 1.5f;
+            Destroy(vfxInstance, 3.0f);
+        }
+    }
+
+    public void ApplyCombatPacing()
+    {
+        float delay = isPhase2 ? Random.Range(phase2PacingMin, phase2PacingMax) : Random.Range(phase1PacingMin, phase1PacingMax);
+        nextAttackAllowedTime = Time.time + delay;
+    }
+
+        public bool CanCastAttack(int attackIndex)
+    {
+        if (IsBusy() || isPhase2Transitioning) return false;
+
+        // Kỹ năng 3 (Flame Breath - index 2) và Kỹ năng 7 (Ice Ball - index 6) bị KHÓA ở Phase 1:
+        if (!isPhase2 && (attackIndex == 2 || attackIndex == 6))
+        {
+            return false;
+        }
+
+        // Kiểm tra nhịp nghỉ Combat Pacing (6-7s ở Phase 1, 4-5s ở Phase 2):
+        if (Time.time < nextAttackAllowedTime)
+        {
+            return false;
+        }
 
         // Nếu là chiêu lớn (1: GumoGumo, 2: Flame, 3: JumpAttack, 4: RunAttack, 6: IceBall), phải cách chiêu lớn trước ít nhất specialSkillGlobalCooldown
         bool isSpecial = (attackIndex == 1 || attackIndex == 2 || attackIndex == 3 || attackIndex == 4 || attackIndex == 6);
@@ -1032,6 +1684,7 @@ public class IceGolemController : MonoBehaviour
         }
 
         isAttack1Active = false;
+        ApplyCombatPacing();
     }
 
     private void PerformAttack1HitCheck()
@@ -1192,10 +1845,56 @@ public class IceGolemController : MonoBehaviour
         StartCoroutine(IceBallRoutine());
     }
 
+    private void SafeResetTrigger(int paramHash)
+    {
+        if (anim == null) return;
+        foreach (var p in anim.parameters)
+        {
+            if (p.nameHash == paramHash)
+            {
+                anim.ResetTrigger(paramHash);
+                return;
+            }
+        }
+    }
+
+    private void SafeResetTrigger(string paramName)
+    {
+        if (anim == null) return;
+        foreach (var p in anim.parameters)
+        {
+            if (p.name.Equals(paramName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                anim.ResetTrigger(p.nameHash);
+                return;
+            }
+        }
+    }
+
+    private void SafeSetTrigger(int paramHash)
+    {
+        if (anim == null) return;
+        foreach (var p in anim.parameters)
+        {
+            if (p.nameHash == paramHash)
+            {
+                anim.SetTrigger(paramHash);
+                return;
+            }
+        }
+    }
+
     public void Die()
     {
         if (isDead) return;
         isDead = true;
+        isWeakened = false;
+        if (weakenCoroutine != null)
+        {
+            StopCoroutine(weakenCoroutine);
+            weakenCoroutine = null;
+        }
+        if (anim != null) anim.speed = 1f;
 
         if (activeFlameInstance != null)
         {
@@ -1231,7 +1930,10 @@ public class IceGolemController : MonoBehaviour
         if (anim != null)
         {
             anim.SetFloat(SpeedHash, 0f);
-            anim.SetTrigger(DeadHash);
+            SafeResetTrigger(DeadHash);
+            SafeResetTrigger(WeakenHash);
+            anim.speed = 1f;
+            anim.CrossFadeInFixedTime("Dead", 0.15f);
         }
     }
 
@@ -1241,6 +1943,17 @@ public class IceGolemController : MonoBehaviour
     public void Revive()
     {
         isDead = false;
+        isPhase2 = false;
+        ApplyBossStats();
+        isWeakened = false;
+        if (weakenCoroutine != null)
+        {
+            StopCoroutine(weakenCoroutine);
+            weakenCoroutine = null;
+        }
+        isPhase2Triggered = false;
+        isPhase2Transitioning = false;
+        ApplyCombatPacing();
         isAttack1Active = false;
         isJumpingDown = false;
         isJumpingAttack = false;
@@ -1276,21 +1989,24 @@ public class IceGolemController : MonoBehaviour
 
         if (rb != null)
         {
-            rb.isKinematic = true;
+            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
 
         if (anim != null)
         {
-            anim.ResetTrigger(DeadHash);
-            anim.ResetTrigger(RoaringHash);
-            anim.ResetTrigger(JumpAttackHash);
-            anim.ResetTrigger(GumoGumoHash);
-            anim.ResetTrigger(RunAttackHash);
-            anim.ResetTrigger(AttackLTHash);
-            anim.ResetTrigger(AttackLTIGHash);
-            anim.ResetTrigger(IceBallHash);
-            anim.ResetTrigger(IceBallIGHash);
+            anim.speed = 1f;
+            anim.applyRootMotion = false;
+            SafeResetTrigger(DeadHash);
+            SafeResetTrigger(RoaringHash);
+            SafeResetTrigger(JumpAttackHash);
+            SafeResetTrigger(GumoGumoHash);
+            SafeResetTrigger(RunAttackHash);
+            SafeResetTrigger(AttackLTIGHash);
+            SafeResetTrigger(IceBallIGHash);
+            SafeResetTrigger(WeakenHash);
+            SafeResetTrigger(phase2StaggerStateName);
             anim.Play("Idle", 0, 0f);
             anim.SetFloat(SpeedHash, 0f);
         }
@@ -1328,8 +2044,13 @@ public class IceGolemController : MonoBehaviour
             SnapFaceTarget();
         }
 
-        // 1. Kích hoạt trigger animation AttackRoaring
-        anim.SetTrigger(RoaringHash);
+        // 1. Kích hoạt animation AttackRoaring (dùng CrossFade và reset sạch trigger để không bao giờ bị phát lặp lại lần 2)
+        if (anim != null)
+        {
+            anim.ResetTrigger(phase2StaggerStateName);
+            anim.ResetTrigger(RoaringHash);
+            anim.CrossFadeInFixedTime("AttackRoaring", 0.15f);
+        }
 
         // 2. Chờ giai đoạn Boss ngửa người lấy hơi trước khi thổi lửa
         float prepTimer = 0f;
@@ -1437,7 +2158,14 @@ public class IceGolemController : MonoBehaviour
             yield return null;
         }
 
+        // Triệt tiêu trigger Roaring để ngăn chặn việc bị kích hoạt lặp lại lần 2
+        if (anim != null)
+        {
+            anim.ResetTrigger(RoaringHash);
+        }
+
         isFlameBreathing = false;
+        ApplyCombatPacing();
     }
 
     // =========================================================================
@@ -1496,6 +2224,7 @@ public class IceGolemController : MonoBehaviour
         }
 
         isRunAttacking = false;
+        ApplyCombatPacing();
     }
 
     private void PerformRunAttackHitCheck(HashSet<IDamageable> hitDamageables)
@@ -1622,6 +2351,7 @@ public class IceGolemController : MonoBehaviour
         }
 
         isAttackLTActive = false;
+        ApplyCombatPacing();
     }
 
     private void PerformSingleMeleeHit(float damage, float knockback, float cameraShakeMag)
@@ -1630,22 +2360,28 @@ public class IceGolemController : MonoBehaviour
         LayerMask queryMask = targetLayers.value != 0 ? targetLayers : (LayerMask)(1 << LayerMask.NameToLayer("Player"));
         Collider[] hits = Physics.OverlapSphere(hitCenter, attack1HitRadius + 0.4f, queryMask);
         bool hasHit = false;
+        HashSet<IDamageable> hitDamageables = new HashSet<IDamageable>();
 
         foreach (Collider col in hits)
         {
             if (col.transform.root == transform.root) continue;
 
             IDamageable dmg = col.GetComponentInParent<IDamageable>();
+            if (dmg == null)
+            {
+                dmg = col.GetComponentInChildren<IDamageable>();
+            }
             if (dmg == null && playerTarget != null && col.transform.root == playerTarget.root)
             {
                 dmg = playerTarget.GetComponentInChildren<IDamageable>();
             }
 
-            if (dmg != null)
+            if (dmg != null && hitDamageables.Add(dmg))
             {
                 hasHit = true;
                 Vector3 hitPoint = col.ClosestPoint(hitCenter);
                 Vector3 knockDir = (col.transform.position - transform.position).normalized;
+                if (knockDir.sqrMagnitude < 0.001f) knockDir = transform.forward;
                 dmg.TakeDamage(damage, hitPoint, knockDir, knockback, transform);
 
                 SpawnAttack1ImpactVfx(hitPoint, Quaternion.identity);
@@ -1665,6 +2401,12 @@ public class IceGolemController : MonoBehaviour
     private IEnumerator IceBallRoutine()
     {
         isIceBallCasting = true;
+
+        int totalCasts = isPhase2 ? 3 : 1;
+
+        for (int castIndex = 0; castIndex < totalCasts; castIndex++)
+        {
+            if (isDead) break;
 
         if (facePlayerOnAttack)
         {
@@ -1774,7 +2516,14 @@ public class IceGolemController : MonoBehaviour
             yield return null;
         }
 
+            if (castIndex < totalCasts - 1)
+            {
+                yield return new WaitForSeconds(0.4f);
+            }
+        }
+
         isIceBallCasting = false;
+        ApplyCombatPacing();
     }
 
     private IEnumerator IceBallFlightRoutine(GameObject orb, Vector3 direction)
@@ -1833,6 +2582,10 @@ public class IceGolemController : MonoBehaviour
             if (col.transform.root == transform.root) continue;
 
             IDamageable dmg = col.GetComponentInParent<IDamageable>();
+            if (dmg == null)
+            {
+                dmg = col.GetComponentInChildren<IDamageable>();
+            }
             if (dmg == null && playerTarget != null && col.transform.root == playerTarget.root)
             {
                 dmg = playerTarget.GetComponentInChildren<IDamageable>();
@@ -1842,6 +2595,7 @@ public class IceGolemController : MonoBehaviour
             {
                 Vector3 hitPoint = col.ClosestPoint(explodePos);
                 Vector3 knockDir = (col.transform.position - explodePos).normalized;
+                if (knockDir.sqrMagnitude < 0.001f) knockDir = (transform.forward + Vector3.up * 0.25f).normalized;
                 dmg.TakeDamage(iceBallDamage, hitPoint, knockDir, iceBallKnockback, transform);
             }
         }
@@ -2073,6 +2827,22 @@ public class IceGolemController : MonoBehaviour
         }
     }
 
+    private void SetupHandHitboxes()
+    {
+        FindBones();
+        ValidateHandBones();
+        if (leftHandBone != null && leftHandBone.GetComponent<BossHandHitbox>() == null)
+        {
+            var hb = leftHandBone.gameObject.AddComponent<BossHandHitbox>();
+            hb.Initialize(this, 0);
+        }
+        if (rightHandBone != null && rightHandBone.GetComponent<BossHandHitbox>() == null)
+        {
+            var hb = rightHandBone.gameObject.AddComponent<BossHandHitbox>();
+            hb.Initialize(this, 1);
+        }
+    }
+
     private Transform FindBoneByName(string targetName)
     {
         Transform[] allChildren = GetComponentsInChildren<Transform>(true);
@@ -2107,41 +2877,85 @@ public class IceGolemController : MonoBehaviour
         Collider[] hitColliders = Physics.OverlapSphere(origin, flameRange, queryMask);
         HashSet<IDamageable> hitDamageables = new HashSet<IDamageable>();
 
+        // Chuẩn hóa hướng phun lửa trên mặt phẳng ngang XZ để triệt tiêu chênh lệch độ cao giữa miệng Boss và Player
+        Vector3 dirFlat = new Vector3(direction.x, 0f, direction.z).normalized;
+        if (dirFlat.sqrMagnitude < 0.001f) dirFlat = transform.forward;
+
         foreach (Collider col in hitColliders)
         {
             if (col.transform.root == transform.root) continue;
 
             Vector3 targetCenter = col.bounds.center;
             Vector3 toTarget = targetCenter - origin;
-            float dist = toTarget.magnitude;
 
-            if (dist > flameRange || dist < 0.01f) continue;
+            // 1. Kiểm tra độ cao tương đối (Player không nhảy vút lên trời quá cao và không rơi tụt xuống vực)
+            float deltaY = targetCenter.y - origin.y;
+            if (deltaY > 2.0f || deltaY < -5.0f) continue;
 
-            // Kiểm tra góc lệch so với hướng miệng đang quay
-            float angle = Vector3.Angle(direction, toTarget);
-            if (angle <= flameConeAngle * 0.5f)
+            // 2. Tính khoảng cách và góc quét trên mặt phẳng ngang (XZ plane)
+            Vector3 toTargetFlat = new Vector3(toTarget.x, 0f, toTarget.z);
+            float flatDist = toTargetFlat.magnitude;
+
+            if (flatDist > flameRange) continue;
+
+            // Nếu đứng ngay sát dưới chân/miệng Boss (< 1.2m), mặc định trúng lửa
+            if (flatDist >= 1.2f)
             {
-                // Kiểm tra vật cản che chắn (tường / cột đá)
-                if (Physics.Raycast(origin, toTarget.normalized, dist, obstacleLayer))
+                float horizontalAngle = Vector3.Angle(dirFlat, toTargetFlat.normalized);
+                if (horizontalAngle > flameConeAngle * 0.5f)
                 {
                     continue;
                 }
+            }
 
-                IDamageable damageable = col.GetComponentInParent<IDamageable>();
-                if (damageable == null && playerTarget != null && col.transform.root == playerTarget.root)
+            // 3. Kiểm tra vật cản che chắn (tường / cột đá) - Bỏ qua sàn đấu và chính collider của Boss/Player
+            float rayDist = toTarget.magnitude;
+            if (rayDist > 0.5f)
+            {
+                RaycastHit[] hits = Physics.RaycastAll(origin, toTarget.normalized, rayDist - 0.2f, obstacleLayer, QueryTriggerInteraction.Ignore);
+                bool isBlocked = false;
+                foreach (var h in hits)
                 {
-                    damageable = playerTarget.GetComponentInChildren<IDamageable>();
+                    if (h.collider.transform.root == transform.root || h.collider.transform.root == col.transform.root) continue;
+                    // Bỏ qua nếu chạm vào sàn đấu (mặt sàn có normal hướng lên: normal.y > 0.5f)
+                    if (h.normal.y > 0.5f) continue;
+
+                    isBlocked = true;
+                    break;
                 }
 
-                if (damageable != null && hitDamageables.Add(damageable))
-                {
-                    Vector3 hitPoint = col.ClosestPoint(origin);
-                    damageable.TakeDamage(flameDamagePerTick, hitPoint, toTarget.normalized, flameKnockback, transform);
+                if (isBlocked) continue;
+            }
 
-                    if (flameHitVfxPrefab != null)
-                    {
-                        Instantiate(flameHitVfxPrefab, hitPoint, Quaternion.identity);
-                    }
+            // 4. Tìm kiếm IDamageable chắc chắn trên mọi phân cấp collider
+            IDamageable damageable = col.GetComponentInParent<IDamageable>();
+            if (damageable == null)
+            {
+                damageable = col.GetComponentInChildren<IDamageable>();
+            }
+            if (damageable == null && playerTarget != null && (col.transform.root == playerTarget.root || col.CompareTag("Player")))
+            {
+                damageable = playerTarget.GetComponentInChildren<IDamageable>();
+            }
+
+            if (damageable != null && hitDamageables.Add(damageable))
+            {
+                Vector3 hitPoint = col.ClosestPoint(origin);
+                Vector3 knockDir = toTargetFlat.sqrMagnitude > 0.01f ? toTargetFlat.normalized : dirFlat;
+
+                // Gây sát thương theo từng tick kèm hất nhẹ
+                damageable.TakeDamage(flameDamagePerTick, hitPoint, knockDir, flameKnockback, transform);
+
+                // Hất nhẹ Player ra xa theo phương ngang (CharacterController)
+                CharacterController targetCC = col.GetComponentInParent<CharacterController>();
+                if (targetCC != null && targetCC.enabled)
+                {
+                    targetCC.Move(knockDir * (flameKnockback * 2.0f * Time.deltaTime));
+                }
+
+                if (flameHitVfxPrefab != null)
+                {
+                    Instantiate(flameHitVfxPrefab, hitPoint, Quaternion.identity);
                 }
             }
         }
@@ -2165,25 +2979,144 @@ public class IceGolemController : MonoBehaviour
         anim.SetTrigger(GumoGumoHash);
         EnableHandAuras();
 
-        float currentTimer = 0f;
-        while (currentTimer < gumoSlamStartTime)
+        if (leftHandBone == null || rightHandBone == null)
         {
-            currentTimer += Time.deltaTime;
+            FindBones();
+        }
+
+        Transform modelTransform = anim != null ? anim.transform : null;
+        Vector3 originalModelLocalPos = modelTransform != null ? modelTransform.localPosition : Vector3.zero;
+
+        // Bù đắp độ cao model để triệt tiêu việc chân và thân bị lún xuống đất
+        if (modelTransform != null && gumoVisualHeightOffset != 0f)
+        {
+            modelTransform.localPosition = originalModelLocalPos + Vector3.up * gumoVisualHeightOffset;
+        }
+
+        // Chờ Animator bắt đầu vào state AttackGumoGumo (tối đa 0.4s)
+        float enterWait = 0.4f;
+        while (enterWait > 0f && anim != null)
+        {
+            var cur = anim.GetCurrentAnimatorStateInfo(0);
+            var nxt = anim.GetNextAnimatorStateInfo(0);
+            if (cur.IsName("AttackGumoGumo") || nxt.IsName("AttackGumoGumo"))
+            {
+                break;
+            }
+            enterWait -= Time.deltaTime;
             yield return null;
         }
 
-        int currentHandIndex = 0; // 0 = Trái, 1 = Phải
-        float nextSlamTime = currentTimer;
+        // Hệ thống theo dõi chuyển động thực tế của 2 bàn tay theo thời gian thực (đáp ứng 100% mọi tốc độ animation: 0.5x, 0.7x, 1.0x, 1.5x...)
+        bool leftArmed = true;
+        bool rightArmed = true;
+        float prevLeftY = leftHandBone != null ? leftHandBone.position.y : transform.position.y + 2f;
+        float prevRightY = rightHandBone != null ? rightHandBone.position.y : transform.position.y + 2f;
+        bool leftWasDescending = false;
+        bool rightWasDescending = false;
 
-        while (currentTimer < gumoSlamEndTime)
+        float attackDurationTimer = 0f;
+        float maxSafetyDuration = 12.0f; // Bảo hiểm chống kẹt trạng thái
+
+        while (anim != null && attackDurationTimer < maxSafetyDuration)
         {
-            currentTimer += Time.deltaTime;
+            attackDurationTimer += Time.deltaTime;
+            var curState = anim.GetCurrentAnimatorStateInfo(0);
+            var nextState = anim.GetNextAnimatorStateInfo(0);
 
-            if (currentTimer >= nextSlamTime)
+            bool inGumo = curState.IsName("AttackGumoGumo") || nextState.IsName("AttackGumoGumo");
+            if (!inGumo && attackDurationTimer > 0.35f)
             {
-                TriggerHandSlam(currentHandIndex);
-                currentHandIndex = (currentHandIndex == 0) ? 1 : 0;
-                nextSlamTime = currentTimer + gumoSlamInterval;
+                break; // Animation kết thúc hoặc đã chuyển sang trạng thái kế tiếp
+            }
+
+            if (leftHandBone == null || rightHandBone == null)
+            {
+                FindBones();
+            }
+
+            // ==========================================
+            // 1. THEO DÕI BÀN TAY TRÁI (LEFT HAND CONTACT)
+            // ==========================================
+            if (leftHandBone != null)
+            {
+                float handY = leftHandBone.position.y;
+                Vector3 slamOrigin = leftHandBone.position + transform.forward * gumoHandForwardOffset;
+                Vector3 groundPos = GetGroundPosition(slamOrigin);
+                float relativeY = handY - groundPos.y;
+
+                // Nạp lại khi bàn tay được nhấc lên cao
+                if (!leftArmed && relativeY > gumoHandReleaseHeight)
+                {
+                    leftArmed = true;
+                    leftWasDescending = false;
+                }
+
+                if (leftArmed)
+                {
+                    if (handY < prevLeftY - 0.001f)
+                    {
+                        leftWasDescending = true;
+                    }
+
+                    // Chỉ kích hoạt khi tay đã đi xuống sát mặt đất
+                    if (relativeY <= gumoHandContactHeight)
+                    {
+                        // Chạm đất khi:
+                        // a) Tay chạm đáy và bắt đầu nảy ngược lên (chuyển động đi lên thực sự)
+                        // b) HOẶC tay đã chạm sát sàn đấu (<= gumoHandMinHeight)
+                        bool hitBottom = leftWasDescending && (handY > prevLeftY + 0.002f);
+                        bool hitFloor = relativeY <= gumoHandMinHeight;
+
+                        if (hitBottom || hitFloor)
+                        {
+                            TriggerHandSlam(0, groundPos);
+                            leftArmed = false;
+                            leftWasDescending = false;
+                        }
+                    }
+                }
+                prevLeftY = handY;
+            }
+
+            // ==========================================
+            // 2. THEO DÕI BÀN TAY PHẢI (RIGHT HAND CONTACT)
+            // ==========================================
+            if (rightHandBone != null)
+            {
+                float handY = rightHandBone.position.y;
+                Vector3 slamOrigin = rightHandBone.position + transform.forward * gumoHandForwardOffset;
+                Vector3 groundPos = GetGroundPosition(slamOrigin);
+                float relativeY = handY - groundPos.y;
+
+                // Nạp lại khi bàn tay được nhấc lên cao
+                if (!rightArmed && relativeY > gumoHandReleaseHeight)
+                {
+                    rightArmed = true;
+                    rightWasDescending = false;
+                }
+
+                if (rightArmed)
+                {
+                    if (handY < prevRightY - 0.001f)
+                    {
+                        rightWasDescending = true;
+                    }
+
+                    if (relativeY <= gumoHandContactHeight)
+                    {
+                        bool hitBottom = rightWasDescending && (handY > prevRightY + 0.002f);
+                        bool hitFloor = relativeY <= gumoHandMinHeight;
+
+                        if (hitBottom || hitFloor)
+                        {
+                            TriggerHandSlam(1, groundPos);
+                            rightArmed = false;
+                            rightWasDescending = false;
+                        }
+                    }
+                }
+                prevRightY = handY;
             }
 
             yield return null;
@@ -2196,25 +3129,52 @@ public class IceGolemController : MonoBehaviour
             yield return null;
         }
 
+        // Trả lại vị trí gốc của model sau khi kết thúc đòn đập đất
+        if (modelTransform != null)
+        {
+            modelTransform.localPosition = originalModelLocalPos;
+        }
+
         isGumoGumoAttacking = false;
+        ApplyCombatPacing();
     }
 
-    public void TriggerHandSlam(int handIndex)
+    public void TriggerHandSlam(int handIndex, Vector3? overrideGroundPos = null)
     {
-        Transform handBone = (handIndex == 0) ? leftHandBone : rightHandBone;
-        Vector3 slamOrigin;
-
-        if (handBone != null)
+        // 0. Debounce chống trùng lặp nếu cả Trigger Collider và Bone Tracking cùng bắt được điểm chạm
+        float now = Time.time;
+        if (handIndex == 0)
         {
-            slamOrigin = handBone.position;
+            if (now - lastLeftSlamTime < 0.15f) return;
+            lastLeftSlamTime = now;
         }
         else
         {
-            float sideOffset = (handIndex == 0) ? -0.9f : 0.9f;
-            slamOrigin = transform.position + transform.forward * 1.6f + transform.right * sideOffset;
+            if (now - lastRightSlamTime < 0.15f) return;
+            lastRightSlamTime = now;
         }
 
-        Vector3 slamGroundPos = GetGroundPosition(slamOrigin);
+        Transform handBone = (handIndex == 0) ? leftHandBone : rightHandBone;
+        Vector3 slamGroundPos;
+
+        if (overrideGroundPos.HasValue)
+        {
+            slamGroundPos = overrideGroundPos.Value;
+        }
+        else
+        {
+            Vector3 slamOrigin;
+            if (handBone != null)
+            {
+                slamOrigin = handBone.position + transform.forward * gumoHandForwardOffset;
+            }
+            else
+            {
+                float sideOffset = (handIndex == 0) ? -0.9f : 0.9f;
+                slamOrigin = transform.position + transform.forward * 1.6f + transform.right * sideOffset;
+            }
+            slamGroundPos = GetGroundPosition(slamOrigin);
+        }
 
         // 1. Rung chấn nhẹ theo từng nhịp đập
         StartCoroutine(TriggerCameraShake(0.12f, 0.12f));
@@ -2227,10 +3187,12 @@ public class IceGolemController : MonoBehaviour
 #endif
         }
 
-        // 3. Sinh hiệu ứng đập đất Attack1 Effect tại vị trí bàn tay tiếp đất
+        // 3. Sinh hiệu ứng đập đất Attack1 Effect tại vị trí bàn tay tiếp đất (sát mặt đất)
         if (handSlamImpactVfx != null)
         {
-            GameObject slamObj = Instantiate(handSlamImpactVfx, slamGroundPos, Quaternion.identity);
+            // Nhích 0.02m so với mặt sàn để triệt tiêu hiện tượng z-fighting (nhấp nháy vân)
+            Vector3 vfxSpawnPos = slamGroundPos + Vector3.up * 0.02f;
+            GameObject slamObj = Instantiate(handSlamImpactVfx, vfxSpawnPos, Quaternion.identity);
             slamObj.transform.localScale = Vector3.one * gumoSlamVfxScale;
 
             ParticleSystem[] psList = slamObj.GetComponentsInChildren<ParticleSystem>();
@@ -2473,23 +3435,18 @@ public class IceGolemController : MonoBehaviour
 
     private bool CheckCanDodgeByJump(Collider targetCol, Vector3 waveCenter)
     {
+        float footY = targetCol.bounds.min.y;
+        float heightAboveWave = footY - waveCenter.y;
+
         PlayerController pc = targetCol.GetComponentInParent<PlayerController>();
         if (pc != null)
         {
-            if (!pc.IsGrounded)
-            {
-                return true;
-            }
+            // Nếu là PlayerController, chỉ né đòn khi đang nhảy trên không (!IsGrounded)
+            // VÀ độ cao bàn chân nhấc khỏi mặt đất/sóng ít nhất 0.25m để tránh vi rung bề mặt
+            return !pc.IsGrounded && heightAboveWave > 0.25f;
         }
 
-        float footY = targetCol.bounds.min.y;
-        float heightAboveFloor = footY - waveCenter.y;
-        if (heightAboveFloor > jumpDodgeHeightThreshold)
-        {
-            return true;
-        }
-
-        return false;
+        return heightAboveWave > jumpDodgeHeightThreshold;
     }
 
     private void SetupLineRenderer(LineRenderer line, Material mat, Color col, float width, int count, bool loop)
@@ -2701,6 +3658,7 @@ public class IceGolemController : MonoBehaviour
         OnJumpAttackImpact(targetLandingPos);
 
         isJumpingAttack = false;
+        ApplyCombatPacing();
     }
 
     private void OnJumpDownImpact(Vector3 landingPos)
@@ -2814,11 +3772,29 @@ public class IceGolemController : MonoBehaviour
 
     private Vector3 GetGroundPosition(Vector3 searchPos)
     {
-        if (Physics.Raycast(searchPos + Vector3.up * 3f, Vector3.down, out RaycastHit hit, 50f, groundLayer, QueryTriggerInteraction.Ignore))
+        // Bắt đầu quét từ phía trên sàn nhưng dưới tầm ngực/vai boss để tránh va chạm cơ thể boss
+        float startY = transform.position.y + 1.8f;
+        Vector3 rayStart = new Vector3(searchPos.x, startY, searchPos.z);
+
+        // Quét xuyên qua tất cả colliders để tìm chính xác bề mặt sàn, lọc bỏ toàn bộ Boss và Player
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
+        float closestDist = float.MaxValue;
+        float floorY = transform.position.y; // Mặc định là cao độ chân Boss trên sàn
+
+        foreach (var hit in hits)
         {
-            return hit.point;
+            if (hit.transform.root == transform.root) continue;
+            if (playerTarget != null && hit.transform.root == playerTarget.root) continue;
+
+            // Bề mặt sàn phải hướng lên (normal.y > 0.4f) để không bắt nhầm tường phẳng thẳng đứng
+            if (hit.normal.y > 0.4f && hit.distance < closestDist)
+            {
+                closestDist = hit.distance;
+                floorY = hit.point.y;
+            }
         }
-        return searchPos;
+
+        return new Vector3(searchPos.x, floorY, searchPos.z);
     }
 
     private void FindBones()
@@ -2965,28 +3941,29 @@ public class IceGolemController : MonoBehaviour
         // 4. Hình nón phun lửa của Attack 3 (Màu Cam / Đỏ nổi bật)
         Vector3 fOrigin = GetMouthPosition();
         Vector3 fDir = GetFlameDirection();
+        Vector3 fDirFlat = new Vector3(fDir.x, 0f, fDir.z).normalized;
+        if (fDirFlat.sqrMagnitude < 0.001f) fDirFlat = transform.forward;
 
         Gizmos.color = new Color(1f, 0.5f, 0f, 0.95f);
         Gizmos.DrawRay(fOrigin, fDir * flameRange);
         Gizmos.DrawWireSphere(fOrigin, 0.15f);
 
         float halfAng = flameConeAngle * 0.5f;
-        Vector3 fRight = Vector3.Cross(Vector3.up, fDir).normalized;
-        if (fRight.sqrMagnitude < 0.001f) fRight = transform.right;
-        Vector3 fUp = Vector3.Cross(fDir, fRight).normalized;
+        Quaternion lRot = Quaternion.AngleAxis(-halfAng, Vector3.up);
+        Quaternion rRot = Quaternion.AngleAxis(halfAng, Vector3.up);
 
-        Quaternion lRot = Quaternion.AngleAxis(-halfAng, fUp);
-        Quaternion rRot = Quaternion.AngleAxis(halfAng, fUp);
-        Quaternion uRot = Quaternion.AngleAxis(-halfAng, fRight);
-        Quaternion dRot = Quaternion.AngleAxis(halfAng, fRight);
+        Gizmos.color = new Color(1f, 0.45f, 0f, 0.5f);
+        Gizmos.DrawRay(fOrigin, (lRot * fDirFlat) * flameRange);
+        Gizmos.DrawRay(fOrigin, (rRot * fDirFlat) * flameRange);
 
-        Gizmos.color = new Color(1f, 0.45f, 0f, 0.4f);
-        Gizmos.DrawRay(fOrigin, (lRot * fDir) * flameRange);
-        Gizmos.DrawRay(fOrigin, (rRot * fDir) * flameRange);
-        Gizmos.DrawRay(fOrigin, (uRot * fDir) * flameRange);
-        Gizmos.DrawRay(fOrigin, (dRot * fDir) * flameRange);
+        // Vẽ thêm rẻ quạt trên mặt đất để dễ quan sát vùng sát thương thực tế
+        Vector3 floorOrigin = new Vector3(fOrigin.x, transform.position.y + 0.1f, fOrigin.z);
+        Gizmos.color = new Color(1f, 0.2f, 0f, 0.6f);
+        Gizmos.DrawRay(floorOrigin, (lRot * fDirFlat) * flameRange);
+        Gizmos.DrawRay(floorOrigin, (rRot * fDirFlat) * flameRange);
+        Gizmos.DrawRay(floorOrigin, fDirFlat * flameRange);
 
         float endRadius = flameRange * Mathf.Tan(halfAng * Mathf.Deg2Rad);
-        Gizmos.DrawWireSphere(fOrigin + fDir * flameRange, endRadius);
+        Gizmos.DrawWireSphere(floorOrigin + fDirFlat * flameRange, endRadius);
     }
 }

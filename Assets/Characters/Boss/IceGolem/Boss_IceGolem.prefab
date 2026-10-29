@@ -161,8 +161,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 800
-  currentHealth: 0
+  maxHealth: 1500
+  currentHealth: 1500
   isInvulnerable: 0
   onHealthChanged:
     m_PersistentCalls:
@@ -271,6 +271,20 @@ MonoBehaviour:
   iceBallKnockback: 2.5
   iceBallLifeTime: 4
   iceBallExplodeVfxPrefab: {fileID: 0}
+  bossMaxHealth: 1500
+  maxPoise: 500
+  currentPoise: 500
+  weakenFreezeAfterDuration: 0
+  phase2StaggerVisualHeightOffset: 0
+  weakenVisualHeightOffset: 0
+  weakenAnimDuration: 3.6
+  weakenStateName: WeakenIG
+  onPoiseChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onStaminaChanged:
+    m_PersistentCalls:
+      m_Calls: []
   hitFlashDuration: 0.12
   hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
   playerTarget: {fileID: 0}
@@ -349,6 +363,11 @@ MonoBehaviour:
   gumoShockwaveRadius: 12
   gumoSlamDamage: 18
   gumoSlamKnockback: 1.2
+  gumoVisualHeightOffset: 0.35
+  gumoHandContactHeight: 0.75
+  gumoHandMinHeight: 0.45
+  gumoHandReleaseHeight: 1.15
+  gumoHandForwardOffset: 0.25
   gumoSlamStartTime: 0.55
   gumoSlamEndTime: 3.3
   gumoSlamInterval: 0.35
@@ -383,6 +402,17 @@ MonoBehaviour:
   jumpDownShockwaveVfx: {fileID: 0}
   jumpAttackShockwaveVfx: {fileID: 0}
   gumoShockwaveVfx: {fileID: 0}
+  phase1PacingMin: 6
+  phase1PacingMax: 7
+  phase2PacingMin: 4
+  phase2PacingMax: 5
+  phase2StaggerStateName: 50%HP
+  phase2StaggerDuration: 4.2
+  phase2PushRadius: 5
+  phase2PushDistance: 4.5
+  phase2PushDuration: 0.25
+  phase2ShockwaveVfxPrefab: {fileID: 0}
+  phase2PushSfx: {fileID: 0}
   jumpDownImpactVfx: {fileID: 3432958286849152088, guid: 87ee7299dd44ed747af24dbb91bcd33b, type: 3}
   jumpAttackImpactVfx: {fileID: 5112403345868107898, guid: 6f34ef0d986e9db4199cf75805f79753, type: 3}
   flameBreathSfx: {fileID: 0}
@@ -467,6 +497,7 @@ MonoBehaviour:
   whiffAttackPenalty: -0.4
   takeDamagePenalty: -0.8
   deathPenalty: -3
+  respawnBossOnDeath: 1
   lockNormalSpeed: 1
 --- !u!114 &7629390967331010991
 MonoBehaviour:

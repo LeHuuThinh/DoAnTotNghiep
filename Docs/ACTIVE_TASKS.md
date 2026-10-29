@@ -207,6 +207,7 @@
   - **Phản Hồi Combat Souls-like & Chuẩn Bị Cho ML-Agents (ML-02):**
     + *Chớp đỏ GPU khi trúng kiếm:* Tự động liên kết `Health.onTakeDamage` và điều khiển toàn bộ MeshRenderers/SkinnedMeshRenderers qua `MaterialPropertyBlock` (thời gian 0.12s, màu đỏ tươi), bảo toàn 100% SRP Batcher.
     + *Xử lý tử trận chuẩn xác:* Tự động liên kết `Health.onDeath` -> `Die()` kích hoạt trigger animation `Dead`, vô hiệu hóa Collider và Rigidbody để ngưng nhận đòn, dọn dẹp effect lửa/aura.
+    + *Hệ thống Thanh chịu đòn Poise (500) & Suy yếu (WeakenIG):* Boss sở hữu 500 điểm Poise, bị bào mòn theo độ uy lực đòn đánh của Player (35 - 100 Poise). Khi Poise = 0 kích hoạt WeakenIG bước lùi hết trọn vẹn clip hoạt ảnh duy nhất 1 lần và lập tức tiếp tục chiến đấu tại vị trí mới; nếu máu tụt <= 50% HP hủy ngay để chuyển Phase 2 cuồng nộ.
     + *Hệ thống Cooldowns & API cho AI / ML-Agents:* Bổ sung thời gian hồi chiêu cho 7 kỹ năng (`attack1: 1.5s`, `gumo: 6.0s`, `flame: 8.0s`, `jump: 7.0s`, `run: 6.0s`, `attackLT: 5.0s`, `iceBall: 7.0s`) cùng các API `CanCastAttack`, `GetCooldownNormalized`, `GetRemainingCooldown` phục vụ trực tiếp vector quan sát cho Agent ML-02.
     + *Khóa mục tiêu & Di chuyển thông minh:* `autoFindPlayer = true`, `alwaysFacePlayer = true`, `facePlayerSpeed = 240 deg/s`, `facePlayerOnAttack = true`, `strafeMode = true`.
   - **Công Cụ Tự Động Hóa Unity Editor:** Tích hợp tool `IceGolemSetupEditor.cs` tại 3 menu:

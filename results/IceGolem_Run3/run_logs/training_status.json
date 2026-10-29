@@ -27,15 +27,24 @@
                 "auxillary_file_paths": [
                     "results\\IceGolem_Run3\\IceGolemSoulsAI\\IceGolemSoulsAI-12955.pt"
                 ]
+            },
+            {
+                "steps": 134046,
+                "file_path": "results\\IceGolem_Run3\\IceGolemSoulsAI\\IceGolemSoulsAI-134046.onnx",
+                "reward": 22.030887921651203,
+                "creation_time": 1793084571.4060864,
+                "auxillary_file_paths": [
+                    "results\\IceGolem_Run3\\IceGolemSoulsAI\\IceGolemSoulsAI-134046.pt"
+                ]
             }
         ],
         "final_checkpoint": {
-            "steps": 12955,
+            "steps": 134046,
             "file_path": "results\\IceGolem_Run3\\IceGolemSoulsAI.onnx",
-            "reward": 21.012999534606934,
-            "creation_time": 1793041762.9333084,
+            "reward": 22.030887921651203,
+            "creation_time": 1793084571.4060864,
             "auxillary_file_paths": [
-                "results\\IceGolem_Run3\\IceGolemSoulsAI\\IceGolemSoulsAI-12955.pt"
+                "results\\IceGolem_Run3\\IceGolemSoulsAI\\IceGolemSoulsAI-134046.pt"
             ]
         }
     },

@@ -29,6 +29,10 @@ public class IceGolemBattleArena : MonoBehaviour
     [Tooltip("Khoảng cách mặc định giữa Player và Boss nếu không đặt SpawnPoint (mét)")]
     [SerializeField] private float defaultResetDistance = 12f;
 
+    [Header("=== CÀI ĐẶT HỒI SINH (RESPAWN) ===")]
+    [Tooltip("Nếu false, khi Boss chết sẽ nằm gục luôn, không hồi sinh để tiếp tục train")]
+    [SerializeField] private bool respawnBossOnDeath = true;
+
     [Header("=== CÀI ĐẶT HIỆP ĐẤU ===")]
     [Tooltip("Ngưỡng máu bảo hiểm của Player (dưới ngưỡng này tính là Boss thắng hiệp)")]
     [SerializeField] private float playerDefeatHpThreshold = 5f;
@@ -89,7 +93,16 @@ public class IceGolemBattleArena : MonoBehaviour
         // 2. Kiểm tra Player thắng hiệp (Boss cạn máu)
         else if (bossHealth.CurrentHealth <= 0.1f)
         {
-            StartCoroutine(RoundEndRoutine(isBossWinner: false));
+            if (respawnBossOnDeath)
+            {
+                StartCoroutine(RoundEndRoutine(isBossWinner: false));
+            }
+            else
+            {
+                // Boss chết thì chết luôn, không hồi sinh để tiếp tục train
+                isRoundTransitioning = true;
+                enabled = false;
+            }
         }
     }
 
