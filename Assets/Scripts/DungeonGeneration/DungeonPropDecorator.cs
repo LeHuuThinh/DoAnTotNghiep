@@ -284,6 +284,15 @@ public partial class DungeonPropDecorator : MonoBehaviour
   public GameObject floorTorchPrefab;      // torch_lit.prefab
   public GameObject bossCauldronPrefab;    // Cauldron_Fire.prefab (Vạc lửa khổng lồ rực cháy)
   public GameObject bossGatePrefab;        // BossGate.prefab (Đại Môn Phong Ấn & Cổng Sương Mù)
+  [Header("Prefabs Boss & Bục Đấu Trường (Task D02-4)")]
+  public GameObject bossPedestalPrefab;    // BossPedestal.prefab
+  public GameObject bossCharacterPrefab;   // Boss_IceGolem.prefab
+  [Tooltip("Góc xoay Y của Bục Đá (độ, tùy chỉnh theo mặt trước bục)")]
+  public float bossPedestalRotationY = 0f;
+  [Tooltip("Góc xoay Y của Boss trên bục (độ, mặc định 180 để quay mặt về hướng Nam nhìn ra cửa lớn)")]
+  public float bossRotationY = 180f;
+  [Tooltip("Khoảng cách lùi vào từ mép tường Bắc cho Bục Đá (mét)")]
+  public float bossPedestalNorthOffset = 3.5f;
   public List<GameObject> candlePrefabs = new List<GameObject>();
 
   [Header("Prefabs Đồ Treo Tường (Wall Decor)")]
@@ -331,6 +340,14 @@ public partial class DungeonPropDecorator : MonoBehaviour
     if (bossGatePrefab == null)
     {
       bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/BossGate.prefab");
+    }
+    if (bossPedestalPrefab == null)
+    {
+      bossPedestalPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/BossPedestal.prefab");
+    }
+    if (bossCharacterPrefab == null)
+    {
+      bossCharacterPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Boss/IceGolem/Boss_IceGolem.prefab");
     }
 #endif
   }
@@ -777,6 +794,9 @@ public partial class DungeonPropDecorator : MonoBehaviour
     // 2.6 DỰNG ĐẠI MÔN PHONG ẤN (BOSS GATE SCALE 2.5X) TẠI CỬA NGÕ PHÒNG BOSS (TASK D02-3)
     SpawnBossGate(data, room, roomPropsObj.transform, tileSize);
 
+    // 2.7 SINH BỤC ĐÁ (BOSSPEDESTAL) & BOSS ICE GOLEM TRÊN BỤC (TASK D02-4)
+    SpawnBossArenaEntities(data, room, roomPropsObj.transform, tileSize);
+
     // TUYỆT ĐỐI KHÔNG GỌI:
     // - DecorateRoomTemplates (không sinh tường vỡ, lều trại)
     // - DecorateRoomFurniture (không sinh bàn ghế, kệ tủ bừa bãi)
@@ -1067,4 +1087,89 @@ public partial class DungeonPropDecorator : MonoBehaviour
 
     Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> 🚪 Đã khởi tạo hoàn chỉnh Đại Môn Boss tại {gatePos} (Scale 2.5x)");
   }
+
+  /// <summary>
+  /// Tự động sinh Bục Đá (BossPedestal) tại vách đối diện cửa vào (vách Bắc) và sinh Boss Ice Golem trên bục (Task D02-4)
+  /// </summary>
+  private void SpawnBossArenaEntities(DungeonData data, RoomData room, Transform roomPropsRoot, float tileSize)
+  {
+    if (bossPedestalPrefab == null)
+    {
+#if UNITY_EDITOR
+      bossPedestalPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/BossPedestal.prefab");
+#endif
+    }
+
+    if (bossCharacterPrefab == null)
+    {
+#if UNITY_EDITOR
+      bossCharacterPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Boss/IceGolem/Boss_IceGolem.prefab");
+#endif
+    }
+
+    // Tọa độ bục đá: Đặt tại vách đối diện cửa vào (vách Bắc của phòng Boss)
+    // Căn giữa theo trục X của phòng, trục Z lùi theo bossPedestalNorthOffset từ mép vách Bắc
+    float pedestalX = (room.bounds.x + room.bounds.width / 2.0f) * tileSize;
+    float northWallZ = (room.bounds.y + room.bounds.height) * tileSize;
+    float pedestalZ = northWallZ - bossPedestalNorthOffset;
+    Vector3 pedestalPos = new Vector3(pedestalX, 0f, pedestalZ);
+
+    // Bục quay mặt về hướng Nam (mặc định 0 độ để đón Player từ cửa Nam đi vào)
+    Quaternion pedestalRot = Quaternion.Euler(0f, bossPedestalRotationY, 0f);
+
+    GameObject pedestalObj = null;
+    if (bossPedestalPrefab != null)
+    {
+      pedestalObj = Instantiate(bossPedestalPrefab, pedestalPos, pedestalRot, roomPropsRoot);
+      pedestalObj.name = "BossArena_Pedestal";
+
+      // Gắn NavMeshModifier để Boss và quái không leo lộn xộn lên bệ đá sau khi nhảy xuống
+      var navMod = pedestalObj.GetComponent<Unity.AI.Navigation.NavMeshModifier>();
+      if (navMod == null) navMod = pedestalObj.AddComponent<Unity.AI.Navigation.NavMeshModifier>();
+      navMod.overrideArea = true;
+      navMod.area = 1; // 1 = Not Walkable
+      navMod.applyToChildren = true;
+
+      Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> 🏛️ Đã dựng Bục Đá Boss (BossPedestal) tại {pedestalPos} (Vách Bắc, quay về Nam)");
+    }
+
+    // Tọa độ sinh Boss: Ưu tiên socket [Boss_Socket] trên bục
+    Vector3 bossSpawnPos = pedestalPos + new Vector3(0f, 12f, 0f);
+    Quaternion bossSpawnRot = Quaternion.Euler(0f, bossRotationY, 0f);
+
+    if (pedestalObj != null)
+    {
+      Transform socket = FindSocketRecursive(pedestalObj.transform, "[Boss_Socket]");
+      if (socket != null)
+      {
+        bossSpawnPos = socket.position;
+        bossSpawnRot = Quaternion.Euler(0f, bossRotationY, 0f);
+      }
+    }
+
+    if (bossCharacterPrefab != null)
+    {
+      GameObject bossObj = Instantiate(bossCharacterPrefab, bossSpawnPos, bossSpawnRot, roomPropsRoot);
+      bossObj.name = "Boss_IceGolem";
+
+      IceGolemController bossCtrl = bossObj.GetComponent<IceGolemController>();
+      if (bossCtrl != null)
+      {
+        bossCtrl.SetStandbyOnPedestal(true);
+      }
+      Debug.Log($"<color=cyan>[DungeonPropDecorator]</color> ❄️ Đã sinh Boss Ice Golem trên đỉnh Bục Đá (Y = {bossSpawnPos.y:F1}) tại {bossSpawnPos}");
+    }
+  }
+
+  private Transform FindSocketRecursive(Transform parent, string socketName)
+  {
+    if (parent.name.Contains(socketName)) return parent;
+    for (int i = 0; i < parent.childCount; i++)
+    {
+      Transform res = FindSocketRecursive(parent.GetChild(i), socketName);
+      if (res != null) return res;
+    }
+    return null;
+  }
+
 }

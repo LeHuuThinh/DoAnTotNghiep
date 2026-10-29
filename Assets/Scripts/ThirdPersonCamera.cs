@@ -609,6 +609,11 @@ public class ThirdPersonCamera : MonoBehaviour
         return;
       }
 
+      if (AdminCheatManager.IsOpen)
+      {
+        return;
+      }
+
       Cursor.lockState = CursorLockMode.Locked;
       Cursor.visible = false;
     }

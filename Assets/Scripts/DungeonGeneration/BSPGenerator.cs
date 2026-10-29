@@ -19,6 +19,13 @@ public class BSPGenerator : MonoBehaviour
   [Header("Cài đặt Hành lang")]
   public int corridorThickness = 2;
 
+  [Header("Cài đặt Phòng Chức Năng (Treasure / Shrine)")]
+  [Tooltip("Tỷ lệ các phòng ngách cụt (Dead-Ends) trở thành phòng kho báu (Mặc định: 0.75 = 75%)")]
+  [Range(0.2f, 1.0f)] public float deadEndTreasureChance = 0.75f;
+
+  [Tooltip("Số lượng phòng kho báu (Treasure Room) tối thiểu cần có nếu có đủ ngách cụt (Mặc định: 3)")]
+  [Range(1, 6)] public int minTreasureRooms = 3;
+
   [Header("Cài đặt Đấu Trường Boss (Boss Arena)")]
   [Tooltip("Kích thước tối thiểu cho Node chứa phòng Boss (tile) để ngăn cắt nhỏ")]
   public int bossNodeMinSize = 48;
@@ -70,7 +77,9 @@ public class BSPGenerator : MonoBehaviour
     data.bossRoomBounds = bossRoomRect;
     data.rooms.Add(bossRoomRect);
 
-    RectInt bossAvenue = new RectInt(aveX, aveY, aveThick, aveLen);
+    // Cắm ngập 2 ô (4m) vào lòng phòng Boss để triệt tiêu hoàn toàn khe hở viền trên Minimap
+    int avenueBossOverlap = 2;
+    RectInt bossAvenue = new RectInt(aveX, aveY, aveThick, aveLen + avenueBossOverlap);
     data.bossCorridor = bossAvenue;
     data.corridors.Add(bossAvenue);
 
@@ -102,7 +111,7 @@ public class BSPGenerator : MonoBehaviour
     BakeGrid(data);
 
     // 6. PHÂN TÍCH ĐỒ THỊ PHÒNG, GẮN GÁC LỬNG & THIẾT LẬP CỘT ĐẤU TRƯỜNG
-    DungeonRoomAnalyzer.Analyze(data, startDoorMarker, tileSize, corridorThickness, mezzanineSettings);
+    DungeonRoomAnalyzer.Analyze(data, startDoorMarker, tileSize, corridorThickness, mezzanineSettings, minTreasureRooms, deadEndTreasureChance);
 
     return data;
   }
@@ -244,13 +253,27 @@ public class BSPGenerator : MonoBehaviour
 
   void CreateCorridorSegment(int x1, int y1, int x2, int y2, DungeonData data, int thickness)
   {
-    int startX = Mathf.Min(x1, x2);
-    int startY = Mathf.Min(y1, y2);
-    int width = Mathf.Abs(x1 - x2) + thickness;
-    int height = Mathf.Abs(y1 - y2) + thickness;
+    int minX = Mathf.Min(x1, x2);
+    int maxX = Mathf.Max(x1, x2);
+    int minY = Mathf.Min(y1, y2);
+    int maxY = Mathf.Max(y1, y2);
 
-    if (x1 == x2) startX -= thickness / 2;
-    else if (y1 == y2) startY -= thickness / 2;
+    int startX, startY, width, height;
+
+    if (x1 == x2) // Đoạn hành lang dọc
+    {
+      startX = x1 - thickness / 2;
+      startY = minY - thickness / 2;
+      width = thickness;
+      height = (maxY - minY) + thickness;
+    }
+    else // Đoạn hành lang ngang
+    {
+      startX = minX - thickness / 2;
+      startY = y1 - thickness / 2;
+      width = (maxX - minX) + thickness;
+      height = thickness;
+    }
 
     data.corridors.Add(new RectInt(startX, startY, width, height));
   }
@@ -280,45 +303,98 @@ public class BSPGenerator : MonoBehaviour
 
     if (leftRoom.width == 0 || rightRoom.width == 0) return;
 
-    // Jitter nhỏ (±25% bề ngang phòng nhỏ hơn) để hành lang không luôn thẳng giữa mà vẫn "organic"
-    int smallerSize = splitIsVertical
-      ? Mathf.Min(leftRoom.height, rightRoom.height)
-      : Mathf.Min(leftRoom.width,  rightRoom.width);
-    int jitter = Mathf.Max(0, Mathf.FloorToInt(smallerSize * 0.25f) - 1);
-
-    Vector2Int ptL = GetConnectionPoint(leftRoom,  splitIsVertical, fromRight: false, jitterRange: jitter);
-    Vector2Int ptR = GetConnectionPoint(rightRoom, splitIsVertical, fromRight: true,  jitterRange: jitter);
-
     if (splitIsVertical)
     {
-      // Hành lang ngang nối ptL → ptR, có thể thêm đoạn dọc ngắn nếu Y không khớp
-      if (ptL.y == ptR.y)
+      // Vách cắt dọc X = splitVal: leftRoom ở bên trái, rightRoom ở bên phải (hành lang chính nằm ngang)
+      // 1. Kiểm tra vùng giao nhau theo trục Y:
+      int overlapMinY = Mathf.Max(leftRoom.y + 1, rightRoom.y + 1);
+      int overlapMaxY = Mathf.Min(leftRoom.y + leftRoom.height - 2, rightRoom.y + rightRoom.height - 2);
+
+      if (overlapMinY <= overlapMaxY)
       {
-        // Thẳng hàng → 1 đoạn ngang duy nhất
-        CreateCorridorSegment(ptL.x, ptL.y, ptR.x, ptR.y, data);
+        // Có vùng giao thoa theo trục Y -> Ép thẳng hàng 100%!
+        // Tuyệt đối không sinh đoạn gãy 1 ô gây chồng đè khối nối L
+        int commonY = (overlapMinY + overlapMaxY) / 2;
+        int edgeL = leftRoom.x + leftRoom.width - 1;
+        int edgeR = rightRoom.x;
+
+        CreateCorridorSegment(edgeL, commonY, edgeR, commonY, data);
       }
       else
       {
-        // Lệch Y → chữ L qua điểm uốn tại biên cắt (splitVal)
-        CreateCorridorSegment(ptL.x, ptL.y, splitVal, ptL.y, data);
-        CreateCorridorSegment(splitVal, ptL.y, splitVal, ptR.y, data);
-        CreateCorridorSegment(splitVal, ptR.y, ptR.x, ptR.y, data);
+        // Hai phòng không giao nhau Y -> Bắt buộc phải rẽ chữ L (Z-shape qua splitVal)
+        // Ép khoảng cách giữa 2 điểm uốn tối thiểu >= corridorThickness + 2 để 2 khối nối L tách biệt hoàn toàn
+        int minSep = corridorThickness + 2;
+        int ptLy = Mathf.Clamp(leftRoom.y + leftRoom.height / 2, leftRoom.y + 1, leftRoom.y + leftRoom.height - 2);
+        int ptRy = Mathf.Clamp(rightRoom.y + rightRoom.height / 2, rightRoom.y + 1, rightRoom.y + rightRoom.height - 2);
+
+        if (Mathf.Abs(ptLy - ptRy) < minSep)
+        {
+          if (ptLy < ptRy)
+          {
+            ptLy = leftRoom.y + 1;
+            ptRy = rightRoom.y + rightRoom.height - 2;
+          }
+          else
+          {
+            ptLy = leftRoom.y + leftRoom.height - 2;
+            ptRy = rightRoom.y + 1;
+          }
+        }
+
+        int edgeL = leftRoom.x + leftRoom.width - 1;
+        int edgeR = rightRoom.x;
+
+        CreateCorridorSegment(edgeL, ptLy, splitVal, ptLy, data);
+        CreateCorridorSegment(splitVal, ptLy, splitVal, ptRy, data);
+        CreateCorridorSegment(splitVal, ptRy, edgeR, ptRy, data);
       }
     }
     else
     {
-      // Hành lang dọc nối ptL → ptR (ptL bên dưới, ptR bên trên)
-      if (ptL.x == ptR.x)
+      // Vách cắt ngang Y = splitVal: leftRoom ở bên dưới, rightRoom ở bên trên (hành lang chính nằm dọc)
+      // 1. Kiểm tra vùng giao nhau theo trục X:
+      int overlapMinX = Mathf.Max(leftRoom.x + 1, rightRoom.x + 1);
+      int overlapMaxX = Mathf.Min(leftRoom.x + leftRoom.width - 2, rightRoom.x + rightRoom.width - 2);
+
+      if (overlapMinX <= overlapMaxX)
       {
-        // Thẳng cột → 1 đoạn dọc duy nhất
-        CreateCorridorSegment(ptL.x, ptL.y, ptR.x, ptR.y, data);
+        // Có vùng giao thoa theo trục X -> Ép thẳng cột 100%!
+        // Tuyệt đối không sinh đoạn gãy 1 ô gây chồng đè khối nối L
+        int commonX = (overlapMinX + overlapMaxX) / 2;
+        int edgeBottom = leftRoom.y + leftRoom.height - 1;
+        int edgeTop = rightRoom.y;
+
+        CreateCorridorSegment(commonX, edgeBottom, commonX, edgeTop, data);
       }
       else
       {
-        // Lệch X → chữ L qua điểm uốn tại biên cắt (splitVal)
-        CreateCorridorSegment(ptL.x, ptL.y, ptL.x, splitVal, data);
-        CreateCorridorSegment(ptL.x, splitVal, ptR.x, splitVal, data);
-        CreateCorridorSegment(ptR.x, splitVal, ptR.x, ptR.y, data);
+        // Hai phòng không giao nhau X -> Bắt buộc phải rẽ chữ L (Z-shape qua splitVal)
+        // Ép khoảng cách giữa 2 điểm uốn tối thiểu >= corridorThickness + 2 để 2 khối nối L tách biệt hoàn toàn
+        int minSep = corridorThickness + 2;
+        int ptLx = Mathf.Clamp(leftRoom.x + leftRoom.width / 2, leftRoom.x + 1, leftRoom.x + leftRoom.width - 2);
+        int ptRx = Mathf.Clamp(rightRoom.x + rightRoom.width / 2, rightRoom.x + 1, rightRoom.x + rightRoom.width - 2);
+
+        if (Mathf.Abs(ptLx - ptRx) < minSep)
+        {
+          if (ptLx < ptRx)
+          {
+            ptLx = leftRoom.x + 1;
+            ptRx = rightRoom.x + rightRoom.width - 2;
+          }
+          else
+          {
+            ptLx = leftRoom.x + leftRoom.width - 2;
+            ptRx = rightRoom.x + 1;
+          }
+        }
+
+        int edgeBottom = leftRoom.y + leftRoom.height - 1;
+        int edgeTop = rightRoom.y;
+
+        CreateCorridorSegment(ptLx, edgeBottom, ptLx, splitVal, data);
+        CreateCorridorSegment(ptLx, splitVal, ptRx, splitVal, data);
+        CreateCorridorSegment(ptRx, splitVal, ptRx, edgeTop, data);
       }
     }
   }
@@ -329,7 +405,6 @@ public class BSPGenerator : MonoBehaviour
     Vector2Int gridDoorPos = new Vector2Int(Mathf.FloorToInt(startDoorMarker.position.x / tileSize), Mathf.FloorToInt(startDoorMarker.position.z / tileSize));
     RectInt closestRoom = data.rooms[0];
     float minDistance = float.MaxValue;
-    Vector2Int closestCenter = Vector2Int.zero;
 
     foreach (RectInt room in data.rooms)
     {
@@ -339,16 +414,32 @@ public class BSPGenerator : MonoBehaviour
       {
         minDistance = distance;
         closestRoom = room;
-        closestCenter = roomCenter;
       }
     }
-    CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, gridDoorPos.x, closestCenter.y, data);
-    CreateCorridorSegment(gridDoorPos.x, closestCenter.y, closestCenter.x, closestCenter.y, data);
+
+    // Điểm cắm vào mép dưới phòng gần nhất (Y = closestRoom.y), TUYỆT ĐỐI không đi sâu vào lòng phòng!
+    int halfThick = corridorThickness / 2;
+    int targetX = Mathf.Clamp(gridDoorPos.x, closestRoom.x + halfThick + 1, closestRoom.x + closestRoom.width - halfThick - 1);
+    int targetY = closestRoom.y;
+
+    if (gridDoorPos.x == targetX)
+    {
+      CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, targetX, targetY, data);
+    }
+    else
+    {
+      // Nếu lệch X, rẽ chữ L bên ngoài phòng trước khi cắm vào mép dưới
+      int midY = (gridDoorPos.y + targetY) / 2;
+      CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, gridDoorPos.x, midY, data);
+      CreateCorridorSegment(gridDoorPos.x, midY, targetX, midY, data);
+      CreateCorridorSegment(targetX, midY, targetX, targetY, data);
+    }
   }
 
   void ConnectGrandBossAvenue(DungeonData data, int aveX, int aveY, int aveThick, int aveLen)
   {
-    Vector2Int mouthCenter = new Vector2Int(aveX + aveThick / 2, aveY);
+    int mouthX = aveX + aveThick / 2;
+    Vector2Int mouthCenter = new Vector2Int(mouthX, aveY);
 
     RectInt bestRoom = default;
     float bestScore = float.MaxValue;
@@ -376,18 +467,26 @@ public class BSPGenerator : MonoBehaviour
       data.bossPrevRoomBounds = bestRoom;
       Vector2Int bestCenter = new Vector2Int(bestRoom.x + bestRoom.width / 2, bestRoom.y + bestRoom.height / 2);
 
-      // 1. Tiền sảnh vòm (Entrance Vestibule) mở rộng toàn bộ bề ngang aveThick tại miệng đại lộ (Y = aveY - 2 đến aveY)
-      // Giúp 100% các ô ở mép Nam đại lộ aveY đều có sàn bên dưới (mapGrid = 1), tuyệt đối không sinh tường đá bịt ngang lối vào!
-      int vestH = 2;
-      int vestY = aveY - vestH;
-      RectInt vestibule = new RectInt(aveX, vestY, aveThick, vestH);
-      data.corridors.Add(vestibule);
+      // Kết nối trực tiếp từ phòng kề bestRoom vào thẳng tâm miệng Đại Lộ Boss (mouthX, aveY)
+      // Nếu phòng kề bao trùm cột mouthX -> cắm thẳng 1 đoạn dọc duy nhất, ngập sâu 2 ô vào Đại Lộ (aveY + 2)
+      if (mouthX >= bestRoom.x + 1 && mouthX <= bestRoom.x + bestRoom.width - 2)
+      {
+        int startY = bestRoom.y + bestRoom.height - 1;
+        CreateCorridorSegment(mouthX, startY, mouthX, aveY + 2, data, corridorThickness);
+      }
+      else
+      {
+        // Nếu lệch cột X: Rẽ 3 đoạn vuông góc chuẩn chỉnh từ mép trên phòng lên miệng Đại Lộ
+        int bestRoomTop = bestRoom.y + bestRoom.height - 1;
+        int turnY = (bestRoomTop + aveY) / 2;
+        turnY = Mathf.Clamp(turnY, bestRoomTop + 1, aveY - 2);
 
-      // 2. Nối từ phòng kề bestRoom lên đáy tiền sảnh vestY tại cột mouthCenter.x
-      // Đoạn 1: Đi từ tâm phòng bestCenter.x, bestCenter.y lên tới hàng vestY (tại cột bestCenter.x)
-      // Đoạn 2: Đi ngang từ bestCenter.x sang mouthCenter.x (tại hàng vestY)
-      CreateCorridorSegment(bestCenter.x, bestCenter.y, bestCenter.x, vestY, data, corridorThickness);
-      CreateCorridorSegment(bestCenter.x, vestY, mouthCenter.x, vestY, data, corridorThickness);
+        int startX = Mathf.Clamp(bestCenter.x, bestRoom.x + 1, bestRoom.x + bestRoom.width - 2);
+
+        CreateCorridorSegment(startX, bestRoomTop, startX, turnY, data, corridorThickness);
+        CreateCorridorSegment(startX, turnY, mouthX, turnY, data, corridorThickness);
+        CreateCorridorSegment(mouthX, turnY, mouthX, aveY + 2, data, corridorThickness);
+      }
 
       Debug.Log($"<color=cyan>[BSPGenerator]</color> 🏛️ Đã kết nối Đại Lộ Boss (Dài {aveLen * tileSize}m) vào phòng kề: X={bestRoom.x}, Y={bestRoom.y}");
     }

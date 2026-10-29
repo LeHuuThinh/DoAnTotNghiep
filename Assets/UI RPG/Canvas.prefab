@@ -11228,12 +11228,21 @@ MonoBehaviour:
   toggleKey: 109
   freezePlayerWhenOpen: 0
   unlockCursorWhenOpen: 1
+  centerOnPlayerOnOpen: 1
+  defaultZoomOnOpen: 2
   autoFitScreenOnOpen: 1
   backgroundDimAlpha: 0.9
   roomBorderSprite: {fileID: 21300000, guid: 20fc858a9b32cad4da9c8346723ae3c7, type: 3}
   roomFillSprite: {fileID: 21300000, guid: 8ed4918b74dc64a4dad3d9e81bc86cd3, type: 3}
   corridorBorderSprite: {fileID: 21300000, guid: 9578be4232afe15449594cff3de4519b, type: 3}
   corridorFillSprite: {fileID: 21300000, guid: a1fbc4efa8f8f5f4cbed36ab36668266, type: 3}
+  corridorBorderLSprite: {fileID: 21300000, guid: f5716bdacdaf381449cac0e1a8c707c5, type: 3}
+  corridorFillLSprite: {fileID: 21300000, guid: b58ef42cb0f5e3244bc8702098e87ea1, type: 3}
+  corridorBorderTSprite: {fileID: 21300000, guid: d86853d458b06e34693dd19436c0baa9, type: 3}
+  corridorFillTSprite: {fileID: 21300000, guid: 91eb6b5370218b54a86c00d18546a3f9, type: 3}
+  junctionSizeOffset: 0
+  enableJunctionFloorBase: 1
+  junctionFloorBasePadding: -3
   playerIconSprite: {fileID: 21300000, guid: 171b8150f00a72340b1b7aad375c084a, type: 3}
   bossIconSprite: {fileID: 21300000, guid: a60a6d83a445adc4cb7d2c3a20068894, type: 3}
   keyIconSprite: {fileID: 21300000, guid: c3b9783531a05c64eb13ef3cfad819e1, type: 3}
@@ -11264,12 +11273,15 @@ MonoBehaviour:
   corridorBorderMultiplier: 16
   minCorridorThickness: 22
   corridorOverlapExtension: 5
+  corridorLengthTrim: 6
+  rotatePlayerMarker: 0
   pixelsPerTile: 8
-  roomIconSize: 60
+  roomIconSize: 45
+  bossIconSize: 96
   playerIconSize: 60
   zoomSpeed: 0.15
   minZoom: 1
-  maxZoom: 3
+  maxZoom: 3.5
   includeStarterRoom: 1
   starterRoomTileSize: {x: 14, y: 11}
 --- !u!1 &2756956990576264447

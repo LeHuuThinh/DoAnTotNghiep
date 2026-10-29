@@ -354,6 +354,8 @@ public class IceGolemController : MonoBehaviour
     private bool isIceBallCasting = false;
     private bool isInitialStartJumpDown = true;
     private bool hasTriggeredJumpDown = false;
+    private bool isCinematicStandby = false;
+    public bool IsCinematicStandby => isCinematicStandby;
     private Rigidbody rb;
     private Collider bossCollider;
     private Health health;
@@ -504,6 +506,12 @@ public class IceGolemController : MonoBehaviour
             EnsureBodyAuraLight();
         }
 
+        if (isCinematicStandby)
+        {
+            if (rb != null) rb.isKinematic = true;
+            return;
+        }
+
         // Tự tìm Player làm mục tiêu nếu chưa gán
         if (playerTarget == null && autoFindPlayer)
         {
@@ -535,6 +543,12 @@ public class IceGolemController : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        if (isCinematicStandby)
+        {
+            if (anim != null) anim.SetFloat(SpeedHash, 0f);
+            return;
+        }
 
         // Luôn bảo đảm có tham chiếu tới đối thủ Player
         if (playerTarget == null)
@@ -3021,4 +3035,117 @@ public class IceGolemController : MonoBehaviour
             auraLight.shadows = LightShadows.None;
         }
     }
+
+    // =========================================================================
+    // HỆ THỐNG ĐẠO DIỄN CUTSCENE INTRO & BỤC ĐÁ (TASK D02-4)
+    // =========================================================================
+
+    /// <summary>
+    /// Đặt Boss vào chế độ đứng yên trên bục đá chờ Cutscene mở màn
+    /// </summary>
+    public void SetStandbyOnPedestal(bool standby)
+    {
+        isCinematicStandby = standby;
+        if (standby)
+        {
+            hasTriggeredJumpDown = false;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+            if (anim != null) anim.SetFloat(SpeedHash, 0f);
+        }
+        else
+        {
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Kích hoạt cú nhảy JumpDown từ trên bục đá xuống sàn đấu trường (Task D02-4)
+    /// </summary>
+    public void PlayIntroJumpDownFromPedestal(Vector3 targetLandingPos, System.Action onLanded = null)
+    {
+        if (isJumpingDown) return;
+        hasTriggeredJumpDown = true;
+        StartCoroutine(PedestalJumpDownRoutine(targetLandingPos, onLanded));
+    }
+
+    private IEnumerator PedestalJumpDownRoutine(Vector3 targetLandingPos, System.Action onLanded)
+    {
+        isJumpingDown = true;
+
+        bool originalKinematic = rb != null && rb.isKinematic;
+        bool originalGravity = rb != null && rb.useGravity;
+        if (rb != null)
+        {
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        Vector3 startPos = transform.position;
+
+        // Xoay mặt nhìn về phía điểm tiếp đất
+        Vector3 toLanding = targetLandingPos - startPos;
+        toLanding.y = 0f;
+        if (toLanding.sqrMagnitude > 0.1f)
+        {
+            transform.rotation = Quaternion.LookRotation(toLanding.normalized);
+        }
+
+        anim.SetTrigger(JumpDownHash);
+
+        float fallTimer = 0f;
+        float duration = Mathf.Max(1.15f, jumpDownFallDuration);
+        while (fallTimer < duration)
+        {
+            fallTimer += Time.deltaTime;
+            float t = Mathf.Clamp01(fallTimer / duration);
+
+            Vector3 currentPos = Vector3.Lerp(startPos, targetLandingPos, t);
+            float curveT = jumpDownFallCurve != null ? jumpDownFallCurve.Evaluate(t) : (t * t);
+            float currentY = Mathf.Lerp(startPos.y, targetLandingPos.y, curveT);
+
+            // Cung nhảy nhẹ nhún lên 1.2m
+            currentY += Mathf.Sin(t * Mathf.PI) * 1.2f;
+
+            currentPos.y = currentY;
+            transform.position = currentPos;
+            yield return null;
+        }
+
+        transform.position = targetLandingPos;
+
+        if (rb != null)
+        {
+            rb.isKinematic = originalKinematic;
+            rb.useGravity = originalGravity;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+        }
+
+        OnJumpDownImpact(targetLandingPos);
+
+        isJumpingDown = false;
+        onLanded?.Invoke();
+    }
+
+    /// <summary>
+    /// Kích hoạt đòn phun băng chào sân trong Cutscene mở màn
+    /// </summary>
+    public void PlayIntroBreath(System.Action onFinished = null)
+    {
+        StartCoroutine(IntroBreathRoutine(onFinished));
+    }
+
+    private IEnumerator IntroBreathRoutine(System.Action onFinished)
+    {
+        yield return StartCoroutine(FlameBreathRoutine());
+        onFinished?.Invoke();
+    }
+
 }

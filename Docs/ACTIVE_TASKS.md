@@ -119,8 +119,20 @@
   - [x] **D02-3: Đại Môn Phong Ấn (Boss Door) & Cổng Sương Mù (Fog Gate Lock-in):**
     - Dựng cửa lớn scale 2.5x tại lối vào phòng Boss, yêu cầu Chìa Khóa Hầm Ngục và giữ F (2.5s) để mở.
     - Tự động đóng cửa và kích hoạt rào chắn sương mù khi người chơi bước vào đấu trường, khóa chặt đường lui.
-  - [ ] **D02-4: Đạo Diễn Đấu Trường (Arena Director), Boss JumpDown Giáng Trần & Thanh Máu Souls HUD:**
-    - Intro hoành tráng: Boss Ice Golem tung chiêu JumpDown từ độ cao 16m giáng xuống rung đất, kích hoạt thanh máu Boss khổng lồ ở cạnh dưới màn hình.
+  - [x] **D02-4: Đạo Diễn Đấu Trường (Arena Director), Boss JumpDown Giáng Trần & Thanh Máu Souls HUD:**
+    - **Sinh Bục Đá & Boss PCG (`DungeonPropDecorator.cs`):** Tự động sinh `BossPedestal.prefab` tại vách đối diện cửa vào (vách Bắc phòng Boss, Y = 0), gắn `NavMeshModifier(area = 1 - Not Walkable)`. Quét socket `[Boss_Socket]` trên đỉnh bục cao 12m và tự động sinh `Boss_IceGolem.prefab` tại đây ở chế độ ngủ đông đứng yên `SetStandbyOnPedestal(true)`.
+    - **Giao Diện Thanh Máu & Diễn Hoạt Tên Trùm (`BossHUDController.cs`):**
+      + Quản lý cụm `BossHP` ở đỉnh màn hình: Đổi thanh `Fill` sang màu xanh băng tuyết (`frostHpColor`), liên kết cập nhật máu thời gian thực theo `Health.cs` của Boss.
+      + Diễn hoạt typography Souls-like đỉnh cao: Banner và Tên trùm xuất hiện hoành tráng ở giữa màn hình (`IceGolemName`), giữ 1.2s để người chơi đọc tên, sau đó Banner mờ dần biến mất trong khi dòng chữ Tên vừa bay lên phía trên thanh máu vừa thu nhỏ lại vừa vặn.
+    - **Bộ Đạo Diễn Cutscene Điện Ảnh 5 Pha (`BossIntroDirector.cs`):**
+      + Lắng nghe sự kiện `BossArenaTrigger.OnPlayerEnteredArena` khi Player bước qua Đại Môn.
+      + Khóa tạm thời Input Player (`PlayerController`, `PlayerCombat`).
+      + Pha 1: Camera cắt giật tới giữa phòng đấu trường, hiện thanh máu Boss màu xanh băng (chưa có tên).
+      + Pha 2: Camera lia mượt mà theo đường cong sang mạn phải (Right Flank 3/4 Low-Angle Heroic View) ngước nhìn lên đỉnh bục đá 12m nơi Boss đứng.
+      + Pha 3: Boss phóng mình nhảy `JumpDown` từ bục 12m giáng trần (camera lia hạ theo cú rơi) -> Tiếp đất rền vang kèm vụ nổ va chạm và Rung Màn Hình (Screen Shake) cực mạnh.
+      + Pha 4: Boss ngửa cổ thi triển đòn phun băng chào sân (`PlayIntroBreath`), cùng lúc kích hoạt hoạt ảnh Banner mờ dần và Tên trùm bay lên neo vững trên thanh máu.
+      + Pha 5: Kéo camera trượt êm ái (EaseInOut) từ đấu trường quay về sau vai Player, mở lại toàn bộ quyền điều khiển và kích hoạt Boss vào trạng thái chiến đấu.
+    - **Tự Động Hóa 1-Click Unity Editor & Runtime:** Tích hợp menu `Infinite Labyrinth -> Boss -> 7. Cấu Hình Cutscene Intro & Boss HUD (Task D02-4)` và cơ chế `[RuntimeInitializeOnLoadMethod]` tự động khởi chạy mượt mà ngay khi bấm Play Mode.
   - [ ] **D02-5: Hoàn Tất Chiến Thắng (Victory Fanfare), Rơi Thưởng Đại Lượng & Cổng Dịch Chuyển Tầng Kế:**
     - Hiển thị biểu ngữ 'VICTORY ACHIEVED', nổ tung vàng/đồ quý, mở lại cửa và kích hoạt Cổng Dịch Chuyển lựa chọn Về Làng hoặc Xuống Tầng 2.
 
@@ -330,4 +342,82 @@
 
 - [ ] **POL-01: Hệ thống Menu** (MainMenu, Settings, PauseMenu).
 - [ ] **POL-02: Âm thanh (SFX & BGM)** (Nhạc nền Làng yên bình, Nhạc nền Hầm ngục rùng rợn, Nhạc đấu Boss dồn dập; Tiếng va chạm kim loại, tiếng quái gầm).
-- [ ] **POL-03: Minimap / La bàn chỉ đường** định hướng trong Dungeon.
+- [x] **POL-03: Bản đồ Hầm ngục Toàn màn hình & Khám phá Sương mù (Fullscreen Procedural Dungeon Map)**
+  - **Kiến trúc & Điều khiển (`DungeonMapManager.cs`):**
+    + Bật/tắt bằng phím nóng `M`, hỗ trợ phím `Esc` để đóng nhanh. Bản đồ nằm ở đáy Canvas (`SetAsFirstSibling()`) bên dưới toàn bộ HUD/UI khác.
+    + Khi mở bản đồ, tự động đặt mức zoom mặc định là 2.0x (`defaultZoomOnOpen = 2.0f`) và căn giữa ngay vị trí người chơi (`centerOnPlayerOnOpen = true`), người chơi có thể tự do phóng to/thu nhỏ bằng con lăn chuột trong khoảng `1.0x` (`minZoom`) đến `3.5x` (`maxZoom`) và kéo chuột trái (Pan). Tự động giữ ổn định tâm nhìn của camera map khi zoom (`panOffset *= newZoom / currentZoom`).
+    + Hiển thị vị trí người chơi thời gian thực (`PlayerMarker`) cố định hướng thẳng đứng mặc định theo yêu cầu.
+  - **Dựng hình Phòng & Hành lang chuẩn BSP:**
+    + Dựng chính xác tỷ lệ và tọa độ theo kết quả phân hoạch BSP (`DungeonData`), bảo toàn hình dạng phòng chữ nhật góc vát sắc nét (`roomBorderMultiplier = 16`).
+    + Tự động ghép nối các mối nối **góc vuông chữ L**, **ngã ba chữ T** và **ngã tư 4 hướng** (`Corridor_Border_L/T`, `Corridor_Fill_L/T`) xoay tự động theo 4 hướng, áp dụng chuẩn **9-slice** (`border = 120`) đồng bộ hoàn hảo với hành lang thẳng.
+    + Tích hợp cơ chế thu nhẹ chiều dài đầu hành lang (`corridorLengthTrim = 6f`, 3px mỗi đầu) kết hợp lớp đệm đáy `FloorBase` đồng bộ màu khám phá (`theme.fillColor`), xóa sổ 100% các đường viền vàng cắt ngang ngã rẽ và các mấu nhô thừa.
+    + Sửa thuật toán `ConnectStartRoom` trong [`BSPGenerator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/BSPGenerator.cs) cắm chuẩn xác vào mép cửa dưới phòng khởi đầu (`closestRoom.y`), triệt tiêu hoàn toàn bóng hành lang đâm xuyên vào lòng sàn phòng.
+    + Căn tâm đoạn hành lang trong [`BSPGenerator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/BSPGenerator.cs) và triệt tiêu `corridorOverlapExtension` dư thừa, loại bỏ hoàn toàn các mấu nhô thừa thành dấu `+`.
+    + Thu hẹp khoảng cách gom cụm điểm giao (`<= 0.5f`) và hạ ngưỡng nhánh (`> 0`), đảm bảo 100% khúc cua L và ngã ba/tư đều được sinh block nối chính xác, không bị nuốt block hoặc nhô viền đen.
+    + Bổ sung nhóm cài đặt Inspector tùy chỉnh trực tiếp cho mối nối (`junctionSizeOffset`, `enableJunctionFloorBase`, `junctionFloorBasePadding`) với `junctionFloorBasePadding = -3f` thu gọn mép nền lùi sâu vào sau viền vàng, ngăn chặn triệt để hiện tượng phình to nền đen ra ngoài.
+    + Tách riêng kích thước icon Boss (`bossIconSize`, Range 16-96px, mặc định 48px) độc lập với các icon phòng thông thường (`roomIconSize = 36px`), cập nhật trực tiếp theo thời gian thực trong Play Mode qua `OnValidate()`.
+    + Khắc phục triệt để hiện tượng đứt gãy hành lang dẫn vào phòng Boss trong [`BSPGenerator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/BSPGenerator.cs) (`ConnectGrandBossAvenue`): Loại bỏ khối `vestibule` 6x2 thừa thãi; thiết lập hệ thống nối chuẩn mực cắm sâu 2 ô vào đáy đại lộ (`aveY + 2`), đồng thời kéo dài đại lộ cắm ngập 2 ô vào lòng phòng Boss (`aveLen + 2`) và bỏ `corridorLengthTrim` cho đại lộ trong [`DungeonMapManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/DungeonMap/DungeonMapManager.cs), giúp đại lộ rộng 12m kết nối liền lạc 100% không một khe hở.
+    + Khắc phục triệt để lỗi hành lang gãy khúc 1 ô làm 2 khối nối L chồng chéo lên nhau (`CreateCorridors` trong [`BSPGenerator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/BSPGenerator.cs)): Tự động kiểm tra vùng giao thoa của 2 phòng để ép thẳng hàng 100% (Snap to Straight) thành một đoạn thẳng duy nhất không có mối nối thừa; trường hợp bắt buộc phải rẽ chữ L (không giao nhau), thuật toán tự động ép cự ly uốn tối thiểu `>= corridorThickness + 2` ô (>= 4 ô = 8m) để 2 khối nối L luôn cách biệt rõ ràng, không bao giờ bị đè dính lên nhau.
+  - **Cơ chế Khám phá & Sương mù (Fog of War):**
+    + Trạng thái 3 cấp độ: *Chưa khám phá* (Unexplored - mờ tối), *Lân cận* (Adjacent - biết có phòng, sáng vừa), *Đã khám phá* (Explored - sáng rực vàng gold).
+    + Kích hoạt tự động Phòng khởi đầu (`StarterRoom`) và các hành lang dẫn vào phòng đầu tiên khi bắt đầu màn chơi.
+    + Khi người chơi bước vào phòng mới, kích hoạt sáng bừng phòng hiện tại kèm highlighter, mở sáng toàn bộ chuỗi hành lang liên hoàn (L-shape, Z-shape) và đánh dấu mờ các phòng lân cận qua đồ thị kề BFS (`adjacency`).
+    + Luôn hiển thị vị trí các Icon chức năng quan trọng: Phòng Boss (`Boss_Icon`), Phòng Chìa Khóa Tế Đàn duy nhất (`Key_Icon`), Phòng Kho Báu (`Treasure_Icon`).
+    + **Hệ thống Phân Bổ Phòng Kho Báu Cân Bằng (`deadEndTreasureChance = 0.75f`, `minTreasureRooms = 3`):** Cấu hình trực tiếp trên Inspector [`BSPGenerator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/BSPGenerator.cs) và thuật toán phân loại trong [`DungeonRoomAnalyzer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRoomAnalyzer.cs): Thiết lập tỷ lệ **75% cho các phòng ngách cụt (Dead-Ends)** trở thành Phòng Kho Báu (vẫn giữ mục tiêu tối thiểu 3 phòng nếu đủ ngách cụt). Loại bỏ hoàn toàn việc biến các phòng hành lang thông thường thành kho báu, giúp mật độ phòng kho báu luôn hài hòa (3 - 4 phòng).
+    + **Thử Thách Lính Gác Phòng Kho Báu (`treasureGuardSquadSize = SquadSize.Quad`):** Trong [`ProceduralEnemySpawner.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/ProceduralEnemySpawner.cs), phòng kho báu luôn chắc chắn sinh **ít nhất 4 quái tinh nhuệ** (1 Warrior, 1 Minion, 1 Rogue, 1 Mage) canh giữ rương báu (kèm thêm lính bắn tỉa nếu phòng có gác lửng tầng 2), gia tăng độ kịch tính và thử thách trước khi người chơi mở hòm báu.
+    + Toàn bộ bảng màu hiển thị có thể tùy chỉnh trực tiếp trên Inspector và cập nhật ngay trong Play Mode.
+
+---
+
+## 🚩 GIAI ĐOẠN 6: Công Cụ Kiểm Thử & Quản Trị Viên (Admin & Debug Tooling)
+
+- [x] **ADM-01: Lập trình Bộ Não Điều Hành Cheat, Safe Teleport & ReGenerate Hầm Ngục (`AdminCheatManager.cs`)**
+  - Quản lý Singleton `AdminCheatManager.Instance` hỗ trợ toàn cục trong game.
+  - Ma trận Dịch chuyển tức thời an toàn (Safe Teleport Matrix): Nắn chuẩn mặt sàn NavMesh và tạm ngắt `CharacterController` chống giật lag/rơi khỏi map:
+    + Teleport về Phòng Khởi Đầu (`TeleportToStartRoom`).
+    + Teleport về Đấu Trường Boss (`TeleportToBossRoom`).
+    + Teleport về Phòng Chìa Khóa / Tế Đàn (`TeleportToKeyRoom`).
+    + Teleport xoay vòng các Phòng Kho Báu (`TeleportToTreasureRoom`).
+    + Teleport lên Gác Lửng Tầng 2 (`TeleportToMezzanine`).
+  - Cơ chế Tái sinh Hầm ngục tức thời trong Play Mode (`RegenerateDungeon`): Tự động dọn quái cũ, dọn sạch props và geometry cũ, sinh seed mới, nướng lại NavMesh, đưa Player về Start an toàn không cần dừng Play Mode.
+  - Trừng phạt & Tiêu diệt quái vật: Tiêu diệt quái trong bán kính xung quanh Player (`KillEnemiesInRadius`) và diệt sạch toàn bộ hầm ngục (`KillAllEnemies`).
+  - Tích hợp kiểm tra `AdminCheatManager.IsOpen` vào [`ThirdPersonCamera.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/ThirdPersonCamera.cs) chống xung đột khóa chuột khi thao tác.
+
+- [x] **ADM-02: Bộ Cheats Chiến Đấu, Sinh Tồn & Tiến Trình RPG (Combat, God Mode & RPG Progression)**
+  - **Player God Mode (Bất Tử 100%):** Tích hợp cờ tĩnh `AdminCheatManager.IsGodMode` trực tiếp vào [`Health.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Health.cs), miễn nhiễm toàn bộ sát thương đòn đánh và tự động nạp đầy thanh máu.
+  - **Vô Hạn Thể Lực (Infinite Stamina):** Tích hợp cờ `AdminCheatManager.IsInfiniteStamina` vào [`PlayerStats.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerStats.cs) (`HasStamina`, `ConsumeStamina`, `ConsumeStaminaContinuous`), lăn né và chạy nước rút không giới hạn.
+  - **Vô Hạn 3 Sao Kỹ Năng (Infinite Spirit Stars):** Tích hợp cờ `AdminCheatManager.IsInfiniteSpirit` nạp đầy 150/150 Spirit trên [`PlayerStats.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerStats.cs), sẵn sàng spam liên tục chiêu E (Sóng kiếm) và Q (Nổ năng lượng).
+  - **Hồi Phục Toàn Diện (`FullHealAndRestore`):** Khôi phục tức thì 100% Máu, 100% Thể lực và 3 Sao Năng Lượng trong 1 nút bấm.
+  - **Tăng Tốc Di Chuyển Siêu Tốc (`CycleSuperSpeed`):** Bổ sung thuộc tính `SpeedMultiplier` trên [`PlayerController.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerController.cs) cho phép luân chuyển 4 mức tốc độ: 1.0x -> 1.8x -> 2.5x -> 3.5x.
+  - **Đóng Băng AI Quái Vật (`ToggleFreezeEnemies`):** Vô hiệu hóa AI `EnemyAIBase` và dừng `NavMeshAgent` toàn bộ quái vật lẫn Boss Ice Golem, biến quái thành bao cát tập luyện tĩnh để kiểm tra combo kiếm 3 đòn, đòn chém gồng, parry timing, vỡ thế poise và nháy trắng GPU.
+  - **Sinh Quái Thử Nghiệm 1v1 (`SpawnTestEnemy`):** Tự động sinh quái (Warrior, Minion, Rogue, Mage) cách Player 3.5m trên sàn NavMesh.
+  - **Bộ Cheats Kinh Tế & Tiến Trình RPG:**
+    + Thêm Chìa Khóa Hầm Ngục (`AddBossKey`): Bỏ thẳng `Item_Key_Dungeon` vào [`InventoryManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Inventory/InventoryManager.cs) để mở Đại Môn Boss mà không cần tìm nhặt.
+    + Thêm Vàng (`AddGold`): Thêm +1.000 hoặc +10.000 Vàng để test Thợ rèn và tẩy điểm.
+    + Thêm EXP (`AddExp`): Thêm +500 EXP vào [`PlayerProgression.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerProgression.cs) để test lên cấp và xem vòng tròn chữ C `ExpRingFill`.
+    + Thêm Điểm Tiềm Năng (`AddAttributePoints`): Thêm +10 điểm tiềm năng chưa phân bổ để test bảng modal thuộc tính.
+    + Thêm Bình Máu (`AddHealthPotions`) & Hỏa Long Kiếm Legendary (`AddLegendarySword`).
+
+- [x] **ADM-03: Giao Diện Người Dùng Admin Console UI (`AdminCheatUI.cs`) & Bật/Tắt Phím `~` (Tilde / Backquote)**
+  - Chuẩn hóa 100% giao diện sang Tiếng Anh (English UI): Tabs, Buttons, Subtitles, Badges, Toast & Log Messages.
+  - Bật/tắt mở đóng đồng bộ bằng phím `~` (Tilde / Backquote) hoặc phím `F1`, hỗ trợ phím `Esc` hoặc nút [✕] để đóng nhanh. Loại bỏ nút nổi góc trái để màn hình chơi game luôn gọn gàng.
+  - Đồng bộ đóng/mở Cửa sổ Debug thông tin góc trên-phải (`MiniDebugOverlay`) cùng lúc với bảng Admin Console (khi ấn `~` cả 2 cùng hiện, khi đóng cả 2 cùng ẩn).
+  - Tối ưu màu sắc Thanh điều hướng Navbar: Các nút tab khi được chọn (`isSelected`) luôn giữ màu chữ trắng tinh (`Color.white`) trên nền vàng hổ phách nổi bật, đảm bảo độ tương phản cao và cực kỳ dễ đọc.
+  - Tối ưu tọa độ Dịch chuyển tức thời an toàn (Safe Offset Teleport):
+    + Phòng Khởi Đầu: Dịch chuyển lùi về phía sau cửa 4.5m trong sảnh đón (`startDoorMarker.position - forward * 4.5f`), xoay mặt nhìn thẳng vào cửa hầm ngục.
+    + Đấu Trường Boss: Dịch chuyển đứng trước Đại Môn Boss 5.5m trên Đại Lộ (`gateZ - 5.5f`), xoay mặt nhìn thẳng vào cổng vòm uy nghi để sẵn sàng giữ F mở cửa bằng chìa khóa.
+  - Thiết kế bảng điều khiển phong cách Dark RPG bán trong suốt (460x620px), phân loại 5 tab chức năng:
+    + **Tab 1: Teleport:** Start Room, Boss Arena, Key Shrine, Treasure Rooms, Mezzanine 8m.
+    + **Tab 2: Dungeon:** Regenerate Dungeon (New Seed), Kill Nearby (25m), Kill All Enemies.
+    + **Tab 3: Player:** God Mode (Invulnerable), Infinite Stamina, Infinite Spirit, Full Heal & Restore, Move Speed Multiplier (1.0x - 3.5x).
+    + **Tab 4: Monsters:** Freeze Enemy AI (Training Dummy), Spawn Skeleton Warrior, Minion, Rogue, Mage.
+    + **Tab 5: RPG & Loot:** Add 1 Boss Key, Add +1,000 / +10,000 Gold, Add +500 EXP, Add +10 Attribute Points, Add 5 Health Potions, Add Dragonic Sword.
+  - Tự động cập nhật nhãn trạng thái ON/OFF thời gian thực (`[ON]`, `[OFF]`, `[FROZEN]`, `[ACTIVE]`).
+  - Thanh thông báo Toast Notification (`toastText`) hiển thị phản hồi tức thì bằng tiếng Anh mỗi khi thực thi cheat.
+
+- [x] **ADM-04: Công Cụ Tự Động Hóa 1-Click Unity Editor (`AdminCheatSetupEditor.cs`) & Kiểm Thử Toàn Diện**
+  - Tích hợp MenuItem trên thanh công cụ Unity: `Infinite Labyrinth -> Admin -> 1. Setup Admin Cheat Console (Hotkey ~)`.
+  - Tự động tạo hoặc kiểm tra `AdminCheatManager` trong Scene, nạp đầy đủ 5 ScriptableObjects Item mẫu và 4 Prefabs quái.
+  - Tự động dựng toàn bộ cây Canvas UI (`AdminCheatCanvas`, `AdminCheatPanel`), cài đặt EventSystem, nối dây 100% các nút bấm và nhãn TextMeshProUGUI.
+  - Tự động đóng gói và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
+

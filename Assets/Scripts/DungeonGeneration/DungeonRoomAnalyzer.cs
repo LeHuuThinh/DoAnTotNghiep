@@ -44,7 +44,7 @@ public class MezzanineSettings
 /// </summary>
 public static class DungeonRoomAnalyzer
 {
-  public static void Analyze(DungeonData data, Transform startDoorMarker, float tileSize, int corridorThickness = 2, MezzanineSettings settings = null)
+  public static void Analyze(DungeonData data, Transform startDoorMarker, float tileSize, int corridorThickness = 2, MezzanineSettings settings = null, int minTreasureRooms = 3, float deadEndTreasureChance = 0.75f)
   {
     if (data == null || data.rooms == null || data.rooms.Count == 0) return;
     if (settings == null) settings = new MezzanineSettings();
@@ -98,7 +98,7 @@ public static class DungeonRoomAnalyzer
     RunBFS(data, adjacency, tileSize);
 
     // 6. Phân loại các phòng còn lại & Thiết lập Gác lửng tầng 2
-    SetupRoomArchetypes(data, adjacency, tileSize, settings);
+    SetupRoomArchetypes(data, adjacency, tileSize, settings, minTreasureRooms, deadEndTreasureChance);
   }
 
   /// <summary>
@@ -413,7 +413,7 @@ public static class DungeonRoomAnalyzer
   /// <summary>
   /// Phân loại các phòng còn lại (Mezzanine, Treasure, Normal) và thiết kế gác lửng tầng 2
   /// </summary>
-  private static void SetupRoomArchetypes(DungeonData data, Dictionary<int, List<int>> adjacency, float tileSize, MezzanineSettings settings)
+  private static void SetupRoomArchetypes(DungeonData data, Dictionary<int, List<int>> adjacency, float tileSize, MezzanineSettings settings, int minTreasureRooms = 3, float deadEndTreasureChance = 0.75f)
   {
     // Phòng kề Boss (Tiền sảnh Đấu Trường - Grand Antechamber): Luôn là phòng lớn 1 tầng cao 8m thông thoáng,
     // không sinh gác lửng hay cầu thang để tạo lối tiến vào Đại Lộ Boss uy nghiêm, không bị che chắn hay va chạm!
@@ -451,10 +451,12 @@ public static class DungeonRoomAnalyzer
     if (deadEndCandidates.Count > 0)
     {
       data.keyRoom = deadEndCandidates[0];
+      deadEndCandidates.RemoveAt(0); // Phòng này dành riêng làm Key Room
     }
     else if (otherCandidates.Count > 0)
     {
       data.keyRoom = otherCandidates[0];
+      otherCandidates.RemoveAt(0);
     }
 
     if (data.keyRoom != null)
@@ -479,11 +481,63 @@ public static class DungeonRoomAnalyzer
       Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 🗝️ Selected Key Room (Dungeon Shrine): Room {data.keyRoom.id} (GraphDist={data.keyRoom.graphDistance}, Size={data.keyRoom.bounds.width}x{data.keyRoom.bounds.height} tiles, Mezzanine={data.keyRoom.hasMezzanine})");
     }
 
+    // --- 4. PHÂN BỔ PHÒNG KHO BÁU (TREASURE ROOMS - 75% CÁC PHÒNG NGÁCH CỤT) ---
+    // Ngách cụt trong RPG luôn là vị trí đặt rương báu phần thưởng tuyệt hảo nhất
+    List<RoomData> selectedTreasureRooms = new List<RoomData>();
+    List<RoomData> passedDeadEnds = new List<RoomData>();
+    List<RoomData> failedDeadEnds = new List<RoomData>();
+
+    foreach (var r in deadEndCandidates)
+    {
+      if (Random.value < deadEndTreasureChance)
+        passedDeadEnds.Add(r);
+      else
+        failedDeadEnds.Add(r);
+    }
+
+    selectedTreasureRooms.AddRange(passedDeadEnds);
+
+    // Nếu số phòng kho báu ngẫu nhiên < minTreasureRooms (3) nhưng vẫn còn phòng ngách cụt khác:
+    // Bổ sung thêm từ failedDeadEnds để đảm bảo đạt tối thiểu 3 phòng (nếu có đủ ngách cụt)
+    int targetTreasureCount = Mathf.Max(3, minTreasureRooms);
+    if (selectedTreasureRooms.Count < targetTreasureCount && failedDeadEnds.Count > 0)
+    {
+      foreach (var r in failedDeadEnds)
+      {
+        selectedTreasureRooms.Add(r);
+        if (selectedTreasureRooms.Count >= targetTreasureCount) break;
+      }
+    }
+
+    HashSet<RoomData> treasureSet = new HashSet<RoomData>(selectedTreasureRooms);
+    foreach (var tr in selectedTreasureRooms)
+    {
+      tr.type = RoomType.Treasure;
+
+      // Phòng Kho Báu vẫn có thể sinh Tầng 2 (Gác lửng Mezzanine) nếu đạt diện tích lớn
+      if (settings.enableMezzanine && tr.bounds.width >= settings.minRoomSize && tr.bounds.height >= settings.minRoomSize && Random.value < settings.spawnChance)
+      {
+        tr.ceilingHeight = 16f;
+        tr.hasMezzanine = true;
+        tr.mezzanineHeight = 8f;
+        CalculateMezzanineLayout(tr, tileSize, settings);
+      }
+      else
+      {
+        tr.ceilingHeight = 8f;
+        tr.hasMezzanine = false;
+      }
+
+      int conns = adjacency.ContainsKey(tr.id) ? adjacency[tr.id].Count : 0;
+      Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 💎 Assigned Treasure Room: Room {tr.id} (GraphDist={tr.graphDistance}, Conns={conns}, Size={tr.bounds.width}x{tr.bounds.height}, Mezzanine={tr.hasMezzanine})");
+    }
+
+    // --- 5. PHÂN BỔ CÁC PHÒNG CHIẾN ĐẤU CÒN LẠI (MEZZANINE HOẶC NORMAL) ---
     foreach (var room in data.roomDataList)
     {
-      if (room == data.startRoom || room == data.bossRoom || room == data.bossPrevRoom || room == data.keyRoom) continue;
+      if (room == data.startRoom || room == data.bossRoom || room == data.bossPrevRoom || room == data.keyRoom || treasureSet.Contains(room)) continue;
 
-      // 1. ƯU TIÊN SỐ 1: Phòng diện tích lớn đạt ngưỡng cấu hình minRoomSize -> Sinh Tầng 2 theo tỷ lệ spawnChance (50-60%)
+      // Phòng diện tích lớn đạt ngưỡng cấu hình minRoomSize -> Sinh Tầng 2 theo tỷ lệ spawnChance
       if (settings.enableMezzanine && room.bounds.width >= settings.minRoomSize && room.bounds.height >= settings.minRoomSize && Random.value < settings.spawnChance)
       {
         room.type = RoomType.Mezzanine;
@@ -495,20 +549,13 @@ public static class DungeonRoomAnalyzer
         continue;
       }
 
-      int connections = adjacency.ContainsKey(room.id) ? adjacency[room.id].Count : 0;
-
-      // 2. Các phòng nhỏ hơn nằm ở nhánh cụt (connections <= 1) -> Phòng Kho Báu (Treasure) hoặc Tế Đàn (Shrine)
-      if (connections <= 1)
-      {
-        room.type = (Random.value > 0.35f) ? RoomType.Treasure : RoomType.Shrine;
-        room.ceilingHeight = 8f; // Chiều cao tối thiểu 8m
-        continue;
-      }
-
-      // 3. Phòng chiến đấu thông thường: Chiều cao chuẩn 8m
+      // Phòng chiến đấu tiêu chuẩn: Chiều cao chuẩn 8m
       room.type = RoomType.Normal;
       room.ceilingHeight = 8f;
+      room.hasMezzanine = false;
     }
+
+    Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 🏆 Đã hoàn tất phân loại: {selectedTreasureRooms.Count} Phòng Kho Báu (Tối thiểu {targetTreasureCount}), 1 Phòng Key (Room {data.keyRoom?.id}), tổng cộng {data.roomDataList.Count} phòng.");
   }
 
   /// <summary>

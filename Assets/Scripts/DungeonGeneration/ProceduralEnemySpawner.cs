@@ -92,6 +92,9 @@ public class ProceduralEnemySpawner : MonoBehaviour
   [Tooltip("Bật sinh quái bảo vệ phòng kho báu / đền thờ")]
   public bool spawnGuardsInSpecialRooms = true;
 
+  [Tooltip("Kích thước đội lính gác phòng kho báu (Mặc định: Quad - chắc chắn ít nhất 4 quái tinh nhuệ canh giữ rương)")]
+  public SquadSize treasureGuardSquadSize = SquadSize.Quad;
+
   [Header("4. Định Vị & Giãn Cách Không Gian (Spatial Clustering)")]
   [Range(1.5f, 5.0f)]
   [Tooltip("Bán kính tụ tập của các thành viên trong cùng một nhóm (mét quanh tâm nhóm)")]
@@ -242,13 +245,31 @@ public class ProceduralEnemySpawner : MonoBehaviour
       List<Vector3> roomSpawnedPositions = new List<Vector3>();
       List<Vector3> roomSquadAnchors = new List<Vector3>();
 
-      // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine): 1 nhóm nhỏ (1 - 2 quái) làm lính gác
-      if (room.type == RoomType.Treasure || room.type == RoomType.Shrine)
+      // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine):
+      if (room.type == RoomType.Treasure)
       {
         if (spawnGuardsInSpecialRooms)
         {
-          SquadSize specialSize = (Random.value < 0.65f) ? SquadSize.Duo : SquadSize.Solo;
-          int spawned = SpawnSquad(room, false, specialSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "GuardSquad");
+          // Phòng kho báu luôn có ít nhất 4 quái (SquadSize.Quad) để tăng tính thử thách canh giữ rương báu
+          int spawned = SpawnSquad(room, false, treasureGuardSquadSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureGuards");
+          if (spawned > 0) totalSquads++;
+
+          // Nếu phòng kho báu có gác lửng Tầng 2, bổ sung thêm lính bắn tỉa trên ban công
+          if (room.hasMezzanine)
+          {
+            SquadSize mezSize = (Random.value < 0.5f) ? SquadSize.Duo : SquadSize.Solo;
+            int mezSpawned = SpawnSquad(room, true, mezSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureMezzanineGuards");
+            if (mezSpawned > 0) totalSquads++;
+          }
+        }
+      }
+      else if (room.type == RoomType.Shrine)
+      {
+        if (spawnGuardsInSpecialRooms)
+        {
+          // Phòng tế đàn chìa khóa (Key Room): Nhóm 3-4 quái bảo vệ
+          SquadSize shrineSize = (Random.value < 0.65f) ? SquadSize.Quad : SquadSize.Trio;
+          int spawned = SpawnSquad(room, false, shrineSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "ShrineGuards");
           if (spawned > 0) totalSquads++;
         }
       }

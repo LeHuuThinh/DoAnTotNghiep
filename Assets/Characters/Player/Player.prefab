@@ -1953,6 +1953,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   canMove: 1
+  speedMultiplier: 1
   moveSpeed: 4
   strafeSpeed: 4
   runSpeed: 8

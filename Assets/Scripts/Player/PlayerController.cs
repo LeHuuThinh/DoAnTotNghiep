@@ -6,6 +6,13 @@ public class PlayerController : MonoBehaviour
 {
     [Header("State")]
     public bool canMove = true;
+    [Tooltip("Hệ số nhân tốc độ di chuyển (Dùng cho Admin Super Speed hoặc Buff/Debuff)")]
+    public float speedMultiplier = 1.0f;
+    public float SpeedMultiplier
+    {
+        get => speedMultiplier;
+        set => speedMultiplier = Mathf.Max(0.1f, value);
+    }
 
     [Header("Movement Speeds")]
     [SerializeField] private float moveSpeed = 4f;
@@ -366,7 +373,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, rotationSpeed * Time.deltaTime);
                     }
 
-                    lockedAirVelocity = moveDir * strafeSpeed;
+                    lockedAirVelocity = moveDir * (strafeSpeed * speedMultiplier);
                 }
                 else
                 {
@@ -375,7 +382,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
                     }
 
-                    float currentSpeed = IsRunning ? runSpeed : moveSpeed;
+                    float currentSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
                     lockedAirVelocity = moveDir * currentSpeed;
                 }
 
@@ -414,7 +421,7 @@ public class PlayerController : MonoBehaviour
             // Cho phép điều chỉnh hướng nhẹ trên không (Air Control) giúp đáp sàn/cầu thang dễ dàng hơn
             if (airControl > 0f && desiredMoveDirection.sqrMagnitude > 0.001f)
             {
-                float targetSpeed = IsRunning ? runSpeed : moveSpeed;
+                float targetSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
                 Vector3 targetAirVel = desiredMoveDirection * targetSpeed;
                 lockedAirVelocity = Vector3.Lerp(lockedAirVelocity, targetAirVel, airControl * 6f * Time.deltaTime);
             }
@@ -429,7 +436,7 @@ public class PlayerController : MonoBehaviour
             // Lực ép xuống cần nhanh hơn vận tốc ngang một chút (tốc độ * 1.35f, tối thiểu 6f).
             // Với Walk = 4m/s -> ép -6f (nhẹ nhàng, mượt mà).
             // Với Run = 8m/s -> ép -11f (chân luôn dính khít mặt dốc, không bao giờ bị nhảy cóc hay tách rời sàn).
-            float curSpeed = IsRunning ? runSpeed : moveSpeed;
+            float curSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
             float groundStick = Mathf.Max(6f, curSpeed * 1.35f);
             finalVelocity.y = -groundStick;
         }

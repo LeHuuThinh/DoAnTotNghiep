@@ -68,6 +68,9 @@ public class Health : MonoBehaviour, IDamageable
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
+    // Admin Cheat: God Mode cho Player
+    if (CompareTag("Player") && AdminCheatManager.IsGodMode) return;
+
     LastAttacker = attacker;
 
     // 1. Kiểm tra nếu đòn đánh bị Parry hoặc Chặn đứng thành công -> MIỄN NHIỄM 100% SÁT THƯƠNG, KHÔNG TRỪ MÁU!

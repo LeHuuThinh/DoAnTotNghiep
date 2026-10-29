@@ -147,11 +147,13 @@ public class PlayerStats : MonoBehaviour
 
   public bool HasStamina(float amount)
   {
+    if (AdminCheatManager.IsInfiniteStamina) return true;
     return currentStamina >= amount;
   }
 
   public bool ConsumeStamina(float amount)
   {
+    if (AdminCheatManager.IsInfiniteStamina) return true;
     if (currentStamina < amount)
     {
       return false;
@@ -165,6 +167,7 @@ public class PlayerStats : MonoBehaviour
 
   public bool ConsumeStaminaContinuous(float amount)
   {
+    if (AdminCheatManager.IsInfiniteStamina) return true;
     if (currentStamina <= 0f)
     {
       return false;
@@ -189,11 +192,13 @@ public class PlayerStats : MonoBehaviour
 
   public bool HasSpirit(float amount)
   {
+    if (AdminCheatManager.IsInfiniteSpirit) return true;
     return currentSpirit >= amount;
   }
 
   public bool ConsumeSpirit(float amount)
   {
+    if (AdminCheatManager.IsInfiniteSpirit) return true;
     if (currentSpirit < amount)
     {
       return false;

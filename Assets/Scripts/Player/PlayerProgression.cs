@@ -197,6 +197,17 @@ namespace InfiniteLabyrinth.Progression
     }
 
     /// <summary>
+    /// Cộng thêm điểm tiềm năng chưa phân bổ (Dùng cho Admin / Level Up / Nhiệm vụ)
+    /// </summary>
+    public void AddUnallocatedPoints(int count)
+    {
+      if (count <= 0) return;
+      unallocatedPoints += count;
+      OnPointsChanged?.Invoke(unallocatedPoints);
+      Debug.Log($"<color=#FFE082>[PlayerProgression] Đã nhận +{count} Điểm Tiềm Năng! Tổng hiện tại: {unallocatedPoints}</color>");
+    }
+
+    /// <summary>
     /// Phân bổ điểm tiềm năng vào các thuộc tính
     /// </summary>
     public bool AllocatePoints(int addAtk, int addHp, int addStam)
