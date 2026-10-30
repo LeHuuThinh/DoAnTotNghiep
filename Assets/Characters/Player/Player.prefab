@@ -571,6 +571,10 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 768
+  hitImpactVfxPrefab: {fileID: 1035977224672214417, guid: f60dfdc7fc034f72b41dc3a2b75a3a44, type: 3}
+  hitImpactDestroyDelay: 1.5
+  hitImpactNormalOffset: 0.05
+  hitImpactScaleMultiplier: 1
   hitlagTimeScale: 0.05
   defaultLethalHitlag: 0.18
 --- !u!1 &1388358114080068217
@@ -1916,6 +1920,7 @@ GameObject:
   - component: {fileID: 6269426121722460428}
   - component: {fileID: 4698226416880465567}
   - component: {fileID: 6398846446710257264}
+  - component: {fileID: 5368507876461529506}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -2126,6 +2131,8 @@ MonoBehaviour:
   poiseRecoveryRate: 30
   parryHitlagDuration: 0.2
   parryTimeScale: 0.05
+  hitVfxPrefab: {fileID: 6823200998282874702, guid: 5eb0f2b3596c4364187316482650f753, type: 3}
+  vfxDestroyDelay: 2
   staggerDuration: 1
   knockbackDuration: 0.5
   staggerIFrameDuration: 0.35
@@ -2193,6 +2200,74 @@ MonoBehaviour:
   playerStats: {fileID: 0}
   characterController: {fileID: 0}
   animator: {fileID: 0}
+--- !u!114 &5368507876461529506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b555e4bd63e15fc478f7a06d2d2af154, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSlashVFX
+  defaultSlashVfxPrefab: {fileID: 5545173171955001552, guid: f8b707ce5df69ca4a9ea4c384a7b6c1a, type: 3}
+  slashSpawnRoot: {fileID: 7646714297203605862}
+  attack1Config:
+    attackName: Attack 1 (Diagonal Down-Left)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: 0.18, y: 1.18, z: 0.62}
+    rotationOffset: {x: -176.57, y: -92.12, z: -92.12}
+    scale: {x: 1, y: 1, z: 1}
+    lifetime: 0.8
+    parentToPlayer: 0
+  attack2Config:
+    attackName: Attack 2 (Slash Up-Right)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: -0.12, y: 1.15, z: 0.62}
+    rotationOffset: {x: -85.89, y: -183.54, z: 0.65}
+    scale: {x: 1.05, y: 1.05, z: 1.05}
+    lifetime: 0.8
+    parentToPlayer: 0
+  attack3Config:
+    attackName: Attack 3 (Horizontal Sweep Finisher)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: 0, y: 1.1, z: 0.68}
+    rotationOffset: {x: -176.57, y: -92.12, z: 0.09}
+    scale: {x: 1.25, y: 1.25, z: 1.25}
+    lifetime: 0.85
+    parentToPlayer: 0
+  chargeHit1Config:
+    attackName: Charge Hit 1 (Windup Slash)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: 0.15, y: 1.25, z: 0.6}
+    rotationOffset: {x: -176.57, y: -92.12, z: -45}
+    scale: {x: 1.1, y: 1.1, z: 1.1}
+    lifetime: 0.8
+    parentToPlayer: 0
+  chargeHit2Config:
+    attackName: Charge Hit 2 (Vertical Slam)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: 0, y: 0.95, z: 0.72}
+    rotationOffset: {x: -90, y: -92.12, z: -90}
+    scale: {x: 1.35, y: 1.35, z: 1.35}
+    lifetime: 0.9
+    parentToPlayer: 0
+  counterAttackConfig:
+    attackName: Counter Attack (Explosive Sweep)
+    customPrefab: {fileID: 0}
+    positionOffset: {x: 0, y: 1.15, z: 0.7}
+    rotationOffset: {x: -176.57, y: -92.12, z: -15}
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+    lifetime: 1
+    parentToPlayer: 0
+  showGizmosInEditor: 1
+  gizmoPreviewAttack: 0
+  gizmoColor: {r: 1, g: 0.9, b: 0.4, a: 0.75}
+  gameSpeed: 1
+  enableSlowMoHotkeys: 1
+  slowMoHoldScale: 0.15
 --- !u!1 &5454798165073531583
 GameObject:
   m_ObjectHideFlags: 0
@@ -3210,6 +3285,7 @@ MonoBehaviour:
   characterController: {fileID: 4791678739667565749}
   playerFeedback: {fileID: 6269426121722460428}
   playerStats: {fileID: 4698226416880465567}
+  playerSlashVFX: {fileID: 5368507876461529506}
   weaponHitbox: {fileID: 7164169299375368469}
   attack1Damage: 22
   attack2Damage: 22

@@ -65,6 +65,17 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ `ghostShrinkDelay = 0.5s` khi dính đòn.
   * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
   * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
+* **Giao Diện Thanh Máu Quái Vật World Space Souls-like (EnemyHealthBarUI.cs):**
+  * **Billboard 3D Thông Minh:** Tự động xoay mặt vuông góc 100% về phía Camera người chơi (CameraAligned), phẳng phiu và không bị méo lệch góc nhìn ở mọi hướng quan sát. Hỗ trợ tùy chọn khóa trục Y (lockYAxis).
+  * **Khai Thác Sprite Grayscale & Hiệu Ứng Souls-like:**
+    * Sử dụng Monster_Border.png và Monster_Fill.png (chuẩn kích thước 3331x400, tỉ lệ 8.33:1).
+    * MainFill: Tô màu đỏ tươi Souls-like từ sprite grayscale qua Image.color.
+    * Ghost Bar: Thanh bóng ma màu vàng nhạt tụt đuổi từ từ sau thời gian trễ ghostShrinkDelay = 0.45s khi quái trúng đòn.
+  * **Tối Ưu Hóa Hiệu Năng Tuyệt Đối (Dungeon 200 Quái):**
+    * Tự động tắt Canvas khi quái ở cự ly xa hoặc ngủ đông (DungeonEnemyOptimizer - 0 Draw Calls).
+    * Ẩn thanh máu khi quái đầy 100% HP và chưa vào trạng thái chiến đấu; tự động Fade In mượt mà khi dính đòn hoặc phát hiện người chơi.
+    * Tự động Fade Out và tắt hẳn khi quái tử trận (onDeath).
+    * Tắt hoàn toàn GraphicRaycaster để loại bỏ 100% chi phí EventSystem Raycasting.
 * **Thanh chịu đòn Poise (`PlayerFeedback.cs`, `EnemyFeedback.cs`, `PlayerCombat.cs`, `IceGolemController.cs`):**
   * **Người chơi & Quái thường:**
     * Cả người chơi và quái vật đều sở hữu thanh Poise ẩn (`maxPoise` = 100 cho Warrior/Minion, 50 cho Rogue/Mage).
@@ -79,10 +90,33 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
       + Đòn chém gồng 2 & Skill E (knockback >= 1.0): trừ 70 Poise.
       + Đòn Counter & Phép nổ Q (knockback >= 1.8): trừ 100 Poise.
     * Khi Poise của Boss về 0: Kích hoạt trạng thái **Suy yếu (WeakenIG)** duy nhất 1 lần (Boss thực hiện động tác bước lùi Weaken hết trọn vẹn clip hoạt ảnh và lập tức tiếp tục chiến đấu ngay tại vị trí mới). Nếu trong lúc đang chạy Weaken mà máu Boss tụt xuống <= 50% HP thì lập tức hủy suy yếu và kích hoạt chuỗi Phase 2 cuồng nộ.
-* **Hệ thống Phản hồi Đòn đánh & Khựng Đòn (Hit Feedback & Hitlag - `EnemyFeedback.cs`, `WeaponHitbox.cs`, `PlayerCombat.cs`):**
+* **Hệ thống Phản hồi Đòn đánh & Khựng Đòn (Hit Feedback & Hitlag - `EnemyFeedback.cs`, `PlayerFeedback.cs`, `WeaponHitbox.cs`, `PlayerCombat.cs`):**
+  * **Hiệu ứng Hit VFX Tứa Máu & Mảnh Vụn (Directional Hit VFX):**
+    * **Quái xương (Skeleton Monsters):** Khi bị Player chém trúng (combo 1, 2, 3, charge, counter, sóng kiếm E hay nổ Q), `EnemyFeedback` sinh ngay `MobsGetHitVFX.prefab` (màu xám vụn xương) tại điểm tiếp xúc `hitPoint`, góc tứa phun ngược chiều cú chém (`-hitDirection`) ra không khí.
+    * **Người chơi (Player):** Khi bị quái chém, bắn tên hoặc phép thuật trúng đích, `PlayerFeedback` sinh ngay `GetHitVFX.prefab` (màu đỏ tứa máu) tại điểm dính đòn `hitPoint`. Khi Player **Parry thành công**, `onCheckParryOrBlock` chặn đứng sát thương trước khi trừ máu nên **không bị tứa máu đỏ**.
+    * **Đòn kết liễu (Lethal Hit):** Luôn bảo đảm phát sinh Hit VFX ngay cả khi đòn đánh hạ gục mục tiêu.
+    * **Công cụ Tự động hóa 1-Click:** `CombatVfxSetupEditor.cs` với MenuItem `Infinite Labyrinth -> Combat -> 1. Cấu Hình Hit VFX Cho Player & Quái Vật (1-Click)`.
   * **Nháy trắng phát quang (Solid White Flash):** Sử dụng `MaterialPropertyBlock` ghi đè `Texture2D.whiteTexture` và kích hoạt `_EMISSION` (cường độ 2.5) trực tiếp trên GPU (0% clone material, giữ nguyên 100% SRP Batcher).
   * **Đòn kết liễu (Lethal Hit Sequence):** Khi dính đòn tử thủ, quái lập tức nháy trắng toàn thân và giữ màu trắng xuyên suốt thời gian hitlag kết liễu (`lethalFlashDuration = 0.15s` realtime), sau đó trả về màu texture ban đầu rồi mới kích hoạt animation ngã chết (`Die`).
   * **Hitlag Souls-like:** `WeaponHitbox` làm chậm thế giới xuống còn 5% (`Time.timeScale = 0.05f`) trong thời gian unscaled realtime. Toàn bộ giá trị hitlag từng đòn chém (`attack1Hitlag: 0.035s`, `attack2Hitlag: 0.045s`, `attack3Hitlag: 0.08s`, `chargeHit1Hitlag: 0.05s`, `chargeHit2Hitlag: 0.095s`, `counterAttackHitlag: 0.11s`) và đòn kết liễu (`lethalHitlag: 0.18s`) được đưa ra Inspector `PlayerCombat.cs`.
+  * **Kiến Trúc Phân Tách Cấp Bậc Nhân Vật (Root Player vs Child MainModel Hierarchy):**
+    * **`Player` (GameObject Gốc - Root):** Quản lý toàn bộ vật lý, điều khiển di chuyển, chỉ số tài nguyên và điều phối vệt kiếm slash: `CharacterController`, `PlayerController`, `Health`, `PlayerStats`, `PlayerFeedback`, `TargetLockSystem`, `PlayerSlashVFX`.
+    * **`MainModel` (GameObject Con - Child):** Chứa 3D Mesh hình thể, bộ xương cử động, hệ thống tóc đuôi nảy lò xo (`SpringManager`), `Animator` và **`PlayerCombat`**.
+    * **Nguyên lý Unity Animation Events:** Các sự kiện chém kiếm, mở/tắt hitbox và kích hoạt vệt slash được cài trực tiếp trên các mốc khung hình của animation clips. Unity chỉ truyền `AnimationEvent` đến các component nằm **trên cùng GameObject với `Animator`**. Do đó, `PlayerCombat` **bắt buộc phải nằm trên `MainModel`**, trong khi các script logic khác nằm ở Root `Player` và được liên kết tham chiếu hai chiều qua `GetComponentInParent` / Serialized fields.
+  * **Hiệu ứng Vệt Chém Kiếm & Quỹ Đạo Đòn Đánh (Sword Slash Trail & Arc VFX - `PlayerSlashVFX.cs`, `Slash VFX.prefab`):**
+    * **Kiến trúc Decoupled Arc Slash:** Không gắn dính vệt chém vào xương cổ tay hay thân kiếm (tránh hiện tượng xoay tròn méo mó theo cử động xương). VFX chém được điều phối bởi `PlayerSlashVFX.cs`, kích hoạt đúng frame vung kiếm mạnh nhất từ các Animation Events trong `PlayerCombat.cs`.
+    * **Cấu hình Độc lập Theo 6 Đòn Đánh:** Mỗi nhát chém sở hữu tham số riêng: Position Offset (cao độ ngang ngực/eo), Rotation Offset (Euler Angles nghiêng chuẩn theo mặt phẳng chém), Scale kích thước, và Lifetime dọn dẹp bộ nhớ:
+      + *Attack 1:* Chém vát chéo vai phải xuống hông trái (Rotation: `-176.57°, -92.12°, -92.12°`, Scale 1.0x).
+      + *Attack 2:* Chém vát ngược từ hông trái lên vai phải (Rotation: `-85.89°, -183.54°, 0.65°`, Scale 1.05x).
+      + *Attack 3:* Chém quét ngang phẳng uy lực kết thúc combo (Rotation: `-176.57°, -92.12°, 0.09°`, Scale 1.25x).
+      + *Charge Hit 1:* Chém mở màn lấy đà gồng lực (Rotation: `-176.57°, -92.12°, -45°`, Scale 1.1x).
+      + *Charge Hit 2:* Nhát bổ thẳng đứng từ trên cao cắm xuống đất (Rotation: `-90°, -92.12°, -90°`, Scale 1.35x).
+      + *Counter Attack:* Cú chém phản đòn bùng nổ năng lượng diện rộng (Rotation: `-176.57°, -92.12°, -15°`, Scale 1.5x).
+    * **Cơ Chế Tự Phục Hồi & Tự Động Hóa 1-Click:** `PlayerCombat` tự động tìm kiếm và gắn `PlayerSlashVFX` khi khởi chạy, tự động fallback nạp `Resources/Slash VFX` nếu thiếu tham chiếu. Hỗ trợ công cụ `PlayerSlashVfxSetupEditor.cs` với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash Trail VFX Cho Kiếm Player (1-Click)` và Custom Editor với 6 nút Test nhát chém trực quan trong Scene View.
+  * **Hiệu ứng Tia Lửa Va Chạm Khi Chém Trúng Đích (Hit Impact Burst VFX - `WeaponHitbox.cs`, `Impact VFX.prefab`):**
+    * **Tách rời Impact khỏi Slash Trail (Decoupled Impact):** Tắt Impact gắn cứng trong prefab đường kiếm để tránh nổ chớp sáng vô lý khi chém trượt trong không khí.
+    * **Kích hoạt Đúng Điểm Chạm (Contact Point Burst):** `WeaponHitbox.cs` chỉ kích nổ `Impact VFX` khi va chạm với các mục tiêu thuộc Layer `Enemy` (9) hoặc `Damageable` (8) và có thành phần `IDamageable`/`Health`.
+    * **Định vị & Hướng Tóe:** Sinh ngay tại `hitPoint = other.ClosestPoint(transform.position)`, góc tứa hướng ngược chiều chém (`-hitDirection`) ra ngoài không khí với độ lệch `hitImpactNormalOffset = 0.05m` chống lẹm mesh. Kích hoạt đồng thời toàn bộ ParticleSystem con (kể cả root có `playOnAwake = false`).
 * **Hệ thống Tài nguyên Player (`PlayerStats.cs`):**
   * **Máu (Health):** Gắn liền với `Health.cs` và interface `IDamageable.cs`.
   * **Thể lực (Stamina):** Max 100. Tiêu hao khi Lướt/Lăn né (Roll: 20), Chạy nhanh (Sprint: 15/s), Chém thường (15), Chém gồng (30), Giơ thế đỡ hụt (20). Tự động hồi phục sau 0.85s trễ.
@@ -288,7 +322,24 @@ flowchart TD
 4. **Hub Ngôi Làng & Thợ Rèn (`LandScene`):**
    * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
    * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu (Đá cường hóa kiếm) và Vàng để nâng cấp vũ khí (+1, +2...), tăng sát thương chém và hiệu ứng visual.
-   * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon.
+   * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
+
+---
+
+### E. Phân Hệ Màn Hình Tải Bất Đồng Bộ & Sinh Hầm Ngục Theo Chặng (Asynchronous Loading Screen & Time-Sliced PCG)
+* **Bộ Điều Phối Toàn Cục (`LoadingScreenManager.cs` - Singleton & DontDestroyOnLoad):**
+  * Tự động khởi tạo và nạp tài nguyên từ `Resources/` (`EnsureInstance()`) mà không phụ thuộc vào thiết lập thủ công trong Scene.
+  * **Pha 1 (0% -> 40%):** Tải Scene từ đĩa vào RAM bất đồng bộ qua `SceneManager.LoadSceneAsync(allowSceneActivation = false)` cho đến khi đạt 90% dữ liệu gốc.
+  * **Pha 2 (40% -> 100%):** Tự động phát hiện `DungeonManager` và liên kết với Coroutine `GenerateWorldRoutine` sinh PCG theo từng chặng.
+  * **Bảo vệ Trải nghiệm & Chống Chớp Nháy (`minLoadingTime = 1.6s`):** Đảm bảo giữ màn hình tối thiểu 1.6 giây để người chơi kịp đọc trọn vẹn mẹo chơi, đồng thời chờ thanh tiến trình dâng đủ 100% trước khi Fade Out mượt mà đưa nhân vật vào thế giới.
+* **Giao Diện Màn Hình Tải (`LoadingScreenUI.cs`, `LoadingScreenData.cs`, `LoadingScreenCanvas.prefab`):**
+  * **Khung Ảnh Nền Ngẫu Nhiên (RawImage Full-screen):** Nhận ngẫu nhiên 1 trong 13 ảnh render 3D hầm ngục mẫu kết hợp lớp phủ Vignette tối tương phản cao.
+  * **Tiêu Đề Địa Danh (Header):** Tiêu đề chính vàng kim (`LocationTitle`) và phụ đề bạc (`LocationSubtitle`) đổi linh hoạt theo ngữ cảnh (ví dụ: *"INFINITE LABYRINTH - FLOOR 1"* hoặc *"HAVEN VILLAGE"*).
+  * **Mẹo Sinh Tồn Ngẫu Nhiên (Gameplay Tips):** Hệ thống 21 mẹo tiếng Anh được phân loại theo 5 nhóm: `COMBAT`, `EXPLORATION`, `BOSS TACTICS`, `VILLAGE HUB`, `ROGUELITE`.
+  * **Thanh Tiến Trình Souls-like:** Sử dụng cặp sprite `Monster_Border.png` + `Monster_Fill.png`, nạp màu hổ phách vàng rực, nội suy mượt mà qua `Mathf.MoveTowards`.
+  * **Phần Trăm & Ấn Ký Spinner:** Hiển thị số `%` ở góc phải thanh loading và ấn ký vòng tròn xoay tròn liên tục theo `Time.unscaledDeltaTime`.
+* **Sinh Hầm Ngục Theo Chặng (Time-Sliced PCG - `DungeonManager.cs`, `DungeonRenderer.cs`):**
+  * Chia nhỏ việc dựng lưới 3D, gác lửng tầng 2, props và bake NavMesh thành các giai đoạn qua nhiều khung hình (`yield return null`), triệt tiêu 100% hiện tượng khựng đơ khung hình khi tạo lập hầm ngục quy mô lớn.
 
 ---
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class DungeonManager : MonoBehaviour
 {
@@ -17,6 +18,10 @@ public class DungeonManager : MonoBehaviour
   [Tooltip("Bật để tự động sinh 1 quái vật trên tầng 2 để kiểm tra xem quái có biết leo cầu thang xuống đuổi player không")]
   public bool spawnTestEnemyOnMezzanine = false;
 
+  [Header("Màn Hình Tải (Loading Screen)")]
+  [Tooltip("Tự động hiển thị màn hình Loading Screen khi nhấn nút Play trực tiếp trong DungeonScene")]
+  public bool showLoadingScreenOnStart = true;
+
   public static DungeonManager Instance { get; private set; }
   public event System.Action<DungeonData> OnDungeonGenerated;
 
@@ -31,7 +36,29 @@ public class DungeonManager : MonoBehaviour
 
   void Start()
   {
-    GenerateWorld();
+    // 1. Nếu LoadingScreenManager đang điều phối màn hình loading (ví dụ chuyển cảnh từ LandScene sang),
+    // thì nhường quyền điều phối cho LoadingScreenManager.TransitionRoutine gọi GenerateWorldRoutine.
+    if (InfiniteLabyrinth.UI.LoadingScreenManager.Instance != null && InfiniteLabyrinth.UI.LoadingScreenManager.Instance.IsLoading)
+    {
+      return;
+    }
+
+    // 2. Khi chạy Play trực tiếp trong DungeonScene (cold start),
+    // nếu bật showLoadingScreenOnStart, khởi chạy màn hình loading tức thì (instant: true) để che màn hình ngay từ frame đầu tiên.
+    if (showLoadingScreenOnStart && InfiniteLabyrinth.UI.LoadingScreenManager.Instance != null)
+    {
+      InfiniteLabyrinth.UI.LoadingScreenManager.Instance.RunInSceneLoading(
+        "DungeonScene",
+        1,
+        (progress) => GenerateWorldRoutine(progress),
+        null,
+        instant: true
+      );
+    }
+    else
+    {
+      GenerateWorld();
+    }
   }
 
   public void GenerateWorld()
@@ -56,6 +83,53 @@ public class DungeonManager : MonoBehaviour
     SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");
+    OnDungeonGenerated?.Invoke(currentData);
+  }
+
+  /// <summary>
+  /// Coroutine sinh hầm ngục theo từng chặng (Time-Sliced Staged Generation).
+  /// Báo cáo tiến trình từ 0.0f đến 1.0f cho LoadingScreenManager.
+  /// </summary>
+  public IEnumerator GenerateWorldRoutine(System.Action<float> onProgress = null)
+  {
+    // 1. Chạy toán học tạo dữ liệu (BSP, Rooms, Corridors)
+    currentData = generator.Generate();
+    onProgress?.Invoke(0.12f);
+    yield return null;
+
+    // 2. Dựng 3D, Props & NavMesh theo từng chặng
+    if (dungeonRenderer != null)
+    {
+      yield return StartCoroutine(dungeonRenderer.BuildMeshRoutine(currentData, p =>
+      {
+        float combined = Mathf.Lerp(0.12f, 0.82f, p);
+        onProgress?.Invoke(combined);
+      }));
+    }
+    else
+    {
+      onProgress?.Invoke(0.82f);
+      yield return null;
+    }
+
+    // 3. Tự động sinh quái vật trong hầm ngục (Task D-01)
+    if (enemySpawner == null) enemySpawner = GetComponent<ProceduralEnemySpawner>();
+    if (enemySpawner == null) enemySpawner = gameObject.AddComponent<ProceduralEnemySpawner>();
+    enemySpawner.SpawnEnemies(currentData, generator.tileSize);
+    onProgress?.Invoke(0.92f);
+    yield return null;
+
+    // 4. Kích hoạt bộ tối ưu hóa ngủ đông quái vật (AI / Animation LOD & Sleep)
+    if (enemyOptimizer == null) enemyOptimizer = GetComponent<DungeonEnemyOptimizer>();
+    if (enemyOptimizer == null) enemyOptimizer = gameObject.AddComponent<DungeonEnemyOptimizer>();
+    enemyOptimizer.RefreshEnemies(enemySpawner.activeEnemies);
+
+    // 5. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
+    SpawnTestEnemies();
+    onProgress?.Invoke(1.0f);
+    yield return null;
+
+    Debug.Log("<color=green>[DungeonManager]</color> Procedural Dungeon Generation (Staged Async) Completed!");
     OnDungeonGenerated?.Invoke(currentData);
   }
 

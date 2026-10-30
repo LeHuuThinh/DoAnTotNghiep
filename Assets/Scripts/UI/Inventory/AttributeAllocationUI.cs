@@ -500,22 +500,62 @@ namespace InfiniteLabyrinth.UI
         availablePointsText.text = RemainingPoints.ToString();
       }
 
-      // Đọc chỉ số gốc của Player
-      float currentBaseAtk = 15f;
-      float currentBaseHp = 100f;
-      float currentBaseStamina = 100f;
+      // Đọc chỉ số hiện tại của Player (bao gồm chỉ số gốc, điểm tiềm năng đã cộng và trang bị)
+      float currentTotalAtk = 15f;
+      float currentTotalHp = 100f;
+      float currentTotalStam = 100f;
 
       var playerObj = GameObject.FindWithTag("Player");
+      if (playerObj == null)
+      {
+        var playerCtrl = FindFirstObjectByType<PlayerController>();
+        if (playerCtrl != null) playerObj = playerCtrl.gameObject;
+      }
+
       if (playerObj != null)
       {
         var combat = playerObj.GetComponent<PlayerCombat>();
-        if (combat != null) currentBaseAtk = combat.BaseAttackDamage;
+        if (combat != null)
+        {
+          currentTotalAtk = combat.TotalAttackDamage;
+        }
+        else
+        {
+          float equipAtk = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalAttackBonus() : 0f;
+          currentTotalAtk = 15f + prog.BonusAttack + equipAtk;
+        }
 
         var health = playerObj.GetComponent<Health>();
-        if (health != null) currentBaseHp = health.MaxHealth;
+        if (health != null)
+        {
+          currentTotalHp = health.MaxHealth;
+        }
+        else
+        {
+          float equipHp = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalHealthBonus() : 0f;
+          currentTotalHp = 100f + prog.BonusHealth + equipHp;
+        }
 
         var stats = playerObj.GetComponent<PlayerStats>();
-        if (stats != null) currentBaseStamina = stats.MaxStamina;
+        if (stats != null)
+        {
+          currentTotalStam = stats.MaxStamina;
+        }
+        else
+        {
+          float equipStam = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalStaminaBonus() : 0f;
+          currentTotalStam = 100f + prog.BonusStamina + equipStam;
+        }
+      }
+      else
+      {
+        float equipAtk = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalAttackBonus() : 0f;
+        float equipHp = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalHealthBonus() : 0f;
+        float equipStam = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalStaminaBonus() : 0f;
+
+        currentTotalAtk = 15f + prog.BonusAttack + equipAtk;
+        currentTotalHp = 100f + prog.BonusHealth + equipHp;
+        currentTotalStam = 100f + prog.BonusStamina + equipStam;
       }
 
       // 2. Hàng Tấn công (ATK)
@@ -526,11 +566,10 @@ namespace InfiniteLabyrinth.UI
       if (atkValueText != null)
       {
         float bonusPerPoint = prog.AttackPerPoint;
-        float currentTotalAtk = currentBaseAtk;
         float previewBonus = tempAtk * bonusPerPoint;
         if (tempAtk > 0)
         {
-          atkValueText.text = $"{currentTotalAtk} <color=#A5D6A7>→ {currentTotalAtk + previewBonus:0.#} (+{previewBonus:0.#})</color>";
+          atkValueText.text = $"{currentTotalAtk:0.#} <color=#A5D6A7>→ {currentTotalAtk + previewBonus:0.#} (+{previewBonus:0.#})</color>";
         }
         else
         {
@@ -548,7 +587,6 @@ namespace InfiniteLabyrinth.UI
       if (hpValueText != null)
       {
         float bonusPerPoint = prog.HealthPerPoint;
-        float currentTotalHp = currentBaseHp;
         float previewBonus = tempHp * bonusPerPoint;
         if (tempHp > 0)
         {
@@ -570,7 +608,6 @@ namespace InfiniteLabyrinth.UI
       if (staminaValueText != null)
       {
         float bonusPerPoint = prog.StaminaPerPoint;
-        float currentTotalStam = currentBaseStamina;
         float previewBonus = tempStamina * bonusPerPoint;
         if (tempStamina > 0)
         {

@@ -9,6 +9,16 @@ public class WeaponHitbox : MonoBehaviour
   [Tooltip("Chỉ gây sát thương lên các Layer được chọn (ví dụ: Enemy, Breakable)")]
   [SerializeField] private LayerMask targetLayers;
 
+  [Header("Hit Impact VFX Settings")]
+  [Tooltip("Hiệu ứng va chạm (Impact burst) phát sinh ngay tại điểm tiếp xúc khi chém trúng mục tiêu có HP (Layer Enemy / Damageable)")]
+  [SerializeField] private GameObject hitImpactVfxPrefab;
+  [Tooltip("Thời gian tự hủy instance Impact VFX (giây)")]
+  [SerializeField] private float hitImpactDestroyDelay = 1.5f;
+  [Tooltip("Độ lệch vị trí tứa ra ngoài bề mặt (m) chống lẹm vào mesh mục tiêu")]
+  [SerializeField] private float hitImpactNormalOffset = 0.05f;
+  [Tooltip("Tự động chỉnh tỉ lệ phóng to/thu nhỏ của Impact VFX")]
+  [SerializeField] private float hitImpactScaleMultiplier = 1.0f;
+
   [Header("Hitlag Settings")]
   [Tooltip("Tốc độ thời gian khi khựng (Time.timeScale). 0.05 = làm chậm 95%")]
   [Range(0f, 0.2f)]
@@ -98,6 +108,9 @@ public class WeaponHitbox : MonoBehaviour
       Vector3 hitPoint = other.ClosestPoint(transform.position);
       Vector3 hitDirection = attacker != null ? attacker.forward : transform.forward;
 
+      // 1. KÍCH HOẠT IMPACT VFX NGAY TẠI ĐIỂM TIẾP XÚC KHI CHÉM TRÚNG MỤC TIÊU CÓ HP
+      SpawnHitImpactVfx(hitPoint, hitDirection);
+
       // Kiểm tra trạng thái sống trước khi trừ máu
       Health targetHealth = damageable as Health ?? (damageable as Component)?.GetComponentInParent<Health>();
       bool wasAlive = targetHealth == null || !targetHealth.IsDead;
@@ -151,9 +164,70 @@ public class WeaponHitbox : MonoBehaviour
   {
     Time.timeScale = hitlagTimeScale; // Làm chậm thế giới xuống còn 5% để tạo độ khựng đanh
     yield return new WaitForSecondsRealtime(duration);
-    Time.timeScale = 1f;    // Trả lại tốc độ bình thường
+    Time.timeScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;    // Trả lại tốc độ slow-mo hiện tại
     activeHitlagCoroutine = null;
     activeRunner = null;
+  }
+
+  /// <summary>
+  /// Sinh hiệu ứng va chạm Impact VFX ngay tại điểm tiếp xúc thực tế khi chém trúng mục tiêu có HP.
+  /// </summary>
+  public void SpawnHitImpactVfx(Vector3 hitPoint, Vector3 hitDirection)
+  {
+    GameObject prefabToSpawn = hitImpactVfxPrefab;
+    if (prefabToSpawn == null)
+    {
+      // Fallback 1: Tự động nạp từ thư mục Resources/Impact VFX
+      prefabToSpawn = Resources.Load<GameObject>("Impact VFX");
+      if (prefabToSpawn != null)
+      {
+        hitImpactVfxPrefab = prefabToSpawn;
+      }
+    }
+
+    if (prefabToSpawn == null) return;
+
+    Vector3 spawnPos = hitPoint;
+    if (spawnPos == Vector3.zero)
+    {
+      spawnPos = transform.position;
+    }
+
+    // Hướng tứa: Bắn ngược chiều cú chém ra ngoài không khí
+    Vector3 spawnDir = -hitDirection;
+    if (spawnDir.sqrMagnitude < 0.001f)
+    {
+      spawnDir = transform.forward;
+    }
+    spawnDir.Normalize();
+
+    spawnPos += spawnDir * hitImpactNormalOffset;
+    Quaternion spawnRot = Quaternion.LookRotation(spawnDir);
+
+    GameObject vfxInstance = Instantiate(prefabToSpawn, spawnPos, spawnRot);
+    if (Mathf.Abs(hitImpactScaleMultiplier - 1.0f) > 0.01f)
+    {
+      vfxInstance.transform.localScale = vfxInstance.transform.localScale * hitImpactScaleMultiplier;
+    }
+
+    // Đảm bảo toàn bộ ParticleSystem con (kể cả root có playOnAwake = false) đều phát nổ ngay lập tức
+    ParticleSystem rootPs = vfxInstance.GetComponent<ParticleSystem>();
+    if (rootPs != null)
+    {
+      rootPs.Play(true);
+    }
+    else
+    {
+      foreach (ParticleSystem ps in vfxInstance.GetComponentsInChildren<ParticleSystem>())
+      {
+        ps.Play();
+      }
+    }
+
+    if (hitImpactDestroyDelay > 0f)
+    {
+      Destroy(vfxInstance, hitImpactDestroyDelay);
+    }
   }
 
   private void OnDisable()
@@ -161,7 +235,7 @@ public class WeaponHitbox : MonoBehaviour
     // Failsafe: Đảm bảo thời gian không bao giờ bị kẹt lại nếu kiếm bị tắt đột ngột
     if (activeRunner == this && activeHitlagCoroutine != null)
     {
-      Time.timeScale = 1f;
+      Time.timeScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
       activeHitlagCoroutine = null;
       activeRunner = null;
     }

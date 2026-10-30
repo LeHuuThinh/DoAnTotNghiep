@@ -463,41 +463,101 @@ public class AdminCheatManager : MonoBehaviour
       return false;
     }
 
-    NotifySuccess("Regenerating Dungeon... Please wait!");
+    // Đóng Admin Console để người chơi chiêm ngưỡng trọn vẹn màn hình Loading
+    if (IsOpen)
+    {
+      CloseMenu();
+    }
 
-    // 1. Move player safely behind entrance door before clearing geometry
+    NotifySuccess("Regenerating Dungeon with Loading Screen... Please wait!");
+
+    // Ưu tiên nạp qua LoadingScreenManager với hiệu ứng chuyển cảnh mượt mà
+    if (InfiniteLabyrinth.UI.LoadingScreenManager.Instance != null)
+    {
+      InfiniteLabyrinth.UI.LoadingScreenManager.Instance.RunInSceneLoading(
+        "DungeonScene",
+        1,
+        (reportProgress) => RegenerateDungeonRoutine(keepSeed, reportProgress),
+        () => NotifySuccess("[Success] New dungeon generated & NavMesh baked successfully!")
+      );
+      return true;
+    }
+
+    // Fallback đồng bộ nếu không có LoadingScreenManager
+    ExecuteSyncRegeneration(keepSeed);
+    return true;
+  }
+
+  private System.Collections.IEnumerator RegenerateDungeonRoutine(bool keepSeed, Action<float> reportProgress)
+  {
+    // 1. Di chuyển Player an toàn ra khu vực chờ trước khi xóa Mesh cũ
     if (DungeonManager.Instance.generator != null && DungeonManager.Instance.generator.startDoorMarker != null)
     {
       TeleportPlayer(DungeonManager.Instance.generator.startDoorMarker.position, "Holding Area");
     }
 
-    // 2. Clear previous monsters
+    // 2. Dọn sạch quái vật cũ
     if (DungeonManager.Instance.enemySpawner != null)
     {
       DungeonManager.Instance.enemySpawner.ClearEnemies();
     }
 
-    // 3. Reseed RNG if requested
+    // 3. Đổi Seed ngẫu nhiên nếu không giữ nguyên seed
     if (!keepSeed)
     {
       UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
     }
 
-    // 4. Generate world (Build Mesh, Decorate Props, Bake NavMesh, Spawn Enemies, Refresh Optimizer)
-    DungeonManager.Instance.GenerateWorld();
+    reportProgress?.Invoke(0.08f);
+    yield return null;
 
-    // 5. Refresh Light Optimizer
+    // 4. Sinh hầm ngục theo từng chặng thông qua GenerateWorldRoutine
+    yield return StartCoroutine(DungeonManager.Instance.GenerateWorldRoutine(p =>
+    {
+      reportProgress?.Invoke(Mathf.Lerp(0.08f, 0.95f, p));
+    }));
+
+    // 5. Làm mới bộ tối ưu ánh sáng
     var lightOptimizer = FindFirstObjectByType<DungeonLightOptimizer>();
     if (lightOptimizer != null)
     {
       lightOptimizer.RefreshLights();
     }
 
-    // 6. Return player safely to Start Room
+    // 6. Đưa Player trở lại phòng xuất phát an toàn
     TeleportToStartRoom();
 
+    reportProgress?.Invoke(1.0f);
+    yield return null;
+  }
+
+  private void ExecuteSyncRegeneration(bool keepSeed)
+  {
+    if (DungeonManager.Instance.generator != null && DungeonManager.Instance.generator.startDoorMarker != null)
+    {
+      TeleportPlayer(DungeonManager.Instance.generator.startDoorMarker.position, "Holding Area");
+    }
+
+    if (DungeonManager.Instance.enemySpawner != null)
+    {
+      DungeonManager.Instance.enemySpawner.ClearEnemies();
+    }
+
+    if (!keepSeed)
+    {
+      UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
+    }
+
+    DungeonManager.Instance.GenerateWorld();
+
+    var lightOptimizer = FindFirstObjectByType<DungeonLightOptimizer>();
+    if (lightOptimizer != null)
+    {
+      lightOptimizer.RefreshLights();
+    }
+
+    TeleportToStartRoom();
     NotifySuccess("[Success] New dungeon generated & NavMesh baked successfully!");
-    return true;
   }
 
   #endregion

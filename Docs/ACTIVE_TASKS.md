@@ -70,6 +70,48 @@
   - **Cụm Sao Năng lượng Chiêu thức (Spirit Stars):** 3 ngôi sao nạp đầy khi chém trúng địch / parry, tiêu hao khi dùng kỹ năng E (Sóng kiếm) và Q (Nổ năng lượng).
   - Đã liên kết và hoạt động hoàn hảo trong `DungeonScene.unity`.
 
+- [x] **UI-02: Hệ Thống Thanh Máu Quái Vật World Space Souls-like (EnemyHealthBarUI.cs)**
+  - **Billboard 3D Thông Minh:** Tự động xoay mặt vuông góc 100% về phía Camera người chơi (CameraAligned), phẳng phiu và không bị méo lệch góc nhìn ở mọi hướng quan sát. Hỗ trợ tùy chọn khóa trục Y (lockYAxis).
+  - **Khai Thác Sprite Grayscale & Hiệu Ứng Souls-like:**
+    - Sử dụng Monster_Border.png và Monster_Fill.png (chuẩn kích thước 3331x400, tỉ lệ 8.33:1).
+    - MainFill: Tô màu đỏ tươi Souls-like từ sprite grayscale qua Image.color.
+    - Ghost Bar: Thanh bóng ma màu vàng nhạt tụt đuổi từ từ sau thời gian trễ ghostShrinkDelay = 0.45s khi quái trúng đòn.
+  - **Tối Ưu Hóa Hiệu Năng Tuyệt Đối (Dungeon 200 Quái):**
+    - Tự động tắt Canvas khi quái ở cự ly xa hoặc ngủ đông (DungeonEnemyOptimizer - 0 Draw Calls).
+    - Ẩn thanh máu khi quái đầy 100% HP và chưa vào trạng thái chiến đấu; tự động Fade In mượt mà khi dính đòn hoặc phát hiện người chơi.
+    - Tự động Fade Out và tắt hẳn khi quái tử trận (onDeath).
+    - Tắt hoàn toàn GraphicRaycaster để loại bỏ 100% chi phí EventSystem Raycasting.
+  - **Tự Động Hóa 1-Click Unity Editor & Runtime:**
+    - Tool EnemyHealthBarSetupEditor.cs với MenuItem: Infinite Labyrinth -> Monsters -> 1. Cấu Hình Toàn Diện Thanh Máu Cho Quái Vật (1-Click).
+    - Tự động tạo Prefab EnemyHealthBar.prefab (trong cả Assets/Prefabs/RPG/ và Assets/Resources/) và gắn trực tiếp vào 4 Prefabs quái: SkeletonWarrior, SkeletonMinion, SkeletonRogue, SkeletonMage theo độ cao đầu tương ứng.
+    - Tích hợp 2 tầng bảo vệ: Nướng sẵn vào Prefab quái và hỗ trợ Fallback Runtime EnsureHealthBar() trong EnemyAIBase.cs.
+
+- [x] **UI-03: Màn hình Loading Screen chuyển cảnh Async & Hầm ngục PCG (Task LD-01 - LD-05)**
+  - [x] **LD-01: Kiến trúc Dữ liệu `LoadingScreenData.cs` & Bộ Khởi Tạo Editor:**
+    - Tạo ScriptableObject [`LoadingScreenData.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenData.cs) lưu trữ 21 mẹo tiếng Anh chia theo 5 nhóm chủ đề: `COMBAT`, `EXPLORATION`, `BOSS TACTICS`, `VILLAGE HUB`, `ROGUELITE`.
+    - Hỗ trợ mảng ảnh nền hầm ngục và ngôi làng (cả `Texture2D` lẫn `Sprite`).
+    - Tiêu đề phân vùng ngữ cảnh theo Scene (DungeonScene: *"INFINITE LABYRINTH - FLOOR {0}"*, LandScene: *"HAVEN VILLAGE"*).
+    - Công cụ tự động hóa [`LoadingScreenSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenSetupEditor.cs) quét và nạp tự động 13 ảnh render hầm ngục từ `Assets/Prefabs/Dungeon/Samples/`.
+  - [x] **LD-02: Dựng Prefab `LoadingScreenCanvas.prefab` & `LoadingScreenUI.cs`:**
+    - Tạo controller [`LoadingScreenUI.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenUI.cs) điều khiển: Full-screen RawImage hầm ngục, Vignette tối tương phản cao, Header địa danh (`LocationTitle` + `LocationSubtitle` + `DecorativeLine`), Khung hiển thị Tip tiếng Anh (`TipCategory` + `TipContent`), Thanh tiến trình Souls-like (`Monster_Border` + `Monster_Fill`), Text % góc phải, và Icon `Exp_Circle` Spinner xoay liên tục (dùng `unscaledDeltaTime` chống đóng băng UI).
+    - Tạo công cụ tự động hóa MenuItem: `Infinite Labyrinth -> UI -> 2. Tạo Prefab Loading Screen Canvas (1-Click)` trong [`LoadingScreenSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenSetupEditor.cs) tạo sẵn Prefab chuẩn Canvas Overlay (Sort Order 999) tại cả `Assets/Resources/LoadingScreenCanvas.prefab` và `Assets/Prefabs/RPG/LoadingScreenCanvas.prefab`.
+    - Hỗ trợ API `Show(...)`, `SetProgress(...)`, `Hide(...)` kèm hiệu ứng Fade In/Out qua `CanvasGroup`.
+  - [x] **LD-03: Bộ điều phối `LoadingScreenManager.cs` (Singleton / DontDestroyOnLoad):**
+    - Tạo [`LoadingScreenManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenManager.cs) hoạt động theo mô hình Singleton bền vững xuyên cảnh (`DontDestroyOnLoad`), hỗ trợ cơ chế tự phục hồi `EnsureInstance()` tự nạp Canvas và Data từ `Resources/`.
+    - Phân chia pha nạp bất đồng bộ: Pha 1 nạp Scene qua `SceneManager.LoadSceneAsync` (tiến trình ánh xạ `0% -> 40%`), Pha 2 chờ tạo lập thế giới / PCG (tiến trình ánh xạ `40% -> 100%`).
+    - Cấu hình thời gian hiển thị tối thiểu `minLoadingTime = 1.6s` chống chớp nháy UI trên SSD tốc độ cao, đảm bảo người chơi luôn đọc trọn vẹn 1 mẹo hữu ích.
+    - Cung cấp API `LoadScene(...)` và `LoadSceneWithStagedCallback(...)` sẵn sàng kết nối với `DungeonManager` và `PortalController`.
+  - [x] **LD-04: Nâng cấp `DungeonManager.cs` sinh PCG theo từng chặng (Time-Sliced Staged Generation):**
+    - Bổ sung `BuildMeshRoutine` trong [`DungeonRenderer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRenderer.cs) chia nhỏ việc dựng hình sàn, tường, trần, gác lửng tầng 2, cột đấu trường, props và NavMesh qua nhiều khung hình (`yield return null`).
+    - Nâng cấp [`DungeonManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs) với Coroutine `GenerateWorldRoutine(Action<float> onProgress)` báo cáo tiến trình theo 5 giai đoạn: Toán học BSP (12%) -> Dựng hình & Props & NavMesh (82%) -> Quái vật (92%) -> Tối ưu ngủ đông & Test quái (100%).
+    - Đồng bộ `Start()`: Tự động phát hiện nếu `LoadingScreenManager.IsLoading` đang chạy thì nhường quyền điều phối cho LoadingScreen, bảo toàn khả năng play test trực tiếp độc lập khi nhấn Play trong Scene.
+  - [x] **LD-05: Tích hợp vào `PortalController.cs` & các luồng chuyển cảnh:**
+    - Cập nhật [`PortalController.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/PortalController.cs) chuyển đổi toàn bộ lệnh nạp scene đồng bộ sang `LoadingScreenManager.Instance.LoadScene(targetSceneName, targetFloor)` (hỗ trợ fallback an toàn).
+    - Kết nối cả 2 chiều di chuyển: Từ Làng (`LandScene`) vào Hầm ngục (`DungeonScene`) và từ Hầm ngục trở về Làng. Hiển thị chuẩn xác ảnh nền hầm ngục, các mẹo tiếng Anh, số phần trăm và thanh tiến trình thời gian thực.
+  - [x] **LD-06: Chạy Loading Screen trực tiếp trong DungeonScene & Admin Console & Tinh chỉnh Inspector:**
+    - **Chạy trực tiếp từ Scene Dungeon (Cold Start Play):** Cấu hình `showLoadingScreenOnStart = true` trong [`DungeonManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs). Khi ấn Play ngay trong `DungeonScene`, hệ thống kích hoạt `RunInSceneLoading` với cờ `instant: true` để che màn hình ngay từ Frame 0, khóa input người chơi và hiển thị mẹo/background ngẫu nhiên trong lúc PCG kiến tạo hầm ngục.
+    - **Tích hợp Admin Console:** Nút "Regenerate Dungeon" (`~` / `F1`) kích hoạt `LoadingScreenManager.Instance.RunInSceneLoading(...)` chạy trơn tru mượt mà ngay trong scene.
+    - **Tùy biến & Xem trước Inspector:** Cung cấp Custom Editor [`LoadingScreenUIEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenUIEditor.cs) với các nút tiện ích: `👁️ Bật Xem Trước (Alpha = 1)`, `🙈 Ẩn Màn Hình (Alpha = 0)`, `🎲 Đổi Ngẫu Nhiên Mẹo & Ảnh Nền`, và thanh trượt `% Tiến Trình` thời gian thực trên Scene & Game view.
 - [x] **D-01: Bộ sinh quái tự động cho hầm ngục theo Biệt Đội / Cụm (`ProceduralEnemySpawner.cs`)**
   - Hệ thống sinh quái theo Biệt Đội (Squad / Pack System) kết hợp định vị không gian (Spatial Clustering):
     - **Tổ hợp Biệt Đội chuẩn RPG:**
@@ -100,6 +142,35 @@
     - **Time-Slicing Batching (4 Batches, 0.12s):** Chia nhỏ quái thành 4 nhóm để quét cự ly luân phiên, triệt tiêu hoàn toàn CPU micro-stutter.
     - **Combat Awakening:** Nếu quái đang ngủ bị trúng đòn tầm xa hoặc dính sát thương (`OnTakeDamageAggro`), quái sẽ lập tức thức tỉnh 100% phản xạ chiến đấu.
   - Đã gắn component và liên kết hoàn chỉnh trong `DungeonScene.unity`.
+
+- [x] **VFX-01: Hệ thống Hit VFX Phản Hồi Đòn Đánh Cho Player & Quái Vật (`MobsGetHitVFX` & `GetHitVFX`)**
+  - **Cơ chế Decoupled Body Reaction:**
+    + **Quái xương (Skeleton Monsters):** Khi bị Player chém trúng (combo 1, 2, 3, charge, counter, skill E, Q), [`EnemyFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Monsters/EnemyFeedback.cs) tự động sinh `MobsGetHitVFX.prefab` (màu xám vụn xương) tại tọa độ va chạm `hitPoint`, hướng tứa ngược chiều cú chém (`-hitDirection`) ra không khí.
+    + **Người chơi (Player):** Khi dính đòn từ quái vật (kiếm, tên bắn, phép ma pháp, chấn động boss), [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs) tự động sinh `GetHitVFX.prefab` (màu đỏ tứa máu) tại `hitPoint`. Khi Player **Parry thành công**, sát thương bị chặn đứng trước khi trừ máu nên **không bị tứa máu đỏ**.
+    + **Bảo toàn Đòn kết liễu (Lethal Hit):** Kích hoạt `SpawnHitVfx` trước khi kiểm tra tử vong, bảo đảm phát sinh hiệu ứng tứa tia VFX ngay cả trong nhát chém hạ gục mục tiêu.
+    + **Công cụ Tự động hóa Unity Editor 1-Click:** [`CombatVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/CombatVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 1. Cấu Hình Hit VFX Cho Player & Quái Vật (1-Click)`, nướng trực tiếp tham chiếu vào `Player.prefab` và 4 Prefabs quái: `SkeletonWarrior`, `SkeletonMinion`, `SkeletonRogue`, `SkeletonMage`.
+
+- [x] **VFX-02: Hệ thống Sword Slash Trail & Arc VFX Cho Player (`PlayerSlashVFX` & `Slash VFX.prefab`)**
+  - **Kiến trúc Decoupled Arc Slash:** Không gắn dính vệt chém vào xương kiếm hay bàn tay. Thay vào đó, vệt chém được quản lý bởi [`PlayerSlashVFX.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerSlashVFX.cs) sinh ra đúng thời điểm vàng (Keyframe) từ các Animation Events trong [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs).
+  - **Cấu hình Độc lập Theo 6 Đòn Đánh (Position, Rotation & Scale):**
+    + *Attack 1:* Chém vát chéo vai phải xuống hông trái (Rotation: `-176.57°, -92.12°, -92.12°`, Scale 1.0x).
+    + *Attack 2:* Chém vát ngược từ hông trái lên vai phải (Rotation: `-85.89°, -183.54°, 0.65°`, Scale 1.05x).
+    + *Attack 3:* Chém quét ngang phẳng uy lực kết thúc combo (Rotation: `-176.57°, -92.12°, 0.09°`, Scale 1.25x).
+    + *Charge Hit 1:* Chém mở màn lấy đà gồng lực (Rotation: `-176.57°, -92.12°, -45°`, Scale 1.1x).
+    + *Charge Hit 2:* Nhát bổ thẳng đứng từ trên cao cắm xuống đất (Rotation: `-90°, -92.12°, -90°`, Scale 1.35x).
+    + *Counter Attack:* Cú chém phản đòn bùng nổ năng lượng diện rộng (Rotation: `-176.57°, -92.12°, -15°`, Scale 1.5x).
+  - **Bảo vệ 2 Tầng & Tự Phục Hồi (Self-Healing Runtime):**
+    + [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs) tự động tìm kiếm tham chiếu `PlayerSlashVFX` ở parent (GameObject gốc `Player`), triệt tiêu việc tự ý sinh component thừa lên con `MainModel`.
+    + [`PlayerSlashVFX.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerSlashVFX.cs) tự động tìm nạp fallback `Resources/Slash VFX` nếu inspector chưa gán prefab.
+    + Công cụ [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) tự động dọn dẹp các component `PlayerSlashVFX` bị trùng trên con `MainModel` và trỏ tham chiếu chuẩn vào root `Player`.
+  - **Hiệu ứng Va Chạm Tóe Lửa Khi Trúng Đích (Hit Impact Burst VFX - `WeaponHitbox.cs`, `Impact VFX.prefab`):**
+    + Tách rời `Impact` khỏi `Slash VFX.prefab` (chống nổ chớp sáng vô lý khi chém hụt ra không khí).
+    + [`WeaponHitbox.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/WeaponHitbox.cs) tự động kích nổ `Impact VFX` ngay tại `hitPoint` (điểm tiếp xúc va chạm thực tế) khi chém trúng đối tượng có HP (Layer `Enemy` & `Damageable`, có `IDamageable`/`Health`).
+    + Tự động kích hoạt đồng loạt mọi `ParticleSystem` con (kể cả root có `playOnAwake = false`), góc tứa ngược chiều chém (`-hitDirection`).
+    + Bổ sung nút bấm `[ 💥 Test Thử Hit Impact VFX ]` ngay trên Custom Inspector [`PlayerSlashVFXEditor`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs).
+  - **Công Cụ Tự Động Hóa Unity Editor 1-Click & Custom Inspector:**
+    + [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash Trail & Hit Impact VFX Cho Kiếm Player (1-Click)`.
+    + Custom Inspector cho `PlayerSlashVFX` với 6 nút Test chém trực quan và Gizmos vẽ trước mặt phẳng chém trong Scene View.
 
 - [ ] **D-02: Cơ chế Boss Arena tại Boss Room** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
   - [x] **D02-1: Sinh Phòng Boss Khổng Lồ (x3-x5), Đại Lộ Hành Lang Dài 40m Uy Nghi, 4 Cột Trụ & 3 Tầng Ánh Sáng (PCG Geometry & Lighting):**

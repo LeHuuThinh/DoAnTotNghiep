@@ -29,6 +29,12 @@ public class EnemyFeedback : MonoBehaviour
   [Tooltip("Ghi đè texture thành màu trắng thuần khiết khi nháy (tránh bị chìm vào vân texture xỉn màu)")]
   [SerializeField] private bool solidWhiteFlash = true;
 
+  [Header("Hit VFX Feedback")]
+  [Tooltip("Prefab VFX tứa ra tại điểm trúng đòn (Mặc định: MobsGetHitVFX màu xám cho quái xương)")]
+  [SerializeField] private GameObject hitVfxPrefab;
+  [Tooltip("Thời gian tự hủy instance VFX (giây) đề phòng nếu VFX không tự hủy")]
+  [SerializeField] private float vfxDestroyDelay = 2.0f;
+
   [Header("Death Settings")]
   [Tooltip("Thời gian chờ xóa GameObject sau khi quái chết (giây)")]
   [SerializeField] private float corpseDestroyDelay = 5f;
@@ -96,6 +102,13 @@ public class EnemyFeedback : MonoBehaviour
         }
       }
     }
+
+#if UNITY_EDITOR
+    if (hitVfxPrefab == null)
+    {
+      hitVfxPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Monsters/MobsGetHitVFX.prefab");
+    }
+#endif
   }
 
   private void OnEnable()
@@ -127,6 +140,9 @@ public class EnemyFeedback : MonoBehaviour
 
   private void HandleTakeDamage(Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance)
   {
+    // Luôn sinh hiệu ứng tứa xám (MobsGetHitVFX) tại điểm chém (kể cả khi đòn này kết liễu quái)
+    SpawnHitVfx(hitPoint, hitDirection);
+
     if (health.IsDead || health.CurrentHealth <= 0f) return;
 
     lastHitTime = Time.time;
@@ -165,6 +181,39 @@ public class EnemyFeedback : MonoBehaviour
     {
       if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
       knockbackCoroutine = StartCoroutine(ApplyKnockback(hitDirection, knockbackDistance));
+    }
+  }
+
+  /// <summary>
+  /// Sinh hiệu ứng VFX tứa mảnh vụn xương (MobsGetHitVFX) tại điểm chém
+  /// </summary>
+  private void SpawnHitVfx(Vector3 hitPoint, Vector3 hitDirection)
+  {
+    if (hitVfxPrefab == null) return;
+
+    // Failsafe nếu điểm trúng đòn không xác định
+    Vector3 spawnPos = hitPoint;
+    if (spawnPos == Vector3.zero)
+    {
+      spawnPos = transform.position + Vector3.up * 1.0f;
+    }
+
+    // Hướng tứa: Bắn ngược chiều cú chém ra ngoài không khí
+    Vector3 spawnDir = -hitDirection;
+    if (spawnDir.sqrMagnitude < 0.001f)
+    {
+      spawnDir = -transform.forward;
+    }
+    spawnDir.Normalize();
+
+    // Dịch nhẹ điểm spawn ra ngoài bề mặt 0.05m để không bị lẹm vào trong mesh
+    spawnPos += spawnDir * 0.05f;
+
+    Quaternion spawnRot = Quaternion.LookRotation(spawnDir);
+    GameObject vfxInstance = Instantiate(hitVfxPrefab, spawnPos, spawnRot);
+    if (vfxDestroyDelay > 0f)
+    {
+      Destroy(vfxInstance, vfxDestroyDelay);
     }
   }
 

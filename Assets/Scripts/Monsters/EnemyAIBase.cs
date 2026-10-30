@@ -89,6 +89,7 @@ public abstract class EnemyAIBase : MonoBehaviour
   protected Renderer[] cachedRenderers;
   protected ParticleSystem[] cachedParticles;
   protected Light[] cachedLights;
+  protected InfiniteLabyrinth.UI.EnemyHealthBarUI cachedHealthBarUI;
 
   // Public Properties
   public abstract EnemyCombatRole CombatRole { get; }
@@ -105,6 +106,7 @@ public abstract class EnemyAIBase : MonoBehaviour
     cachedRenderers = GetComponentsInChildren<Renderer>(true);
     cachedParticles = GetComponentsInChildren<ParticleSystem>(true);
     cachedLights = GetComponentsInChildren<Light>(true);
+    cachedHealthBarUI = GetComponentInChildren<InfiniteLabyrinth.UI.EnemyHealthBarUI>(true);
 
     if (animator != null)
     {
@@ -152,6 +154,11 @@ public abstract class EnemyAIBase : MonoBehaviour
     if (DungeonEnemyOptimizer.Instance != null)
     {
       DungeonEnemyOptimizer.Instance.RegisterEnemy(this);
+    }
+
+    if (cachedHealthBarUI == null)
+    {
+      EnsureHealthBar();
     }
   }
 
@@ -487,6 +494,12 @@ public abstract class EnemyAIBase : MonoBehaviour
           if (cachedLights[i] != null) cachedLights[i].enabled = false;
         }
       }
+
+      // 6. Tắt thanh máu khi quái ngủ đông
+      if (cachedHealthBarUI != null)
+      {
+        cachedHealthBarUI.gameObject.SetActive(false);
+      }
     }
     else
     {
@@ -529,6 +542,12 @@ public abstract class EnemyAIBase : MonoBehaviour
         {
           if (cachedLights[i] != null) cachedLights[i].enabled = true;
         }
+      }
+
+      // 6. Bật lại thanh máu khi thức tỉnh
+      if (cachedHealthBarUI != null)
+      {
+        cachedHealthBarUI.gameObject.SetActive(true);
       }
     }
   }
@@ -592,4 +611,31 @@ public abstract class EnemyAIBase : MonoBehaviour
   public virtual void EnableStaffAura() {}
   public virtual void DisableStaffAura() {}
   public virtual void SpawnMageSpellEvent() {}
+
+  /// <summary>
+  /// Tự động đảm bảo quái vật luôn có thanh máu World Space trên đầu (Runtime Fallback)
+  /// </summary>
+  protected virtual void EnsureHealthBar()
+  {
+    cachedHealthBarUI = GetComponentInChildren<InfiniteLabyrinth.UI.EnemyHealthBarUI>(true);
+    if (cachedHealthBarUI != null) return;
+
+    GameObject prefab = Resources.Load<GameObject>("EnemyHealthBar");
+    if (prefab != null)
+    {
+      GameObject barObj = Instantiate(prefab, transform);
+      barObj.name = "EnemyHealthBar";
+      float offset = 2.15f;
+      if (gameObject.name.Contains("Minion")) offset = 1.95f;
+      else if (gameObject.name.Contains("Mage")) offset = 2.25f;
+
+      var rt = barObj.GetComponent<RectTransform>();
+      if (rt != null)
+      {
+        rt.localPosition = new Vector3(0f, offset, 0f);
+        rt.localRotation = Quaternion.identity;
+      }
+      cachedHealthBarUI = barObj.GetComponent<InfiniteLabyrinth.UI.EnemyHealthBarUI>();
+    }
+  }
 }

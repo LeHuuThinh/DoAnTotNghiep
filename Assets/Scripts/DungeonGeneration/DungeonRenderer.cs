@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine.AI;
@@ -142,6 +143,75 @@ public class DungeonRenderer : MonoBehaviour
 
     // 4. TỰ ĐỘNG BAKE NAVMESH VÀ KIỂM ĐỊNH KẾT NỐI TOÀN BỘ SÀN TRỆT, CẦU THANG VÀ TẦNG 2 (Sau khi đã có đầy đủ Props)
     BakeAndValidateNavMesh(data);
+  }
+
+  /// <summary>
+  /// Coroutine dựng hầm ngục 3D theo từng chặng (Time-Sliced Staged Generation) để cập nhật thanh Loading UI.
+  /// </summary>
+  public IEnumerator BuildMeshRoutine(DungeonData data, System.Action<float> onProgress = null)
+  {
+    if (dungeonParent == null) yield break;
+    ClearGeneratedDungeon();
+    EnsurePrefabsAssigned();
+    onProgress?.Invoke(0.05f);
+    yield return null;
+
+    // 1. Dựng sàn trệt, tường và trần theo chiều cao từng phòng (Time-slicing chia nhỏ khung hình)
+    int processedAreas = 0;
+
+    foreach (RectInt room in data.rooms)
+    {
+      CreateCombinedAreaMesh(room, "Room", data);
+      CreateInvisibleCollider(room);
+      processedAreas++;
+      if (processedAreas % 4 == 0) yield return null;
+    }
+
+    foreach (RectInt corridor in data.corridors)
+    {
+      CreateCombinedAreaMesh(corridor, "Corridor", data);
+      CreateInvisibleCollider(corridor);
+      processedAreas++;
+      if (processedAreas % 6 == 0) yield return null;
+    }
+
+    onProgress?.Invoke(0.35f);
+    yield return null;
+
+    // 2. Dựng cấu trúc gác lửng tầng 2 (Mezzanine) cho các phòng đủ điều kiện
+    if (data.roomDataList != null)
+    {
+      foreach (var r in data.roomDataList)
+      {
+        if (r.hasMezzanine)
+        {
+          BuildMezzanine(r, data);
+        }
+      }
+    }
+
+    // 2.5. Dựng 4 cây cột to chịu lực tại Đấu Trường Boss (cao 16m, scale 2.5x, có MeshCollider để núp né đòn)
+    if (data.bossRoom != null)
+    {
+      BuildBossArenaPillars(data.bossRoom, data);
+    }
+
+    onProgress?.Invoke(0.50f);
+    yield return null;
+
+    // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Sinh TRƯỚC khi Bake NavMesh để NavMesh tự động đục lỗ né vật cản)
+    if (propDecorator == null) propDecorator = GetComponent<DungeonPropDecorator>();
+    if (propDecorator == null) propDecorator = gameObject.AddComponent<DungeonPropDecorator>();
+    propDecorator.DecorateDungeon(data, dungeonParent, tileSize);
+
+    onProgress?.Invoke(0.80f);
+    yield return null;
+
+    // 4. TỰ ĐỘNG BAKE NAVMESH VÀ KIỂM ĐỊNH KẾT NỐI TOÀN BỘ SÀN TRỆT, CẦU THANG VÀ TẦNG 2 (Sau khi đã có đầy đủ Props)
+    BakeAndValidateNavMesh(data);
+
+    onProgress?.Invoke(1.0f);
+    yield return null;
   }
 
   void ClearGeneratedDungeon()

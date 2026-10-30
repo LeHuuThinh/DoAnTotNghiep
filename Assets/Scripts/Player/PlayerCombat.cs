@@ -10,6 +10,7 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private CharacterController characterController;
   [SerializeField] private PlayerFeedback playerFeedback;
   [SerializeField] private PlayerStats playerStats;
+  [SerializeField] private PlayerSlashVFX playerSlashVFX;
 
   [Header("Weapon & Damage Settings")]
   [SerializeField] private WeaponHitbox weaponHitbox;
@@ -140,10 +141,13 @@ public class PlayerCombat : MonoBehaviour
     if (playerController == null) playerController = GetComponentInParent<PlayerController>();
     if (characterController == null) characterController = GetComponentInParent<CharacterController>();
     if (playerFeedback == null) playerFeedback = GetComponentInParent<PlayerFeedback>();
+    if (playerSlashVFX == null) playerSlashVFX = GetComponentInParent<PlayerSlashVFX>();
+    if (playerSlashVFX == null) playerSlashVFX = GetComponent<PlayerSlashVFX>();
+    if (playerSlashVFX == null) playerSlashVFX = GetComponentInChildren<PlayerSlashVFX>();
 
-    if (playerStats == null) playerStats = GetComponent<PlayerStats>();
     if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
-    if (playerStats == null) playerStats = gameObject.AddComponent<PlayerStats>();
+    if (playerStats == null) playerStats = GetComponent<PlayerStats>();
+    if (playerStats == null) playerStats = GetComponentInChildren<PlayerStats>();
 
     health = GetComponent<Health>();
     if (health == null) health = GetComponentInParent<Health>();
@@ -725,29 +729,54 @@ public class PlayerCombat : MonoBehaviour
   private float TotalAttackBonus => AttackBonus + ProgressionAttackBonus;
 
   // =========================================================================
-  // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG CHUẨN
+  // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG & SLASH TRAIL VFX
   // =========================================================================
 
   // Đòn 1: Nhanh, mượt
-  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage);
+  public void EnableAttack1Hitbox()
+  {
+    weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack1);
+  }
 
   // Đòn 2: Nhanh, dứt khoát
-  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage);
+  public void EnableAttack2Hitbox()
+  {
+    weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack2);
+  }
 
   // Đòn 3: Đòn kết đầm tay
-  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage);
+  public void EnableAttack3Hitbox()
+  {
+    weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack3);
+  }
 
   // Charge Attack - Hit 1: Chém mở màn
-  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage);
+  public void EnableChargeHit1Hitbox()
+  {
+    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
+  }
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm
-  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage);
+  public void EnableChargeHit2Hitbox()
+  {
+    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
+  }
 
   // Counter Attack: Nhát chém trừng phạt cực nặng
-  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage);
+  public void EnableCounterAttackHitbox()
+  {
+    weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage);
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
+  }
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
   // Thêm vào PlayerCombat để PlayerController có thể đọc được
   public bool IsBlockingOrParrying => isParryActive;
   public bool IsAttacking => isAttacking;
+  public PlayerSlashVFX SlashVFX => playerSlashVFX;
 }

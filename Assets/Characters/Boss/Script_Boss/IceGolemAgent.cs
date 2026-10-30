@@ -286,19 +286,6 @@ public class IceGolemAgent : Agent
 
     private void Update()
     {
-        // 0. Điều khiển tốc độ game: Bấm phím T để chuyển đổi giữa 1x (thực tế) và 5x (tăng tốc training)
-        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.tKey.wasPressedThisFrame)
-        {
-            lockNormalSpeed = !lockNormalSpeed;
-            Time.timeScale = lockNormalSpeed ? 1.0f : 5.0f;
-            Debug.Log($"<color=yellow>[Tốc Độ Game]</color> Đã đổi Time.timeScale = {Time.timeScale}x (Phím T)");
-        }
-
-        if (lockNormalSpeed && Time.timeScale != 1.0f)
-        {
-            Time.timeScale = 1.0f;
-        }
-
         if (playerTransform == null)
         {
             AutoDetectPlayerReferences();

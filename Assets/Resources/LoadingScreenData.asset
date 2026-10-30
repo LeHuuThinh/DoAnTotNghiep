@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 621e334cf51a9a244898d8cc1e0dcbfe, type: 3}
+  m_Name: LoadingScreenData
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.LoadingScreenData
+  dungeonBackgroundTextures:
+  - {fileID: 2800000, guid: 1eb16cb4a8072f24dad152f010c594c1, type: 3}
+  - {fileID: 2800000, guid: 8c9b429e1de1f174e8725aac0af537cc, type: 3}
+  - {fileID: 2800000, guid: b3a641b2d15c62d4788523a061389772, type: 3}
+  - {fileID: 2800000, guid: 99e545a954d8b7146a76970ef63d1096, type: 3}
+  - {fileID: 2800000, guid: 5a564e465ab2bcd459b28efa9227cb61, type: 3}
+  - {fileID: 2800000, guid: 5c13cd0edc0a8394a926832ce60636e3, type: 3}
+  - {fileID: 2800000, guid: 7c17e9e3e30318345871781fa4275b1b, type: 3}
+  - {fileID: 2800000, guid: 026a483cbb8959541bb689b79ce78f7c, type: 3}
+  - {fileID: 2800000, guid: 5b9366ffe15746943b01773c2440e1b9, type: 3}
+  - {fileID: 2800000, guid: 9d01e6cefdc6bec499cf7da739765c9d, type: 3}
+  - {fileID: 2800000, guid: 8ece7be9269e98a41aaf5cfc15938c8f, type: 3}
+  - {fileID: 2800000, guid: 5af0b74eca3bbbf4396fe7e77f206987, type: 3}
+  - {fileID: 2800000, guid: 5df90138173ffd641b0c74eb5767d3ac, type: 3}
+  - {fileID: 2800000, guid: 12ce8b9fbeb392540892989a83ff40f3, type: 3}
+  - {fileID: 2800000, guid: a09377ee4d79ae548b828f643c3b4a9e, type: 3}
+  - {fileID: 2800000, guid: 6fa2f20105275bc429d01e3404f1a4fb, type: 3}
+  - {fileID: 2800000, guid: 794949d0d636e794297b15fa51206b40, type: 3}
+  dungeonBackgroundSprites: []
+  villageBackgroundTextures: []
+  villageBackgroundSprites: []
+  tips:
+  - category: COMBAT
+    content: Time your Parry with [Right Mouse Button] right before an attack connects
+      to stagger foes and recover Spirit.
+  - category: COMBAT
+    content: Rolling gives you Invulnerability Frames (I-Frames). Use it to evade
+      wide slashes and crushing shockwaves.
+  - category: COMBAT
+    content: Heavy Skeleton Warriors boast thick Poise. Land a complete 3-hit combo
+      to break their posture and interrupt their strikes.
+  - category: COMBAT
+    content: Release your Spirit Blade [E] to strike down archers and skeleton mages
+      from a safe range.
+  - category: COMBAT
+    content: When surrounded by skeletal hordes, unleash the Area Burst [Q] to sweep
+      the field clean.
+  - category: COMBAT
+    content: Keep an eye on your Stamina bar. Running out of breath leaves you defenseless
+      against lethal counterattacks.
+  - category: EXPLORATION
+    content: Shatter barrels and wooden crates with your weapon to find gold coins
+      and vital recovery elixirs.
+  - category: EXPLORATION
+    content: Large labyrinth halls often feature second-floor mezzanines hiding valuable
+      treasure chests.
+  - category: EXPLORATION
+    content: Ancient Shrines radiate a golden aura. Search them thoroughly to obtain
+      the Dungeon Key.
+  - category: EXPLORATION
+    content: Gold coins magnetize towards you automatically when walking nearby.
+  - category: EXPLORATION
+    content: Wall torches and floor braziers reveal safe corridors and banish dark
+      ambushes.
+  - category: BOSS TACTICS
+    content: The Ice Golem is an unrelenting colossus. Step back when you see its
+      fists raised high for a ground slam.
+  - category: BOSS TACTICS
+    content: When the Frost Juggernaut leaps into the air, time your jump or roll
+      just as it impacts the arena floor.
+  - category: BOSS TACTICS
+    content: Take cover behind the four ancient colosseum pillars to block freezing
+      breath and homing purple ice orbs.
+  - category: BOSS TACTICS
+    content: During the Ice Golem's intro jump-down, keep your distance to avoid
+      taking heavy splash damage.
+  - category: VILLAGE HUB
+    content: Resting at the Village Bell fully restores your Health and recharges
+      your spirit for the journey ahead.
+  - category: VILLAGE HUB
+    content: Visit the Village Blacksmith to enhance your blades and boost your melee
+      damage output.
+  - category: PROGRESSION
+    content: Press [Tab] at any time to inspect your inventory, equip armor, or allocate
+      attribute points.
+  - category: PROGRESSION
+    content: Resetting attribute points costs gold at the Village, but allows you
+      to experiment with new combat builds.
+  - category: ROGUELITE
+    content: If you fall in battle, you will awaken at the Village Bell with the
+      rising of a new dawn.
+  - category: ROGUELITE
+    content: Deeper dungeon floors yield rarer equipment, greater heaps of gold,
+      and tougher adversaries.
+  locations:
+  - sceneName: DungeonScene
+    titleFormat: INFINITE LABYRINTH - FLOOR {0}
+    subtitle: The Forgotten Crypt
+  - sceneName: LandScene
+    titleFormat: HAVEN VILLAGE
+    subtitle: Sanctuary of the Wandering Knight

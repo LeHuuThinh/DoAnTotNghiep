@@ -1,16 +1,21 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using InfiniteLabyrinth.Interaction;
+using InfiniteLabyrinth.UI;
 
 /// <summary>
 /// Cổng dịch chuyển giữa các Scene (ví dụ: DungeonScene <-> LandScene)
 /// Kế thừa IInteractable hỗ trợ đè giữ phím F với thanh HoldFill từ dưới lên trên InteractUI.
+/// Tự động kết nối với LoadingScreenManager để chuyển cảnh và nạp PCG mượt mà.
 /// </summary>
 public class PortalController : MonoBehaviour, IInteractable
 {
   [Header("=== CẤU HÌNH DỊCH CHUYỂN ===")]
   [Tooltip("Tên Scene đích muốn tải (ví dụ: DungeonScene hoặc LandScene)")]
   [SerializeField] private string targetSceneName = "LandScene";
+
+  [Tooltip("Số tầng hầm ngục muốn tới (nếu chuyển vào DungeonScene)")]
+  [SerializeField] private int targetFloor = 1;
 
   [Tooltip("Câu gợi ý hiển thị trên UI")]
   [SerializeField] private string interactionPrompt = "Vào Cổng Dịch Chuyển";
@@ -71,7 +76,15 @@ public class PortalController : MonoBehaviour, IInteractable
       Instantiate(teleportVfxPrefab, transform.position, Quaternion.identity);
     }
 
-    SceneManager.LoadScene(targetSceneName);
+    // Chuyển Scene thông qua LoadingScreenManager (màn hình loading mượt mà kèm mẹo và ảnh nền)
+    if (LoadingScreenManager.Instance != null)
+    {
+      LoadingScreenManager.Instance.LoadScene(targetSceneName, targetFloor);
+    }
+    else
+    {
+      SceneManager.LoadScene(targetSceneName);
+    }
   }
 
   // Tương thích ngược với các Trigger cũ nếu có
