@@ -7,7 +7,7 @@ public partial class DungeonPropDecorator
   /// Trang trí gác lửng tầng 2 (Mezzanine): cờ hiệu, khiên kiếm, đuốc tường, đuốc sàn, kệ sách, rương, bàn ghế ngắm cảnh lan can
   /// Khớp chuẩn cao độ mặt sàn tầng 2 (mY = room.mezzanineHeight = 8.0m)
   /// </summary>
-  private void DecorateMezzanine(RoomData room, Transform staticPropsGroup, Transform lightsGroup, HashSet<Vector2Int> forbiddenTiles, List<GameObject> roomBanners, RoomTheme theme, DungeonData data, float tileSize)
+  private void DecorateMezzanine(RoomData room, Transform staticPropsGroup, Transform lightsGroup, Transform interactablesGroup, HashSet<Vector2Int> forbiddenTiles, List<GameObject> roomBanners, RoomTheme theme, DungeonData data, float tileSize)
   {
     float mY = (room.mezzanineHeight > 0.1f) ? room.mezzanineHeight : 8.0f; // Cao độ thực tế của sàn tầng 2
     RectInt b = room.bounds;
@@ -65,6 +65,92 @@ public partial class DungeonPropDecorator
       }
     }
 
+    // 2.5. RƯƠNG BÁU & CỤM THÙNG GỖ ĐẬP ĐƯỢC TRÊN GÁC LỬNG TẦNG 2
+    if (enableLootAndBreakables && room.mezzanineTiles != null)
+    {
+      // A. Sinh Rương báu trên gác lửng (Tỉ lệ cao do người chơi leo lên khám phá)
+      if (enableChests && (regularChestPrefab != null || goldChestPrefab != null) && Random.value < mezzanineChestChance)
+      {
+        List<Vector2Int> backTiles = new List<Vector2Int>();
+        foreach (var t in room.mezzanineTiles)
+        {
+          if (forbiddenTiles.Contains(t)) continue;
+          bool isBack = (room.mezzanineSide == MezzanineWallSide.North) ? (t.y == b.y + b.height - 1) : (t.y == b.y);
+          if (isBack) backTiles.Add(t);
+        }
+
+        if (backTiles.Count > 0)
+        {
+          Vector2Int chestTile = backTiles[Random.Range(0, backTiles.Count)];
+          float cOffset = Mathf.Max(0.1f, chestWallOffset);
+          Vector3 pos = (room.mezzanineSide == MezzanineWallSide.North)
+            ? new Vector3(chestTile.x * tileSize + halfTile, mY, (b.y + b.height) * tileSize - cOffset)
+            : new Vector3(chestTile.x * tileSize + halfTile, mY, b.y * tileSize + cOffset);
+          Quaternion rot = (room.mezzanineSide == MezzanineWallSide.North) ? Quaternion.Euler(0, 180, 0) : Quaternion.identity;
+
+          bool isGold = (Random.value < mezzanineGoldChestChance && goldChestPrefab != null);
+          GameObject chestPrefab = (isGold && goldChestPrefab != null) ? goldChestPrefab : (regularChestPrefab ?? goldChestPrefab);
+          if (chestPrefab != null)
+          {
+            GameObject chestObj = Instantiate(chestPrefab, pos, rot, interactablesGroup);
+            EnsureNavMeshObstacleModifier(chestObj);
+            forbiddenTiles.Add(chestTile);
+          }
+        }
+      }
+
+      // B. Sinh Thùng gỗ đập được trên gác lửng (1 - 2 cụm Solo hoặc Pair)
+      if (enableFloorBarrels && breakableBarrelPrefabs.Count > 0)
+      {
+        int maxMezzBarrels = Random.Range(1, 3);
+        int placedMezzBarrels = 0;
+        foreach (var t in room.mezzanineTiles)
+        {
+          if (placedMezzBarrels >= maxMezzBarrels) break;
+          if (forbiddenTiles.Contains(t)) continue;
+
+          bool isBack = (room.mezzanineSide == MezzanineWallSide.North) ? (t.y == b.y + b.height - 1) : (t.y == b.y);
+          if (isBack) continue; // Để lại sát tường cho kệ sách/rương
+
+          if (Random.value < 0.35f)
+          {
+            Vector3 center = new Vector3(t.x * tileSize + halfTile, mY, t.y * tileSize + halfTile);
+            float roll = Random.value;
+
+            if (roll < 0.45f)
+            {
+              // Solo
+              Vector3 jitter = new Vector3(Random.Range(-0.15f, 0.15f), 0f, Random.Range(-0.15f, 0.15f));
+              GameObject p = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject bObj = Instantiate(p, center + jitter, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);
+              EnsureNavMeshObstacleModifier(bObj);
+            }
+            else
+            {
+              // Pair
+              float angle = Random.Range(0f, 360f);
+              Quaternion crot = Quaternion.Euler(0, angle, 0);
+              float spacing = Mathf.Max(0.3f, barrelPairSpacing);
+              Vector3 pos1 = center + crot * new Vector3(-spacing, 0f, 0f);
+              Vector3 pos2 = center + crot * new Vector3(spacing, 0f, 0f);
+
+              GameObject p1 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject p2 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+
+              GameObject b1 = Instantiate(p1, pos1, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);
+              GameObject b2 = Instantiate(p2, pos2, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);
+
+              EnsureNavMeshObstacleModifier(b1);
+              EnsureNavMeshObstacleModifier(b2);
+            }
+
+            forbiddenTiles.Add(t);
+            placedMezzBarrels++;
+          }
+        }
+      }
+    }
+
     // 3. NỘI THẤT ÁP TƯỜNG & KHU VỰC NGẮM CẢNH GẦN LAN CAN & RẢI RÁC SÀN TẦNG 2
     if (room.mezzanineTiles != null)
     {
@@ -88,12 +174,15 @@ public partial class DungeonPropDecorator
         // A. Ô sát tường sau: Kê kệ sách hoặc rương/keg áp sát vách (ngẫu nhiên đa dạng)
         if (isBackWall && placedFurniture < maxFurniture)
         {
+          bool spawnShelf = (placedFurniture % 2 == 0 && shelfPrefabs.Count > 0);
+          float offset = spawnShelf ? shelfWallOffset : furnitureWallOffset;
+
           Vector3 pos = (room.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(tile.x * tileSize + halfTile, mY, (b.y + b.height) * tileSize - furnitureWallOffset)
-            : new Vector3(tile.x * tileSize + halfTile, mY, b.y * tileSize + furnitureWallOffset);
+            ? new Vector3(tile.x * tileSize + halfTile, mY, (b.y + b.height) * tileSize - offset)
+            : new Vector3(tile.x * tileSize + halfTile, mY, b.y * tileSize + offset);
           Quaternion rot = (room.mezzanineSide == MezzanineWallSide.North) ? Quaternion.Euler(0, 180, 0) : Quaternion.identity;
 
-          if (placedFurniture % 2 == 0 && shelfPrefabs.Count > 0)
+          if (spawnShelf)
           {
             GameObject shelf = shelfPrefabs[Random.Range(0, shelfPrefabs.Count)];
             Instantiate(shelf, pos, rot, staticPropsGroup);
@@ -115,7 +204,7 @@ public partial class DungeonPropDecorator
 
           if (placedFurniture % 2 == 0 && tablePrefabs.Count > 0)
           {
-            List<GameObject> smTables = tablePrefabs.FindAll(t => t.name.Contains("small") || t.name.Contains("medium"));
+            List<GameObject> smTables = tablePrefabs.FindAll(t => (t.name.Contains("small") || t.name.Contains("medium")) && !t.name.Contains("decorated_B") && !t.name.Contains("decorated_b"));
             GameObject smTable = (smTables.Count > 0) ? smTables[Random.Range(0, smTables.Count)] : tablePrefabs[0];
             Instantiate(smTable, pos, Quaternion.identity, staticPropsGroup);
 

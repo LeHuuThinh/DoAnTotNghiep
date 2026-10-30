@@ -231,6 +231,72 @@ namespace InfiniteLabyrinth.Inventory
       return count;
     }
 
+    /// <summary>
+    /// Kiểm tra người chơi có sở hữu vật phẩm theo ID không
+    /// </summary>
+    public bool HasItem(string itemId)
+    {
+      if (string.IsNullOrEmpty(itemId)) return false;
+      for (int i = 0; i < slots.Count; i++)
+      {
+        if (!slots[i].IsEmpty && slots[i].ItemData != null && slots[i].ItemData.Id.Equals(itemId, System.StringComparison.OrdinalIgnoreCase))
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>
+    /// Đếm tổng số lượng một vật phẩm đang có trong túi theo ID
+    /// </summary>
+    public int GetItemCount(string itemId)
+    {
+      if (string.IsNullOrEmpty(itemId)) return 0;
+      int count = 0;
+      for (int i = 0; i < slots.Count; i++)
+      {
+        if (!slots[i].IsEmpty && slots[i].ItemData != null && slots[i].ItemData.Id.Equals(itemId, System.StringComparison.OrdinalIgnoreCase))
+        {
+          count += slots[i].Quantity;
+        }
+      }
+      return count;
+    }
+
+    /// <summary>
+    /// Xóa vật phẩm theo ID khỏi túi đồ
+    /// </summary>
+    public bool RemoveItem(string itemId, int quantity = 1)
+    {
+      if (string.IsNullOrEmpty(itemId) || quantity <= 0) return false;
+      int totalOwned = GetItemCount(itemId);
+      if (totalOwned < quantity) return false;
+
+      int neededToRemove = quantity;
+      for (int i = slots.Count - 1; i >= 0; i--)
+      {
+        if (!slots[i].IsEmpty && slots[i].ItemData != null && slots[i].ItemData.Id.Equals(itemId, System.StringComparison.OrdinalIgnoreCase))
+        {
+          int currentSlotQty = slots[i].Quantity;
+          if (currentSlotQty <= neededToRemove)
+          {
+            neededToRemove -= currentSlotQty;
+            slots[i].Clear();
+          }
+          else
+          {
+            slots[i].RemoveQuantity(neededToRemove);
+            neededToRemove = 0;
+          }
+          if (neededToRemove <= 0) break;
+        }
+      }
+
+      OnInventoryChanged?.Invoke();
+      return true;
+    }
+
     // =========================================================================
     // 2. TRANG BỊ & THÁO ĐỒ (EQUIPMENT)
     // =========================================================================

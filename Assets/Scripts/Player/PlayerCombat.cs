@@ -44,6 +44,47 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private float chargeAttackKnockback = 1.2f;
   [SerializeField] private float counterAttackKnockback = 2.0f; // Đẩy bay quái khi Counter
 
+  [Header("Hitlag Settings")]
+  [Tooltip("Thời gian khựng (giây) khi đòn chém thường 1 trúng mục tiêu")]
+  [SerializeField] private float attack1Hitlag = 0.035f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn chém thường 2 trúng mục tiêu")]
+  [SerializeField] private float attack2Hitlag = 0.045f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn chém thường 3 (đòn kết chuỗi) trúng mục tiêu")]
+  [SerializeField] private float attack3Hitlag = 0.08f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn Gồng Lực (Charge) nhát 1 trúng mục tiêu")]
+  [SerializeField] private float chargeHit1Hitlag = 0.05f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn Gồng Lực (Charge) nhát 2 trúng mục tiêu")]
+  [SerializeField] private float chargeHit2Hitlag = 0.095f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn Phản Đòn (Counter Attack) trúng mục tiêu")]
+  [SerializeField] private float counterAttackHitlag = 0.11f;
+
+  [Tooltip("Thời gian khựng (giây) khi đòn đánh KẾT LIỄU hạ gục quái vật (0.15s - 0.2s tạo độ đanh và điểm nhấn dứt điểm cực đã tay)")]
+  [SerializeField] private float lethalHitlag = 0.18f;
+
+  [Header("Poise Damage Settings")]
+  [Tooltip("Sát thương làm mất thăng bằng của đòn chém 1 (Đòn nhẹ, quái đứng vững)")]
+  [SerializeField] private float attack1PoiseDamage = 25f;
+
+  [Tooltip("Sát thương làm mất thăng bằng của đòn chém 2 (Đòn nhẹ, quái đứng vững)")]
+  [SerializeField] private float attack2PoiseDamage = 25f;
+
+  [Tooltip("Sát thương làm mất thăng bằng của đòn chém 3 (Đòn kết chuỗi, vỡ thế quái)")]
+  [SerializeField] private float attack3PoiseDamage = 55f;
+
+  [Tooltip("Sát thương Poise đòn Gồng nhát 1")]
+  [SerializeField] private float chargeHit1PoiseDamage = 35f;
+
+  [Tooltip("Sát thương Poise đòn Gồng nhát 2 (Bổ mạnh phá thế)")]
+  [SerializeField] private float chargeHit2PoiseDamage = 80f;
+
+  [Tooltip("Sát thương Poise đòn Phản công Counter (Lập tức phá vỡ thế mọi quái)")]
+  [SerializeField] private float counterAttackPoiseDamage = 120f;
+
   [Header("Parry & Counter Settings")]
   [Tooltip("Khung thời gian vàng (giây) tính từ khi bấm Chuột Phải mà đòn chém của quái bị gạt")]
   [SerializeField] private float parryWindowDuration = 0.28f;
@@ -687,23 +728,23 @@ public class PlayerCombat : MonoBehaviour
   // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG CHUẨN
   // =========================================================================
 
-  // Đòn 1: Nhanh, mượt (Hitlag = 0.035s)
-  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, 0.035f);
+  // Đòn 1: Nhanh, mượt
+  public void EnableAttack1Hitbox() => weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage);
 
-  // Đòn 2: Nhanh, dứt khoát (Hitlag = 0.045s)
-  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, 0.045f);
+  // Đòn 2: Nhanh, dứt khoát
+  public void EnableAttack2Hitbox() => weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage);
 
-  // Đòn 3: Đòn kết đầm tay (Hitlag = 0.08s)
-  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, 0.08f);
+  // Đòn 3: Đòn kết đầm tay
+  public void EnableAttack3Hitbox() => weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage);
 
-  // Charge Attack - Hit 1: Chém mở màn (Hitlag = 0.05s)
-  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, 0.05f);
+  // Charge Attack - Hit 1: Chém mở màn
+  public void EnableChargeHit1Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage);
 
-  // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm (Hitlag = 0.095s)
-  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, 0.095f);
+  // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm
+  public void EnableChargeHit2Hitbox() => weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage);
 
-  // Counter Attack: Nhát chém trừng phạt cực nặng (Hitlag = 0.11s)
-  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, 0.11f);
+  // Counter Attack: Nhát chém trừng phạt cực nặng
+  public void EnableCounterAttackHitbox() => weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage);
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
   // Thêm vào PlayerCombat để PlayerController có thể đọc được

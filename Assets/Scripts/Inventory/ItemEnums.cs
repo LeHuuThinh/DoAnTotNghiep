@@ -11,7 +11,8 @@ namespace InfiniteLabyrinth.Inventory
     Armor,      // Giáp (Áo giáp, khiên...)
     Consumable, // Vật phẩm tiêu hao (Bình máu, bình thể lực...)
     Material,   // Nguyên liệu (Đá nâng cấp kiếm, xương quái, quặng...)
-    Currency    // Tiền tệ (Đồng tiền vàng)
+    Currency,   // Tiền tệ (Đồng tiền vàng)
+    Key         // Chìa khóa & Vật phẩm nhiệm vụ (Chìa khóa Hầm ngục...)
   }
 
   /// <summary>
@@ -54,12 +55,12 @@ namespace InfiniteLabyrinth.Inventory
     {
       switch (rarity)
       {
-        case ItemRarity.Common: return "Thường";
-        case ItemRarity.Uncommon: return "Đặc Biệt";
-        case ItemRarity.Rare: return "Hiếm";
-        case ItemRarity.Epic: return "Sử Thi";
-        case ItemRarity.Legendary: return "Huyền Thoại";
-        default: return "Vô Danh";
+        case ItemRarity.Common: return "Common";
+        case ItemRarity.Uncommon: return "Uncommon";
+        case ItemRarity.Rare: return "Rare";
+        case ItemRarity.Epic: return "Epic";
+        case ItemRarity.Legendary: return "Legendary";
+        default: return "Unknown";
       }
     }
 

@@ -6,11 +6,18 @@ public class PlayerController : MonoBehaviour
 {
     [Header("State")]
     public bool canMove = true;
+    [Tooltip("Hệ số nhân tốc độ di chuyển (Dùng cho Admin Super Speed hoặc Buff/Debuff)")]
+    public float speedMultiplier = 1.0f;
+    public float SpeedMultiplier
+    {
+        get => speedMultiplier;
+        set => speedMultiplier = Mathf.Max(0.1f, value);
+    }
 
     [Header("Movement Speeds")]
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float strafeSpeed = 3.8f;      // Tốc độ khi bước ngang/lùi vờn quái
-    [SerializeField] private float runSpeed = 9f;
+    [SerializeField] private float runSpeed = 8f;
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float rotationSpeed = 12f;
 
@@ -135,6 +142,12 @@ public class PlayerController : MonoBehaviour
         if (thirdPersonCamera == null && Camera.main != null)
         {
             thirdPersonCamera = Camera.main.GetComponent<ThirdPersonCamera>();
+        }
+
+        // Tự động đảm bảo PlayerInteraction luôn có mặt trên Player
+        if (!TryGetComponent<InfiniteLabyrinth.Player.PlayerInteraction>(out _))
+        {
+            gameObject.AddComponent<InfiniteLabyrinth.Player.PlayerInteraction>();
         }
 
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
@@ -332,7 +345,7 @@ public class PlayerController : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(rollDirection);
                 verticalVelocity += gravity * Time.deltaTime;
                 Vector3 rollVelocity = rollDirection * rollSpeed;
-                rollVelocity.y = verticalVelocity;
+                rollVelocity.y = isGrounded ? -6f : verticalVelocity;
                 characterController.Move(rollVelocity * Time.deltaTime);
                 return;
             }
@@ -343,8 +356,7 @@ public class PlayerController : MonoBehaviour
         // =====================================================================
         if (isGrounded)
         {
-            // Lực bám sàn -5f giúp CharacterController không bị trượt/chớp tắt isGrounded trên lan can và cầu thang
-            if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -5f;
+            if (verticalVelocity < 0f && !isPreparingJump) verticalVelocity = -4f;
 
             if (!isPreparingJump)
             {
@@ -361,7 +373,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, rotationSpeed * Time.deltaTime);
                     }
 
-                    lockedAirVelocity = moveDir * strafeSpeed;
+                    lockedAirVelocity = moveDir * (strafeSpeed * speedMultiplier);
                 }
                 else
                 {
@@ -370,7 +382,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
                     }
 
-                    float currentSpeed = IsRunning ? runSpeed : moveSpeed;
+                    float currentSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
                     lockedAirVelocity = moveDir * currentSpeed;
                 }
 
@@ -394,6 +406,7 @@ public class PlayerController : MonoBehaviour
                 if (jumpTimer <= 0f)
                 {
                     isPreparingJump = false;
+                    UnlockMovement(); // Giải phóng điều khiển khi phóng lên không trung
                     verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     lockedAirVelocity = pendingJumpVelocity;
                 }
@@ -408,15 +421,50 @@ public class PlayerController : MonoBehaviour
             // Cho phép điều chỉnh hướng nhẹ trên không (Air Control) giúp đáp sàn/cầu thang dễ dàng hơn
             if (airControl > 0f && desiredMoveDirection.sqrMagnitude > 0.001f)
             {
-                float targetSpeed = IsRunning ? runSpeed : moveSpeed;
+                float targetSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
                 Vector3 targetAirVel = desiredMoveDirection * targetSpeed;
                 lockedAirVelocity = Vector3.Lerp(lockedAirVelocity, targetAirVel, airControl * 6f * Time.deltaTime);
             }
         }
 
         Vector3 finalVelocity = lockedAirVelocity;
-        finalVelocity.y = verticalVelocity;
+        if (isGrounded && !isPreparingJump && verticalVelocity <= 0.1f)
+        {
+            // Lực bám sàn động theo tốc độ di chuyển:
+            // Chỉ áp dụng khi ĐANG TIẾP ĐẤT và KHÔNG ĐANG PHÓNG NHẢY LÊN (verticalVelocity <= 0.1f)!
+            // Khi di chuyển trên dốc 45 độ, dốc tụt xuống theo phương đứng bằng đúng vận tốc ngang.
+            // Lực ép xuống cần nhanh hơn vận tốc ngang một chút (tốc độ * 1.35f, tối thiểu 6f).
+            // Với Walk = 4m/s -> ép -6f (nhẹ nhàng, mượt mà).
+            // Với Run = 8m/s -> ép -11f (chân luôn dính khít mặt dốc, không bao giờ bị nhảy cóc hay tách rời sàn).
+            float curSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
+            float groundStick = Mathf.Max(6f, curSpeed * 1.35f);
+            finalVelocity.y = -groundStick;
+        }
+        else
+        {
+            finalVelocity.y = verticalVelocity;
+        }
         characterController.Move(finalVelocity * Time.deltaTime);
+    }
+
+    [Header("=== DEBUG & DIAGNOSTICS ===")]
+    [Tooltip("Bật để hiển thị log mọi vật cản va chạm với Player trong Console. Mặc định tắt để tránh spam.")]
+    [SerializeField] private bool enableCollisionLogging = false;
+
+    private float lastCollisionLogTime = 0f;
+    private GameObject lastHitObject = null;
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (!enableCollisionLogging) return;
+        if (hit.normal.y > 0.7f) return; // Bỏ qua sàn trệt dưới chân và mặt dốc leo được
+
+        // Log mọi chướng ngại vật chặn đường (tường thẳng, tường chéo, mép sàn, lan can...)
+        if (Time.time - lastCollisionLogTime > 0.5f || hit.gameObject != lastHitObject)
+        {
+            lastCollisionLogTime = Time.time;
+            lastHitObject = hit.gameObject;
+            Debug.LogWarning($"<color=yellow>[Player Obstacle Hit]</color> Object: <b>{hit.gameObject.name}</b> ({hit.collider.GetType().Name}), Normal: ({hit.normal.x:F2}, {hit.normal.y:F2}, {hit.normal.z:F2}), Point: {hit.point}");
+        }
     }
 
     private void TriggerRoll(Vector3 desiredMoveDirection)

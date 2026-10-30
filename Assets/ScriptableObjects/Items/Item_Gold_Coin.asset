@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Item_Gold_Coin
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: currency_gold
-  itemName: "\u0110\u1ED3ng Ti\u1EC1n V\xE0ng"
-  description: "\u0110\u01A1n v\u1ECB ti\u1EC1n t\u1EC7 l\u01B0u h\xE0nh kh\u1EAFp
-    v\u01B0\u01A1ng qu\u1ED1c. D\xF9ng \u0111\u1EC3 n\xE2ng c\u1EA5p v\u0169 kh\xED
-    t\u1EA1i Th\u1EE3 R\xE8n ho\u1EB7c mua nhu y\u1EBFu ph\u1EA9m."
+  itemName: Gold Coin
+  description: Common currency used throughout the realm. Used to forge weapons at
+    the Blacksmith or purchase supplies.
   icon: {fileID: 21300000, guid: e7f477f3895bda14ab618c66591c57ed, type: 3}
   itemType: 4
   rarity: 0

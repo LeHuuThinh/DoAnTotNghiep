@@ -93,8 +93,14 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
-    public bool IsVisible => (modalCanvasGroup != null && modalCanvasGroup.alpha > 0.05f) ||
-                             (modalRoot != null && modalRoot.activeSelf);
+    public bool IsVisible
+    {
+      get
+      {
+        if (modalCanvasGroup != null) return modalCanvasGroup.alpha > 0.05f;
+        return modalRoot != null && modalRoot.activeSelf;
+      }
+    }
 
     private void Awake()
     {
@@ -116,12 +122,38 @@ namespace InfiniteLabyrinth.UI
       }
 
       // Tự động dò tìm các GameObject và Component theo cấu trúc Canvas
-      if (confirmButton == null || atkPlusButton == null)
+      if (confirmButton == null || atkPlusButton == null || resetPriceText == null)
       {
         AutoFindUIComponents();
       }
 
+      FixButtonColors();
       SetupButtonListeners();
+    }
+
+    private void FixButtonColors()
+    {
+      FixButtonDisabledColor(confirmButton);
+      FixButtonDisabledColor(cancelButton);
+      FixButtonDisabledColor(resetStatsButton);
+      FixButtonDisabledColor(atkMinusButton);
+      FixButtonDisabledColor(atkPlusButton);
+      FixButtonDisabledColor(hpMinusButton);
+      FixButtonDisabledColor(hpPlusButton);
+      FixButtonDisabledColor(staminaMinusButton);
+      FixButtonDisabledColor(staminaPlusButton);
+    }
+
+    private void FixButtonDisabledColor(Button btn)
+    {
+      if (btn == null) return;
+      ColorBlock cb = btn.colors;
+      // Nếu disabledColor quá sáng (mặc định của Unity là 0.784 trắng mờ), làm nút tối bị biến thành hộp trắng
+      if (cb.disabledColor.r > 0.5f)
+      {
+        cb.disabledColor = new Color(cb.normalColor.r * 0.75f, cb.normalColor.g * 0.75f, cb.normalColor.b * 0.75f, 0.45f);
+        btn.colors = cb;
+      }
     }
 
     [ContextMenu("Auto Find UI Components")]
@@ -173,7 +205,23 @@ namespace InfiniteLabyrinth.UI
       if (resetPriceText == null)
       {
         Transform t = transform.Find("FooterRow/ResetPrice/Text");
-        if (t != null) resetPriceText = t.GetComponent<TextMeshProUGUI>();
+        if (t == null) t = transform.Find("ResetPrice/Text");
+        if (t != null)
+        {
+          resetPriceText = t.GetComponent<TextMeshProUGUI>();
+        }
+        else
+        {
+          var tmps = GetComponentsInChildren<TextMeshProUGUI>(true);
+          foreach (var tmp in tmps)
+          {
+            if (tmp.transform.parent != null && tmp.transform.parent.name.Equals("ResetPrice", StringComparison.OrdinalIgnoreCase))
+            {
+              resetPriceText = tmp;
+              break;
+            }
+          }
+        }
       }
 
       if (resetStatsButtonText == null && resetStatsButton != null)
@@ -231,9 +279,6 @@ namespace InfiniteLabyrinth.UI
 
     private void Start()
     {
-      // Mặc định ẩn modal khi vào game
-      HideImmediate();
-
       if (PlayerProgression.HasInstance)
       {
         PlayerProgression.Instance.OnPointsChanged += HandlePointsChanged;
@@ -378,7 +423,7 @@ namespace InfiniteLabyrinth.UI
         tempAtk = 0;
         tempHp = 0;
         tempStamina = 0;
-        if (statusMessageText != null) statusMessageText.text = "<color=#B0BEC5>Đã hủy bỏ điểm cộng tạm thời.</color>";
+        if (statusMessageText != null) statusMessageText.text = "<color=#B0BEC5>Cancelled pending attribute points.</color>";
         RefreshUI();
       }
       else
@@ -400,7 +445,7 @@ namespace InfiniteLabyrinth.UI
         tempStamina = 0;
         if (statusMessageText != null)
         {
-          statusMessageText.text = $"<color=#A5D6A7>✓ Đã phân bổ thành công +{addedTotal} điểm tiềm năng!</color>";
+          statusMessageText.text = $"<color=#A5D6A7>✓ Successfully allocated +{addedTotal} points!</color>";
         }
         RefreshUI();
       }
@@ -408,7 +453,7 @@ namespace InfiniteLabyrinth.UI
       {
         if (statusMessageText != null)
         {
-          statusMessageText.text = "<color=#EF9A9A>✗ Phân bổ điểm không thành công, vui lòng kiểm tra lại!</color>";
+          statusMessageText.text = "<color=#EF9A9A>✗ Failed to allocate points, please try again!</color>";
         }
       }
     }
@@ -435,7 +480,7 @@ namespace InfiniteLabyrinth.UI
         tempStamina = 0;
         if (statusMessageText != null)
         {
-          statusMessageText.text = $"<color=#A5D6A7>✓ Tẩy điểm thành công! Đã hoàn trả {pointsRefunded} điểm tiềm năng.</color>";
+          statusMessageText.text = $"<color=#A5D6A7>✓ Reset stats successful! Refunded {pointsRefunded} points.</color>";
         }
         RefreshUI();
       }
@@ -449,19 +494,10 @@ namespace InfiniteLabyrinth.UI
       var prog = PlayerProgression.Instance;
       if (prog == null) return;
 
-      // 1. Điểm khả dụng
+      // 1. Điểm khả dụng (chỉ gán số, nhãn 'Available Points' đã được thiết kế sẵn trên Canvas)
       if (availablePointsText != null)
       {
-        int rem = RemainingPoints;
-        if (availablePointsText.gameObject.name.Equals("Points", StringComparison.OrdinalIgnoreCase))
-        {
-          availablePointsText.text = rem.ToString();
-        }
-        else
-        {
-          string colorTag = rem > 0 ? "<color=#FFE082>" : "<color=#B0BEC5>";
-          availablePointsText.text = $"Điểm khả dụng: {colorTag}<b>{rem}</b></color>";
-        }
+        availablePointsText.text = RemainingPoints.ToString();
       }
 
       // Đọc chỉ số gốc của Player
@@ -566,18 +602,6 @@ namespace InfiniteLabyrinth.UI
       if (resetPriceText != null)
       {
         resetPriceText.text = cost.ToString("N0");
-      }
-
-      if (resetStatsButtonText != null)
-      {
-        if (resetPriceText != null)
-        {
-          resetStatsButtonText.text = "Reset All";
-        }
-        else
-        {
-          resetStatsButtonText.text = $"Tẩy Điểm ({cost} Vàng)";
-        }
       }
 
       if (resetStatsButton != null)

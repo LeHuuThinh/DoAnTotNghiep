@@ -12,8 +12,26 @@ public class EnemyFeedback : MonoBehaviour
   [SerializeField] private Renderer[] bodyRenderers;
 
   [Header("Flash Feedback")]
-  [SerializeField] private float flashDuration = 0.1f;
-  [SerializeField] private Color flashColor = Color.red;
+  [Tooltip("Thời gian nháy khi dính đòn (giây). 0.08s - 0.1s cho cảm giác chém trúng rất đã tay")]
+  [SerializeField] private float flashDuration = 0.08f;
+
+  [Tooltip("Thời gian quái giữ màu nháy trắng khi dính đòn kết liễu (giây). Giữ trắng xuyên suốt hitlag kết liễu để tạo điểm nhấn thị giác cực mạnh")]
+  [SerializeField] private float lethalFlashDuration = 0.15f;
+
+  [Tooltip("Màu nháy khi dính đòn (Mặc định: Trắng Color.white)")]
+  [ColorUsage(true, true)]
+  [SerializeField] private Color flashColor = Color.white;
+
+  [Tooltip("Cường độ phát quang (Emission) giúp nháy trắng rực rỡ và nổi bật ngay cả trong góc tối hầm ngục")]
+  [Range(0f, 5f)]
+  [SerializeField] private float emissionIntensity = 2.5f;
+
+  [Tooltip("Ghi đè texture thành màu trắng thuần khiết khi nháy (tránh bị chìm vào vân texture xỉn màu)")]
+  [SerializeField] private bool solidWhiteFlash = true;
+
+  [Header("Death Settings")]
+  [Tooltip("Thời gian chờ xóa GameObject sau khi quái chết (giây)")]
+  [SerializeField] private float corpseDestroyDelay = 5f;
 
   [Header("Souls-like Poise Settings")]
   [SerializeField] private float maxPoise = 100f;
@@ -23,10 +41,13 @@ public class EnemyFeedback : MonoBehaviour
   [Header("Knockback Settings")]
   [SerializeField] private float knockbackDuration = 0.15f;
 
-  // Sử dụng MaterialPropertyBlock để chớp đỏ trực tiếp trên GPU: Không clone Material, 100% tương thích SRP Batcher & GPU Instancing!
+  // Sử dụng MaterialPropertyBlock để chớp trắng trực tiếp trên GPU: Không clone Material, 100% tương thích SRP Batcher & GPU Instancing!
   private static MaterialPropertyBlock flashPropertyBlock;
+  private static readonly int BaseMapProp = Shader.PropertyToID("_BaseMap");
+  private static readonly int MainTexProp = Shader.PropertyToID("_MainTex");
   private static readonly int BaseColorProp = Shader.PropertyToID("_BaseColor");
   private static readonly int ColorProp = Shader.PropertyToID("_Color");
+  private static readonly int EmissionColorProp = Shader.PropertyToID("_EmissionColor");
 
   private Health health;
   private EnemyAIBase enemyAI;
@@ -55,12 +76,36 @@ public class EnemyFeedback : MonoBehaviour
     {
       bodyRenderers = GetComponentsInChildren<Renderer>(true);
     }
+
+    // Kích hoạt từ khóa _EMISSION trên Shared Material để shader URP Lit xử lý phát quang từ MaterialPropertyBlock
+    if (bodyRenderers != null)
+    {
+      for (int i = 0; i < bodyRenderers.Length; i++)
+      {
+        if (bodyRenderers[i] == null) continue;
+        Material[] mats = bodyRenderers[i].sharedMaterials;
+        if (mats != null)
+        {
+          for (int m = 0; m < mats.Length; m++)
+          {
+            if (mats[m] != null)
+            {
+              mats[m].EnableKeyword("_EMISSION");
+            }
+          }
+        }
+      }
+    }
   }
 
   private void OnEnable()
   {
     health.onTakeDamage.AddListener(HandleTakeDamage);
     health.onDeath.AddListener(HandleDeath);
+    if (currentPoise <= 0f && (health == null || !health.IsDead))
+    {
+      currentPoise = maxPoise;
+    }
   }
 
   private void OnDisable()
@@ -72,8 +117,7 @@ public class EnemyFeedback : MonoBehaviour
 
   private void Update()
   {
-    // Tối ưu hóa: Khi quái ngủ đông, bỏ qua cập nhật Poise để tiết kiệm CPU
-    if (enemyAI != null && enemyAI.IsSleeping) return;
+    if ((health != null && health.IsDead) || (enemyAI != null && enemyAI.IsSleeping)) return;
 
     if (currentPoise < maxPoise && Time.time >= lastHitTime + poiseRecoveryDelay)
     {
@@ -83,43 +127,49 @@ public class EnemyFeedback : MonoBehaviour
 
   private void HandleTakeDamage(Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance)
   {
-    if (health.IsDead) return;
+    if (health.IsDead || health.CurrentHealth <= 0f) return;
 
     lastHitTime = Time.time;
 
-    // Tính Poise
-    float poiseDamageTaken = 30f;
-    if (knockbackDistance >= 1.5f) poiseDamageTaken = 100f;
-    else if (knockbackDistance > 0f) poiseDamageTaken = 60f;
+    // 1. Tính lượng Poise bị trừ: Ưu tiên lấy trực tiếp từ cấu hình đòn đánh của Player (Health.LastPoiseDamage)
+    float poiseDamageTaken = (health != null && health.LastPoiseDamage > 0f)
+      ? health.LastPoiseDamage
+      : (knockbackDistance >= 1.5f ? 100f : (knockbackDistance >= 0.8f ? 55f : 25f));
 
     currentPoise -= poiseDamageTaken;
 
-    // Luôn chớp đỏ tất cả bộ phận khi trúng kiếm
+    // 2. Luôn nháy trắng tất cả bộ phận khi trúng kiếm (Visual Feedback đanh thép)
     FlashDamageFeedback();
 
-    // Hyper Armor check
-    bool isAttacking = enemyAI != null && enemyAI.IsAttacking;
-    if (isAttacking && currentPoise > 0f) return;
-
-    // Stagger
-    if (currentPoise <= 0f || knockbackDistance > 0f)
+    // 3. Cơ chế Souls-like Poise: Khi còn Poise (currentPoise > 0f), quái giữ vững thế đứng (Super Armor)
+    // CHỈ nháy trắng chịu đòn, TUYỆT ĐỐI KHÔNG bị giật hoạt ảnh GetHit hay bị ngắt hành động!
+    if (currentPoise > 0f)
     {
-      currentPoise = maxPoise;
+      return;
+    }
 
-      int randomHit = Random.Range(0, 2);
-      animator.SetInteger(HitTypeHash, randomHit);
-      animator.SetTrigger(GetHitTriggerHash);
+    // 4. VỠ THẾ (Poise Broken / Stagger): Reset lại Poise và kích hoạt Animation GetHit
+    currentPoise = maxPoise;
 
-      if (knockbackDistance > 0f)
-      {
-        if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
-        knockbackCoroutine = StartCoroutine(ApplyKnockback(hitDirection, knockbackDistance));
-      }
+    // Ngắt đòn đánh của quái nếu đang vung kiếm
+    if (enemyAI != null && enemyAI.IsAttacking)
+    {
+      enemyAI.InterruptAttack();
+    }
+
+    int randomHit = Random.Range(0, 2);
+    animator.SetInteger(HitTypeHash, randomHit);
+    animator.SetTrigger(GetHitTriggerHash);
+
+    if (knockbackDistance > 0f)
+    {
+      if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+      knockbackCoroutine = StartCoroutine(ApplyKnockback(hitDirection, knockbackDistance));
     }
   }
 
   // =========================================================================
-  // XỬ LÝ NHÁY ĐỎ TRỰC TIẾP QUA MATERIAL PROPERTY BLOCK
+  // XỬ LÝ NHÁY TRẮNG TRỰC TIẾP QUA MATERIAL PROPERTY BLOCK
   // =========================================================================
 
   private void FlashDamageFeedback()
@@ -127,17 +177,44 @@ public class EnemyFeedback : MonoBehaviour
     if (bodyRenderers == null || bodyRenderers.Length == 0) return;
 
     if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-    flashCoroutine = StartCoroutine(FlashRedRoutine());
+    flashCoroutine = StartCoroutine(FlashDamageRoutine());
   }
 
-  private IEnumerator FlashRedRoutine()
+  private IEnumerator FlashDamageRoutine()
   {
+    ApplyFlashColors();
+    yield return new WaitForSecondsRealtime(flashDuration);
+    ResetColors();
+    flashCoroutine = null;
+  }
+
+  private void ApplyFlashColors()
+  {
+    if (bodyRenderers == null || bodyRenderers.Length == 0) return;
+
     if (flashPropertyBlock == null)
     {
       flashPropertyBlock = new MaterialPropertyBlock();
     }
+
+    // 1. Ghi đè texture thành màu trắng thuần (Texture2D.whiteTexture)
+    // Giúp loại bỏ texture xỉn màu gốc, đưa mô hình về màu trắng tinh khiết
+    if (solidWhiteFlash)
+    {
+      flashPropertyBlock.SetTexture(BaseMapProp, Texture2D.whiteTexture);
+      flashPropertyBlock.SetTexture(MainTexProp, Texture2D.whiteTexture);
+    }
+
+    // 2. Thiết lập tông màu Base Color
     flashPropertyBlock.SetColor(BaseColorProp, flashColor);
     flashPropertyBlock.SetColor(ColorProp, flashColor);
+
+    // 3. Tăng cường độ phát sáng (Emission) để nháy chói lóa ngay cả khi quái đứng trong bóng tối hầm ngục
+    if (emissionIntensity > 0f)
+    {
+      Color emissionColor = flashColor * emissionIntensity;
+      flashPropertyBlock.SetColor(EmissionColorProp, emissionColor);
+    }
 
     for (int i = 0; i < bodyRenderers.Length; i++)
     {
@@ -146,11 +223,6 @@ public class EnemyFeedback : MonoBehaviour
         bodyRenderers[i].SetPropertyBlock(flashPropertyBlock);
       }
     }
-
-    yield return new WaitForSeconds(flashDuration);
-
-    ResetColors();
-    flashCoroutine = null;
   }
 
   private void ResetColors()
@@ -184,19 +256,48 @@ public class EnemyFeedback : MonoBehaviour
   }
 
   // =========================================================================
-  // XỬ LÝ CHẾT (Đảm bảo nháy đỏ xong tự nhả lại màu gốc)
+  // XỬ LÝ CHẾT (Đòn kết liễu: Nháy trắng -> Trả về màu bình thường -> Death)
   // =========================================================================
 
   private void HandleDeath()
   {
-    if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+    if (knockbackCoroutine != null)
+    {
+      StopCoroutine(knockbackCoroutine);
+      knockbackCoroutine = null;
+    }
+    if (flashCoroutine != null)
+    {
+      StopCoroutine(flashCoroutine);
+      flashCoroutine = null;
+    }
 
-    int randomDeath = Random.Range(0, 2);
-    animator.SetInteger(DeathTypeHash, randomDeath);
-    animator.SetTrigger(DieTriggerHash);
+    StartCoroutine(DeathRoutine());
+  }
 
+  private IEnumerator DeathRoutine()
+  {
+    // 1. Tắt va chạm ngay lập tức để không cản trở di chuyển của Player và không nhận thêm đòn đánh thừa
     if (enemyCollider != null) enemyCollider.enabled = false;
 
-    Destroy(gameObject, 5f);
+    // 2. Nháy trắng toàn thân khi dính đòn kết liễu
+    ApplyFlashColors();
+
+    // 3. Giữ màu trắng trong suốt thời gian hitlag kết liễu (dùng unscaled realtime vì game đang khựng ở timeScale = 0.05)
+    yield return new WaitForSecondsRealtime(lethalFlashDuration);
+
+    // 4. Trả lại màu và texture ban đầu cho quái vật
+    ResetColors();
+
+    // 5. Sau khi hết nháy và đã về màu bình thường mới kích hoạt animation ngã chết
+    if (animator != null)
+    {
+      int randomDeath = Random.Range(0, 2);
+      animator.SetInteger(DeathTypeHash, randomDeath);
+      animator.SetTrigger(DieTriggerHash);
+    }
+
+    // 6. Xóa xác quái vật sau thời gian chờ
+    Destroy(gameObject, corpseDestroyDelay);
   }
 }

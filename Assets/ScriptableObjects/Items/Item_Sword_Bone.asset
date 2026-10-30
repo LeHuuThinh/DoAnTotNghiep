@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_Sword_Bone
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_bone
-  itemName: "C\u1ED1t Ma Ki\u1EBFm"
-  description: "R\xE8n t\u1EEB x\u01B0\u01A1ng s\u1ECD c\u1EE7a Chi\u1EBFn Binh B\u1ED9
-    X\u01B0\u01A1ng c\u1ED5 x\u01B0a (+28 S\xE1t th\u01B0\u01A1ng, +10 Th\u1EC3 l\u1EF1c)."
+  itemName: Bone Demon Sword
+  description: Forged from the skull of an ancient Skeleton Warrior (+28 Attack,
+    +10 Stamina).
   icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
   itemType: 0
   rarity: 2

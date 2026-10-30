@@ -21,6 +21,12 @@ public class Health : MonoBehaviour, IDamageable
   public float BaseMaxHealth => baseMaxHealth > 0f ? baseMaxHealth : maxHealth;
   public bool IsDead => isDead;
   public Transform LastAttacker { get; private set; }
+  public float LastPoiseDamage { get; private set; } = -1f;
+
+  public void SetIncomingPoiseDamage(float poiseDamage)
+  {
+    LastPoiseDamage = poiseDamage;
+  }
 
   // Callback kiểm tra Parry hoặc Block trước khi trừ máu (trả về true nếu chặn/parry thành công -> không trừ máu)
   public Func<Transform, Vector3, Vector3, float, bool> onCheckParryOrBlock;
@@ -62,6 +68,9 @@ public class Health : MonoBehaviour, IDamageable
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
+    // Admin Cheat: God Mode cho Player
+    if (CompareTag("Player") && AdminCheatManager.IsGodMode) return;
+
     LastAttacker = attacker;
 
     // 1. Kiểm tra nếu đòn đánh bị Parry hoặc Chặn đứng thành công -> MIỄN NHIỄM 100% SÁT THƯƠNG, KHÔNG TRỪ MÁU!
@@ -92,10 +101,8 @@ public class Health : MonoBehaviour, IDamageable
     {
       Die();
     }
-    else
-    {
-      onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
-    }
+
+    onTakeDamage?.Invoke(hitPoint, hitDirection, knockbackDistance);
   }
 
   public void Heal(float amount)

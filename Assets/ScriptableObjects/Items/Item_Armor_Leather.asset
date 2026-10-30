@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_Armor_Leather
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: armor_warrior_leather
-  itemName: "Gi\xE1p Da Th\xE1m Hi\u1EC3m"
-  description: "B\u1ED9 gi\xE1p da d\u1EBBo dai gi\xFAp gi\u1EA3m s\xE1t th\u01B0\u01A1ng
-    nh\u1EADn v\xE0o (+6 DEF) v\xE0 t\u0103ng s\u1EE9c b\u1EC1n (+25 Max HP)."
+  itemName: Explorer Leather Armor
+  description: Durable leather armor that reduces incoming damage (+6 DEF) and increases
+    vitality (+25 Max HP).
   icon: {fileID: 21300000, guid: 2808837efb0bfb14ab39aafa9bdefa53, type: 3}
   itemType: 1
   rarity: 0

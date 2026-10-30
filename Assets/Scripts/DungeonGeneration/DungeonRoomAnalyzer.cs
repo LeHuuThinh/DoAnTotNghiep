@@ -14,6 +14,9 @@ public class MezzanineSettings
   [Tooltip("Kích thước tối thiểu của phòng (cả chiều rộng và chiều cao tính theo tile) để đủ điều kiện sinh tầng 2")]
   public int minRoomSize = 10;
 
+  [Tooltip("Tỷ lệ xuất hiện tầng 2 trong số các phòng đủ điều kiện (0.55 = 55% phòng có tầng 2)")]
+  [Range(0f, 1f)] public float spawnChance = 0.55f;
+
   [Header("Tỷ lệ Hình dạng Tầng 2 (Shape Probabilities)")]
   [Tooltip("Tỷ lệ sinh sàn chữ nhật (Rectangle - chiếm một nửa diện tích phòng)")]
   [Range(0f, 1f)] public float rectangleChance = 0.25f;
@@ -41,7 +44,7 @@ public class MezzanineSettings
 /// </summary>
 public static class DungeonRoomAnalyzer
 {
-  public static void Analyze(DungeonData data, Transform startDoorMarker, float tileSize, int corridorThickness = 2, MezzanineSettings settings = null)
+  public static void Analyze(DungeonData data, Transform startDoorMarker, float tileSize, int corridorThickness = 2, MezzanineSettings settings = null, int minTreasureRooms = 3, float deadEndTreasureChance = 0.75f)
   {
     if (data == null || data.rooms == null || data.rooms.Count == 0) return;
     if (settings == null) settings = new MezzanineSettings();
@@ -77,20 +80,31 @@ public static class DungeonRoomAnalyzer
       data.startRoom.ceilingHeight = 8f;
     }
 
-    // 4. Xây dựng đồ thị kề giữa các phòng qua hành lang
+    // 3.5. Xác định Boss Room và Boss Prev Room từ bounds đã lưu
+    if (data.bossRoomBounds.width > 0)
+    {
+      data.bossRoom = data.roomDataList.Find(r => r.bounds.Equals(data.bossRoomBounds));
+    }
+    if (data.bossPrevRoomBounds.width > 0)
+    {
+      data.bossPrevRoom = data.roomDataList.Find(r => r.bounds.Equals(data.bossPrevRoomBounds));
+    }
+
+    // 4. Xây dựng đồ thị kề chuẩn xác giữa các phòng qua hành lang
     Dictionary<int, List<int>> adjacency = BuildRoomAdjacency(data);
+    data.adjacency = adjacency;
 
     // 5. Chạy BFS tính khoảng cách và xác định Boss Room (phòng xa nhất)
-    RunBFS(data, adjacency);
+    RunBFS(data, adjacency, tileSize);
 
     // 6. Phân loại các phòng còn lại & Thiết lập Gác lửng tầng 2
-    SetupRoomArchetypes(data, adjacency, tileSize, settings);
+    SetupRoomArchetypes(data, adjacency, tileSize, settings, minTreasureRooms, deadEndTreasureChance);
   }
 
   /// <summary>
   /// Tìm các ô cửa nằm trên mép phòng tiếp giáp với hành lang
   /// </summary>
-  private static void FindDoorTiles(DungeonData data)
+  public static void FindDoorTiles(DungeonData data)
   {
     foreach (var room in data.roomDataList)
     {
@@ -160,7 +174,10 @@ public static class DungeonRoomAnalyzer
   }
 
   /// <summary>
-  /// Xây dựng đồ thị kề giữa các phòng: 2 phòng được coi là kề nhau nếu có chung hành lang kết nối
+  /// Xây dựng đồ thị kề chuẩn xác giữa các phòng:
+  /// - Xét hành lang thẳng nối trực tiếp giữa 2 phòng
+  /// - Xét hành lang gấp khúc chữ L (2 đoạn c1 và c2 giao nhau nối trực tiếp giữa 2 phòng)
+  /// - Nối Boss Room với Boss Prev Room qua Đại Lộ 40m
   /// </summary>
   private static Dictionary<int, List<int>> BuildRoomAdjacency(DungeonData data)
   {
@@ -170,29 +187,110 @@ public static class DungeonRoomAnalyzer
       adj[r.id] = new List<int>();
     }
 
-    // Với mỗi hành lang, xem nó chạm vào những phòng nào
-    foreach (var corridor in data.corridors)
+    int corridorCount = data.corridors.Count;
+    if (corridorCount == 0) return adj;
+
+    // 1. Xac dinh moi doan hanh lang tiep xuc voi nhung phong nao
+    List<int>[] roomsPerCorridor = new List<int>[corridorCount];
+    RectInt[] expandedCorridors = new RectInt[corridorCount];
+
+    for (int i = 0; i < corridorCount; i++)
     {
-      List<int> connectedRooms = new List<int>();
+      roomsPerCorridor[i] = new List<int>();
+      RectInt c = data.corridors[i];
+      expandedCorridors[i] = new RectInt(c.x - 1, c.y - 1, c.width + 2, c.height + 2);
+
       foreach (var room in data.roomDataList)
       {
-        if (CorridorTouchesRoom(corridor, room.bounds))
+        if (expandedCorridors[i].Overlaps(room.bounds))
         {
-          connectedRooms.Add(room.id);
+          roomsPerCorridor[i].Add(room.id);
         }
       }
 
-      // Nối cạnh đồ thị giữa tất cả các phòng chạm chung hành lang này
-      for (int i = 0; i < connectedRooms.Count; i++)
+      // Neu 1 doan hanh lang thang tu noi 2 phong truc tiep
+      if (roomsPerCorridor[i].Count >= 2)
       {
-        for (int j = i + 1; j < connectedRooms.Count; j++)
+        for (int a = 0; a < roomsPerCorridor[i].Count; a++)
         {
-          int idA = connectedRooms[i];
-          int idB = connectedRooms[j];
-          if (!adj[idA].Contains(idB)) adj[idA].Add(idB);
-          if (!adj[idB].Contains(idA)) adj[idB].Add(idA);
+          for (int b = a + 1; b < roomsPerCorridor[i].Count; b++)
+          {
+            int idA = roomsPerCorridor[i][a];
+            int idB = roomsPerCorridor[i][b];
+            if (!adj[idA].Contains(idB)) adj[idA].Add(idB);
+            if (!adj[idB].Contains(idA)) adj[idB].Add(idA);
+          }
         }
       }
+    }
+
+    // 2. Xay dung do thi lien ket giua cac doan hanh lang giao nhau (Corridor Graph)
+    List<int>[] corridorNeighbors = new List<int>[corridorCount];
+    for (int i = 0; i < corridorCount; i++)
+    {
+      corridorNeighbors[i] = new List<int>();
+    }
+
+    for (int i = 0; i < corridorCount; i++)
+    {
+      for (int j = i + 1; j < corridorCount; j++)
+      {
+        if (expandedCorridors[i].Overlaps(data.corridors[j]))
+        {
+          corridorNeighbors[i].Add(j);
+          corridorNeighbors[j].Add(i);
+        }
+      }
+    }
+
+    // 3. Quet lien ket phong qua chuoi hanh lang lien hoan (ho tro 2 doan L-shape, 3 doan Z-shape/dogleg va phuc hop)
+    for (int startCorridor = 0; startCorridor < corridorCount; startCorridor++)
+    {
+      if (roomsPerCorridor[startCorridor].Count == 0) continue;
+
+      foreach (int roomA in roomsPerCorridor[startCorridor])
+      {
+        Queue<int> queue = new Queue<int>();
+        HashSet<int> visitedCorridors = new HashSet<int>();
+
+        queue.Enqueue(startCorridor);
+        visitedCorridors.Add(startCorridor);
+
+        while (queue.Count > 0)
+        {
+          int currentC = queue.Dequeue();
+
+          // Kiem tra xem doan hanh lang nay co cham phong nao khac khong
+          foreach (int roomB in roomsPerCorridor[currentC])
+          {
+            if (roomB != roomA)
+            {
+              if (!adj[roomA].Contains(roomB)) adj[roomA].Add(roomB);
+              if (!adj[roomB].Contains(roomA)) adj[roomB].Add(roomA);
+            }
+          }
+
+          // Lan truyen sang cac doan hanh lang ke tiep (chi di tiep neu day la doan trung gian chua cham phong khac)
+          if (currentC == startCorridor || roomsPerCorridor[currentC].Count == 0)
+          {
+            foreach (int neighborC in corridorNeighbors[currentC])
+            {
+              if (!visitedCorridors.Contains(neighborC))
+              {
+                visitedCorridors.Add(neighborC);
+                queue.Enqueue(neighborC);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Ket noi truc tiep Boss Room voi phong ke can dan vao Dai Lo (bossPrevRoom)
+    if (data.bossRoom != null && data.bossPrevRoom != null)
+    {
+      if (!adj[data.bossRoom.id].Contains(data.bossPrevRoom.id)) adj[data.bossRoom.id].Add(data.bossPrevRoom.id);
+      if (!adj[data.bossPrevRoom.id].Contains(data.bossRoom.id)) adj[data.bossPrevRoom.id].Add(data.bossRoom.id);
     }
 
     return adj;
@@ -208,12 +306,13 @@ public static class DungeonRoomAnalyzer
   /// <summary>
   /// Thuật toán BFS: Tính khoảng cách từ Start Room, tìm phòng xa nhất làm Boss Room
   /// </summary>
-  private static void RunBFS(DungeonData data, Dictionary<int, List<int>> adjacency)
+  private static void RunBFS(DungeonData data, Dictionary<int, List<int>> adjacency, float tileSize)
   {
     if (data.startRoom == null) return;
 
     Queue<int> queue = new Queue<int>();
     HashSet<int> visited = new HashSet<int>();
+    Dictionary<int, int> bfsParent = new Dictionary<int, int>();
 
     data.startRoom.graphDistance = 0;
     queue.Enqueue(data.startRoom.id);
@@ -236,6 +335,7 @@ public static class DungeonRoomAnalyzer
             visited.Add(neighborId);
             RoomData neighborRoom = data.roomDataList[neighborId];
             neighborRoom.graphDistance = currentRoom.graphDistance + 1;
+            bfsParent[neighborId] = currentId;
 
             if (neighborRoom.graphDistance > maxDistance ||
                (neighborRoom.graphDistance == maxDistance && (neighborRoom.bounds.width * neighborRoom.bounds.height) > (furthestRoom.bounds.width * furthestRoom.bounds.height)))
@@ -250,34 +350,195 @@ public static class DungeonRoomAnalyzer
       }
     }
 
-    // Gán Boss Room
-    data.bossRoom = furthestRoom;
+    // Gán Boss Room: Ưu tiên tuyệt đối phòng Boss Khổng Lồ do BSP sinh ra
+    RoomData designatedBossRoom = null;
+    if (data.bossRoomBounds.width > 0)
+    {
+      designatedBossRoom = data.roomDataList.Find(r => r.bounds.Equals(data.bossRoomBounds));
+    }
+
+    data.bossRoom = designatedBossRoom != null ? designatedBossRoom : furthestRoom;
     data.bossRoom.type = RoomType.Boss;
-    data.bossRoom.ceilingHeight = 16f; // Phòng Boss trần cao 16m cực kỳ thoáng đãng, hoành tráng
+    data.bossRoom.ceilingHeight = 24f; // Phòng Boss trần cao 24m cực kỳ đồ sộ, hoành tráng chuẩn thánh đường Souls-like
+
+    // Xác định phòng kề trước phòng Boss trên đường đi từ Start Room
+    if (bfsParent.ContainsKey(data.bossRoom.id))
+    {
+      data.bossPrevRoom = data.roomDataList[bfsParent[data.bossRoom.id]];
+      Debug.Log($"<color=cyan>[DungeonRoomAnalyzer]</color> 🚪 Xác định phòng kề Boss: Room {data.bossPrevRoom.id} (Cách Boss 1 chặng)");
+    }
+    else if (data.bossPrevRoomBounds.width > 0)
+    {
+      data.bossPrevRoom = data.roomDataList.Find(r => r.bounds.Equals(data.bossPrevRoomBounds));
+      Debug.Log($"<color=cyan>[DungeonRoomAnalyzer]</color> 🚪 Xác định phòng kề Boss từ bossPrevRoomBounds: Room {data.bossPrevRoom.id}");
+    }
+    else
+    {
+      Debug.LogWarning($"<color=yellow>[DungeonRoomAnalyzer]</color> ⚠️ bfsParent không tìm thấy đường đến Boss Room {data.bossRoom.id}!");
+    }
+
+    // Thiết lập tọa độ 4 cây cột to chịu lực tại 4 góc phòng Boss
+    SetupBossArenaPillars(data.bossRoom, tileSize);
+  }
+
+  /// <summary>
+  /// Thiết lập 4 cây cột to ở 4 góc phòng Boss (khoảng hở 4 ô cách tường để làm chỗ núp né đòn)
+  /// </summary>
+  private static void SetupBossArenaPillars(RoomData bossRoom, float tileSize)
+  {
+    if (bossRoom == null) return;
+    bossRoom.pillarPositions.Clear();
+
+    RectInt b = bossRoom.bounds;
+    // Đặt 4 cây cột cách mép tường 4 ô (8m) để tạo khoảng hở chạy vờn và núp sau cột
+    int offset = Mathf.Clamp(4, 2, Mathf.Min(b.width, b.height) / 5);
+
+    Vector2Int[] cornerGridPositions = new Vector2Int[]
+    {
+      new Vector2Int(b.x + offset, b.y + offset),                                   // Tây Nam
+      new Vector2Int(b.x + b.width - 1 - offset, b.y + offset),                    // Đông Nam
+      new Vector2Int(b.x + offset, b.y + b.height - 1 - offset),                   // Tây Bắc
+      new Vector2Int(b.x + b.width - 1 - offset, b.y + b.height - 1 - offset)     // Đông Bắc
+    };
+
+    foreach (var gp in cornerGridPositions)
+    {
+      Vector3 worldPos = new Vector3(gp.x * tileSize + tileSize / 2f, 0f, gp.y * tileSize + tileSize / 2f);
+      bossRoom.pillarPositions.Add(worldPos);
+    }
+
+    Debug.Log($"<color=cyan>[DungeonRoomAnalyzer]</color> 🏛️ Đã thiết lập 4 cây cột đỡ đấu trường tại phòng Boss (Room {bossRoom.id}, diện tích {b.width}x{b.height} tiles, cao {bossRoom.ceilingHeight}m)");
   }
 
   /// <summary>
   /// Phân loại các phòng còn lại (Mezzanine, Treasure, Normal) và thiết kế gác lửng tầng 2
   /// </summary>
-  private static void SetupRoomArchetypes(DungeonData data, Dictionary<int, List<int>> adjacency, float tileSize, MezzanineSettings settings)
+  private static void SetupRoomArchetypes(DungeonData data, Dictionary<int, List<int>> adjacency, float tileSize, MezzanineSettings settings, int minTreasureRooms = 3, float deadEndTreasureChance = 0.75f)
   {
-    foreach (var room in data.roomDataList)
+    // Phòng kề Boss (Tiền sảnh Đấu Trường - Grand Antechamber): Luôn là phòng lớn 1 tầng cao 8m thông thoáng,
+    // không sinh gác lửng hay cầu thang để tạo lối tiến vào Đại Lộ Boss uy nghiêm, không bị che chắn hay va chạm!
+    if (data.bossPrevRoom != null)
     {
-      if (room == data.startRoom || room == data.bossRoom) continue;
+      data.bossPrevRoom.type = RoomType.Normal;
+      data.bossPrevRoom.ceilingHeight = 8f;
+      data.bossPrevRoom.hasMezzanine = false;
+    }
 
-      int connections = adjacency.ContainsKey(room.id) ? adjacency[room.id].Count : 0;
-      int area = room.bounds.width * room.bounds.height;
+    // --- XÁC ĐỊNH PHÒNG TẾ ĐÀN CHỨA CHÌA KHÓA HẦM NGỤC (KEY ROOM - SHRINE) ---
+    // Ưu tiên chọn phòng nhánh cụt (connections <= 1) có khoảng cách đồ thị xa nhất (khuyến khích thám hiểm)
+    data.keyRoom = null;
+    List<RoomData> deadEndCandidates = new List<RoomData>();
+    List<RoomData> otherCandidates = new List<RoomData>();
 
-      // 1. Nhánh cụt (chỉ có 1 cửa nối) -> Phòng Kho Báu (Treasure) hoặc Tế Đàn (Shrine)
-      if (connections <= 1)
+    foreach (var r in data.roomDataList)
+    {
+      if (r == data.startRoom || r == data.bossRoom || r == data.bossPrevRoom) continue;
+      int conn = adjacency.ContainsKey(r.id) ? adjacency[r.id].Count : 0;
+      if (conn <= 1)
       {
-        room.type = (Random.value > 0.35f) ? RoomType.Treasure : RoomType.Shrine;
-        room.ceilingHeight = 8f; // Chiều cao tối thiểu 8m
-        continue;
+        deadEndCandidates.Add(r);
+      }
+      else
+      {
+        otherCandidates.Add(r);
+      }
+    }
+
+    // Sắp xếp các phòng nhánh cụt theo graphDistance giảm dần (xa Start Room nhất)
+    deadEndCandidates.Sort((a, b) => b.graphDistance.CompareTo(a.graphDistance));
+    otherCandidates.Sort((a, b) => b.graphDistance.CompareTo(a.graphDistance));
+
+    if (deadEndCandidates.Count > 0)
+    {
+      data.keyRoom = deadEndCandidates[0];
+      deadEndCandidates.RemoveAt(0); // Phòng này dành riêng làm Key Room
+    }
+    else if (otherCandidates.Count > 0)
+    {
+      data.keyRoom = otherCandidates[0];
+      otherCandidates.RemoveAt(0);
+    }
+
+    if (data.keyRoom != null)
+    {
+      data.keyRoom.type = RoomType.Shrine;
+
+      // Cho phép phòng Key sinh Tầng 2 (Gác lửng Mezzanine) nếu diện tích đạt minRoomSize và trúng tỷ lệ spawnChance
+      if (settings.enableMezzanine && data.keyRoom.bounds.width >= settings.minRoomSize && data.keyRoom.bounds.height >= settings.minRoomSize && Random.value < settings.spawnChance)
+      {
+        data.keyRoom.ceilingHeight = 16f; // Tổng trần cao 16m (Trệt 8m + Tầng 2 8m)
+        data.keyRoom.hasMezzanine = true;
+        data.keyRoom.mezzanineHeight = 8f; // Sàn tầng 2 nằm ở độ cao 8m
+
+        CalculateMezzanineLayout(data.keyRoom, tileSize, settings);
+      }
+      else
+      {
+        data.keyRoom.ceilingHeight = 8f;
+        data.keyRoom.hasMezzanine = false;
       }
 
-      // 2. Phòng diện tích lớn đạt ngưỡng cấu hình minRoomSize -> Sinh Tầng 2 (Gác lửng Mezzanine)
-      if (settings.enableMezzanine && room.bounds.width >= settings.minRoomSize && room.bounds.height >= settings.minRoomSize)
+      Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 🗝️ Selected Key Room (Dungeon Shrine): Room {data.keyRoom.id} (GraphDist={data.keyRoom.graphDistance}, Size={data.keyRoom.bounds.width}x{data.keyRoom.bounds.height} tiles, Mezzanine={data.keyRoom.hasMezzanine})");
+    }
+
+    // --- 4. PHÂN BỔ PHÒNG KHO BÁU (TREASURE ROOMS - 75% CÁC PHÒNG NGÁCH CỤT) ---
+    // Ngách cụt trong RPG luôn là vị trí đặt rương báu phần thưởng tuyệt hảo nhất
+    List<RoomData> selectedTreasureRooms = new List<RoomData>();
+    List<RoomData> passedDeadEnds = new List<RoomData>();
+    List<RoomData> failedDeadEnds = new List<RoomData>();
+
+    foreach (var r in deadEndCandidates)
+    {
+      if (Random.value < deadEndTreasureChance)
+        passedDeadEnds.Add(r);
+      else
+        failedDeadEnds.Add(r);
+    }
+
+    selectedTreasureRooms.AddRange(passedDeadEnds);
+
+    // Nếu số phòng kho báu ngẫu nhiên < minTreasureRooms (3) nhưng vẫn còn phòng ngách cụt khác:
+    // Bổ sung thêm từ failedDeadEnds để đảm bảo đạt tối thiểu 3 phòng (nếu có đủ ngách cụt)
+    int targetTreasureCount = Mathf.Max(3, minTreasureRooms);
+    if (selectedTreasureRooms.Count < targetTreasureCount && failedDeadEnds.Count > 0)
+    {
+      foreach (var r in failedDeadEnds)
+      {
+        selectedTreasureRooms.Add(r);
+        if (selectedTreasureRooms.Count >= targetTreasureCount) break;
+      }
+    }
+
+    HashSet<RoomData> treasureSet = new HashSet<RoomData>(selectedTreasureRooms);
+    foreach (var tr in selectedTreasureRooms)
+    {
+      tr.type = RoomType.Treasure;
+
+      // Phòng Kho Báu vẫn có thể sinh Tầng 2 (Gác lửng Mezzanine) nếu đạt diện tích lớn
+      if (settings.enableMezzanine && tr.bounds.width >= settings.minRoomSize && tr.bounds.height >= settings.minRoomSize && Random.value < settings.spawnChance)
+      {
+        tr.ceilingHeight = 16f;
+        tr.hasMezzanine = true;
+        tr.mezzanineHeight = 8f;
+        CalculateMezzanineLayout(tr, tileSize, settings);
+      }
+      else
+      {
+        tr.ceilingHeight = 8f;
+        tr.hasMezzanine = false;
+      }
+
+      int conns = adjacency.ContainsKey(tr.id) ? adjacency[tr.id].Count : 0;
+      Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 💎 Assigned Treasure Room: Room {tr.id} (GraphDist={tr.graphDistance}, Conns={conns}, Size={tr.bounds.width}x{tr.bounds.height}, Mezzanine={tr.hasMezzanine})");
+    }
+
+    // --- 5. PHÂN BỔ CÁC PHÒNG CHIẾN ĐẤU CÒN LẠI (MEZZANINE HOẶC NORMAL) ---
+    foreach (var room in data.roomDataList)
+    {
+      if (room == data.startRoom || room == data.bossRoom || room == data.bossPrevRoom || room == data.keyRoom || treasureSet.Contains(room)) continue;
+
+      // Phòng diện tích lớn đạt ngưỡng cấu hình minRoomSize -> Sinh Tầng 2 theo tỷ lệ spawnChance
+      if (settings.enableMezzanine && room.bounds.width >= settings.minRoomSize && room.bounds.height >= settings.minRoomSize && Random.value < settings.spawnChance)
       {
         room.type = RoomType.Mezzanine;
         room.ceilingHeight = 16f; // Tổng trần cao 16m (Trệt 8m + Tầng 2 8m)
@@ -288,10 +549,13 @@ public static class DungeonRoomAnalyzer
         continue;
       }
 
-      // 3. Phòng chiến đấu thông thường: Chiều cao chuẩn 8m
+      // Phòng chiến đấu tiêu chuẩn: Chiều cao chuẩn 8m
       room.type = RoomType.Normal;
       room.ceilingHeight = 8f;
+      room.hasMezzanine = false;
     }
+
+    Debug.Log($"<color=yellow>[DungeonRoomAnalyzer]</color> 🏆 Đã hoàn tất phân loại: {selectedTreasureRooms.Count} Phòng Kho Báu (Tối thiểu {targetTreasureCount}), 1 Phòng Key (Room {data.keyRoom?.id}), tổng cộng {data.roomDataList.Count} phòng.");
   }
 
   /// <summary>
@@ -325,41 +589,33 @@ public static class DungeonRoomAnalyzer
   {
     if (candX < b.x || candX + 1 >= b.x + b.width) return false;
 
-    if (room.mezzanineSide == MezzanineWallSide.North)
+    // 1. Phải có sàn đón trên gác lửng
+    if (!room.mezzanineTiles.Contains(new Vector2Int(candX, candLandingY)) ||
+        !room.mezzanineTiles.Contains(new Vector2Int(candX + 1, candLandingY)))
+      return false;
+
+    // 2. Chân thang (landingY - 4) và vùng bước vào (landingY - 5) phải nằm gọn trong phòng và cách mép tường Nam ít nhất 1 ô
+    if (candLandingY - 5 < b.y) return false;
+
+    // 2.5. Tuyệt đối không đặt thang thẳng hàng với cửa ở tường Bắc (sau lưng chiếu nghỉ gác lửng)
+    if (room.doorTiles != null)
     {
-      // 1. Phải có sàn đón trên gác lửng
-      if (!room.mezzanineTiles.Contains(new Vector2Int(candX, candLandingY)) ||
-          !room.mezzanineTiles.Contains(new Vector2Int(candX + 1, candLandingY)))
-        return false;
-
-      // 2. Chân thang (landingY - 4) và vùng bước vào (landingY - 5) phải nằm gọn trong phòng
-      if (candLandingY - 4 < b.y) return false;
-
-      // 3. Footprint kiểm tra khoảng cách đến các cửa trệt (chân thang + vùng bước vào)
-      int checkMinY = Mathf.Max(b.y, candLandingY - 5);
-      RectInt fp = new RectInt(candX, checkMinY, 2, candLandingY - checkMinY + 1);
-      int dist = GetMinDoorDistance(room, fp);
-      bool isFree = (candX > b.x && candX + 1 < b.x + b.width - 1);
-      candidates.Add(new StairCandidate { x = candX, landingY = candLandingY, dist = dist, isFreestanding = isFree, priority = priority });
-      return true;
+      foreach (var d in room.doorTiles)
+      {
+        if (d.y >= candLandingY && d.x >= candX - 1 && d.x <= candX + 2)
+        {
+          return false;
+        }
+      }
     }
-    else
-    {
-      // South: Landing tile trên gác lửng là (candLandingY - 1)
-      if (!room.mezzanineTiles.Contains(new Vector2Int(candX, candLandingY - 1)) ||
-          !room.mezzanineTiles.Contains(new Vector2Int(candX + 1, candLandingY - 1)))
-        return false;
 
-      // Chân thang (landingY + 3) và vùng bước vào (landingY + 4) phải nằm gọn trong phòng
-      if (candLandingY + 3 >= b.y + b.height) return false;
-
-      int checkMaxY = Mathf.Min(b.y + b.height - 1, candLandingY + 4);
-      RectInt fp = new RectInt(candX, candLandingY - 1, 2, checkMaxY - (candLandingY - 1) + 1);
-      int dist = GetMinDoorDistance(room, fp);
-      bool isFree = (candX > b.x && candX + 1 < b.x + b.width - 1);
-      candidates.Add(new StairCandidate { x = candX, landingY = candLandingY, dist = dist, isFreestanding = isFree, priority = priority });
-      return true;
-    }
+    // 3. Footprint kiểm tra khoảng cách đến các cửa trệt (chân thang + vùng bước vào)
+    int checkMinY = candLandingY - 5;
+    RectInt fp = new RectInt(candX, checkMinY, 2, candLandingY - checkMinY + 1);
+    int dist = GetMinDoorDistance(room, fp);
+    bool isFree = (candX > b.x && candX + 1 < b.x + b.width - 1);
+    candidates.Add(new StairCandidate { x = candX, landingY = candLandingY, dist = dist, isFreestanding = isFree, priority = priority });
+    return true;
   }
 
   private static StairCandidate PickBestStairCandidate(List<StairCandidate> candidates, float freestandingChance)
@@ -405,27 +661,8 @@ public static class DungeonRoomAnalyzer
     room.stairLandingTiles.Clear();
     room.pillarPositions.Clear();
 
-    // 1. Tìm phía tường xa cửa nhất để đặt khối gác lửng chính
-    Vector2 doorCenter = Vector2.zero;
-    if (room.doorTiles.Count > 0)
-    {
-      foreach (var d in room.doorTiles) doorCenter += new Vector2(d.x, d.y);
-      doorCenter /= room.doorTiles.Count;
-    }
-    else
-    {
-      doorCenter = new Vector2(b.x + b.width / 2f, b.y);
-    }
-
-    // Mặc định đặt áp tường Bắc (nếu cửa ở Nam) hoặc tường Nam (nếu cửa ở Bắc)
-    if (doorCenter.y < b.y + b.height / 2f)
-    {
-      room.mezzanineSide = MezzanineWallSide.North;
-    }
-    else
-    {
-      room.mezzanineSide = MezzanineWallSide.South;
-    }
+    // 1. Gác lửng luôn luôn áp sát tường Bắc (North Wall) để hướng mặt ban công và cầu thang về phía Nam thông thoáng
+    room.mezzanineSide = MezzanineWallSide.North;
 
     // 2. Lựa chọn Hình dạng Kiến trúc tầng 2 theo tỷ lệ cấu hình trong Inspector
     float shapeRoll = Random.value;
@@ -449,13 +686,14 @@ public static class DungeonRoomAnalyzer
     int stairGridX = b.x;
 
     // 3. Tính toán kích thước, sinh sàn tầng 2 và chọn vị trí cầu thang tối ưu (~50% diện tích phòng)
+    // Chiều sâu sàn gác lửng được giới hạn tối đa b.height - 6 để luôn bảo đảm chân thang và khoảng bước lên
+    // cách mép tường Nam ít nhất 2 ô (4m), tuyệt đối không bao giờ chạm tường hay lấn sang hành lang lân cận!
     if (room.mezzanineShape == MezzanineShape.Rectangle)
     {
-      // SÀN CHỮ NHẬT: Chiếm đúng ~50% diện tích phòng (để lại 50% trần cao và sàn trệt)
-      int maxSafeDepth = Mathf.Max(4, b.height - 5);
-      int depth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.50f), 4, maxSafeDepth);
-      landingY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - depth) : (b.y + depth);
-      room.mezzanineBounds = new RectInt(b.x, (room.mezzanineSide == MezzanineWallSide.North) ? landingY : b.y, b.width, depth);
+      int maxSafeDepth = Mathf.Max(4, b.height - 6);
+      int depth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.45f), 4, maxSafeDepth);
+      landingY = b.y + b.height - depth;
+      room.mezzanineBounds = new RectInt(b.x, landingY, b.width, depth);
 
       for (int x = room.mezzanineBounds.x; x < room.mezzanineBounds.x + room.mezzanineBounds.width; x++)
         for (int y = room.mezzanineBounds.y; y < room.mezzanineBounds.y + room.mezzanineBounds.height; y++)
@@ -468,38 +706,34 @@ public static class DungeonRoomAnalyzer
       }
 
       StairCandidate best = PickBestStairCandidate(candidates, settings.freestandingStairChance);
-      stairGridX = (candidates.Count > 0) ? best.x : b.x;
+      stairGridX = (candidates.Count > 0) ? best.x : (b.x + 2);
       landingY = (candidates.Count > 0) ? best.landingY : landingY;
     }
     else if (room.mezzanineShape == MezzanineShape.LShape)
     {
-      // SÀN CHỮ L:
-      // 1. Thanh chính (Main Area) mở rộng sâu ~38% chiều cao phòng (rộng hơn vài lần so với trước)
-      // 2. Nhánh vươn sâu ~70% phòng
-      // => Tổng diện tích sàn chữ L chiếm ~48% - 50% diện tích phòng
-      int barDepth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.38f), 4, b.height - 5);
-      int maxArmLength = Mathf.Max(barDepth + 3, b.height - 5);
-      int armLength = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.70f), barDepth + 3, maxArmLength);
+      int barDepth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.35f), 4, b.height - 6);
+      int maxArmLength = Mathf.Max(barDepth + 2, b.height - 6);
+      int armLength = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.65f), barDepth + 2, maxArmLength);
       int armWidth = Mathf.Clamp(Mathf.RoundToInt(b.width * 0.28f), 3, Mathf.Max(3, b.width / 2 - 1));
 
       bool chooseEast = Random.value > 0.5f;
       int armStartX = chooseEast ? (b.x + b.width - armWidth) : b.x;
 
       // Sinh sàn L-Shape: Thanh chính
-      int barStartY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - barDepth) : b.y;
+      int barStartY = b.y + b.height - barDepth;
       for (int x = b.x; x < b.x + b.width; x++)
         for (int y = barStartY; y < barStartY + barDepth; y++)
           room.mezzanineTiles.Add(new Vector2Int(x, y));
 
       // Nhánh hành lang chữ L vươn dài
-      int armMinY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - armLength) : b.y;
-      int armMaxY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height) : (b.y + armLength);
+      int armMinY = b.y + b.height - armLength;
+      int armMaxY = b.y + b.height;
       for (int x = armStartX; x < armStartX + armWidth; x++)
         for (int y = armMinY; y < armMaxY; y++)
           room.mezzanineTiles.Add(new Vector2Int(x, y));
 
-      int armTipLandingY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - armLength) : (b.y + armLength);
-      int mainFrontLandingY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - barDepth) : (b.y + barDepth);
+      int armTipLandingY = b.y + b.height - armLength;
+      int mainFrontLandingY = b.y + b.height - barDepth;
 
       List<StairCandidate> candidates = new List<StairCandidate>();
 
@@ -531,32 +765,28 @@ public static class DungeonRoomAnalyzer
     }
     else if (room.mezzanineShape == MezzanineShape.UShape)
     {
-      // SÀN CHỮ U:
-      // 1. Thanh chính (Main Area) mở rộng sâu ~34% chiều cao phòng (rộng hơn vài lần so với trước)
-      // 2. 2 Nhánh hai bên vươn sâu ~70% phòng bao quanh giếng trời thông tầng thoáng đãng
-      // => Tổng diện tích sàn chữ U chiếm ~48% - 50% diện tích phòng
-      int barDepth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.34f), 4, b.height - 5);
-      int maxArmLength = Mathf.Max(barDepth + 3, b.height - 5);
-      int armLength = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.70f), barDepth + 3, maxArmLength);
+      int barDepth = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.32f), 4, b.height - 6);
+      int maxArmLength = Mathf.Max(barDepth + 2, b.height - 6);
+      int armLength = Mathf.Clamp(Mathf.RoundToInt(b.height * 0.65f), barDepth + 2, maxArmLength);
       int armWidth = Mathf.Clamp(Mathf.RoundToInt(b.width * 0.22f), 3, Mathf.Max(3, (b.width - 4) / 2));
 
       // Sinh sàn U-Shape: Thanh chính
-      int barStartY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - barDepth) : b.y;
+      int barStartY = b.y + b.height - barDepth;
       for (int x = b.x; x < b.x + b.width; x++)
         for (int y = barStartY; y < barStartY + barDepth; y++)
           room.mezzanineTiles.Add(new Vector2Int(x, y));
 
       // 2 Nhánh hai bên (West arm & East arm)
-      int armMinY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - armLength) : b.y;
-      int armMaxY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height) : (b.y + armLength);
+      int armMinY = b.y + b.height - armLength;
+      int armMaxY = b.y + b.height;
       for (int y = armMinY; y < armMaxY; y++)
       {
         for (int x = b.x; x < b.x + armWidth; x++) room.mezzanineTiles.Add(new Vector2Int(x, y));
         for (int x = b.x + b.width - armWidth; x < b.x + b.width; x++) room.mezzanineTiles.Add(new Vector2Int(x, y));
       }
 
-      int armTipLandingY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - armLength) : (b.y + armLength);
-      int mainFrontLandingY = (room.mezzanineSide == MezzanineWallSide.North) ? (b.y + b.height - barDepth) : (b.y + barDepth);
+      int armTipLandingY = b.y + b.height - armLength;
+      int mainFrontLandingY = b.y + b.height - barDepth;
 
       List<StairCandidate> candidates = new List<StairCandidate>();
 
@@ -579,7 +809,7 @@ public static class DungeonRoomAnalyzer
       }
 
       StairCandidate best = PickBestStairCandidate(candidates, settings.freestandingStairChance);
-      stairGridX = (candidates.Count > 0) ? best.x : b.x;
+      stairGridX = (candidates.Count > 0) ? best.x : (b.x + 1);
       landingY = (candidates.Count > 0) ? best.landingY : armTipLandingY;
     }
 
@@ -620,26 +850,13 @@ public static class DungeonRoomAnalyzer
     float stairCenterX = (stairGridX + 1) * tileSize;
     room.stairGridPos = new Vector2Int(stairGridX, landingY);
 
-    if (room.mezzanineSide == MezzanineWallSide.North)
-    {
-      float landingZ = landingY * tileSize;
-      room.stairsRotation = Quaternion.Euler(0, 180, 0); // Hướng leo từ Nam lên Bắc
-      // Nhịp trên (4m -> 8m)
-      room.stairsUpperPosition = new Vector3(stairCenterX, 4f, landingZ);
-      // Nhịp dưới (0m -> 4m)
-      room.stairsLowerPosition = new Vector3(stairCenterX, 0f, landingZ - 4f);
-      room.stairsPosition = new Vector3(stairCenterX, 0f, landingZ);
-    }
-    else
-    {
-      float landingZ = landingY * tileSize;
-      room.stairsRotation = Quaternion.Euler(0, 0, 0); // Hướng leo từ Bắc xuống Nam
-      // Nhịp trên (4m -> 8m)
-      room.stairsUpperPosition = new Vector3(stairCenterX, 4f, landingZ);
-      // Nhịp dưới (0m -> 4m)
-      room.stairsLowerPosition = new Vector3(stairCenterX, 0f, landingZ + 4f);
-      room.stairsPosition = new Vector3(stairCenterX, 0f, landingZ);
-    }
+    float landingZ = landingY * tileSize;
+    room.stairsRotation = Quaternion.Euler(0, 180, 0); // Hướng leo từ Nam lên Bắc vào sàn gác lửng
+    // Nhịp trên (4m -> 8m)
+    room.stairsUpperPosition = new Vector3(stairCenterX, 4f, landingZ);
+    // Nhịp dưới (0m -> 4m)
+    room.stairsLowerPosition = new Vector3(stairCenterX, 0f, landingZ - 4f);
+    room.stairsPosition = new Vector3(stairCenterX, 0f, landingZ);
 
     // 6. Tính toán vị trí các cột chống đỡ (Pillars) thụt vào trong sàn với khoảng cách tối thiểu nghiêm ngặt
     HashSet<Vector2Int> openEdgeTiles = new HashSet<Vector2Int>();

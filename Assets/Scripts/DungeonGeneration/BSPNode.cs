@@ -12,6 +12,9 @@ public class BSPNode
   public BSPNode leftChild;
   public BSPNode rightChild;
 
+  // Đánh dấu đây là Node dành riêng cho Đấu Trường Boss (không bị cắt nhỏ tiếp)
+  public bool isBossNode = false;
+
   // Constructor để dễ dàng tạo Node mới
   public BSPNode(RectInt bounds)
   {
@@ -22,5 +25,14 @@ public class BSPNode
   public bool IsLeaf()
   {
     return leftChild == null && rightChild == null;
+  }
+
+  // Hàm kiểm tra xem Node này hoặc bất kỳ con cháu nào có phải là Boss Node không
+  public bool ContainsBossNode()
+  {
+    if (isBossNode) return true;
+    if (leftChild != null && leftChild.ContainsBossNode()) return true;
+    if (rightChild != null && rightChild.ContainsBossNode()) return true;
+    return false;
   }
 }

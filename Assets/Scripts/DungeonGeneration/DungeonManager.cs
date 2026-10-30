@@ -17,9 +17,17 @@ public class DungeonManager : MonoBehaviour
   [Tooltip("Bật để tự động sinh 1 quái vật trên tầng 2 để kiểm tra xem quái có biết leo cầu thang xuống đuổi player không")]
   public bool spawnTestEnemyOnMezzanine = false;
 
+  public static DungeonManager Instance { get; private set; }
+  public event System.Action<DungeonData> OnDungeonGenerated;
+
   // Data chứa toàn bộ lưới sau khi render
   [System.NonSerialized]
   public DungeonData currentData;
+
+  void Awake()
+  {
+    Instance = this;
+  }
 
   void Start()
   {
@@ -48,6 +56,7 @@ public class DungeonManager : MonoBehaviour
     SpawnTestEnemies();
 
     Debug.Log("Dungeon Generator Architecture Initialized!");
+    OnDungeonGenerated?.Invoke(currentData);
   }
 
   private void SpawnTestEnemies()
@@ -127,6 +136,16 @@ public class DungeonManager : MonoBehaviour
         }
 
         Gizmos.DrawWireCube(rCenter, rSize);
+
+        // Vẽ 4 cột đỡ phòng Boss
+        if (r.type == RoomType.Boss && r.pillarPositions != null)
+        {
+          Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.8f);
+          foreach (var pPos in r.pillarPositions)
+          {
+            Gizmos.DrawWireCube(pPos + Vector3.up * (r.ceilingHeight / 2f), new Vector3(2.5f * tSize, r.ceilingHeight, 2.5f * tSize));
+          }
+        }
 
         // Vẽ sàn gác lửng tầng 2
         if (r.hasMezzanine)

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine.AI;
@@ -127,6 +127,12 @@ public class DungeonRenderer : MonoBehaviour
           BuildMezzanine(r, data);
         }
       }
+    }
+
+    // 2.5. Dựng 4 cây cột to chịu lực tại Đấu Trường Boss (cao 16m, scale 2.5x, có MeshCollider để núp né đòn)
+    if (data.bossRoom != null)
+    {
+      BuildBossArenaPillars(data.bossRoom, data);
     }
 
     // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Sinh TRƯỚC khi Bake NavMesh để NavMesh tự động đục lỗ né vật cản)
@@ -641,12 +647,14 @@ public class DungeonRenderer : MonoBehaviour
       GameObject lowerStairs = Instantiate(stairsPrefab, lowerPos, room.stairsRotation, mezzanineParent.transform);
       lowerStairs.name = "Mezzanine_Stairs_Lower";
       lowerStairs.transform.localScale = flightScale;
+      EnsureStairsCollider(lowerStairs);
 
       // Nhịp trên (4m -> 8m) - Nâng nhẹ 0.05m để bậc trên cùng khớp phẳng khít tuyệt đối với mặt sàn gỗ (8.05m)
       Vector3 upperPos = room.stairsUpperPosition + new Vector3(0, 0.05f, 0);
       GameObject upperStairs = Instantiate(stairsPrefab, upperPos, room.stairsRotation, mezzanineParent.transform);
       upperStairs.name = "Mezzanine_Stairs_Upper";
       upperStairs.transform.localScale = flightScale;
+      EnsureStairsCollider(upperStairs);
 
       // Bệ đá stairs_fill bịt kín không gian dưới nhịp trên (dùng BoxCollider gốc đã chỉnh góc trên prefab của bạn)
       if (encloseStairsBase && stairsFillPrefab != null)
@@ -659,75 +667,75 @@ public class DungeonRenderer : MonoBehaviour
         // Sử dụng BoxCollider có sẵn trên Prefab do bạn căn chỉnh, TUYỆT ĐỐI không gắn NavMeshObstacle đè gây đứt quãng cầu thang!
       }
 
-      // Tạo dốc va chạm MeshCollider liền mạch tuyệt đối (Continuous Ramp MeshCollider)
-      // Nối từ mặt trệt (0m) lên đỉnh thang (8.05m) và phủ phẳng qua sàn đón (8.05m)
-      // Loại bỏ hoàn toàn mọi gờ va chạm cạnh đứng, chạy hay đi bộ đều êm ru không bao giờ kẹt!
-      CreateContinuousStairsRamp(room, mezzanineParent.transform, targetWidth);
+      // Cầu thang đã có sẵn MeshCollider lăng trụ tam giác vuông được gán trực tiếp trên stairs.prefab (StairsColliderSetup)
+      // Nhịp dưới (0->4m) + Bệ đá stairs_fill (0->4m) + Nhịp trên (4->8m) ghép thành hệ thống va chạm kín khít 100%.
     }
   }
 
-  void CreateContinuousStairsRamp(RoomData room, Transform parent, float targetWidth)
+  private static Mesh cachedWedgeMesh = null;
+
+  void EnsureStairsCollider(GameObject stairsObj)
   {
-    GameObject rampObj = new GameObject("Stairs_ContinuousSlopeRamp");
-    rampObj.transform.SetParent(parent, false);
-    rampObj.layer = 10; // Ground / Floor layer (NavMessFloor)
+    if (stairsObj == null) return;
+    MeshCollider mc = stairsObj.GetComponent<MeshCollider>();
+    if (mc != null && mc.sharedMesh != null) return;
 
-    float halfW = targetWidth * 0.95f / 2f;
-    float centerX = room.stairsPosition.x;
-    float x0 = centerX - halfW;
-    float x1 = centerX + halfW;
-    float landingZ = room.stairsPosition.z;
-
-    Mesh rampMesh = new Mesh();
-    rampMesh.name = "ContinuousRampMesh";
-
-    Vector3[] verts = new Vector3[6];
-    int[] tris = new int[12];
-
-    float rampRun = 8.3f; // Độ dài chân dốc 8.3m tạo độ dốc thoai thoải ~43.9 độ (< 45 độ chuẩn NavMesh)
-    float rampTopY = room.mezzanineHeight; // 8.0m khớp phẳng khít tuyệt đối với mặt sàn gỗ tầng 2
-
-    if (room.mezzanineSide == MezzanineWallSide.North)
+    if (cachedWedgeMesh == null)
     {
-      // Thang leo từ Nam (landingZ - rampRun) lên Bắc (landingZ)
-      verts[0] = new Vector3(x0, 0f, landingZ - rampRun);
-      verts[1] = new Vector3(x1, 0f, landingZ - rampRun);
-      verts[2] = new Vector3(x0, rampTopY, landingZ);
-      verts[3] = new Vector3(x1, rampTopY, landingZ);
-      verts[4] = new Vector3(x0, rampTopY, landingZ + tileSize);
-      verts[5] = new Vector3(x1, rampTopY, landingZ + tileSize);
-
-      // Quads hướng lên trên
-      tris[0] = 0; tris[1] = 2; tris[2] = 1;
-      tris[3] = 1; tris[4] = 2; tris[5] = 3;
-      tris[6] = 2; tris[7] = 4; tris[8] = 3;
-      tris[9] = 3; tris[10] = 4; tris[11] = 5;
-    }
-    else
-    {
-      // Thang leo từ Bắc (landingZ + rampRun) xuống Nam (landingZ)
-      verts[0] = new Vector3(x0, 0f, landingZ + rampRun);
-      verts[1] = new Vector3(x1, 0f, landingZ + rampRun);
-      verts[2] = new Vector3(x0, rampTopY, landingZ);
-      verts[3] = new Vector3(x1, rampTopY, landingZ);
-      verts[4] = new Vector3(x0, rampTopY, landingZ - tileSize);
-      verts[5] = new Vector3(x1, rampTopY, landingZ - tileSize);
-
-      // Quads hướng lên trên
-      tris[0] = 0; tris[1] = 1; tris[2] = 2;
-      tris[3] = 1; tris[4] = 3; tris[5] = 2;
-      tris[6] = 2; tris[7] = 3; tris[8] = 4;
-      tris[9] = 3; tris[10] = 5; tris[11] = 4;
+      cachedWedgeMesh = CreateStairsWedgeMesh();
     }
 
-    rampMesh.vertices = verts;
-    rampMesh.triangles = tris;
-    rampMesh.RecalculateNormals();
-    rampMesh.RecalculateBounds();
-
-    MeshCollider mc = rampObj.AddComponent<MeshCollider>();
-    mc.sharedMesh = rampMesh;
+    if (mc == null) mc = stairsObj.AddComponent<MeshCollider>();
+    mc.sharedMesh = cachedWedgeMesh;
+    mc.convex = true;
   }
+
+  static Mesh CreateStairsWedgeMesh()
+  {
+    Mesh mesh = new Mesh();
+    mesh.name = "Stairs_Wedge_Collider";
+
+    // Kích thước chuẩn theo model stairs.fbx gốc: Rộng X: [-2.5, 2.5] (5m), Dài Z: [0, 4] (4m), Cao Y: [0, 4] (4m)
+    // Chân thang ở Z = 4.0m (Y = 0m). Đỉnh thang ở Z = 0.0m (Y = 4.0m).
+    Vector3[] vertices = new Vector3[]
+    {
+      new Vector3(-2.5f, 0.0f, 4.0f), // 0: Chân thang trái (Foot Left)
+      new Vector3( 2.5f, 0.0f, 4.0f), // 1: Chân thang phải (Foot Right)
+      new Vector3(-2.5f, 0.0f, 0.0f), // 2: Đáy sau trái (Back Bottom Left)
+      new Vector3( 2.5f, 0.0f, 0.0f), // 3: Đáy sau phải (Back Bottom Right)
+      new Vector3(-2.5f, 4.0f, 0.0f), // 4: Đỉnh sau trái (Back Top Left)
+      new Vector3( 2.5f, 4.0f, 0.0f)  // 5: Đỉnh sau phải (Back Top Right)
+    };
+
+    int[] triangles = new int[]
+    {
+      // 1. Mặt dốc nghiêng (từ chân Z=4 lên đỉnh Z=0) - normal hướng lên và ra ngoài (+Y, +Z)
+      0, 5, 4,
+      0, 1, 5,
+
+      // 2. Mặt đáy phẳng sàn (Y=0) - normal hướng xuống (-Y)
+      0, 3, 1,
+      0, 2, 3,
+
+      // 3. Mặt đứng phía sau (Z=0) - normal hướng ra sau (-Z)
+      2, 4, 5,
+      2, 5, 3,
+
+      // 4. Mặt tam giác bên hông trái (X=-2.5) - normal hướng sang trái (-X)
+      0, 4, 2,
+
+      // 5. Mặt tam giác bên hông phải (X=+2.5) - normal hướng sang phải (+X)
+      1, 3, 5
+    };
+
+    mesh.vertices = vertices;
+    mesh.triangles = triangles;
+    mesh.RecalculateNormals();
+    mesh.RecalculateBounds();
+
+    return mesh;
+  }
+
 
   void CreateInvisibleCollider(RectInt area)
   {
@@ -812,6 +820,48 @@ public class DungeonRenderer : MonoBehaviour
   }
 
   /// <summary>
+  /// Dựng 4 cây cột to đồ sộ tại Đấu Trường Boss (vươn cao 16m, scale 2.5x, có MeshCollider làm vật cản chiến thuật)
+  /// </summary>
+  private void BuildBossArenaPillars(RoomData bossRoom, DungeonData data)
+  {
+    if (bossRoom == null || bossRoom.pillarPositions == null || bossRoom.pillarPositions.Count == 0) return;
+    if (pillarPrefab == null) EnsurePrefabsAssigned();
+    if (pillarPrefab == null) return;
+
+    GameObject bossPillarsGroup = new GameObject("BossArena_Pillars");
+    bossPillarsGroup.transform.SetParent(dungeonParent, false);
+
+    // Cột gốc trong prefab cao 4m. Phòng Boss trần cao 16m -> scale Y = 16 / 4 = 4.0
+    // Độ dày cột scale 2.5x để tạo thành cột đá cổ đồ sộ uy nghi chuẩn Souls-like
+    Vector3 bossPillarScale = new Vector3(2.5f, bossRoom.ceilingHeight / 4.0f, 2.5f);
+
+    foreach (var pPos in bossRoom.pillarPositions)
+    {
+      GameObject pillarObj = Instantiate(pillarPrefab, pPos, Quaternion.identity, bossPillarsGroup.transform);
+      pillarObj.name = "BossArena_Pillar";
+      pillarObj.transform.localScale = bossPillarScale;
+      pillarObj.layer = 0; // Default layer
+
+      // Đảm bảo có MeshCollider để Player có thể núp né đòn và chặn đạn
+      MeshCollider mc = pillarObj.GetComponent<MeshCollider>();
+      if (mc == null)
+      {
+        mc = pillarObj.AddComponent<MeshCollider>();
+        MeshFilter mf = pillarObj.GetComponentInChildren<MeshFilter>();
+        if (mf != null) mc.sharedMesh = mf.sharedMesh;
+      }
+
+      // Gắn NavMeshModifier để NavMesh tự động đục lỗ quanh 4 cây cột
+      var navMod = pillarObj.GetComponent<NavMeshModifier>();
+      if (navMod == null) navMod = pillarObj.AddComponent<NavMeshModifier>();
+      navMod.overrideArea = true;
+      navMod.area = 1; // Not Walkable
+    }
+
+    Debug.Log($"<color=cyan>[DungeonRenderer]</color> 🏛️ Đã dựng thành công 4 cây cột đồ sộ tại Đấu Trường Boss (Scale 2.5x, cao {bossRoom.ceilingHeight}m)");
+  }
+
+  /// <summary>
   /// Tự động Bake NavMeshSurface toàn map và kiểm định tính liên thông đường đi (Pathfinding) giữa sàn trệt và tầng 2
   /// </summary>
   public void BakeAndValidateNavMesh(DungeonData data)
@@ -833,7 +883,7 @@ public class DungeonRenderer : MonoBehaviour
     // - Chỉ thu thập các collider thuộc Layer 10 (NavMessFloor: sàn trệt, sàn tầng 2, cầu thang)
     navMeshSurface.collectObjects = CollectObjects.Children;
     navMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
-    navMeshSurface.layerMask = (1 << 10) | (1 << 0); // Layer 10: NavMessFloor, Layer 0: Props vật cản
+    navMeshSurface.layerMask = (1 << 10) | (1 << 0) | (1 << 8) | (1 << 7); // Layer 10: Floor, Layer 0: Props tĩnh, Layer 8: Damageable barrels, Layer 7: Obstacles
 
     // Nướng NavMesh Surface đồng bộ
     navMeshSurface.BuildNavMesh();
@@ -858,15 +908,11 @@ public class DungeonRenderer : MonoBehaviour
         {
           mezzanineCount++;
 
-          // Điểm xuất phát A: Dưới sàn trệt ngay trước chân cầu thang (chân dốc 8.3m)
-          Vector3 groundPos = (r.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z - 9.0f)
-            : new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z + 9.0f);
+          // Điểm xuất phát A: Dưới sàn trệt ngay trước bậc đầu tiên của nhịp dưới cầu thang (cách đỉnh thang 8.5m về phía Nam)
+          Vector3 groundPos = new Vector3(r.stairsPosition.x, 0.1f, r.stairsPosition.z - 8.5f);
 
-          // Điểm đích B: Trên sàn tầng 2 sau khi bước lên khỏi cầu thang
-          Vector3 floor2Pos = (r.mezzanineSide == MezzanineWallSide.North)
-            ? new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z + tileSize)
-            : new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z - tileSize);
+          // Điểm đích B: Trên sàn tầng 2 ngay sau khi bước lên khỏi bậc cuối cùng (cách đỉnh thang 1.5m về phía Bắc)
+          Vector3 floor2Pos = new Vector3(r.stairsPosition.x, r.mezzanineHeight + 0.1f, r.stairsPosition.z + 1.5f);
 
           NavMeshPath path = new NavMeshPath();
           bool hasSampleA = NavMesh.SamplePosition(groundPos, out NavMeshHit hitA, 3.0f, NavMesh.AllAreas);

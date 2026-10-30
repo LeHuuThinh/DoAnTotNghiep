@@ -1,0 +1,27 @@
+# Wavefront OBJ: Stairs Right Triangular Prism Wedge Collider
+# Matching stairs.fbx (Width X: 5.0m, Length Z: 4.0m, Height Y: 4.0m)
+o Stairs_Wedge_Collider
+v -2.5 0.0 4.0
+v 2.5 0.0 4.0
+v -2.5 0.0 0.0
+v 2.5 0.0 0.0
+v -2.5 4.0 0.0
+v 2.5 4.0 0.0
+
+# 1. Slope face (Faces upward-forward along slope, normal: 0, +0.707, +0.707)
+f 1 6 5
+f 1 2 6
+
+# 2. Bottom face (Faces downward, normal: 0, -1, 0)
+f 1 4 2
+f 1 3 4
+
+# 3. Back face (Faces backward, normal: 0, 0, -1)
+f 3 5 6
+f 3 6 4
+
+# 4. Left side face (Faces left, normal: -1, 0, 0)
+f 1 5 3
+
+# 5. Right side face (Faces right, normal: +1, 0, 0)
+f 2 4 6

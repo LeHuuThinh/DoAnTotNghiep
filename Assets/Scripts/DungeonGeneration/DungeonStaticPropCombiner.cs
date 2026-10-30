@@ -63,9 +63,10 @@ public static class DungeonStaticPropCombiner
       cmr.sharedMaterial = mat;
       cmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // Đồ tĩnh hầm ngục không cần tạo bóng thêm
 
-      // Chỉ tạo MeshCollider cho các nhóm vật liệu kiến trúc, nội thất gỗ/đá; bỏ qua cờ vải, chai lọ nhỏ để giảm tải PhysX
+      // Chỉ tạo MeshCollider cho các nhóm vật liệu kiến trúc, nội thất gỗ/đá; bỏ qua cờ vải, chai lọ, đĩa chén và đá vụn nhỏ để giảm tải PhysX và không làm vấp chân người chơi
       string matName = (mat != null) ? mat.name.ToLower() : "";
-      bool isNonCollidingMat = matName.Contains("banner") || matName.Contains("cloth") || matName.Contains("flag") || matName.Contains("glass");
+      bool isNonCollidingMat = matName.Contains("banner") || matName.Contains("cloth") || matName.Contains("flag") || matName.Contains("glass")
+          || matName.Contains("rubble") || matName.Contains("plate") || matName.Contains("dish") || matName.Contains("bottle");
       if (!isNonCollidingMat)
       {
         MeshCollider cmc = combinedObj.AddComponent<MeshCollider>();

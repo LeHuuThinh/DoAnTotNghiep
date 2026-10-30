@@ -197,6 +197,17 @@ namespace InfiniteLabyrinth.Progression
     }
 
     /// <summary>
+    /// Cộng thêm điểm tiềm năng chưa phân bổ (Dùng cho Admin / Level Up / Nhiệm vụ)
+    /// </summary>
+    public void AddUnallocatedPoints(int count)
+    {
+      if (count <= 0) return;
+      unallocatedPoints += count;
+      OnPointsChanged?.Invoke(unallocatedPoints);
+      Debug.Log($"<color=#FFE082>[PlayerProgression] Đã nhận +{count} Điểm Tiềm Năng! Tổng hiện tại: {unallocatedPoints}</color>");
+    }
+
+    /// <summary>
     /// Phân bổ điểm tiềm năng vào các thuộc tính
     /// </summary>
     public bool AllocatePoints(int addAtk, int addHp, int addStam)
@@ -231,13 +242,13 @@ namespace InfiniteLabyrinth.Progression
     {
       if (TotalAllocatedPoints <= 0)
       {
-        reason = "Chưa có điểm tiềm năng nào được cộng để tẩy!";
+        reason = "No allocated attribute points to reset!";
         return false;
       }
 
       if (InventoryManager.HasInstance && InventoryManager.Instance.CurrentGold < resetCostGold)
       {
-        reason = $"Bạn không đủ Vàng! Cần tối thiểu {resetCostGold} Vàng để tẩy điểm (Hiện có: {InventoryManager.Instance.CurrentGold} Vàng).";
+        reason = $"Not enough Gold! Requires {resetCostGold} Gold (Current: {InventoryManager.Instance.CurrentGold} Gold).";
         return false;
       }
 

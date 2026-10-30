@@ -17,6 +17,13 @@ public class DungeonData
   public List<RoomData> roomDataList = new List<RoomData>();
   public RoomData startRoom;
   public RoomData bossRoom;
+  public RoomData bossPrevRoom;   // Phòng kề trước phòng Boss
+  public RoomData keyRoom;        // Phòng tế đàn nhánh cụt chứa Chìa Khóa Hầm Ngục
+  public bool hasSpawnedDungeonKey; // Cờ đánh dấu đã sinh chìa khóa hầm ngục
+  public RectInt bossRoomBounds;   // Giới hạn căn phòng Boss Khổng Lồ do BSP tạo ra
+  public RectInt bossPrevRoomBounds; // Giới hạn căn phòng kề nối vào cửa ngõ Đại Lộ Boss
+  public RectInt bossCorridor;     // Hành lang nối trực tiếp vào phòng Boss (được mở rộng gấp đôi)
+  public Dictionary<int, List<int>> adjacency = new Dictionary<int, List<int>>(); // Đồ thị kề liên kết giữa các phòng qua hành lang
 
   // Kiểm tra an toàn xem tọa độ có lọt ra ngoài mảng không
   public bool IsInBounds(int x, int y)

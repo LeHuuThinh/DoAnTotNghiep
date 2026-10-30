@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Item_Sword_Dragonic
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_dragonic
-  itemName: "H\u1ECFa Long Ki\u1EBFm"
-  description: "Th\u1EA7n kh\xED mang linh h\u1ED3n c\u1EE7a R\u1ED3ng L\u1EEDa Vi\u1EC5n
-    C\u1ED5 (+55 S\xE1t th\u01B0\u01A1ng, +50 M\xE1u t\u1ED1i \u0111a, +25 Th\u1EC3
-    l\u1EF1c)."
+  itemName: Dragonfire Sword
+  description: A mythical blade infused with the soul of an Ancient Fire Dragon (+55
+    Attack, +50 Max HP, +25 Stamina).
   icon: {fileID: 21300000, guid: 20930f5b30b999043965bc94cbbeef18, type: 3}
   itemType: 0
   rarity: 4

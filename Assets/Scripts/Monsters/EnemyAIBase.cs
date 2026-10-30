@@ -201,6 +201,15 @@ public abstract class EnemyAIBase : MonoBehaviour
     {
       DungeonEnemyOptimizer.Instance.UnregisterEnemy(this);
     }
+    if (agent != null)
+    {
+      if (agent.isOnNavMesh)
+      {
+        agent.isStopped = true;
+        agent.velocity = Vector3.zero;
+      }
+      agent.enabled = false;
+    }
 
     // Thưởng EXP cho Player khi quái vật bị tiêu diệt
     if (expReward > 0 && InfiniteLabyrinth.Progression.PlayerProgression.HasInstance)

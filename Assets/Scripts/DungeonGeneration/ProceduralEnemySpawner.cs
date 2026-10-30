@@ -43,21 +43,21 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
   [Header("Quy Mô Phòng & Số Cụm Quái (Squad Counts Per Room)")]
   [Tooltip("Ngưỡng diện tích (số ô tile) để phòng được coi là Đại sảnh lớn")]
-  public int largeRoomTileThreshold = 220;
+  public int largeRoomTileThreshold = 160;
 
   [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
+  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng thường (nhỏ/vừa: 1 - 2 nhóm)")]
   public int minGroundSquadsStandard = 1;
   [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường (nhỏ/vừa: đúng 1 nhóm)")]
-  public int maxGroundSquadsStandard = 1;
+  [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng thường (nhỏ/vừa: 1 - 2 nhóm)")]
+  public int maxGroundSquadsStandard = 2;
 
-  [Range(1, 3)]
-  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng lớn")]
-  public int minGroundSquadsLarge = 1;
   [Range(1, 4)]
+  [Tooltip("Số nhóm quái tối thiểu ở sàn trệt phòng lớn")]
+  public int minGroundSquadsLarge = 2;
+  [Range(1, 5)]
   [Tooltip("Số nhóm quái tối đa ở sàn trệt phòng lớn")]
-  public int maxGroundSquadsLarge = 2;
+  public int maxGroundSquadsLarge = 3;
 
   [Header("Tầng 2 Gác Lửng (Mezzanine Floor)")]
   [Range(1, 2)]
@@ -91,6 +91,9 @@ public class ProceduralEnemySpawner : MonoBehaviour
   [Header("Phòng Kho Báu & Điện Thờ (Treasure / Shrine)")]
   [Tooltip("Bật sinh quái bảo vệ phòng kho báu / đền thờ")]
   public bool spawnGuardsInSpecialRooms = true;
+
+  [Tooltip("Kích thước đội lính gác phòng kho báu (Mặc định: Quad - chắc chắn ít nhất 4 quái tinh nhuệ canh giữ rương)")]
+  public SquadSize treasureGuardSquadSize = SquadSize.Quad;
 
   [Header("4. Định Vị & Giãn Cách Không Gian (Spatial Clustering)")]
   [Range(1.5f, 5.0f)]
@@ -236,19 +239,37 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
       int roomSpawnedBefore = activeEnemies.Count;
       int roomAreaTiles = room.bounds.width * room.bounds.height;
-      bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 16 && room.bounds.height >= 16);
+      bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 13 && room.bounds.height >= 13);
 
       // Danh sách vị trí các quái đã sinh trong phòng này (để kiểm tra khoảng cách)
       List<Vector3> roomSpawnedPositions = new List<Vector3>();
       List<Vector3> roomSquadAnchors = new List<Vector3>();
 
-      // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine): 1 nhóm nhỏ (1 - 2 quái) làm lính gác
-      if (room.type == RoomType.Treasure || room.type == RoomType.Shrine)
+      // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine):
+      if (room.type == RoomType.Treasure)
       {
         if (spawnGuardsInSpecialRooms)
         {
-          SquadSize specialSize = (Random.value < 0.65f) ? SquadSize.Duo : SquadSize.Solo;
-          int spawned = SpawnSquad(room, false, specialSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "GuardSquad");
+          // Phòng kho báu luôn có ít nhất 4 quái (SquadSize.Quad) để tăng tính thử thách canh giữ rương báu
+          int spawned = SpawnSquad(room, false, treasureGuardSquadSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureGuards");
+          if (spawned > 0) totalSquads++;
+
+          // Nếu phòng kho báu có gác lửng Tầng 2, bổ sung thêm lính bắn tỉa trên ban công
+          if (room.hasMezzanine)
+          {
+            SquadSize mezSize = (Random.value < 0.5f) ? SquadSize.Duo : SquadSize.Solo;
+            int mezSpawned = SpawnSquad(room, true, mezSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureMezzanineGuards");
+            if (mezSpawned > 0) totalSquads++;
+          }
+        }
+      }
+      else if (room.type == RoomType.Shrine)
+      {
+        if (spawnGuardsInSpecialRooms)
+        {
+          // Phòng tế đàn chìa khóa (Key Room): Nhóm 3-4 quái bảo vệ
+          SquadSize shrineSize = (Random.value < 0.65f) ? SquadSize.Quad : SquadSize.Trio;
+          int spawned = SpawnSquad(room, false, shrineSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "ShrineGuards");
           if (spawned > 0) totalSquads++;
         }
       }
@@ -553,12 +574,11 @@ public class ProceduralEnemySpawner : MonoBehaviour
         // Tránh cửa ra vào
         if (room.IsNearDoor(tile, doorClearanceTiles)) continue;
 
-        // Nếu phòng có gác lửng và yêu cầu loại trừ sàn tầng 2 (để quái cận chiến sinh ở khoảng thông tầng)
+        // Nếu phòng có gác lửng:
+        // TUYỆT ĐỐI KHÔNG loại trừ ô sàn trệt dưới gác lửng (khoảng không dưới gác lửng trần cao 8m hoàn toàn đi lại được và là nơi quái cận chiến đứng mai phục!)
+        // CHỈ loại trừ đúng footprint cầu thang để quái không sinh đè lên bậc thang
         if (excludeMezzanine && room.hasMezzanine)
         {
-          if (room.IsInMezzanine(x, y)) continue;
-
-          // Tránh khu vực chân cầu thang
           if (Mathf.Abs(x - room.stairGridPos.x) <= 2 && Mathf.Abs(y - room.stairGridPos.y) <= 3)
           {
             continue;

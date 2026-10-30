@@ -13,10 +13,8 @@ MonoBehaviour:
   m_Name: Item_Potion_Health
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: potion_health_small
-  itemName: "B\xECnh M\xE1u Nh\u1ECF"
-  description: "Chi\u1EBFt xu\u1EA5t t\u1EEB th\u1EA3o m\u1ED9c ph\xE1t s\xE1ng trong
-    h\u1EA7m ng\u1EE5c. H\u1ED3i ph\u1EE5c ngay l\u1EADp t\u1EE9c 35 \u0111i\u1EC3m
-    M\xE1u."
+  itemName: Small Health Potion
+  description: Brewed from glowing dungeon herbs. Instantly restores 35 Health Points.
   icon: {fileID: 21300000, guid: 6989cecc2cea8a74d9a7858baa63b2f6, type: 3}
   itemType: 2
   rarity: 0

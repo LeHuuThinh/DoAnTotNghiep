@@ -239,6 +239,10 @@ MonoBehaviour:
   moveSpeed: 3.5
   rotationSpeed: 120
   strafeMode: 1
+  enableBodyAuraLight: 1
+  bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
+  bodyAuraRange: 16
+  bodyAuraIntensity: 3
   attack1Cooldown: 1.5
   gumoGumoCooldown: 6
   flameBreathCooldown: 8

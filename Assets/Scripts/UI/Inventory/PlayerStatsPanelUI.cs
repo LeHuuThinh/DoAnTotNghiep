@@ -12,17 +12,30 @@ namespace InfiniteLabyrinth.UI
   /// </summary>
   public class PlayerStatsPanelUI : MonoBehaviour
   {
-    [Header("=== TEXT HIỂN THỊ CHỈ SỐ ===")]
-    [Tooltip("Text hiển thị chỉ số Tấn công (ATK)")]
+    [Header("=== TEXT HIỂN THỊ CHỈ SỐ (VALUE RIÊNG) ===")]
+    [Tooltip("Text hiển thị giá trị số Tấn công (ATK Value)")]
+    [SerializeField] private TextMeshProUGUI atkValueText;
+
+    [Tooltip("Text hiển thị giá trị số Phòng thủ (DEF Value)")]
+    [SerializeField] private TextMeshProUGUI defValueText;
+
+    [Tooltip("Text hiển thị giá trị Máu (HP Value: Hiện tại / Tối đa)")]
+    [SerializeField] private TextMeshProUGUI hpValueText;
+
+    [Tooltip("Text hiển thị giá trị Thể lực (Stamina Value: Hiện tại / Tối đa)")]
+    [SerializeField] private TextMeshProUGUI staminaValueText;
+
+    [Header("=== LABEL HOẶC CONTAINER GỐC ===")]
+    [Tooltip("Text hiển thị nhãn Tấn công (hoặc container AtkText)")]
     [SerializeField] private TextMeshProUGUI atkText;
 
-    [Tooltip("Text hiển thị chỉ số Phòng thủ (DEF)")]
+    [Tooltip("Text hiển thị nhãn Phòng thủ (hoặc container DefText)")]
     [SerializeField] private TextMeshProUGUI defText;
 
-    [Tooltip("Text hiển thị chỉ số Máu tối đa (Max HP)")]
+    [Tooltip("Text hiển thị nhãn Máu (hoặc container HpText)")]
     [SerializeField] private TextMeshProUGUI hpText;
 
-    [Tooltip("Text hiển thị chỉ số Thể lực tối đa (Max Stamina)")]
+    [Tooltip("Text hiển thị nhãn Thể lực (hoặc container StaminaText)")]
     [SerializeField] private TextMeshProUGUI staminaText;
 
     [Header("=== NÚT CỘNG ĐIỂM TIỀM NĂNG (RPG-05) ===")]
@@ -40,17 +53,56 @@ namespace InfiniteLabyrinth.UI
     private Health cachedPlayerHealth;
     private PlayerStats cachedPlayerStats;
     private PlayerCombat cachedPlayerCombat;
+    private string cachedAttributeButtonText;
 
     private void Awake()
     {
+      AutoResolveValueTexts();
+
       if (attributePointsButton != null)
       {
         attributePointsButton.onClick.AddListener(HandleAttributePointsClicked);
+        if (attributeButtonText == null)
+        {
+          attributeButtonText = attributePointsButton.GetComponentInChildren<TextMeshProUGUI>();
+        }
+        if (attributeButtonText != null)
+        {
+          cachedAttributeButtonText = attributeButtonText.text;
+        }
+      }
+    }
+
+    private void AutoResolveValueTexts()
+    {
+      if (atkValueText == null && atkText != null)
+      {
+        Transform tr = atkText.transform.Find("Value");
+        if (tr != null) atkValueText = tr.GetComponent<TextMeshProUGUI>();
+      }
+
+      if (defValueText == null && defText != null)
+      {
+        Transform tr = defText.transform.Find("Value");
+        if (tr != null) defValueText = tr.GetComponent<TextMeshProUGUI>();
+      }
+
+      if (hpValueText == null && hpText != null)
+      {
+        Transform tr = hpText.transform.Find("Value");
+        if (tr != null) hpValueText = tr.GetComponent<TextMeshProUGUI>();
+      }
+
+      if (staminaValueText == null && staminaText != null)
+      {
+        Transform tr = staminaText.transform.Find("Value");
+        if (tr != null) staminaValueText = tr.GetComponent<TextMeshProUGUI>();
       }
     }
 
     private void OnEnable()
     {
+      AutoResolveValueTexts();
       CachePlayerReferences();
       RefreshStats();
 
@@ -78,7 +130,20 @@ namespace InfiniteLabyrinth.UI
         PlayerProgression.Instance.OnStatsAllocated -= RefreshStats;
         PlayerProgression.Instance.OnPointsChanged -= HandlePointsChanged;
       }
+
+      if (cachedPlayerHealth != null)
+      {
+        cachedPlayerHealth.onHealthChanged.RemoveListener(HandleHealthChanged);
+      }
+
+      if (cachedPlayerStats != null)
+      {
+        cachedPlayerStats.onStaminaChanged.RemoveListener(HandleStaminaChanged);
+      }
     }
+
+    private void HandleHealthChanged(float cur, float max) => RefreshStats();
+    private void HandleStaminaChanged(float cur, float max) => RefreshStats();
 
     private void HandleEquipmentChanged(ItemType type, ItemData item)
     {
@@ -111,6 +176,18 @@ namespace InfiniteLabyrinth.UI
           cachedPlayerCombat = playerCtrl.GetComponent<PlayerCombat>();
         }
       }
+
+      if (cachedPlayerHealth != null)
+      {
+        cachedPlayerHealth.onHealthChanged.RemoveListener(HandleHealthChanged);
+        cachedPlayerHealth.onHealthChanged.AddListener(HandleHealthChanged);
+      }
+
+      if (cachedPlayerStats != null)
+      {
+        cachedPlayerStats.onStaminaChanged.RemoveListener(HandleStaminaChanged);
+        cachedPlayerStats.onStaminaChanged.AddListener(HandleStaminaChanged);
+      }
     }
 
     /// <summary>
@@ -118,6 +195,7 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void RefreshStats()
     {
+      AutoResolveValueTexts();
       CachePlayerReferences();
 
       float baseAtk = 15f;
@@ -152,34 +230,52 @@ namespace InfiniteLabyrinth.UI
       float progStamina = PlayerProgression.HasInstance ? PlayerProgression.Instance.BonusStamina : 0f;
       float totalBonusStamina = equipStamina + progStamina;
 
-      // 1. Tấn công
-      if (atkText != null)
+      // 1. Tấn công (Attack - chỉ hiển thị số)
+      float totalAtk = baseAtk + totalBonusAtk;
+      string atkBonusStr = totalBonusAtk > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusAtk:0.#})</color></size>" : "";
+      if (atkValueText != null)
       {
-        float totalAtk = baseAtk + totalBonusAtk;
-        string bonusStr = totalBonusAtk > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusAtk})</color></size>" : "";
-        atkText.text = $"Tấn công: <color=#FFE082>{totalAtk}</color>{bonusStr}";
+        atkValueText.text = $"<color=#FFE082>{totalAtk:0.#}</color>{atkBonusStr}";
+      }
+      else if (atkText != null)
+      {
+        atkText.text = $"Attack: <color=#FFE082>{totalAtk:0.#}</color>{atkBonusStr}";
       }
 
-      // 2. Phòng thủ
-      if (defText != null)
+      // 2. Phòng thủ (Defense - chỉ hiển thị số)
+      if (defValueText != null)
       {
-        defText.text = $"Phòng thủ: <color=#81D4FA>{totalDef}</color>";
+        defValueText.text = $"<color=#81D4FA>{totalDef:0.#}</color>";
+      }
+      else if (defText != null)
+      {
+        defText.text = $"Defense: <color=#81D4FA>{totalDef:0.#}</color>";
       }
 
-      // 3. Máu tối đa
-      if (hpText != null)
+      // 3. Máu (Health: Hiện tại / Tối đa)
+      float totalHp = baseHp + totalBonusHp;
+      float curHp = cachedPlayerHealth != null ? cachedPlayerHealth.CurrentHealth : totalHp;
+      string hpBonusStr = totalBonusHp > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusHp:0.#})</color></size>" : "";
+      if (hpValueText != null)
       {
-        float totalHp = baseHp + totalBonusHp;
-        string bonusStr = totalBonusHp > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusHp})</color></size>" : "";
-        hpText.text = $"Máu tối đa: <color=#EF9A9A>{totalHp}</color>{bonusStr}";
+        hpValueText.text = $"<color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>{hpBonusStr}";
+      }
+      else if (hpText != null)
+      {
+        hpText.text = $"Health: <color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>{hpBonusStr}";
       }
 
-      // 4. Thể lực tối đa
-      if (staminaText != null)
+      // 4. Thể lực (Stamina: Hiện tại / Tối đa)
+      float totalStam = baseStamina + totalBonusStamina;
+      float curStam = cachedPlayerStats != null ? cachedPlayerStats.CurrentStamina : totalStam;
+      string stamBonusStr = totalBonusStamina > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusStamina:0.#})</color></size>" : "";
+      if (staminaValueText != null)
       {
-        float totalStam = baseStamina + totalBonusStamina;
-        string bonusStr = totalBonusStamina > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusStamina})</color></size>" : "";
-        staminaText.text = $"Thể lực: <color=#A5D6A7>{totalStam}</color>{bonusStr}";
+        staminaValueText.text = $"<color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>{stamBonusStr}";
+      }
+      else if (staminaText != null)
+      {
+        staminaText.text = $"Stamina: <color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>{stamBonusStr}";
       }
 
       UpdateAttributeButtonBadge();
@@ -190,18 +286,23 @@ namespace InfiniteLabyrinth.UI
       if (attributeButtonText == null && attributePointsButton != null)
       {
         attributeButtonText = attributePointsButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (attributeButtonText != null && string.IsNullOrEmpty(cachedAttributeButtonText))
+        {
+          cachedAttributeButtonText = attributeButtonText.text;
+        }
       }
 
       if (attributeButtonText != null && PlayerProgression.HasInstance)
       {
+        string baseText = !string.IsNullOrEmpty(cachedAttributeButtonText) ? cachedAttributeButtonText : "Attribute Points";
         int unallocated = PlayerProgression.Instance.UnallocatedPoints;
         if (unallocated > 0)
         {
-          attributeButtonText.text = $"Cộng Điểm <color=#FFE082><b>(+{unallocated})</b></color>";
+          attributeButtonText.text = $"{baseText} <color=#FFE082><b>(+{unallocated})</b></color>";
         }
         else
         {
-          attributeButtonText.text = "Cộng Điểm";
+          attributeButtonText.text = baseText;
         }
       }
     }

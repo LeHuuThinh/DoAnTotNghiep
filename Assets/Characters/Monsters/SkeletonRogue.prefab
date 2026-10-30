@@ -149,12 +149,16 @@ MonoBehaviour:
   animator: {fileID: 1637796913889691200}
   enemyCollider: {fileID: 6904120551395480210}
   bodyRenderers: []
-  flashDuration: 0.1
-  flashColor: {r: 0.81960785, g: 0.41960785, b: 0.41960785, a: 1}
-  maxPoise: 60
+  flashDuration: 0.08
+  lethalFlashDuration: 0.15
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  emissionIntensity: 0.6
+  solidWhiteFlash: 1
+  corpseDestroyDelay: 5
+  maxPoise: 50
   poiseRecoveryDelay: 2.5
   poiseRecoveryRate: 25
-  knockbackDuration: 0.15
+  knockbackDuration: 0.5
 --- !u!195 &8316317591851585195
 NavMeshAgent:
   m_ObjectHideFlags: 0
