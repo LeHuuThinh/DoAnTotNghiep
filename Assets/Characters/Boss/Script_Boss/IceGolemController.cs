@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
+using InfiniteLabyrinth.Interaction;
 
 public enum BoneForwardAxis
 {
@@ -25,6 +26,22 @@ public class IceGolemController : MonoBehaviour
     public float moveSpeed = 3.5f;
     public float rotationSpeed = 120f;
     public bool strafeMode = true;
+
+    [Header("=== NỘI SUY DI CHUYỂN MƯỢT (SMOOTH LOCOMOTION ENGINE) ===")]
+    [Tooltip("Gia tốc tăng tốc khi bắt đầu di chuyển (tránh giật cục khi đổi trạng thái)")]
+    [SerializeField] private float moveAcceleration = 4.5f;
+    [Tooltip("Gia tốc hãm tốc khi dừng lại (tránh dừng đột ngột)")]
+    [SerializeField] private float moveDeceleration = 6.0f;
+    [Tooltip("Thời gian damping làm mượt các tham số Animator (Speed, MoveX, MoveZ)")]
+    [SerializeField] private float locomotionDampTime = 0.22f;
+
+    // Biến nội suy chuyển động nội bộ
+    private Vector2 desiredMoveInput = Vector2.zero;
+    private Vector2 currentSmoothMoveInput = Vector2.zero;
+    private float currentSmoothSpeed = 0f;
+    private int currentActiveMoveType = 0;
+    private float lastMoveCommandTime = -1f;
+    private bool hasManualArrowInput = false;
 
     [Header("=== TẦNG 3 ÁNH SÁNG: HÀO QUANG BĂNG GIÁ (BOSS BODY LIGHT) ===")]
     [Tooltip("Bật đèn hào quang xanh băng tự thân bám theo thân Boss Ice Golem trong bóng tối")]
@@ -161,21 +178,23 @@ public class IceGolemController : MonoBehaviour
 
     [Header("=== CÀI ĐẶT JUMP DOWN (ĐÁP XUỐNG MỞ MÀN DUY NHẤT 1 LẦN) ===")]
     [Tooltip("Tự động kích hoạt cú nhảy đáp xuống khi vừa bắt đầu game (Start) nếu Player đã có mặt")]
-    [SerializeField] private bool jumpDownOnStart = true;
-    [Tooltip("Tự động kích hoạt cú nhảy đáp xuống khi lần đầu tiên phát hiện Player xuất hiện trong tầm nhìn")]
+    [SerializeField] private bool jumpDownOnStart = false;
+    [Tooltip("Tự động kích hoạt cú nhảy đáp xuống khi lần đầu tiên phát hiện Player bước vào phòng")]
     [SerializeField] private bool triggerJumpDownOnDetectPlayer = true;
-    [Tooltip("Khoảng cách tối đa để phát hiện Player và kích hoạt cú nhảy đáp đất mở màn (mét)")]
-    [SerializeField] private float playerDetectionRange = 35f;
+    [Tooltip("Khoảng cách tối đa để phát hiện Player (mét) - Tầm nhìn bao quát toàn bộ phòng Boss rộng 100m - 200m")]
+    [SerializeField] private float playerDetectionRange = 300f;
     [Tooltip("Khoảng cách bay tới (mét) khi JumpDown")]
     [SerializeField] private float jumpDownDistance = 10f;
     [Tooltip("Độ cao xuất phát trên không của Boss trước khi lao dốc xuống (mét)")]
     [SerializeField] private float jumpDownHeight = 12f;
-    [Tooltip("Độ cao vòng cung bổ sung nếu có (mét)")]
-    [SerializeField] private float jumpDownArcHeight = 0f;
+    [Tooltip("Độ cao vòng cung phóng lên trời trước khi lao xuống (mét, mặc định 4.0m tạo cú nhảy vút cao ấn tượng)")]
+    [SerializeField] private float jumpDownArcHeight = 4.0f;
     [Tooltip("Khoảng trễ trước khi bắt đầu rơi (giây)")]
     [SerializeField] private float jumpDownStartDelay = 0.1f;
-    [Tooltip("Thời gian rơi từ trên cao xuống chạm đất (giây, khớp với lúc hai tay/chân đập sàn trong animation)")]
-    [SerializeField] private float jumpDownFallDuration = 0.95f;
+    [Tooltip("Thời gian rơi từ trên cao xuống chạm đất (giây, khớp 100% với frame 55 tiếp đất của animation: 1.80s)")]
+    [SerializeField] private float jumpDownFallDuration = 1.35f;
+    [Tooltip("Tốc độ phát hoạt ảnh lúc Boss đang lao dốc rơi từ trên cao xuống sàn (nhỏ hơn 1 để hoạt ảnh chậm lại tạo cảm giác rơi từ trên cao, mặc định 0.65f)")]
+    [SerializeField] private float jumpDownFallAnimSpeed = 0.65f;
     [Tooltip("Mục tiêu để Boss đáp tới (Player). Nếu để trống thì bay thẳng theo hướng mặt")]
     [SerializeField] private Transform jumpDownTarget;
     [Tooltip("Tự động tìm Player làm mục tiêu tiếp đất (mặc định false để Boss chỉ rơi xuống tại vị trí của Boss và tỏa sóng lan ra)")]
@@ -196,6 +215,12 @@ public class IceGolemController : MonoBehaviour
     [SerializeField] private float jumpDownShockwaveKnockback = 3.0f;
     [Tooltip("Màu sắc vòng xoáy JumpDown")]
     [SerializeField] private Color jumpDownShockwaveColor = new Color(0.2f, 0.9f, 1f, 0.95f);
+    [Tooltip("Hiệu ứng gắn vào 2 bàn chân khi Boss đang lao xuống trong cú JumpDown (Tự động gán Wind Trails / Aura)")]
+    [SerializeField] private GameObject jumpDownFootTrailPrefab;
+    [Tooltip("Transform xương bàn chân trái")]
+    [SerializeField] private Transform leftFootBone;
+    [Tooltip("Transform xương bàn chân phải")]
+    [SerializeField] private Transform rightFootBone;
 
     [Header("=== CÀI ĐẶT JUMP ATTACK (NHẢY TẤN CÔNG BAY TỚI) ===")]
     [Tooltip("Khoảng cách bay tới tối đa khi JumpAttack (mét)")]
@@ -273,11 +298,11 @@ public class IceGolemController : MonoBehaviour
     [Tooltip("Nâng độ cao model Boss khi thực hiện chiêu 2 (m) - Giúp bù đắp hoạt ảnh để chân không bị lún xuống sàn (mặc định 0.35m)")]
     [SerializeField] private float gumoVisualHeightOffset = 0.35f;
     [Tooltip("Độ cao bàn tay so với mặt sàn để bắt đầu vào vùng sẵn sàng va chạm (m)")]
-    [SerializeField] private float gumoHandContactHeight = 0.55f;
+    [SerializeField] private float gumoHandContactHeight = 0.85f;
     [Tooltip("Độ cao bàn tay chạm sát sàn coi như chạm đất ngay lập tức (m)")]
-    [SerializeField] private float gumoHandMinHeight = 0.30f;
+    [SerializeField] private float gumoHandMinHeight = 0.60f;
     [Tooltip("Độ cao bàn tay cần nhấc lên để nạp lại cú đập tiếp theo (m)")]
-    [SerializeField] private float gumoHandReleaseHeight = 0.95f;
+    [SerializeField] private float gumoHandReleaseHeight = 0.72f;
     [Tooltip("Độ lệch tiến về phía trước theo hướng mặt của bàn tay để đặt hiệu ứng nổ ngay tâm nắm đấm (m)")]
     [SerializeField] private float gumoHandForwardOffset = 0.20f;
 
@@ -348,8 +373,8 @@ public class IceGolemController : MonoBehaviour
     [SerializeField] private float flameShakeDuration = 0.05f;
 
     [Header("=== CƠ CHẾ NHẢY NÉ ĐÒN & XOÁY KIM ĐỒNG HỒ ===")]
-    [Tooltip("Bật/Tắt hiển thị vòng xoáy LineRenderer trên sàn (Mặc định TẮT để không làm bẩn sàn đấu)")]
-    [SerializeField] private bool enableShockwaveRingVisual = false;
+    [Tooltip("Bật/Tắt hiển thị vòng xoáy LineRenderer trên sàn")]
+    [SerializeField] private bool enableShockwaveRingVisual = true;
     [Tooltip("Độ cao tối thiểu (mét) so với mặt đất để tính là Player đã nhảy lên né đòn thành công")]
     [SerializeField] private float jumpDodgeHeightThreshold = 0.5f;
     [Tooltip("Tốc độ tự xoay theo chiều kim đồng hồ của vòng xoáy (độ/giây)")]
@@ -441,8 +466,11 @@ public class IceGolemController : MonoBehaviour
 
     private bool isInitialStartJumpDown = true;
     private bool hasTriggeredJumpDown = false;
-    private bool isCinematicStandby = false;
+    [SerializeField] private bool isCinematicStandby = true;
     public bool IsCinematicStandby => isCinematicStandby;
+    private bool isOpeningSequence = false;
+    public bool IsOpeningSequence => isOpeningSequence;
+    private Coroutine openingSequenceCoroutine = null;
     private Rigidbody rb;
     private Collider bossCollider;
     private Health health;
@@ -483,11 +511,9 @@ public class IceGolemController : MonoBehaviour
     private static readonly int JumpDownHash = Animator.StringToHash("JumpDown");
     private static readonly int DeadHash = Animator.StringToHash("Dead");
 
-    // Hashes cho 3 kỹ năng mới (hỗ trợ cả tên có hoặc không có _IG)
+    // Hashes cho 3 kỹ năng mới
     private static readonly int RunAttackHash = Animator.StringToHash("RunAttack");
-    private static readonly int AttackLTHash = Animator.StringToHash("AttackLT");
     private static readonly int AttackLTIGHash = Animator.StringToHash("AttackLT_IG");
-    private static readonly int IceBallHash = Animator.StringToHash("IceBall");
     private static readonly int IceBallIGHash = Animator.StringToHash("IceBallIG");
     private static readonly int WeakenHash = Animator.StringToHash("Weaken");
 
@@ -573,10 +599,14 @@ public class IceGolemController : MonoBehaviour
             health.onTakeDamage.AddListener(HandleOnTakeDamage);
             health.onDeath.AddListener(Die);
         }
+
+        BossArenaTrigger.OnPlayerEnteredArena -= HandlePlayerEnteredArena;
+        BossArenaTrigger.OnPlayerEnteredArena += HandlePlayerEnteredArena;
     }
 
     private void OnDisable()
     {
+        BossArenaTrigger.OnPlayerEnteredArena -= HandlePlayerEnteredArena;
         if (anim != null) anim.transform.localPosition = Vector3.zero;
         if (health != null)
         {
@@ -584,6 +614,15 @@ public class IceGolemController : MonoBehaviour
             health.onDeath.RemoveListener(Die);
         }
         ResetFlashColors();
+    }
+
+    private void HandlePlayerEnteredArena()
+    {
+        if (!hasTriggeredJumpDown && !isOpeningSequence)
+        {
+            Debug.Log("<color=cyan>[IceGolemController]</color> 🚪 Nhận tín hiệu Player đã bước qua cửa vào Đấu Trường! Khởi động chuỗi JumpDown mở màn.");
+            TriggerOpeningJumpDownSequence();
+        }
     }
 
     private void OnDestroy()
@@ -611,6 +650,11 @@ public class IceGolemController : MonoBehaviour
         }
 
         rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+        }
         bossCollider = GetComponent<Collider>();
         ApplyCombatPacing();
         health = GetComponent<Health>();
@@ -648,7 +692,12 @@ public class IceGolemController : MonoBehaviour
 
         if (isCinematicStandby)
         {
-            if (rb != null) rb.isKinematic = true;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+            if (anim != null) anim.SetFloat(SpeedHash, 0f);
             return;
         }
 
@@ -684,9 +733,23 @@ public class IceGolemController : MonoBehaviour
     {
         if (isDead) return;
 
+        // KHI ĐANG TRONG CHUỖI NHẢY CỐ ĐỊNH (OPENING SEQUENCE): Khóa 100% điều khiển
+        if (isOpeningSequence)
+        {
+            if (anim != null) anim.SetFloat(SpeedHash, 0f);
+            return;
+        }
+
+        // KHI ĐANG ĐỨNG YÊN TRÊN BỤC ĐÁ Ở THẾ IDLE (STANDBY):
         if (isCinematicStandby)
         {
             if (anim != null) anim.SetFloat(SpeedHash, 0f);
+
+            // Tầm nhìn không giới hạn (100m - 200m): Quét liên tục để nhận biết khi Player bước qua cửa vào phòng
+            if (!hasTriggeredJumpDown && triggerJumpDownOnDetectPlayer)
+            {
+                CheckPlayerEnteredArenaVision();
+            }
             return;
         }
 
@@ -699,29 +762,92 @@ public class IceGolemController : MonoBehaviour
         // Tự động kích hoạt cú nhảy giáng trần mở màn DUY NHẤT 1 LẦN khi phát hiện Player bước vào phòng hầm ngục
         if (!hasTriggeredJumpDown && triggerJumpDownOnDetectPlayer)
         {
-            Transform target = GetPlayerTarget();
-            if (target != null)
-            {
-                float dist = Vector3.Distance(transform.position, target.position);
-                if (dist <= playerDetectionRange)
-                {
-                    PlayJumpDown();
-                }
-            }
+            CheckPlayerEnteredArenaVision();
         }
-
-        // KIỂM TRA KHÓA: Nếu đang bận thực hiện bất kỳ hoạt cảnh nào -> khóa toàn bộ thao tác
-        if (IsBusy())
-        {
-            // Triệt tiêu tốc độ di chuyển trong Animator để tránh giật chân
-            anim.SetFloat(SpeedHash, 0f);
-            return;
-        }
-
-        // Luôn tự động xoay mặt hướng về phía Player khi rảnh rỗi (Idle)
-        HandleFacingPlayer();
 
         HandleNewInputSystem();
+        UpdateLocomotion(Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Quét tầm nhìn không giới hạn khắp phòng (100m - 200m) để nhận diện khi Player bước qua cửa vào đấu trường
+    /// </summary>
+    private void CheckPlayerEnteredArenaVision()
+    {
+        if (hasTriggeredJumpDown || isOpeningSequence || isDead) return;
+
+        Transform target = GetPlayerTarget();
+        if (target == null) return;
+
+        float dist = Vector3.Distance(transform.position, target.position);
+        if (dist > playerDetectionRange) return;
+
+        // Kiểm tra xem Player đã thực sự bước qua cánh cửa vào bên trong phòng Boss chưa
+        if (IsPlayerInsideArena(target))
+        {
+            Debug.Log($"<color=cyan>[IceGolemController]</color> 👀 Boss phát hiện Player đã bước qua cửa vào phòng đấu trường (Khoảng cách: {dist:F1}m)! Bắt đầu JumpDown.");
+            TriggerOpeningJumpDownSequence();
+        }
+    }
+
+    /// <summary>
+    /// Kiểm tra người chơi đã thực sự vượt qua cánh cửa lớn vào phía trong phòng đấu trường chưa
+    /// </summary>
+    private bool IsPlayerInsideArena(Transform target)
+    {
+        if (target == null) return false;
+
+        // 1. Kiểm tra qua BossGateController nếu có trong Scene
+        BossGateController gate = BossGateController.Instance;
+        if (gate == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            gate = FindAnyObjectByType<BossGateController>();
+#else
+            gate = FindObjectOfType<BossGateController>();
+#endif
+        }
+
+        if (gate != null)
+        {
+            // Nếu cửa chưa mở -> Người chơi vẫn đang ở ngoài các phòng khác hoặc hành lang
+            if (!gate.IsOpened && !gate.IsArenaLocked)
+            {
+                return false;
+            }
+
+            // Nếu cửa đã bị khóa sau lưng người chơi (LockedArena) -> 100% đã vào trong phòng
+            if (gate.IsArenaLocked)
+            {
+                return true;
+            }
+
+            // Nếu cửa đã mở: Kiểm tra xem Player đã vượt qua vị trí cánh cửa vào phía bên trong phòng Boss
+            Vector3 gatePos = gate.transform.position;
+            Vector3 toBoss = transform.position - gatePos;
+            toBoss.y = 0f;
+            Vector3 toPlayer = target.position - gatePos;
+            toPlayer.y = 0f;
+
+            // Nếu vector từ cửa tới Player cùng hướng với vector từ cửa tới Boss (đã bước qua cửa vào phòng ít nhất 0.8m)
+            if (toBoss.sqrMagnitude > 0.1f && Vector3.Dot(toPlayer, toBoss.normalized) > 0.8f)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        // 2. Nếu trong Scene không có BossGateController (Scene test độc lập):
+        // Boss nhìn thẳng thấy Player không bị tường ngăn cách
+        Vector3 eyePos = transform.position + Vector3.up * 3.0f;
+        Vector3 targetChest = target.position + Vector3.up * 1.0f;
+        if (Physics.Linecast(eyePos, targetChest, obstacleLayer))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -854,7 +980,7 @@ public class IceGolemController : MonoBehaviour
     /// </summary>
     public bool IsBusy()
     {
-        if (anim == null || isDead || isWeakened) return true;
+        if (anim == null || isDead || isWeakened || isOpeningSequence || isCinematicStandby || isPhase2Transitioning) return true;
         if (isAttack1Active || isJumpingDown || isJumpingAttack || isGumoGumoAttacking || isFlameBreathing 
             || isRunAttacking || isAttackLTActive || isIceBallCasting) return true;
 
@@ -894,9 +1020,9 @@ public class IceGolemController : MonoBehaviour
         float horizontal = 0f;
         float vertical = 0f;
 
-        bool hasArrowInput = keyboard.upArrowKey.isPressed || keyboard.downArrowKey.isPressed ||
-                             keyboard.leftArrowKey.isPressed || keyboard.rightArrowKey.isPressed;
-        if (hasArrowInput)
+        hasManualArrowInput = keyboard.upArrowKey.isPressed || keyboard.downArrowKey.isPressed ||
+                              keyboard.leftArrowKey.isPressed || keyboard.rightArrowKey.isPressed;
+        if (hasManualArrowInput)
         {
             if (keyboard.upArrowKey.isPressed) vertical += 1f;
             if (keyboard.downArrowKey.isPressed) vertical -= 1f;
@@ -1596,62 +1722,115 @@ public class IceGolemController : MonoBehaviour
     // ==========================================
 
     /// <summary>
-    /// Di chuyển 4 hướng linh hoạt (Tới: Walk, Lùi: WalkBackIG, Trái: WalkLeftIG, Phải: WalkRightIG)
+    /// Nhận lệnh di chuyển 4 hướng (từ AI Agent hoặc bàn phím), nạp vào bộ nội suy làm mượt (Locomotion Engine)
     /// </summary>
     public void Move(float horizontal, float vertical)
     {
-        if (IsBusy()) return;
-
-        Vector3 inputDir = new Vector3(horizontal, 0f, vertical);
-        float inputMag = inputDir.magnitude;
-        int moveType = 0; // 0 = Idle, 1 = Forward, 2 = Backward, 3 = Left, 4 = Right
-
-        if (inputMag >= 0.1f)
+        if (IsBusy())
         {
-            inputDir.Normalize();
+            desiredMoveInput = Vector2.zero;
+            return;
+        }
 
-            if (strafeMode)
+        desiredMoveInput = new Vector2(horizontal, vertical);
+        if (desiredMoveInput.sqrMagnitude > 1f)
+        {
+            desiredMoveInput.Normalize();
+        }
+        lastMoveCommandTime = Time.time;
+    }
+
+    /// <summary>
+    /// Động cơ nội suy di chuyển mượt mà (Locomotion Engine) chạy liên tục ở TỪNG FRAME UPDATE.
+    /// Triệt tiêu 100% hiện tượng khựng giật, giật chân, xung đột giữa AI/Input và PhysX.
+    /// </summary>
+    private void UpdateLocomotion(float dt)
+    {
+        if (anim == null) return;
+
+        if (IsBusy())
+        {
+            desiredMoveInput = Vector2.zero;
+            currentSmoothMoveInput = Vector2.zero;
+            currentSmoothSpeed = 0f;
+            currentActiveMoveType = 0;
+            anim.SetFloat(SpeedHash, 0f, locomotionDampTime, dt);
+            anim.SetInteger(MoveTypeHash, 0);
+            anim.SetFloat(MoveXHash, 0f, locomotionDampTime, dt);
+            anim.SetFloat(MoveZHash, 0f, locomotionDampTime, dt);
+            return;
+        }
+
+        // Tự động dừng nếu quá 0.45s không có lệnh di chuyển từ AI hay bàn phím
+        if (!hasManualArrowInput && (Time.time - lastMoveCommandTime > 0.45f))
+        {
+            desiredMoveInput = Vector2.zero;
+        }
+
+        // 1. Gia tốc nội suy làm mượt đầu vào di chuyển (Smooth Accel/Decel)
+        float accel = (desiredMoveInput.sqrMagnitude > 0.01f) ? moveAcceleration : moveDeceleration;
+        currentSmoothMoveInput = Vector2.MoveTowards(currentSmoothMoveInput, desiredMoveInput, accel * dt);
+        currentSmoothSpeed = currentSmoothMoveInput.magnitude;
+
+        // 2. Xoay mặt mượt mà về phía Player khi đang rảnh rỗi hoặc đang di chuyển
+        if (alwaysFacePlayer)
+        {
+            Transform target = GetPlayerTarget();
+            if (target != null)
             {
-                Transform target = GetPlayerTarget();
-                if (target != null)
-                {
-                    SmoothFaceTarget(target, facePlayerSpeed * 1.5f);
-                }
+                SmoothFaceTarget(target, facePlayerSpeed);
+            }
+        }
 
-                Vector3 moveDir = (transform.forward * vertical + transform.right * horizontal).normalized;
-                transform.position += moveDir * moveSpeed * Time.deltaTime;
+        // 3. Khóa PhysX can thiệp để di chuyển hoàn toàn trơn tru theo render frame
+        if (rb != null && !rb.isKinematic)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
 
-                // Xác định hướng di chuyển chính để kích hoạt animation tương ứng
-                if (Mathf.Abs(vertical) >= Mathf.Abs(horizontal))
-                {
-                    moveType = (vertical > 0f) ? 1 : 2; // 1 = Walk tới, 2 = WalkBackIG lùi
-                }
-                else
-                {
-                    moveType = (horizontal > 0f) ? 4 : 3; // 4 = WalkRightIG phải, 3 = WalkLeftIG trái
-                }
+        // 4. Thực hiện di chuyển vị trí ở TỪNG FRAME hiển thị
+        if (currentSmoothSpeed > 0.02f)
+        {
+            Vector3 moveDir = (transform.forward * currentSmoothMoveInput.y + transform.right * currentSmoothMoveInput.x);
+            if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
+
+            Vector3 nextPos = transform.position + moveDir * (moveSpeed * currentSmoothSpeed) * dt;
+
+            // Bám sát cao độ mặt sàn an toàn để chân không bị lún hay lơ lửng
+            Vector3 groundPos = GetGroundPosition(nextPos, false);
+            nextPos.y = groundPos.y;
+
+            transform.position = nextPos;
+        }
+
+        // 5. Cập nhật Animator mượt mà bằng DampTime (chống giật hoạt ảnh)
+        anim.SetFloat(SpeedHash, currentSmoothSpeed, locomotionDampTime, dt);
+        anim.SetFloat(MoveXHash, currentSmoothMoveInput.x, locomotionDampTime, dt);
+        anim.SetFloat(MoveZHash, currentSmoothMoveInput.y, locomotionDampTime, dt);
+
+        // 6. Xác định MoveType theo cơ chế trễ (Hysteresis) để Animator Controller tự động chuyển hướng mượt mà
+        int newMoveType = currentActiveMoveType;
+        if (currentSmoothSpeed >= 0.12f)
+        {
+            if (Mathf.Abs(currentSmoothMoveInput.y) >= Mathf.Abs(currentSmoothMoveInput.x) * 0.85f)
+            {
+                newMoveType = (currentSmoothMoveInput.y > 0f) ? 1 : 2; // 1 = Walk tới, 2 = WalkBackIG lùi
             }
             else
             {
-                float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg;
-                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, TurnSmoothTime);
-                transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-                transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
-                moveType = 1;
+                newMoveType = (currentSmoothMoveInput.x > 0f) ? 4 : 3; // 4 = WalkRightIG phải, 3 = WalkLeftIG trái
             }
-
-            anim.SetFloat(SpeedHash, inputMag);
-            anim.SetInteger(MoveTypeHash, moveType);
-            anim.SetFloat(MoveXHash, horizontal);
-            anim.SetFloat(MoveZHash, vertical);
         }
-        else
+        else if (currentSmoothSpeed < 0.05f)
         {
-            anim.SetFloat(SpeedHash, 0f);
-            anim.SetInteger(MoveTypeHash, 0); // 0 = Idle
-            anim.SetFloat(MoveXHash, 0f);
-            anim.SetFloat(MoveZHash, 0f);
+            newMoveType = 0; // 0 = Idle
+        }
+
+        if (newMoveType != currentActiveMoveType)
+        {
+            currentActiveMoveType = newMoveType;
+            anim.SetInteger(MoveTypeHash, currentActiveMoveType);
         }
     }
 
@@ -1823,11 +2002,7 @@ public class IceGolemController : MonoBehaviour
 
     public void PlayJumpDown()
     {
-        // JumpDown chỉ được phép kích hoạt 1 lần duy nhất khi mới bắt đầu thấy Player, tuyệt đối không dùng đi dùng lại
-        if (hasTriggeredJumpDown) return;
-        if (isJumpingDown || isJumpingAttack || isGumoGumoAttacking || isFlameBreathing || isRunAttacking || isAttackLTActive || isIceBallCasting) return;
-        hasTriggeredJumpDown = true;
-        StartCoroutine(JumpDownRoutine());
+        TriggerOpeningJumpDownSequence();
     }
 
     public void PlayJumpAttack()
@@ -3035,13 +3210,22 @@ public class IceGolemController : MonoBehaviour
             yield return null;
         }
 
-        // Hệ thống theo dõi chuyển động thực tế của 2 bàn tay theo thời gian thực (đáp ứng 100% mọi tốc độ animation: 0.5x, 0.7x, 1.0x, 1.5x...)
+        // Hệ thống theo dõi chuyển động thực tế của 2 bàn tay kết hợp Timeline Backup bảo hiểm kép 100%
         bool leftArmed = true;
         bool rightArmed = true;
         float prevLeftY = leftHandBone != null ? leftHandBone.position.y : transform.position.y + 2f;
         float prevRightY = rightHandBone != null ? rightHandBone.position.y : transform.position.y + 2f;
         bool leftWasDescending = false;
         bool rightWasDescending = false;
+
+        lastLeftSlamTime = -999f;
+        lastRightSlamTime = -999f;
+
+        // Các mốc thời gian cú đập thực tế chuẩn xác 100% theo animation GumoGumoGun
+        // Nhịp đập: Tay Phải (1.00s) -> Tay Trái (1.67s) -> Tay Phải (2.50s) -> Tay Trái (3.20s) -> Dứt điểm (3.85s)
+        float[] slamTimeline = new float[] { 1.00f, 1.67f, 2.50f, 3.20f, 3.85f };
+        int[] slamHands = new int[] { 1, 0, 1, 0, 2 }; // 1: Phải, 0: Trái, 2: Cả hai tay
+        bool[] timelineTriggered = new bool[slamTimeline.Length];
 
         float attackDurationTimer = 0f;
         float maxSafetyDuration = 12.0f; // Bảo hiểm chống kẹt trạng thái
@@ -3053,7 +3237,7 @@ public class IceGolemController : MonoBehaviour
             var nextState = anim.GetNextAnimatorStateInfo(0);
 
             bool inGumo = curState.IsName("AttackGumoGumo") || nextState.IsName("AttackGumoGumo");
-            if (!inGumo && attackDurationTimer > 0.35f)
+            if (!inGumo && attackDurationTimer >= 3.90f)
             {
                 break; // Animation kết thúc hoặc đã chuyển sang trạng thái kế tiếp
             }
@@ -3070,11 +3254,11 @@ public class IceGolemController : MonoBehaviour
             {
                 float handY = leftHandBone.position.y;
                 Vector3 slamOrigin = leftHandBone.position + transform.forward * gumoHandForwardOffset;
-                Vector3 groundPos = GetGroundPosition(slamOrigin);
+                Vector3 groundPos = GetSlamGroundPosition(slamOrigin, out _);
                 float relativeY = handY - groundPos.y;
 
-                // Nạp lại khi bàn tay được nhấc lên cao
-                if (!leftArmed && relativeY > gumoHandReleaseHeight)
+                // Nạp lại khi bàn tay được nhấc lên
+                if (!leftArmed && relativeY >= gumoHandReleaseHeight)
                 {
                     leftArmed = true;
                     leftWasDescending = false;
@@ -3082,18 +3266,15 @@ public class IceGolemController : MonoBehaviour
 
                 if (leftArmed)
                 {
-                    if (handY < prevLeftY - 0.001f)
+                    if (handY < prevLeftY - 0.0005f)
                     {
                         leftWasDescending = true;
                     }
 
-                    // Chỉ kích hoạt khi tay đã đi xuống sát mặt đất
+                    // Kích hoạt khi tay ở vùng sát mặt sàn
                     if (relativeY <= gumoHandContactHeight)
                     {
-                        // Chạm đất khi:
-                        // a) Tay chạm đáy và bắt đầu nảy ngược lên (chuyển động đi lên thực sự)
-                        // b) HOẶC tay đã chạm sát sàn đấu (<= gumoHandMinHeight)
-                        bool hitBottom = leftWasDescending && (handY > prevLeftY + 0.002f);
+                        bool hitBottom = leftWasDescending && (handY >= prevLeftY - 0.0005f);
                         bool hitFloor = relativeY <= gumoHandMinHeight;
 
                         if (hitBottom || hitFloor)
@@ -3101,6 +3282,16 @@ public class IceGolemController : MonoBehaviour
                             TriggerHandSlam(0, groundPos);
                             leftArmed = false;
                             leftWasDescending = false;
+
+                            // Đánh dấu timeline đã được kích hoạt bởi bone tracking
+                            for (int i = 0; i < slamTimeline.Length; i++)
+                            {
+                                if (!timelineTriggered[i] && (slamHands[i] == 0 || slamHands[i] == 2) && Mathf.Abs(attackDurationTimer - slamTimeline[i]) < 0.35f)
+                                {
+                                    timelineTriggered[i] = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -3114,11 +3305,11 @@ public class IceGolemController : MonoBehaviour
             {
                 float handY = rightHandBone.position.y;
                 Vector3 slamOrigin = rightHandBone.position + transform.forward * gumoHandForwardOffset;
-                Vector3 groundPos = GetGroundPosition(slamOrigin);
+                Vector3 groundPos = GetSlamGroundPosition(slamOrigin, out _);
                 float relativeY = handY - groundPos.y;
 
-                // Nạp lại khi bàn tay được nhấc lên cao
-                if (!rightArmed && relativeY > gumoHandReleaseHeight)
+                // Nạp lại khi bàn tay được nhấc lên
+                if (!rightArmed && relativeY >= gumoHandReleaseHeight)
                 {
                     rightArmed = true;
                     rightWasDescending = false;
@@ -3126,14 +3317,14 @@ public class IceGolemController : MonoBehaviour
 
                 if (rightArmed)
                 {
-                    if (handY < prevRightY - 0.001f)
+                    if (handY < prevRightY - 0.0005f)
                     {
                         rightWasDescending = true;
                     }
 
                     if (relativeY <= gumoHandContactHeight)
                     {
-                        bool hitBottom = rightWasDescending && (handY > prevRightY + 0.002f);
+                        bool hitBottom = rightWasDescending && (handY >= prevRightY - 0.0005f);
                         bool hitFloor = relativeY <= gumoHandMinHeight;
 
                         if (hitBottom || hitFloor)
@@ -3141,10 +3332,47 @@ public class IceGolemController : MonoBehaviour
                             TriggerHandSlam(1, groundPos);
                             rightArmed = false;
                             rightWasDescending = false;
+
+                            for (int i = 0; i < slamTimeline.Length; i++)
+                            {
+                                if (!timelineTriggered[i] && (slamHands[i] == 1 || slamHands[i] == 2) && Mathf.Abs(attackDurationTimer - slamTimeline[i]) < 0.35f)
+                                {
+                                    timelineTriggered[i] = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
                 prevRightY = handY;
+            }
+
+            // ==========================================
+            // 3. BẢO HIỂM TIMELINE KÉP: ĐẢM BẢO 100% MỌI CÚ ĐẬP ĐỀU PHÁT HIỆU ỨNG
+            // ==========================================
+            for (int i = 0; i < slamTimeline.Length; i++)
+            {
+                if (!timelineTriggered[i] && attackDurationTimer >= slamTimeline[i])
+                {
+                    timelineTriggered[i] = true;
+                    if (slamHands[i] == 0)
+                    {
+                        Vector3 origin = leftHandBone != null ? leftHandBone.position : (transform.position + transform.forward * 1.6f - transform.right * 0.8f);
+                        TriggerHandSlam(0, GetSlamGroundPosition(origin, out _));
+                    }
+                    else if (slamHands[i] == 1)
+                    {
+                        Vector3 origin = rightHandBone != null ? rightHandBone.position : (transform.position + transform.forward * 1.6f + transform.right * 0.8f);
+                        TriggerHandSlam(1, GetSlamGroundPosition(origin, out _));
+                    }
+                    else
+                    {
+                        // Both hands
+                        Vector3 centerOrigin = transform.position + transform.forward * 1.8f;
+                        TriggerHandSlam(0, GetSlamGroundPosition(centerOrigin - transform.right * 0.6f, out _));
+                        TriggerHandSlam(1, GetSlamGroundPosition(centerOrigin + transform.right * 0.6f, out _));
+                    }
+                }
             }
 
             yield return null;
@@ -3167,41 +3395,106 @@ public class IceGolemController : MonoBehaviour
         ApplyCombatPacing();
     }
 
+    /// <summary>
+    /// Bắt chính xác cao độ mặt sàn đấu trường và pháp tuyến bề mặt cho cú đập đất Chiêu 2 (GumoGumo).
+    /// Đảm bảo 100% tọa độ luôn nằm sát sàn đất (flush against ground), không bao giờ lơ lửng trên không.
+    /// </summary>
+    private Vector3 GetSlamGroundPosition(Vector3 slamOrigin, out Vector3 groundNormal)
+    {
+        groundNormal = Vector3.up;
+        float refFloorY = transform.position.y;
+        Transform pTarget = GetPlayerTarget();
+
+        // Bắn tia raycast từ trên cao độ chân Boss + 2.5m chiếu thẳng xuống dưới 5.5m
+        Vector3 rayStart = new Vector3(slamOrigin.x, refFloorY + 2.5f, slamOrigin.z);
+        LayerMask queryMask = groundLayer.value != 0 ? groundLayer : ~0;
+
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 5.5f, queryMask, QueryTriggerInteraction.Ignore);
+        float bestFloorY = refFloorY;
+        float minDiff = float.MaxValue;
+        bool found = false;
+
+        foreach (var hit in hits)
+        {
+            if (hit.transform.root == transform.root) continue;
+            if (pTarget != null && hit.transform.root == pTarget.root) continue;
+
+            if (hit.normal.y > 0.45f)
+            {
+                float diff = Mathf.Abs(hit.point.y - refFloorY);
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    bestFloorY = hit.point.y;
+                    groundNormal = hit.normal;
+                    found = true;
+                }
+            }
+        }
+
+        if (found)
+        {
+            return new Vector3(slamOrigin.x, bestFloorY, slamOrigin.z);
+        }
+
+        return new Vector3(slamOrigin.x, refFloorY, slamOrigin.z);
+    }
+
     public void TriggerHandSlam(int handIndex, Vector3? overrideGroundPos = null)
     {
         // 0. Debounce chống trùng lặp nếu cả Trigger Collider và Bone Tracking cùng bắt được điểm chạm
         float now = Time.time;
         if (handIndex == 0)
         {
-            if (now - lastLeftSlamTime < 0.15f) return;
+            if (now - lastLeftSlamTime < 0.08f) return;
             lastLeftSlamTime = now;
         }
         else
         {
-            if (now - lastRightSlamTime < 0.15f) return;
+            if (now - lastRightSlamTime < 0.08f) return;
             lastRightSlamTime = now;
         }
 
         Transform handBone = (handIndex == 0) ? leftHandBone : rightHandBone;
         Vector3 slamGroundPos;
+        Vector3 groundNormal = Vector3.up;
+
+        Vector3 slamOrigin;
+        if (handBone != null)
+        {
+            slamOrigin = handBone.position + transform.forward * gumoHandForwardOffset;
+        }
+        else
+        {
+            float sideOffset = (handIndex == 0) ? -0.9f : 0.9f;
+            slamOrigin = transform.position + transform.forward * 1.6f + transform.right * sideOffset;
+        }
 
         if (overrideGroundPos.HasValue)
         {
             slamGroundPos = overrideGroundPos.Value;
-        }
-        else
-        {
-            Vector3 slamOrigin;
-            if (handBone != null)
+            // Raycast kiểm tra lại cao độ mặt sàn thực tế tại điểm override
+            Vector3 checkStart = new Vector3(slamGroundPos.x, transform.position.y + 1.5f, slamGroundPos.z);
+            if (Physics.Raycast(checkStart, Vector3.down, out RaycastHit hit, 3.5f, groundLayer.value != 0 ? groundLayer : ~0, QueryTriggerInteraction.Ignore))
             {
-                slamOrigin = handBone.position + transform.forward * gumoHandForwardOffset;
+                if (hit.transform.root != transform.root && hit.normal.y > 0.45f)
+                {
+                    slamGroundPos.y = hit.point.y;
+                    groundNormal = hit.normal;
+                }
+                else
+                {
+                    slamGroundPos.y = transform.position.y;
+                }
             }
             else
             {
-                float sideOffset = (handIndex == 0) ? -0.9f : 0.9f;
-                slamOrigin = transform.position + transform.forward * 1.6f + transform.right * sideOffset;
+                slamGroundPos.y = transform.position.y;
             }
-            slamGroundPos = GetGroundPosition(slamOrigin);
+        }
+        else
+        {
+            slamGroundPos = GetSlamGroundPosition(slamOrigin, out groundNormal);
         }
 
         // 1. Rung chấn nhẹ theo từng nhịp đập
@@ -3215,13 +3508,24 @@ public class IceGolemController : MonoBehaviour
 #endif
         }
 
-        // 3. Sinh hiệu ứng đập đất Attack1 Effect tại vị trí bàn tay tiếp đất (sát mặt đất)
+        // 3. Sinh hiệu ứng đập đất Attack1 Effect tại vị trí bàn tay tiếp đất (chắc chắn sát mặt đất 100%)
         if (handSlamImpactVfx != null)
         {
-            // Nhích 0.02m so với mặt sàn để triệt tiêu hiện tượng z-fighting (nhấp nháy vân)
-            Vector3 vfxSpawnPos = slamGroundPos + Vector3.up * 0.02f;
-            GameObject slamObj = Instantiate(handSlamImpactVfx, vfxSpawnPos, Quaternion.identity);
+            // Nhích 0.02m so với mặt sàn theo hướng pháp tuyến để triệt tiêu hiện tượng z-fighting
+            Vector3 vfxSpawnPos = slamGroundPos + groundNormal * 0.02f;
+            Quaternion vfxRotation = Quaternion.FromToRotation(Vector3.up, groundNormal);
+            GameObject slamObj = Instantiate(handSlamImpactVfx, vfxSpawnPos, vfxRotation);
             slamObj.transform.localScale = Vector3.one * gumoSlamVfxScale;
+
+            // Bảo hiểm kép 100%: Duyệt qua toàn bộ transform con để ép phẳng tất cả hạt (flare, glow, Decal, stone) sát mặt đất
+            for (int i = 0; i < slamObj.transform.childCount; i++)
+            {
+                Transform child = slamObj.transform.GetChild(i);
+                if (child.localPosition.y > 0.05f)
+                {
+                    child.localPosition = new Vector3(child.localPosition.x, 0.02f, child.localPosition.z);
+                }
+            }
 
             ParticleSystem[] psList = slamObj.GetComponentsInChildren<ParticleSystem>();
             foreach (var ps in psList)
@@ -3370,6 +3674,7 @@ public class IceGolemController : MonoBehaviour
         }
 
         HashSet<IDamageable> hitDamageables = new HashSet<IDamageable>();
+        HashSet<IDamageable> dodgedDamageables = new HashSet<IDamageable>();
 
         float timer = 0f;
         float currentRotationY = 0f;
@@ -3427,7 +3732,9 @@ public class IceGolemController : MonoBehaviour
             if (damage > 0f)
             {
                 LayerMask queryMask = targetLayers.value != 0 ? targetLayers : (LayerMask)(1 << LayerMask.NameToLayer("Player"));
-                Collider[] hits = Physics.OverlapSphere(center, currentRadius, queryMask);
+                // Tính độ dày vành sóng (Ring wave thickness)
+                float ringThickness = Mathf.Max(2.0f, speed * Time.deltaTime * 2.5f);
+                Collider[] hits = Physics.OverlapSphere(center, currentRadius + ringThickness * 0.5f, queryMask);
                 foreach (Collider col in hits)
                 {
                     if (col.transform.root == transform.root) continue;
@@ -3438,18 +3745,48 @@ public class IceGolemController : MonoBehaviour
                         dmg = playerTarget.GetComponentInChildren<IDamageable>();
                     }
 
-                    if (dmg != null && !hitDamageables.Contains(dmg))
+                    if (dmg != null)
                     {
-                        if (CheckCanDodgeByJump(col, center))
+                        // 1. Đã dính sát thương hoặc đã né thành công từ đợt sóng này: bỏ qua
+                        if (hitDamageables.Contains(dmg) || dodgedDamageables.Contains(dmg))
                         {
                             continue;
                         }
 
-                        hitDamageables.Add(dmg);
-                        Vector3 hitPoint = col.ClosestPoint(center);
-                        Vector3 knockDir = (col.transform.position - center).normalized;
-                        knockDir.y = 0.25f;
-                        dmg.TakeDamage(damage, hitPoint, knockDir, knockback, transform);
+                        // 2. Tính khoảng cách phẳng tới tâm sóng
+                        Vector3 colPos = col.transform.position;
+                        Vector3 toCol = colPos - center;
+                        toCol.y = 0f;
+                        float distToCenter = toCol.magnitude;
+
+                        // 3. Nếu sóng đã lan vượt qua hẳn vị trí mục tiêu (bên trong vành sóng):
+                        // Đánh dấu đã né an toàn để không bị dính sát thương
+                        if (distToCenter < currentRadius - ringThickness * 0.8f)
+                        {
+                            dodgedDamageables.Add(dmg);
+                            continue;
+                        }
+
+                        // 4. Nếu mục tiêu đang nằm ngay trên vành sóng lan ra:
+                        float distDiff = Mathf.Abs(distToCenter - currentRadius);
+                        if (distDiff <= ringThickness * 0.85f)
+                        {
+                            // Kiểm tra xem mục tiêu có đang nhảy trên không để né sóng không
+                            if (CheckCanDodgeByJump(col, center))
+                            {
+                                dodgedDamageables.Add(dmg);
+                                Debug.Log($"<color=cyan>[IceGolem Shockwave]</color> 🌀 Người chơi đã nhảy né sóng chấn động thành công! (Bán kính: {currentRadius:F1}m)");
+                                continue;
+                            }
+
+                            // Nếu đang chạm đất -> Dính đòn!
+                            hitDamageables.Add(dmg);
+                            Vector3 hitPoint = col.ClosestPoint(center);
+                            Vector3 knockDir = (col.transform.position - center).normalized;
+                            knockDir.y = 0.25f;
+                            dmg.TakeDamage(damage, hitPoint, knockDir, knockback, transform);
+                            Debug.Log($"<color=orange>[IceGolem Shockwave]</color> 💥 Người chơi dính sát thương sóng chấn động! (Bán kính: {currentRadius:F1}m, Sát thương: {damage})");
+                        }
                     }
                 }
             }
@@ -3463,18 +3800,18 @@ public class IceGolemController : MonoBehaviour
 
     private bool CheckCanDodgeByJump(Collider targetCol, Vector3 waveCenter)
     {
-        float footY = targetCol.bounds.min.y;
-        float heightAboveWave = footY - waveCenter.y;
-
         PlayerController pc = targetCol.GetComponentInParent<PlayerController>();
         if (pc != null)
         {
-            // Nếu là PlayerController, chỉ né đòn khi đang nhảy trên không (!IsGrounded)
-            // VÀ độ cao bàn chân nhấc khỏi mặt đất/sóng ít nhất 0.25m để tránh vi rung bề mặt
-            return !pc.IsGrounded && heightAboveWave > 0.25f;
+            float footY = pc.transform.position.y;
+            float heightAboveWave = footY - waveCenter.y;
+            // Nếu Player không chạm sàn (!IsGrounded) VÀ có độ cao nhấc khỏi mặt đất/sóng ít nhất 0.15m:
+            return !pc.IsGrounded && heightAboveWave > 0.15f;
         }
 
-        return heightAboveWave > jumpDodgeHeightThreshold;
+        float colFootY = targetCol.bounds.min.y;
+        float genericHeight = colFootY - waveCenter.y;
+        return genericHeight > jumpDodgeHeightThreshold;
     }
 
     private void SetupLineRenderer(LineRenderer line, Material mat, Color col, float width, int count, bool loop)
@@ -3563,35 +3900,140 @@ public class IceGolemController : MonoBehaviour
             }
         }
 
-        // Điểm tiếp đất là vị trí sàn tại chỗ của Boss trong phòng đấu
-        Vector3 targetLandingPos = GetGroundPosition(transform.position);
-        // Boss xuất phát từ trên cao lao dốc xuống sàn đấu
-        Vector3 startPos = targetLandingPos - transform.forward * jumpDownDistance + Vector3.up * jumpDownHeight;
-        transform.position = startPos;
+        Vector3 startPos = transform.position;
+        Vector3 targetLandingPos;
 
-        anim.SetTrigger(JumpDownHash);
-
-        float fallTimer = 0f;
-        while (fallTimer < jumpDownFallDuration)
+        // Nếu Boss đang ở trên bục đá trên cao (Y > 2.5m): Điểm xuất phát là chính vị trí bục đá hiện tại
+        if (startPos.y > 2.5f)
         {
-            fallTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(fallTimer / jumpDownFallDuration);
+            Vector3 jumpDir;
+            float jumpDist;
 
-            Vector3 currentPos = Vector3.Lerp(startPos, targetLandingPos, t);
-            float curveT = jumpDownFallCurve != null ? jumpDownFallCurve.Evaluate(t) : (t * t);
-            float currentY = Mathf.Lerp(startPos.y, targetLandingPos.y, curveT);
-
-            if (jumpDownArcHeight > 0f)
+            if (initTarget != null)
             {
-                currentY += Mathf.Sin(t * Mathf.PI) * jumpDownArcHeight;
+                Vector3 toTargetFlat = initTarget.position - startPos;
+                toTargetFlat.y = 0f;
+                float dist = toTargetFlat.magnitude;
+                jumpDir = dist > 0.1f ? toTargetFlat.normalized : transform.forward;
+                jumpDir.y = 0f;
+                jumpDist = Mathf.Clamp(dist - 5.5f, 8f, 16f);
+            }
+            else
+            {
+                jumpDir = transform.forward;
+                jumpDir.y = 0f;
+                if (jumpDir.sqrMagnitude < 0.01f) jumpDir = Vector3.forward;
+                jumpDir.Normalize();
+                jumpDist = 12f;
             }
 
-            currentPos.y = currentY;
-            transform.position = currentPos;
+            Vector3 groundCandidate = startPos + jumpDir * jumpDist;
+            groundCandidate.y = (initTarget != null) ? initTarget.position.y : 0f;
+            targetLandingPos = GetGroundPosition(groundCandidate, true);
+        }
+        else
+        {
+            // Điểm tiếp đất là vị trí sàn tại chỗ của Boss trong phòng đấu
+            targetLandingPos = GetGroundPosition(startPos, false);
+            // Boss xuất phát từ trên cao lao dốc xuống sàn đấu
+            startPos = targetLandingPos - transform.forward * jumpDownDistance + Vector3.up * jumpDownHeight;
+            transform.position = startPos;
+        }
+
+        // 3. Kích hoạt hoạt ảnh GolemJumpDown (Pha 1: Lúc nhảy lên/nhún đà thì để tốc độ bình thường 1.0f)
+        if (anim != null)
+        {
+            anim.SetFloat(SpeedHash, 0f);
+            anim.ResetTrigger(JumpDownHash);
+            anim.speed = 1.0f; // Lúc nhảy lên: Tốc độ bình thường
+            if (anim.HasState(0, Animator.StringToHash("GolemJumpDown")))
+            {
+                anim.Play("GolemJumpDown", 0, 0f);
+            }
+            else
+            {
+                anim.Play("JumpDown", 0, 0f);
+            }
+        }
+
+        // Gắn hiệu ứng Wind Trails vào 2 bàn chân trong suốt thời gian lao xuống
+        if (leftFootBone == null || rightFootBone == null) FindBones();
+        GameObject leftTrail = null;
+        GameObject rightTrail = null;
+        if (jumpDownFootTrailPrefab != null)
+        {
+            if (leftFootBone != null)
+            {
+                leftTrail = Instantiate(jumpDownFootTrailPrefab, leftFootBone);
+                leftTrail.transform.localPosition = Vector3.zero;
+                leftTrail.transform.localRotation = Quaternion.identity;
+            }
+            if (rightFootBone != null)
+            {
+                rightTrail = Instantiate(jumpDownFootTrailPrefab, rightFootBone);
+                rightTrail.transform.localPosition = Vector3.zero;
+                rightTrail.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        // PHA 1: NHÚN ĐÀ VẬN SỨC TRÊN BỤC (0s -> 0.65s) - Giữ nguyên vị trí bục đá, hoạt ảnh tốc độ bình thường
+        float takeoffDuration = 0.65f;
+        float takeoffTimer = 0f;
+        while (takeoffTimer < takeoffDuration)
+        {
+            takeoffTimer += Time.deltaTime;
+            transform.position = startPos;
             yield return null;
         }
 
+        // PHA 2: BẮT ĐẦU RỜI BỤC LAO DỐC CẮM XUỐNG SÀN ĐẤU (Nhảy xuống chậm đi 1 tí theo yêu cầu)
+        if (anim != null)
+        {
+            anim.speed = jumpDownFallAnimSpeed; // Làm chậm hoạt ảnh rơi
+        }
+
+        float floorY = targetLandingPos.y;
+        float flightDuration = jumpDownFallDuration > 0.1f ? jumpDownFallDuration : 1.35f;
+
+        Vector2 startXZ = new Vector2(startPos.x, startPos.z);
+        Vector2 targetXZ = new Vector2(targetLandingPos.x, targetLandingPos.z);
+
+        float fallTimer = 0f;
+        while (fallTimer < flightDuration)
+        {
+            fallTimer += Time.deltaTime;
+            float u = Mathf.Clamp01(fallTimer / flightDuration);
+
+            // Rơi gia tốc trọng lực u^2 tạo độ nặng nề
+            float fallU = u * u;
+            float currentY = Mathf.Lerp(startPos.y, floorY, fallU);
+
+            float smoothXZ = Mathf.SmoothStep(0f, 1f, u);
+            Vector2 currentXZ = Vector2.Lerp(startXZ, targetXZ, smoothXZ);
+
+            transform.position = new Vector3(currentXZ.x, currentY, currentXZ.y);
+            yield return null;
+        }
+
+        // PHA 3: TIẾP ĐẤT - Khôi phục tốc độ bình thường 1.0f ngay khi chạm sàn
         transform.position = targetLandingPos;
+        if (anim != null)
+        {
+            anim.speed = 1.0f; // Trả lại tốc độ bình thường
+            anim.ResetTrigger(JumpDownHash);
+        }
+
+        // Dọn dẹp hiệu ứng bàn chân khi đã chạm đất
+        if (leftTrail != null)
+        {
+            foreach (var ps in leftTrail.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
+            Destroy(leftTrail, 0.8f);
+        }
+        if (rightTrail != null)
+        {
+            foreach (var ps in rightTrail.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
+            Destroy(rightTrail, 0.8f);
+        }
 
         if (rb != null)
         {
@@ -3600,7 +4042,17 @@ public class IceGolemController : MonoBehaviour
             if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
         }
 
+        // CHỈ KHI CHÂN CHẠM ĐẤT MỚI PHÁT RA HIỆU ỨNG VÀ VÒNG TRÒN SÓNG LAN RA
         OnJumpDownImpact(targetLandingPos);
+
+        yield return new WaitForSeconds(0.75f);
+
+        if (anim != null)
+        {
+            anim.speed = 1.0f;
+            anim.ResetTrigger(JumpDownHash);
+            anim.CrossFadeInFixedTime("Idle", 0.35f);
+        }
 
         isJumpingDown = false;
     }
@@ -3800,29 +4252,60 @@ public class IceGolemController : MonoBehaviour
 
     private Vector3 GetGroundPosition(Vector3 searchPos)
     {
-        // Bắt đầu quét từ phía trên sàn nhưng dưới tầm ngực/vai boss để tránh va chạm cơ thể boss
-        float startY = transform.position.y + 1.8f;
-        Vector3 rayStart = new Vector3(searchPos.x, startY, searchPos.z);
+        return GetGroundPosition(searchPos, transform.position.y > 2.5f);
+    }
 
-        // Quét xuyên qua tất cả colliders để tìm chính xác bề mặt sàn, lọc bỏ toàn bộ Boss và Player
-        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
-        float closestDist = float.MaxValue;
-        float floorY = transform.position.y; // Mặc định là cao độ chân Boss trên sàn
+    private Vector3 GetGroundPosition(Vector3 searchPos, bool forceArenaFloor)
+    {
+        // 1. Xác định cao độ sàn tham chiếu
+        float playerFloorY = 0f;
+        Transform pTarget = GetPlayerTarget();
+        if (pTarget != null) playerFloorY = pTarget.position.y;
+        else if (playerTarget != null) playerFloorY = playerTarget.position.y;
 
-        foreach (var hit in hits)
+        // 2. Điểm xuất phát của tia raycast:
+        // A. Nếu forceArenaFloor: Điểm tiếp đất sàn đấu trường xuất phát từ playerFloorY + 4m (Dưới bục đá và dưới trần nhà!)
+        // Tuyệt đối không xuất phát từ 35m trên cao để tránh va phải mái nhà hoặc đỉnh bục đá!
+        if (forceArenaFloor)
         {
-            if (hit.transform.root == transform.root) continue;
-            if (playerTarget != null && hit.transform.root == playerTarget.root) continue;
+            Vector3 rayStart = new Vector3(searchPos.x, playerFloorY + 4f, searchPos.z);
+            RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
+            float bestFloorY = playerFloorY;
+            float minDiff = float.MaxValue;
+            bool found = false;
 
-            // Bề mặt sàn phải hướng lên (normal.y > 0.4f) để không bắt nhầm tường phẳng thẳng đứng
-            if (hit.normal.y > 0.4f && hit.distance < closestDist)
+            foreach (var hit in hits)
             {
-                closestDist = hit.distance;
-                floorY = hit.point.y;
-            }
-        }
+                if (hit.transform.root == transform.root) continue;
+                if (pTarget != null && hit.transform.root == pTarget.root) continue;
 
-        return new Vector3(searchPos.x, floorY, searchPos.z);
+                if (hit.normal.y > 0.5f)
+                {
+                    float diff = Mathf.Abs(hit.point.y - playerFloorY);
+                    if (diff < minDiff)
+                    {
+                        minDiff = diff;
+                        bestFloorY = hit.point.y;
+                        found = true;
+                    }
+                }
+            }
+
+            return new Vector3(searchPos.x, found ? bestFloorY : playerFloorY, searchPos.z);
+        }
+        else
+        {
+            // B. Khi di chuyển tuần tra thông thường (Locomotion): Bám sàn từng bước
+            Vector3 rayStart = new Vector3(searchPos.x, searchPos.y + 1.8f, searchPos.z);
+            if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 4.5f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.transform.root != transform.root && (pTarget == null || hit.transform.root != pTarget.root) && hit.normal.y > 0.45f)
+                {
+                    return new Vector3(searchPos.x, hit.point.y, searchPos.z);
+                }
+            }
+            return searchPos;
+        }
     }
 
     private void FindBones()
@@ -3832,6 +4315,8 @@ public class IceGolemController : MonoBehaviour
             if (leftHandBone == null) leftHandBone = anim.GetBoneTransform(HumanBodyBones.LeftHand);
             if (rightHandBone == null) rightHandBone = anim.GetBoneTransform(HumanBodyBones.RightHand);
             if (mouthBone == null) mouthBone = anim.GetBoneTransform(HumanBodyBones.Head);
+            if (leftFootBone == null) leftFootBone = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
+            if (rightFootBone == null) rightFootBone = anim.GetBoneTransform(HumanBodyBones.RightFoot);
         }
 
         Transform[] allChildren = GetComponentsInChildren<Transform>(true);
@@ -3849,6 +4334,14 @@ public class IceGolemController : MonoBehaviour
             if (mouthBone == null && (t.name == "Mieng" || lowerName.Contains("head") || lowerName.Contains("mouth") || lowerName.Contains("face")))
             {
                 mouthBone = t;
+            }
+            if (leftFootBone == null && (t.name == "BanChanT" || lowerName.Contains("foot_l") || lowerName.Contains("leftfoot") || lowerName.Contains("ankle_l")))
+            {
+                leftFootBone = t;
+            }
+            if (rightFootBone == null && (t.name == "BanChanP" || lowerName.Contains("foot_r") || lowerName.Contains("rightfoot") || lowerName.Contains("ankle_r")))
+            {
+                rightFootBone = t;
             }
         }
     }
@@ -3886,7 +4379,7 @@ public class IceGolemController : MonoBehaviour
         }
         if (handSlamImpactVfx == null)
         {
-            handSlamImpactVfx = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/A VFX Prefabs/Attack1 Effect.prefab");
+            handSlamImpactVfx = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Boss/IceGolem/VFX/Attack1 Effect.prefab");
         }
         if (jumpDownImpactVfx == null)
         {
@@ -3899,6 +4392,10 @@ public class IceGolemController : MonoBehaviour
         if (iceBallPrefab == null)
         {
             iceBallPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Boss/IceGolem/VFX/Purple Orb.prefab");
+        }
+        if (jumpDownFootTrailPrefab == null)
+        {
+            jumpDownFootTrailPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/A VFX Prefabs/Other/Wind Trails.prefab");
         }
 #endif
     }
@@ -4018,7 +4515,7 @@ public class IceGolemController : MonoBehaviour
     // =========================================================================
 
     /// <summary>
-    /// Đặt Boss vào chế độ đứng yên trên bục đá chờ Cutscene mở màn
+    /// Đặt Boss vào chế độ đứng yên trên bục đá ở thế Idle (trước khi người chơi bước vào phòng)
     /// </summary>
     public void SetStandbyOnPedestal(bool standby)
     {
@@ -4026,12 +4523,18 @@ public class IceGolemController : MonoBehaviour
         if (standby)
         {
             hasTriggeredJumpDown = false;
+            isOpeningSequence = false;
             if (rb != null)
             {
                 rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;
             }
-            if (anim != null) anim.SetFloat(SpeedHash, 0f);
+            if (anim != null)
+            {
+                anim.SetFloat(SpeedHash, 0f);
+                anim.Play("Idle", 0, 0f);
+            }
         }
         else
         {
@@ -4044,18 +4547,32 @@ public class IceGolemController : MonoBehaviour
     }
 
     /// <summary>
-    /// Kích hoạt cú nhảy JumpDown từ trên bục đá xuống sàn đấu trường (Task D02-4)
+    /// Kích hoạt chuỗi động tác cố định JumpDown từ trên bục đá (giống như Weaken hay 50% HP)
+    /// </summary>
+    public void TriggerOpeningJumpDownSequence(System.Action onLanded = null)
+    {
+        if (hasTriggeredJumpDown || isOpeningSequence || isDead) return;
+        hasTriggeredJumpDown = true;
+        if (openingSequenceCoroutine != null) StopCoroutine(openingSequenceCoroutine);
+        openingSequenceCoroutine = StartCoroutine(OpeningJumpDownSequenceRoutine(onLanded));
+    }
+
+    /// <summary>
+    /// Alias tương thích ngược cho Cutscene Director hoặc hệ thống cũ
     /// </summary>
     public void PlayIntroJumpDownFromPedestal(Vector3 targetLandingPos, System.Action onLanded = null)
     {
-        if (isJumpingDown) return;
-        hasTriggeredJumpDown = true;
-        StartCoroutine(PedestalJumpDownRoutine(targetLandingPos, onLanded));
+        TriggerOpeningJumpDownSequence(onLanded);
     }
 
-    private IEnumerator PedestalJumpDownRoutine(Vector3 targetLandingPos, System.Action onLanded)
+    private IEnumerator OpeningJumpDownSequenceRoutine(System.Action onLanded)
     {
+        isOpeningSequence = true;
         isJumpingDown = true;
+        isCinematicStandby = true; // Khóa AI và điều khiển di chuyển
+
+        // Dừng và dọn dẹp các đòn đánh dở dang (nếu có)
+        CancelActiveAttackCoroutines();
 
         bool originalKinematic = rb != null && rb.isKinematic;
         bool originalGravity = rb != null && rb.useGravity;
@@ -4065,39 +4582,174 @@ public class IceGolemController : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        Vector3 startPos = transform.position;
-
-        // Xoay mặt nhìn về phía điểm tiếp đất
-        Vector3 toLanding = targetLandingPos - startPos;
-        toLanding.y = 0f;
-        if (toLanding.sqrMagnitude > 0.1f)
+        // 1. Tự động xoay mặt dứt khoát hướng về phía đối thủ
+        Transform target = GetPlayerTarget();
+        if (target != null)
         {
-            transform.rotation = Quaternion.LookRotation(toLanding.normalized);
+            Vector3 toTarget = target.position - transform.position;
+            toTarget.y = 0f;
+            if (toTarget.sqrMagnitude > 0.1f)
+            {
+                transform.rotation = Quaternion.LookRotation(toTarget.normalized);
+            }
         }
 
-        anim.SetTrigger(JumpDownHash);
+        // Dừng nhẹ 0.25s để tạo nhịp nhận diện kẻ xâm nhập trước khi phóng mình xuống
+        yield return new WaitForSeconds(0.25f);
 
-        float fallTimer = 0f;
-        float duration = Mathf.Max(1.15f, jumpDownFallDuration);
-        while (fallTimer < duration)
+        // 2. Xác định điểm xuất phát trên bục và điểm tiếp đất sàn đấu trường
+        Vector3 startPos = transform.position;
+        Vector3 targetLandingPos;
+
+        // Nếu Boss đang ở trên bục đá (Y > 2.5m): Điểm tiếp đất nằm trên sàn đấu trường phía trước bục
+        if (startPos.y > 2.5f)
         {
-            fallTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(fallTimer / duration);
+            Vector3 jumpDir;
+            float jumpDist;
 
-            Vector3 currentPos = Vector3.Lerp(startPos, targetLandingPos, t);
-            float curveT = jumpDownFallCurve != null ? jumpDownFallCurve.Evaluate(t) : (t * t);
-            float currentY = Mathf.Lerp(startPos.y, targetLandingPos.y, curveT);
+            if (target != null)
+            {
+                Vector3 toPlayerFlat = target.position - startPos;
+                toPlayerFlat.y = 0f;
+                float distToPlayer = toPlayerFlat.magnitude;
+                jumpDir = distToPlayer > 0.1f ? toPlayerFlat.normalized : transform.forward;
+                jumpDir.y = 0f;
 
-            // Cung nhảy nhẹ nhún lên 1.2m
-            currentY += Mathf.Sin(t * Mathf.PI) * 1.2f;
+                // Boss nhảy về phía người chơi: Đáp xuống cách người chơi khoảng 5.5m (khoảng cách giao tranh đẹp mắt)
+                // Đồng thời cách bục tối thiểu 8m và tối đa 16m để chắc chắn rơi xuống giữa sàn đấu
+                jumpDist = Mathf.Clamp(distToPlayer - 5.5f, 8f, 16f);
+            }
+            else
+            {
+                jumpDir = transform.forward;
+                jumpDir.y = 0f;
+                if (jumpDir.sqrMagnitude < 0.01f) jumpDir = Vector3.forward;
+                jumpDir.Normalize();
+                jumpDist = 12f;
+            }
 
-            currentPos.y = currentY;
-            transform.position = currentPos;
+            Vector3 groundCandidate = startPos + jumpDir * jumpDist;
+            groundCandidate.y = (target != null) ? target.position.y : 0f;
+            targetLandingPos = GetGroundPosition(groundCandidate, true);
+        }
+        else
+        {
+            Vector3 groundCandidate = startPos + transform.forward * 4f;
+            targetLandingPos = GetGroundPosition(groundCandidate, false);
+        }
+
+        // 3. Kích hoạt hoạt ảnh GolemJumpDown (Pha 1: Lúc nhảy lên/nhún đà thì để tốc độ bình thường 1.0f)
+        if (anim != null)
+        {
+            anim.SetFloat(SpeedHash, 0f);
+            anim.ResetTrigger(JumpDownHash);
+            anim.speed = 1.0f; // Lúc nhảy lên: Tốc độ bình thường
+            if (anim.HasState(0, Animator.StringToHash("GolemJumpDown")))
+            {
+                anim.Play("GolemJumpDown", 0, 0f);
+            }
+            else
+            {
+                anim.Play("JumpDown", 0, 0f);
+            }
+        }
+
+        // 4. Gắn hiệu ứng Wind Trails vào 2 bàn chân trong suốt thời gian lao xuống
+        if (leftFootBone == null || rightFootBone == null) FindBones();
+        GameObject leftTrail = null;
+        GameObject rightTrail = null;
+        if (jumpDownFootTrailPrefab != null)
+        {
+            if (leftFootBone != null)
+            {
+                leftTrail = Instantiate(jumpDownFootTrailPrefab, leftFootBone);
+                leftTrail.transform.localPosition = Vector3.zero;
+                leftTrail.transform.localRotation = Quaternion.identity;
+            }
+            if (rightFootBone != null)
+            {
+                rightTrail = Instantiate(jumpDownFootTrailPrefab, rightFootBone);
+                rightTrail.transform.localPosition = Vector3.zero;
+                rightTrail.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        // PHA 1: NHÚN ĐÀ VẬN SỨC TRÊN BỤC (0s -> 0.65s) - Giữ nguyên vị trí bục đá, hoạt ảnh tốc độ bình thường
+        float takeoffDuration = 0.65f;
+        float takeoffTimer = 0f;
+        while (takeoffTimer < takeoffDuration)
+        {
+            takeoffTimer += Time.deltaTime;
+            transform.position = startPos;
             yield return null;
         }
 
-        transform.position = targetLandingPos;
+        // PHA 2: BẮT ĐẦU RỜI BỤC LAO DỐC CẮM XUỐNG SÀN ĐẤU (Nhảy xuống chậm đi 1 tí theo yêu cầu)
+        if (anim != null)
+        {
+            anim.speed = jumpDownFallAnimSpeed; // Làm chậm hoạt ảnh rơi
+        }
 
+        float floorY = targetLandingPos.y;
+        float flightDuration = jumpDownFallDuration > 0.1f ? jumpDownFallDuration : 1.35f;
+
+        Vector2 startXZ = new Vector2(startPos.x, startPos.z);
+        Vector2 targetXZ = new Vector2(targetLandingPos.x, targetLandingPos.z);
+
+        float fallTimer = 0f;
+        while (fallTimer < flightDuration)
+        {
+            fallTimer += Time.deltaTime;
+            float u = Mathf.Clamp01(fallTimer / flightDuration);
+
+            // Rơi gia tốc trọng lực u^2 tạo độ cắm dốc nặng nề
+            float fallU = u * u;
+            float currentY = Mathf.Lerp(startPos.y, floorY, fallU);
+
+            float smoothXZ = Mathf.SmoothStep(0f, 1f, u);
+            Vector2 currentXZ = Vector2.Lerp(startXZ, targetXZ, smoothXZ);
+
+            transform.position = new Vector3(currentXZ.x, currentY, currentXZ.y);
+            yield return null;
+        }
+
+        // PHA 3: TIẾP ĐẤT - Ghim vị trí tiếp đất và khôi phục tốc độ bình thường 1.0f ngay khi chạm sàn
+        transform.position = targetLandingPos;
+        if (anim != null)
+        {
+            anim.speed = 1.0f; // Trả lại tốc độ bình thường khi tiếp đất
+            anim.ResetTrigger(JumpDownHash);
+        }
+
+        // Dọn dẹp hiệu ứng vệt chân
+        if (leftTrail != null)
+        {
+            foreach (var ps in leftTrail.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
+            Destroy(leftTrail, 0.8f);
+        }
+        if (rightTrail != null)
+        {
+            foreach (var ps in rightTrail.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
+            Destroy(rightTrail, 0.8f);
+        }
+
+        // 6. CHỈ KHI CHÂN CHẠM ĐẤT MỚI PHÁT NỔ HIỆU ỨNG VÀ VÒNG TRÒN SÓNG LAN RA
+        OnJumpDownImpact(targetLandingPos);
+
+        onLanded?.Invoke();
+
+        // 7. Chờ Boss đứng dậy hồi vị từ tư thế tiếp đất (0.75s ở tốc độ 1.0f)
+        yield return new WaitForSeconds(0.75f);
+
+        // Chuyển mượt mà về Idle và triệt tiêu vĩnh viễn trigger JumpDown để không lặp lại lần 2
+        if (anim != null)
+        {
+            anim.speed = 1.0f;
+            anim.ResetTrigger(JumpDownHash);
+            anim.CrossFadeInFixedTime("Idle", 0.35f);
+        }
+
+        // Khôi phục vật lý
         if (rb != null)
         {
             rb.isKinematic = originalKinematic;
@@ -4105,10 +4757,15 @@ public class IceGolemController : MonoBehaviour
             if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
         }
 
-        OnJumpDownImpact(targetLandingPos);
-
+        // 8. KẾT THÚC CHUỖI CỐ ĐỊNH & BÀN GIAO QUYỀN ĐIỀU KHIỂN CHO AI
         isJumpingDown = false;
-        onLanded?.Invoke();
+        isOpeningSequence = false;
+        isCinematicStandby = false;
+        openingSequenceCoroutine = null;
+        if (anim != null) anim.ResetTrigger(JumpDownHash);
+
+        ApplyCombatPacing();
+        Debug.Log("<color=green>[IceGolemController]</color> ⚔️ Hoàn tất chuỗi JumpDown mở màn! Bàn giao quyền điều khiển cho AI.");
     }
 
     /// <summary>

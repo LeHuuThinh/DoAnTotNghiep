@@ -71,6 +71,24 @@ public class IceGolemAgent : Agent
     [Tooltip("Khóa tốc độ game ở mức 1x bình thường để người chơi kịp quan sát / tự đánh")]
     [SerializeField] private bool lockNormalSpeed = true;
 
+    [Header("=== LOCOMOTION SMOOTHING (CHỐNG GIẬT KHỰNG) ===")]
+    [Tooltip("Thời gian tối thiểu duy trì một hướng di chuyển (giây) để bước đi dứt khoát, mượt mà")]
+    [SerializeField] private float movePersistenceTime = 0.75f;
+
+    [Tooltip("Khoảng cách tối thiểu Boss phải đi được theo một hướng ngang trước khi được phép đảo chiều ngược lại (mét)")]
+    [SerializeField] private float minStrafeDistance = 2.5f;
+
+    [Tooltip("Thời gian tối thiểu duy trì một hướng đi ngang trước khi được phép đảo chiều (giây)")]
+    [SerializeField] private float minStrafeDuration = 1.2f;
+
+    private int currentCommittedMoveAction = 0;
+    private float moveCommitTimer = 0f;
+    private Vector2 currentAiMoveVector = Vector2.zero;
+
+    private int activeStrafeDirection = 0; // 0 = Chưa khóa, 3 = Đang đi Trái, 4 = Đang đi Phải
+    private Vector3 strafeStartPoint = Vector3.zero;
+    private float strafeTimer = 0f;
+
     // Biến theo dõi trạng thái
     private bool wasPlayerRolling = false;
     private bool isPlayerInRollRecovery = false;
@@ -259,6 +277,11 @@ public class IceGolemAgent : Agent
         }
 
         // Reset các cờ theo dõi
+        currentCommittedMoveAction = 0;
+        moveCommitTimer = 0f;
+        activeStrafeDirection = 0;
+        strafeTimer = 0f;
+        strafeStartPoint = Vector3.zero;
         wasPlayerRolling = false;
         isPlayerInRollRecovery = false;
         isPlayerHealingWindow = false;
@@ -299,10 +322,28 @@ public class IceGolemAgent : Agent
             Time.timeScale = 1.0f;
         }
 
+        // Khi Boss đang đứng yên chờ trên bục hoặc đang trong chuỗi nhảy mở màn: AI hoàn toàn không can thiệp
+        if (controller != null && (controller.IsCinematicStandby || controller.IsOpeningSequence))
+        {
+            return;
+        }
+
         if (playerTransform == null)
         {
             AutoDetectPlayerReferences();
             return;
+        }
+
+        // Duy trì liên tục lệnh di chuyển ở mỗi render frame để chuyển động 100% trơn tru, không bị timeout ngắt nhịp
+        if (!isDelayingAttack && controller != null && !controller.IsBusy() && !controller.IsCinematicStandby && !controller.IsOpeningSequence && !controller.IsDead)
+        {
+            // Nếu Player ở xa ngoài cự ly giữ khoảng cách: Luôn hướng di chuyển về phía trước (Tiến tới tiếp cận)
+            float dist = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : 0f;
+            if (dist > optimalDistanceMax && (currentAiMoveVector.x != 0f || currentAiMoveVector.y < 0f))
+            {
+                currentAiMoveVector = new Vector2(0f, 1f);
+            }
+            controller.Move(currentAiMoveVector.x, currentAiMoveVector.y);
         }
 
         // 1. Tính vận tốc Player
@@ -456,16 +497,93 @@ public class IceGolemAgent : Agent
     /// </summary>
     public override void OnActionReceived(ActionBuffers actions)
     {
-        if (controller == null || playerTransform == null || controller.IsDead || controller.IsWeakened) return;
+        if (controller == null || playerTransform == null || controller.IsDead || controller.IsWeakened || controller.IsCinematicStandby || controller.IsOpeningSequence) return;
 
         int moveAction = actions.DiscreteActions[0];
         int attackAction = actions.DiscreteActions[1];
         int timingAction = actions.DiscreteActions[2];
 
-        // 1. Xử lý di chuyển
+        // 1. Xử lý di chuyển với bộ lọc Persistence & Strafe Distance Lock (Chống giật khựng đổi hướng ngang)
+        int selectedMoveAction = moveAction;
+
+        // Nếu chuẩn bị tung chiêu tấn công: Lập tức hủy cam kết di chuyển và reset khóa đi ngang
+        if (attackAction > 0)
+        {
+            currentCommittedMoveAction = 0;
+            moveCommitTimer = 0f;
+            selectedMoveAction = 0;
+            activeStrafeDirection = 0;
+            strafeTimer = 0f;
+        }
+        else
+        {
+            // Kiểm tra trạng thái khóa hướng đi ngang (Strafing Directional Lock):
+            // Phải đi được một khoảng cách (minStrafeDistance) hoặc hết thời gian tối thiểu mới được đổi sang hướng ngược lại
+            if (activeStrafeDirection == 3 || activeStrafeDirection == 4)
+            {
+                strafeTimer -= Time.fixedDeltaTime;
+                float distTraveled = Vector3.Distance(transform.position, strafeStartPoint);
+
+                // Bảo hiểm: Kiểm tra nếu phía trước hướng đi ngang bị cản bởi tường thì mở khóa sớm
+                Vector3 strafeWorldDir = (activeStrafeDirection == 3) ? -transform.right : transform.right;
+                bool wallAhead = Physics.Raycast(transform.position + Vector3.up * 1.5f, strafeWorldDir, 1.2f, obstacleMask);
+
+                if ((distTraveled >= minStrafeDistance && strafeTimer <= 0f) || wallAhead)
+                {
+                    // Đã đi đủ quãng đường tối thiểu hoặc gặp tường: Cho phép mở khóa đổi hướng
+                    activeStrafeDirection = 0;
+                }
+                else
+                {
+                    // Chưa đi đủ quãng đường: Nếu AI muốn đổi sang hướng ngang ngược lại thì ép giữ nguyên hướng cũ
+                    int oppositeDir = (activeStrafeDirection == 3) ? 4 : 3;
+                    if (selectedMoveAction == oppositeDir)
+                    {
+                        selectedMoveAction = activeStrafeDirection;
+                    }
+                }
+            }
+
+            // Nếu bắt đầu một chu kỳ đi ngang mới (Trái = 3 hoặc Phải = 4):
+            if (activeStrafeDirection == 0 && (selectedMoveAction == 3 || selectedMoveAction == 4))
+            {
+                activeStrafeDirection = selectedMoveAction;
+                strafeStartPoint = transform.position;
+                strafeTimer = minStrafeDuration;
+            }
+
+            // Bộ lọc Persistence thông thường
+            if (moveCommitTimer > 0f)
+            {
+                moveCommitTimer -= Time.fixedDeltaTime;
+                if (currentCommittedMoveAction != 0)
+                {
+                    selectedMoveAction = currentCommittedMoveAction;
+                }
+            }
+            else
+            {
+                currentCommittedMoveAction = selectedMoveAction;
+                moveCommitTimer = (selectedMoveAction != 0) ? movePersistenceTime : 0f;
+            }
+        }
+
+        // KIỂM SOÁT CHIẾN THUẬT TIẾP CẬN KHI Ở XA (TASK SPACING & APPROACH):
+        // Chỉ khi cách nhân vật một khoảng cố định (<= optimalDistanceMax) mới bắt đầu đi ngang qua ngang lại để giữ khoảng cách.
+        // Khi ở xa (> optimalDistanceMax): Bắt buộc chuyển hướng di chuyển thành TIẾN TỚI (Action 1) để tiếp cận đối thủ!
+        float distToPlayer = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : 0f;
+        if (distToPlayer > optimalDistanceMax && attackAction == 0)
+        {
+            if (selectedMoveAction == 2 || selectedMoveAction == 3 || selectedMoveAction == 4)
+            {
+                selectedMoveAction = 1;
+                currentCommittedMoveAction = 1;
+            }
+        }
+
         float horiz = 0f;
         float vert = 0f;
-        switch (moveAction)
+        switch (selectedMoveAction)
         {
             case 1: vert = 1f; break;  // Tới
             case 2: vert = -1f; break; // Lùi
@@ -474,15 +592,15 @@ public class IceGolemAgent : Agent
             default: break;            // Đứng yên
         }
 
+        currentAiMoveVector = new Vector2(horiz, vert);
+
         if (!isDelayingAttack && !controller.IsBusy())
         {
             controller.Move(horiz, vert);
         }
 
         // Thưởng phạt về Cự ly và Di chuyển (Spacing & Circling):
-        float distToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-
-        // A. Cự ly lý tưởng (3.5m - 8.0m): Thưởng giữ cự ly + Thưởng đi vòng quanh vờn đối thủ
+        // A. Cự ly lý tưởng (optimalDistanceMin - optimalDistanceMax, 3.5m - 8.0m): Thưởng giữ cự ly + Thưởng đi vòng quanh vờn đối thủ
         if (distToPlayer >= optimalDistanceMin && distToPlayer <= optimalDistanceMax)
         {
             AddReward(0.004f);
@@ -502,10 +620,23 @@ public class IceGolemAgent : Agent
                 AddReward(0.008f);
             }
         }
-        // C. Ở quá xa (> 14m) mà đứng yên hoặc lùi thêm: Phạt nhẹ vì trốn chạy
-        else if (distToPlayer > 14f && (moveAction == 0 || moveAction == 2))
+        // C. Ở xa ngoài cự ly giữ khoảng cách (> optimalDistanceMax):
+        else if (distToPlayer > optimalDistanceMax)
         {
-            AddReward(-0.004f);
+            // Thưởng khi chủ động Tiến tới (MoveAction == 1) áp sát đối thủ
+            if (moveAction == 1)
+            {
+                AddReward(0.006f);
+            }
+            // Phạt nếu đi ngang hoặc lùi khi đang ở xa Player
+            else if (moveAction == 3 || moveAction == 4)
+            {
+                AddReward(-0.005f);
+            }
+            else if (moveAction == 0 || moveAction == 2)
+            {
+                AddReward(-0.006f);
+            }
         }
 
         // Phạt nhẹ nếu dí sát tường đấu trường
@@ -658,6 +789,14 @@ public class IceGolemAgent : Agent
     {
         var discreteActions = actionsOut.DiscreteActions;
 
+        if (controller != null && (controller.IsCinematicStandby || controller.IsOpeningSequence))
+        {
+            discreteActions[0] = 0;
+            discreteActions[1] = 0;
+            discreteActions[2] = 0;
+            return;
+        }
+
         // 1. Phím mũi tên điều khiển di chuyển (Branch 0)
         int move = 0;
         if (UnityEngine.InputSystem.Keyboard.current != null)
@@ -725,6 +864,40 @@ public class IceGolemAgent : Agent
         if (controller == null || playerTransform == null) return;
 
         float dist = Vector3.Distance(transform.position, playerTransform.position);
+
+        // =========================================================================
+        // BRANCH 0: ĐIỀU HƯỚNG DI CHUYỂN THEO CỰ LY CHIẾN THUẬT (SPACING & APPROACH)
+        // =========================================================================
+        // 1. Khi ở xa ngoài khoảng cách giữ cự ly (dist > optimalDistanceMax):
+        //    Chỉ khi boss cách nhân vật 1 khoảng cố định mới bắt đầu đi ngang qua ngang lại giữ khoảng cách.
+        //    Khi ở xa: Khóa hoàn toàn đi ngang trái (3), đi ngang phải (4) và lùi (2)!
+        //    Buộc Boss phải TIẾN TỚI (Action 1) tiếp cận, hoặc ĐỨNG LẠI tung chiêu tầm xa (Action 0).
+        if (dist > optimalDistanceMax)
+        {
+            actionMask.SetActionEnabled(0, 2, false); // Khóa Lùi
+            actionMask.SetActionEnabled(0, 3, false); // Khóa Đi ngang trái
+            actionMask.SetActionEnabled(0, 4, false); // Khóa Đi ngang phải
+            activeStrafeDirection = 0;
+        }
+        // 2. Khi bị áp sát quá gần (dist < optimalDistanceMin):
+        //    Khóa TIẾN TỚI (Action 1) để tránh húc đè vào người chơi.
+        else if (dist < optimalDistanceMin)
+        {
+            actionMask.SetActionEnabled(0, 1, false); // Khóa Tiến tới
+        }
+        // 3. Trong cự ly lý tưởng (optimalDistanceMin <= dist <= optimalDistanceMax):
+        //    Khóa hướng ngược lại nếu Boss đang trong chu kỳ đi ngang chưa đi đủ cự ly tối thiểu:
+        else
+        {
+            if (activeStrafeDirection == 3)
+            {
+                actionMask.SetActionEnabled(0, 4, false); // Đang đi Trái: CẤM tuyệt đối đi Phải
+            }
+            else if (activeStrafeDirection == 4)
+            {
+                actionMask.SetActionEnabled(0, 3, false); // Đang đi Phải: CẤM tuyệt đối đi Trái
+            }
+        }
 
         // Khóa toàn bộ hành động (di chuyển & kỹ năng) nếu Boss đang bị Weaken (suy yếu)
         if (controller.IsWeakened)

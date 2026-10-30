@@ -20254,6 +20254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c36602b16d625b4ba7ad15ec3472485, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Interaction.BossIntroDirector
+  enableCinematicCameraCutscene: 0
   isPlayingCutscene: 0
   hasPlayedIntro: 0
   midCamDistance: 10

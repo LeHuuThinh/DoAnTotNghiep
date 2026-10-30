@@ -17,6 +17,8 @@ namespace InfiniteLabyrinth.Interaction
     public static BossIntroDirector Instance { get; private set; }
 
     [Header("=== TRẠNG THÁI CUTSCENE ===")]
+    [Tooltip("Bật/tắt chế độ giật góc máy Camera cutscene điện ảnh (Mặc định = false để người chơi tự do điều khiển nhảy né sóng và theo dõi góc nhìn gameplay trực tiếp)")]
+    [SerializeField] private bool enableCinematicCameraCutscene = false;
     [SerializeField] private bool isPlayingCutscene = false;
     [SerializeField] private bool hasPlayedIntro = false;
 
@@ -107,6 +109,27 @@ namespace InfiniteLabyrinth.Interaction
     private void HandlePlayerEnteredArena()
     {
       if (hasPlayedIntro || isPlayingCutscene) return;
+      hasPlayedIntro = true;
+
+      // Tìm Boss và liên kết thanh máu HUD
+      IceGolemController boss = FindFirstObjectByType<IceGolemController>();
+      if (boss != null)
+      {
+        Health bossHealth = boss.GetComponent<Health>();
+        if (bossHealth != null && BossHUDController.Instance != null)
+        {
+          BossHUDController.Instance.BindBossHealth(bossHealth);
+          BossHUDController.Instance.PlayNameSequence();
+        }
+      }
+
+      // Nếu không bật Cutscene giật Camera: Cho phép người chơi tự do điều khiển và Boss tự nhảy
+      if (!enableCinematicCameraCutscene)
+      {
+        Debug.Log("<color=cyan>[BossIntroDirector]</color> ⚔️ Chế độ Gameplay Trực Tiếp: Người chơi giữ trọn quyền điều khiển để nhảy né sóng, Boss tự thi triển JumpDown!");
+        return;
+      }
+
       StartCoroutine(IntroCinematicRoutine());
     }
 

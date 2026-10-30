@@ -25,6 +25,8 @@ namespace InfiniteLabyrinth.EditorTools
         private const string GroundImpactVfxPath = "Assets/VFX/A VFX Prefabs/Impact/Ground Impact.prefab";
         private const string IceImpactVfxPath = "Assets/VFX/A VFX Prefabs/Impact/Ice Impact.prefab";
         private const string PurpleOrbVfxPath = "Assets/Characters/Boss/IceGolem/VFX/Purple Orb.prefab";
+        private const string WindTrailsVfxPath = "Assets/VFX/A VFX Prefabs/Other/Wind Trails.prefab";
+        private const string JumpDownFbxPath = "Assets/Characters/Boss/IceGolem/Animation/JumpingDown.fbx";
 
         private const string AttackLTFbxPath = "Assets/Characters/Boss/IceGolem/Animation/AttackLT_IG.fbx";
         private const string IceBallClipPath = "Assets/Characters/Boss/IceGolem/Animation/Animation/IceBallIG.anim";
@@ -251,10 +253,11 @@ namespace InfiniteLabyrinth.EditorTools
                 soController.FindProperty("hitFlashDuration").floatValue = 0.12f;
                 soController.FindProperty("hitFlashColor").colorValue = new Color(1f, 0.25f, 0.25f, 1f);
 
-                // JumpDown (mở màn từ trên cao duy nhất 1 lần khi thấy Player)
-                soController.FindProperty("jumpDownOnStart").boolValue = true;
+                // JumpDown (mở màn từ trên cao duy nhất 1 lần khi Player mở cửa và bước qua cửa)
+                soController.FindProperty("isCinematicStandby").boolValue = true;
+                soController.FindProperty("jumpDownOnStart").boolValue = false;
                 soController.FindProperty("triggerJumpDownOnDetectPlayer").boolValue = true;
-                soController.FindProperty("playerDetectionRange").floatValue = 35f;
+                soController.FindProperty("playerDetectionRange").floatValue = 300f;
                 soController.FindProperty("jumpDownDistance").floatValue = 10f;
                 soController.FindProperty("jumpDownHeight").floatValue = 12f;
                 soController.FindProperty("jumpDownArcHeight").floatValue = 0f;
@@ -322,18 +325,23 @@ namespace InfiniteLabyrinth.EditorTools
                 soController.FindProperty("flameShakeMagnitude").floatValue = 0.025f;
                 soController.FindProperty("flameShakeDuration").floatValue = 0.05f;
 
-                // Cơ chế né đòn
+                // Cơ chế né đòn & vòng sóng
+                soController.FindProperty("enableShockwaveRingVisual").boolValue = true;
                 soController.FindProperty("jumpDodgeHeightThreshold").floatValue = 0.5f;
                 soController.FindProperty("clockwiseSpinSpeed").floatValue = 280f;
                 soController.FindProperty("shockwaveLineWidth").floatValue = 0.35f;
 
-                // Tìm xương bàn tay và miệng
+                // Tìm xương bàn tay, miệng và bàn chân
                 Transform[] children = root.GetComponentsInChildren<Transform>(true);
                 foreach (Transform t in children)
                 {
                     if (t.name == "BossHitboxT") soController.FindProperty("leftHandBone").objectReferenceValue = t;
                     if (t.name == "BossHitboxP") soController.FindProperty("rightHandBone").objectReferenceValue = t;
                     if (t.name == "Mieng") soController.FindProperty("mouthBone").objectReferenceValue = t;
+                    if (t.name == "BanChanT" || t.name.ToLower().Contains("foot_l") || t.name.ToLower().Contains("leftfoot"))
+                        soController.FindProperty("leftFootBone").objectReferenceValue = t;
+                    if (t.name == "BanChanP" || t.name.ToLower().Contains("foot_r") || t.name.ToLower().Contains("rightfoot"))
+                        soController.FindProperty("rightFootBone").objectReferenceValue = t;
                 }
 
                 // Gán các Prefab VFX
@@ -354,6 +362,9 @@ namespace InfiniteLabyrinth.EditorTools
 
                 GameObject purpleOrb = AssetDatabase.LoadAssetAtPath<GameObject>(PurpleOrbVfxPath);
                 if (purpleOrb != null) soController.FindProperty("iceBallPrefab").objectReferenceValue = purpleOrb;
+
+                GameObject windTrails = AssetDatabase.LoadAssetAtPath<GameObject>(WindTrailsVfxPath);
+                if (windTrails != null) soController.FindProperty("jumpDownFootTrailPrefab").objectReferenceValue = windTrails;
 
                 // Các slot VFX tự chọn: runAuraVfxPrefab và handAuraVfxPrefab để trống để người dùng tự do kéo thả
                 // không tự động gán bất kỳ hiệu ứng khói/vệt nào
@@ -463,6 +474,13 @@ namespace InfiniteLabyrinth.EditorTools
             // IceBallIG (Phím 7)
             SetupAnyStateAttack(rootSm, iceBallState, "IceBallIG");
             SetupAttackReturnToIdle(iceBallState, idleState, 0.95f);
+
+            // JumpDown (Mở màn khi Player mở cửa bước vào đấu trường - kích hoạt trực tiếp qua code anim.Play, không dùng AnyState để tránh lặp lại lần 2)
+            AnimatorState jumpDownState = FindOrCreateState(rootSm, "JumpDown", JumpDownFbxPath, new Vector3(410, 170, 0));
+            SetupAttackReturnToIdle(jumpDownState, idleState, 0.95f);
+
+            // Luôn đảm bảo Default State là Idle (Boss đứng yên trên bục đá khi vừa vào game)
+            rootSm.defaultState = idleState;
 
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();

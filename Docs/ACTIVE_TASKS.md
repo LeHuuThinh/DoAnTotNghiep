@@ -132,6 +132,37 @@
       + Pha 3: Boss phóng mình nhảy `JumpDown` từ bục 12m giáng trần (camera lia hạ theo cú rơi) -> Tiếp đất rền vang kèm vụ nổ va chạm và Rung Màn Hình (Screen Shake) cực mạnh.
       + Pha 4: Boss ngửa cổ thi triển đòn phun băng chào sân (`PlayIntroBreath`), cùng lúc kích hoạt hoạt ảnh Banner mờ dần và Tên trùm bay lên neo vững trên thanh máu.
       + Pha 5: Kéo camera trượt êm ái (EaseInOut) từ đấu trường quay về sau vai Player, mở lại toàn bộ quyền điều khiển và kích hoạt Boss vào trạng thái chiến đấu.
+    - **Khắc Phục Lỗi Kỹ Năng & Hoạt Ảnh JumpDown Mở Màn (Boss Ice Golem):**
+      + *Sửa lỗi đơ người khi nhảy:* Chuẩn hóa Animator BossController đưa Idle về m_DefaultState, bổ sung AnyState -> JumpDown transition, ép phát ngay clip từ frame 0 qua anim.Play("JumpDown", 0, 0f).
+      + *Tầm nhìn quan sát rộng 300m bao quát cả phòng:* Boss đứng trên bục có tầm nhìn rộng 300m, quan sát toàn bộ phòng đấu trường 100m - 200m mà không bị giới hạn ở 35m.
+      + *Trạng thái Standby an toàn:* Trước khi người chơi bước vào phòng, Boss ở trên bục đá hoàn toàn đứng yên ở hoạt ảnh Idle (Speed = 0, isKinematic = true, AI bị khóa).
+      + *Nhận biết khi Player bước qua cánh cửa:* Kết hợp đa tầng giữa BossGateController (cửa mở & Player vượt qua ngưỡng cửa vào phòng), BossArenaTrigger (chạm ngưỡng cửa), và Line of Sight (tầm nhìn không bị cản).
+      + *Chuỗi JumpDown cố định (Opening Scripted Sequence):* Được thiết kế chuẩn hóa như Weaken hay 50% HP (xoay mặt nhận diện kẻ địch -> kích hoạt JumpDown -> vệt gió 2 chân -> tiếp đất phát nổ va chạm và sóng chấn động -> đứng dậy hồi vị chuyển mượt về Idle -> SAU ĐÓ MỚI BÀN GIAO QUYỀN ĐIỀU KHIỂN CHO AI).
+      + *Vành sóng chấn động né bằng cú nhảy (Jump Over Shockwave):* Tích hợp cơ chế vành sóng mở rộng, người chơi bấm phím Space nhảy lên (!pc.IsGrounded && heightAboveWave > 0.15f) sẽ né hoàn toàn sát thương từ đợt sóng kể cả khi chạm đất trở lại.
+      + *Chế độ Gameplay Trực Tiếp:* BossIntroDirector hỗ trợ Direct Gameplay Mode không khóa input Player, giúp người chơi tự do di chuyển và bấm phím Space nhảy né sóng chấn động ngay từ phát đập đất mở màn.
+      + *Khắc Phục Lỗi Lơ Lửng Trên Không & Đồng Bộ Chạm Đất Chuẩn Xác:*
+        - Nâng cấp `GetGroundPosition`: Bắn tia raycast từ độ cao an toàn trong phòng (`playerFloorY + 4f`), loại trừ hoàn toàn nguy cơ quét trúng mái nhà (24m) hay đỉnh bục đá (12m), tự động khóa chặt độ cao mặt sàn đấu trường.
+        - Quỹ đạo Nhảy 2 Pha Chuẩn Xác (2-Phase Leap & Plunge Trajectory):
+          + **Pha 1: Bật vút lên trời ($t \le 0.35$):** Cao độ $Y$ tăng vọt từ $startPos.y$ (8m) lên đỉnh cao $apexY$ (12m, cao hơn bục đá 4 mét!), Boss thực sự dậm nhảy vút lên không trung và vươn người ra phía trước phòng đấu, triệt tiêu 100% cảm giác lơ lửng trôi ngang hay hẫng rơi.
+          + **Pha 2: Lao dốc cắm xuống sàn ($t > 0.35$):** Boss gia tốc rơi tự do trọng lực $u^2$ cắm thẳng xuống điểm tiếp đất `targetLandingPos`.
+          + **Đồng bộ thời lượng 1.80s khớp chính xác Frame 55 của `JumpingDown.fbx`:** Trước đây code để 1.25s khiến Boss chạm đất ảo khi animation còn đang rơi ở 1.99m (khiến vòng tròn nổ trước khi chân chạm đất 0.5s). Nay đã đồng bộ 100% ở mốc 1.80s: Đúng khoảnh khắc chân và hai tay dộng sàn trong animation thì Boss ghim chặt xuống sàn đấu và kích hoạt nổ hiệu ứng vòng sóng chấn động.
+        - **Triệt Tiêu Hoàn Toàn Lỗi JumpDown Lặp Lại Lần 2**: Loại bỏ AnyState transition sang `JumpDown` trong Animator `BossController.controller` và `IceGolemSetupEditor.cs`. Sau khi tiếp đất, Boss chuyển mượt về Idle và giữ sạch Trigger `JumpDown`.
+      + *Rà Soát Toàn Diện Bảng Animator Controller (`BossController.controller`) & Khắc Phục Sai Sót Các Hành Động:*
+        - **Chuẩn hóa Locomotion 4 hướng:** Xóa bỏ điều kiện thừa `Speed < 0.1` và `Speed > 0.1` ở hai transition `Walk <-> Idle`, đồng bộ hoàn toàn với 3 hướng còn lại (`WalkBackIG`, `WalkLeftIG`, `WalkRightIG`) chỉ phụ thuộc vào `MoveType` (0 = Idle, 1 = Walk, 2 = WalkBack, 3 = WalkLeft, 4 = WalkRight). Chuyển `Walk` state `m_Speed: 0.64 -> 1.0` để bước chân tiến tới không bị lết và dừng khựng so với bước lùi/ngang.
+        - **Bảo hiểm Hoạt ảnh Tử trận (`Dead`):** Đổi `m_CanTransitionToSelf: 1 -> 0` trên transition AnyState -> `Dead`, ngăn chặn tuyệt đối lỗi Boss bị re-trigger hoạt ảnh chết từ frame 0 nếu nhận thêm hit va chạm cuối.
+        - **Dọn dẹp Controller:** Xóa triệt để block mồ côi `8532576496906446981` (transition AnyState -> JumpDown cũ còn sót trong YAML). Loại bỏ các biến Hash không tồn tại trong Controller (`IceBallHash`, `AttackLTHash`).
+      + *Sửa Triệt Để Lỗi Hiệu Ứng Chiêu 2 (GumoGumo Slam / Đập Đất Liên Tục Bị Chập Chờn Cú Có Cú Không):*
+        - **Giải mã nhịp đập thực tế trong `GumoGumoGun.anim`:** Đo đạc chính xác 5 nhịp tiếp đất: 1.00s (Tay Phải), 1.67s (Tay Trái), 2.50s (Tay Phải), 3.20s (Tay Trái), 3.85s (Cú đập dứt điểm).
+        - **Khắc phục lỗi gán ngược tay trong Timeline Backup:** Cũ gán nhầm `{ 0, 1, 0, 1, 2 }` (ngược tay so với hoạt ảnh), đã sửa chuẩn xác thành `{ 1, 0, 1, 0, 2 }` (1: Phải, 0: Trái, 2: Cả 2 tay).
+        - **Bù đắp cao độ xương tay khi model Boss nâng 0.35m:** Nâng ngưỡng dò xương tay nhạy bén (`gumoHandContactHeight = 0.85f`, `gumoHandReleaseHeight = 0.72f`, `gumoHandMinHeight = 0.60f`), triệt tiêu việc tay chỉ xuống tới 0.67m bị hụt không bắt được va chạm.
+        - **Đồng bộ đường dẫn Prefab:** Cập nhật đường dẫn nạp `handSlamImpactVfx` về đúng file tồn tại `Assets/Characters/Boss/IceGolem/VFX/Attack1 Effect.prefab`.
+        - Đảm bảo 100% cả 5 cú đập liên hoàn đều phát nổ hiệu ứng `Attack1 Effect` và gây chấn động chuẩn xác.
+      + *Khắc Phục Hiện Tượng Di Chuyển Khựng Giật & Tối Ưu Hóa Locomotion Mượt Mà:*
+        - Kiến tạo Động cơ Nội suy Di chuyển (`Smooth Locomotion Engine`): Tách rời việc ra lệnh (`desiredMoveInput`) khỏi việc dịch chuyển vật lý ở từng frame `Update()`, loại bỏ việc dịch chuyển rời rạc theo nhịp ML-Agents / FixedUpdate.
+        - Gia tốc tăng/giảm tốc (`moveAcceleration = 4.5f`, `moveDeceleration = 6.0f`): Bước chân chuyển động đĩnh đạc, mượt mà chuẩn Souls-like.
+        - Cập nhật Animator với `locomotionDampTime = 0.22f` kết hợp ngưỡng trễ Hysteresis (`MoveType`): Giúp blend animation chuyển động mượt mà giữa Idle, Walk, WalkBack, WalkLeft, WalkRight.
+        - Tích hợp bộ lọc Cam kết Di chuyển (`Movement Action Persistence = 0.75s`) trong `IceGolemAgent`: Duy trì trọn vẹn 1 chu kỳ sải chân bước đi khi AI vờn quanh đối thủ (Circling / Strafing), và hồi vị nhanh 0.2s khi dừng, triệt tiêu hoàn toàn cảm giác giật khựng bước chân.
+        - Cấu hình `RigidbodyInterpolation.Interpolate` và khóa xoay vật lý để triệt tiêu ma sát rung lắc PhysX trên mặt sàn.
     - **Tự Động Hóa 1-Click Unity Editor & Runtime:** Tích hợp menu `Infinite Labyrinth -> Boss -> 7. Cấu Hình Cutscene Intro & Boss HUD (Task D02-4)` và cơ chế `[RuntimeInitializeOnLoadMethod]` tự động khởi chạy mượt mà ngay khi bấm Play Mode.
   - [ ] **D02-5: Hoàn Tất Chiến Thắng (Victory Fanfare), Rơi Thưởng Đại Lượng & Cổng Dịch Chuyển Tầng Kế:**
     - Hiển thị biểu ngữ 'VICTORY ACHIEVED', nổ tung vàng/đồ quý, mở lại cửa và kích hoạt Cổng Dịch Chuyển lựa chọn Về Làng hoặc Xuống Tầng 2.
@@ -244,14 +275,16 @@
 - [x] **BOSS-01: Hoàn thiện Bộ Kỹ Năng & VFX Trùm Ice Golem (`Boss_IceGolem.prefab`)**
   - **Đồng bộ trực tiếp lên Prefab gốc (`Boss_IceGolem.prefab`):**
     + Gắn component `IceGolemController` với cấu hình tham chiếu xương tay (`leftHandBone: BossHitboxT`, `rightHandBone: BossHitboxP`), miệng (`mouthBone: Mieng`), Animator, và Tag `Enemy`.
-    + Cấu hình Máu Boss: `Health.maxHealth = 800 HP` chuẩn trùm Souls-like (loại bỏ Persistent Call gọi `SetActive(false)` lỗi thời).
+    + **Bảng Thông Số Boss Inspector (`=== BANG THONG SO BOSS ===`):** Cấu hình Máu Boss `bossMaxHealth = 1500 HP` chuẩn trùm Souls-like dày dặn (tự động đồng bộ vào component `Health`), thanh chịu đòn `maxPoise = 500`, thời gian đóng băng suy yếu `weakenFreezeAfterDuration = 0s`, bù trừ hoạt ảnh `phase2StaggerVisualHeightOffset = 0m` và `weakenVisualHeightOffset = 0m`, thời lượng hoạt ảnh Weaken `weakenAnimDuration = 3.6s`, tên state `weakenStateName = WeakenIG`.
+    + **Hệ thống Chiếu Sáng Tự Thân (`Boss_Aura_Light`):** Bật đèn hào quang xanh băng tự sinh bám theo ngực Boss cao 2.5m (`enableBodyAuraLight = true`, color `(0.25, 0.75, 1.0)`, range 16m, intensity 3.0) nổi bật rực rỡ trong hầm ngục.
+    + **Hệ thống Đạo Diễn Cutscene Intro Bục Đá:** Cung cấp API `SetStandbyOnPedestal(standby)`, `PlayIntroJumpDownFromPedestal(targetPos, onLanded)`, và `PlayIntroBreath(onFinished)` phục vụ chuỗi Intro Cutscene mở màn từ trên cao.
     + Cơ chế tự bảo vệ trong `Awake()`: Tự động phát hiện và hủy mọi instance `IceGolemController` bị gắn trùng trên cùng GameObject để chống nhân đôi chiêu thức.
   - **Chuẩn Hóa 100% Hoạt Ảnh Humanoid Rig & Khắc Phục Triệt Để Lỗi Chôn Chân:**
     + Khắc phục triệt để lỗi hoạt ảnh Generic (`AttackLT_IG.anim`, `WalkBackIG.anim`, `WalkLeftIG.anim`, `WalkRightIG.anim`) làm tụt xương `mixamorig:Hips` xuống Y = 0.88m khiến Boss cao 5.12m bị chìm nửa người xuống đất và đóng băng di chuyển.
     + Trỏ toàn bộ các State trong `BossController.controller` sang sub-asset Humanoid chuẩn bên trong các file FBX (`AttackLT_IG.fbx`, `WalkBackIG.fbx`, `WalkLeftIG.fbx`, `WalkRightIG.fbx`), đưa toàn bộ 14 State trong Animator Controller thành 100% Humanoid chuẩn xác.
   - **Tích hợp trọn bộ 7 chiêu thức chiến đấu & Tùy biến VFX Prefabs chuyên biệt:**
     + `Attack1` *(Phím 1)*: Đấm thẳng cận chiến (`attack1Damage = 25`, `hitDelay = 1.23s`, Scale 1.2x) kết hợp `Impact.prefab`.
-    + `GumoGumo Slam` *(Phím 2)*: Đấm sàn rung đất liên hoàn 2 tay (`gumoSlamDamage = 18`, bán kính 12m, Scale 2.0x, nhịp 0.35s) kết hợp `Attack1 Effect.prefab` bùng nổ tại từng vị trí bàn tay tiếp đất.
+    + `GumoGumo Slam` *(Phím 2)*: Đấm sàn rung đất liên hoàn 2 tay (`gumoSlamDamage = 18`, bán kính 12m, Scale 2.0x, nhịp 0.35s) kết hợp `Attack1 Effect.prefab` bùng nổ tại từng vị trí bàn tay tiếp đất. Tích hợp bộ thông số bắt điểm chạm đất thực tế bàn tay: `gumoVisualHeightOffset = 0.35m` (bù đắp nâng độ cao chống chìm chân), `gumoHandContactHeight = 0.55m` (ngưỡng bắt đầu vào vùng va chạm), `gumoHandMinHeight = 0.30m` (ngưỡng chạm sát sàn), `gumoHandReleaseHeight = 0.95m` (ngưỡng nhấc tay nạp lại cú đập tiếp), `gumoHandForwardOffset = 0.20m` (lệch tiến theo hướng bàn tay).
     + `FlameBreath` *(Phím 3)*: Phun lửa nón tầm trung 15.5m (`flameConeAngle = 49°`, `flameDamagePerTick = 12`, mật độ hạt 1.9x, visual dài 3.58x, rộng 2.9x, thời lượng 3.2s) kết hợp `Flame Thrower.prefab`, khóa xoay dọc và độ cao ngọn lửa.
     + `JumpAttack` *(Phím 4)*: Lao bổ áp sát tầm xa 20m (`jumpAttackDamage = 40`, đỉnh cung 2.8m, delay đập đất 0.23s, bán kính 18m) kết hợp `Ice Impact.prefab` và Vòng xoáy xung kích phát sáng xoay kim đồng hồ.
     + `RunAttack` *(Phím 5)*: Boss lao nhanh về phía trước húc thẳng vào Player (`runAttackSpeed = 12m/s`, `runAttackDamage = 35`, knockback `5.0`), hỗ trợ slot `Run Aura Vfx Prefab` trống (`None`) để người dùng tự do gán hiệu ứng hào quang bao quanh Boss khi chạy, loại bỏ hoàn toàn vệt xanh lá kéo dài cũ.
@@ -262,7 +295,8 @@
   - **Phản Hồi Combat Souls-like & Chuẩn Bị Cho ML-Agents (ML-02):**
     + *Chớp đỏ GPU khi trúng kiếm:* Tự động liên kết `Health.onTakeDamage` và điều khiển toàn bộ MeshRenderers/SkinnedMeshRenderers qua `MaterialPropertyBlock` (thời gian 0.12s, màu đỏ tươi), bảo toàn 100% SRP Batcher.
     + *Xử lý tử trận chuẩn xác:* Tự động liên kết `Health.onDeath` -> `Die()` kích hoạt trigger animation `Dead`, vô hiệu hóa Collider và Rigidbody để ngưng nhận đòn, dọn dẹp effect lửa/aura.
-    + *Hệ thống Thanh chịu đòn Poise (500) & Suy yếu (WeakenIG):* Boss sở hữu 500 điểm Poise, bị bào mòn theo độ uy lực đòn đánh của Player (35 - 100 Poise). Khi Poise = 0 kích hoạt WeakenIG bước lùi hết trọn vẹn clip hoạt ảnh duy nhất 1 lần và lập tức tiếp tục chiến đấu tại vị trí mới; nếu máu tụt <= 50% HP hủy ngay để chuyển Phase 2 cuồng nộ.
+    + *Hệ thống Thanh chịu đòn Poise (500) & Suy yếu (WeakenIG):* Boss sở hữu 500 điểm Poise độc lập với máu, không tự hồi phục, bị bào mòn theo độ uy lực đòn đánh của Player (Chém thường: 35, Chém 3 / Charge 1: 50, Chém gồng 2 / Skill E: 70, Counter / Phép Q: 100 Poise). Cung cấp event `onPoiseChanged(float, float)` và alias `onStaminaChanged`. Khi Poise = 0 kích hoạt WeakenIG bước lùi lảo đảo duy nhất 1 lần (`hasTriggeredWeaken = true`), chạy trọn vẹn 100% clip hoạt ảnh bất kể tốc độ tua (`Speed = 0.5`), tự động chốt vị trí mới qua `CommitWeakenPosition` để không bị giật lùi về vị trí cũ, không đứng yên sau clip (`weakenFreezeAfterDuration = 0`), lập tức chuyển về Idle sẵn sàng chiến đấu tiếp; nếu máu tụt <= 50% HP hủy ngay Weaken để ưu tiên chuyển Phase 2 cuồng nộ.
+    + *Phase 2 Cuồng Nộ (Enrage Sequence tại <= 50% HP / 750 HP):* Khi máu Boss giảm xuống dưới 50% lần đầu tiên, lập tức kích hoạt chuỗi chuyển pha: Hoạt cảnh chao đảo `50%HP` (4.2s), phát sóng chấn động đẩy văng Player bán kính 5m (lực đẩy 4.5m) kèm SFX gầm thét và VFX chấn động mặt sàn, sau đó gầm thét phun lửa `AttackRoaring`, đợi 3.0s rồi liên tiếp phóng dồn dập 3 quả cầu ma lực tím `IceBallIG` về phía đối thủ. Tốc độ chiến đấu tổng thể (`combatPacing`) rút ngắn từ 6-7s xuống 4-5s với tần suất tấn công hung hãn và tốc độ tiếp cận gia tăng.
     + *Hệ thống Cooldowns & API cho AI / ML-Agents:* Bổ sung thời gian hồi chiêu cho 7 kỹ năng (`attack1: 1.5s`, `gumo: 6.0s`, `flame: 8.0s`, `jump: 7.0s`, `run: 6.0s`, `attackLT: 5.0s`, `iceBall: 7.0s`) cùng các API `CanCastAttack`, `GetCooldownNormalized`, `GetRemainingCooldown` phục vụ trực tiếp vector quan sát cho Agent ML-02.
     + *Khóa mục tiêu & Di chuyển thông minh:* `autoFindPlayer = true`, `alwaysFacePlayer = true`, `facePlayerSpeed = 240 deg/s`, `facePlayerOnAttack = true`, `strafeMode = true`.
   - **Công Cụ Tự Động Hóa Unity Editor:** Tích hợp tool `IceGolemSetupEditor.cs` tại 3 menu:
@@ -421,4 +455,31 @@
   - Tự động tạo hoặc kiểm tra `AdminCheatManager` trong Scene, nạp đầy đủ 5 ScriptableObjects Item mẫu và 4 Prefabs quái.
   - Tự động dựng toàn bộ cây Canvas UI (`AdminCheatCanvas`, `AdminCheatPanel`), cài đặt EventSystem, nối dây 100% các nút bấm và nhãn TextMeshProUGUI.
   - Tự động đóng gói và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
+
+---
+
+## 🚩 GIAI ĐOẠN 7: Boss Ice Golem - Kỹ Năng & AI Hoàn Thiện
+
+- [x] **BOSS-01: Chuỗi Mở Màn JumpDown & Tầm Nhìn Không Giới Hạn**
+  - Quét tầm nhìn toàn bộ phòng hầm ngục (100m - 300m) không giới hạn cự ly.
+  - Đứng yên tuyệt đối (Idle) trên bục đá, chỉ khi Player thực sự bước qua cánh cửa lớn vào phòng Boss mới bắt đầu kích hoạt JumpDown mở màn duy nhất 1 lần.
+  - Triệt tiêu lỗi dịch chuyển giật lên trên trần nhà: Giữ nguyên độ cao bục đá trong nhịp nhún đà vận sức (0.4s đầu), sau đó phóng mình lao dốc cắm xuống sàn đấu trường theo gia tốc rơi tự do $u^2$.
+  - Tiếp đất chính xác ở frame 55 (1.80s), chân chạm đất mới kích hoạt hiệu ứng vòng tròn chấn động (shockwave) và rung chấn màn hình.
+  - Đồng bộ chiêu 2 (AttackGumoGumo) chuẩn xác 5 nhịp dộng sàn: 1.00s (Phải), 1.67s (Trái), 2.50s (Phải), 3.20s (Trái), 3.85s (Hai tay dứt điểm).
+
+- [x] **BOSS-02: Bộ Động Cơ Di Chuyển Mượt Mà 4 Hướng & Chiến Thuật Tiếp Cận (Smart Approach & Spacing Engine)**
+  - Bổ sung 12 transitions 2 chiều giữa 4 trạng thái đi bộ (`Walk`, `WalkBackIG`, `WalkLeftIG`, `WalkRightIG`) trong [`BossController.controller`](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/IceGolem/BossController.controller) với Duration 0.15s, loại bỏ việc kẹt lại ở Idle khi đổi hướng.
+  - Bật `m_LoopTime: 1` cho các animation clips đi bộ lùi/trái/phải.
+  - Xóa bỏ lệnh cưỡng bức `CrossFadeInFixedTime` trong code C#, cho phép Animator Controller tự hòa trộn sải chân mượt mà theo `MoveType`.
+  - Duy trì lệnh di chuyển liên tục ở từng Render Frame trong [`IceGolemAgent.cs`](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/Script_Boss/IceGolemAgent.cs), triệt tiêu hoàn toàn độ trễ giữa các nhịp ML-Agents và xóa sổ hiện tượng khựng bước chân.
+  - **Chiến thuật Spacing & Tiếp cận theo khoảng cách (Approach on Distance):**
+    + Khi ở xa Player (> 8.0m): Khóa cứng hành động đi ngang (`Strafing`) và lùi (`Back`), buộc Boss chỉ được tiến thẳng về phía Player để nhanh chóng rút ngắn khoảng cách tiếp cận.
+    + Chỉ khi đã vào cự ly chiến đấu chuẩn (3.5m - 8.0m): Mở khóa di chuyển ngang để Boss đi ngang qua lại (strafing trái/phải) vờn quanh đối thủ và giữ khoảng cách đúng phong cách Souls-like.
+    + Khi bị áp sát quá gần (< 2.5m - 3.5m): Khóa tiến tới, khuyến khích lùi lại hoặc ra chiêu cận chiến.
+
+- [x] **REF-02: Bảo Toàn Kiến Trúc Thống Nhất Cho Boss Ice Golem (Monolithic Controller 4.692 dòng)**
+  - Duy trì toàn bộ 4.692 dòng code của [`IceGolemController.cs`](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/Script_Boss/IceGolemController.cs) trong 1 file duy nhất để bảo đảm 100% Serialization trong Unity Inspector:
+    + Giữ nguyên liên kết tất cả VFX Prefabs (`attack1ImpactVfxPrefab`, `handSlamImpactVfx`, `flameVfxPrefab`, `iceBallPrefab`, `jumpDownFootTrailPrefab`, `jumpDownImpactVfx`, `jumpAttackImpactVfx`...).
+    + Bảo toàn toàn bộ các cấu hình thuộc tính, Animation Curves, LayerMasks và tham chiếu xương không bị gián đoạn hay reset về null.
+    + Xóa bỏ các file component con tách rời, giữ GameObject `Boss_IceGolem` và Inspector luôn sạch sẽ, ổn định.
 
