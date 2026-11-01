@@ -1083,6 +1083,10 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 8
+  hitImpactVfxPrefab: {fileID: 1035977224672214417, guid: e30819a30479ee2458fdc2fc52dc4fa4, type: 3}
+  hitImpactDestroyDelay: 1.5
+  hitImpactNormalOffset: 0.05
+  hitImpactScaleMultiplier: 1
   hitlagTimeScale: 0.05
   defaultLethalHitlag: 0.18
 --- !u!1001 &6584584502418158541

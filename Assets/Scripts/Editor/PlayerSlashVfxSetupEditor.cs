@@ -18,7 +18,10 @@ namespace InfiniteLabyrinth.Editor
     private const string RESOURCES_IMPACT_VFX_PATH = "Assets/Resources/Impact VFX.prefab";
     private const string SOURCE_IMPACT_VFX_PATH = "Assets/VFX/C Sword Slash/Impact.prefab";
 
-    private const string PREF_KEY = "PlayerSlashVfx_AutoSetup_v2";
+    private const string PRIMARY_PARRY_VFX_PATH = "Assets/Characters/Player/Skill/Parry VFX.prefab";
+    private const string RESOURCES_PARRY_VFX_PATH = "Assets/Resources/Parry VFX.prefab";
+
+    private const string PREF_KEY = "PlayerSlashVfx_AutoSetup_v3";
 
     [InitializeOnLoadMethod]
     private static void AutoRunSetupOnce()
@@ -27,17 +30,17 @@ namespace InfiniteLabyrinth.Editor
       {
         if (!EditorPrefs.GetBool(PREF_KEY, false))
         {
-          Debug.Log("<color=cyan>[PlayerSlashVfxSetup]</color> 🚀 Tự động cấu hình Slash Trail & Hit Impact VFX cho Player...");
+          Debug.Log("<color=cyan>[PlayerSlashVfxSetup]</color> 🚀 Tự động cấu hình Slash Trail, Hit Impact & Parry VFX cho Player...");
           SetupPlayerSlashVfx();
           EditorPrefs.SetBool(PREF_KEY, true);
         }
       };
     }
 
-    [MenuItem("Infinite Labyrinth/Combat/2. Cấu Hình Slash Trail & Hit Impact VFX Cho Kiếm Player (1-Click)", false, 2)]
+    [MenuItem("Infinite Labyrinth/Combat/2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click)", false, 2)]
     public static void SetupPlayerSlashVfx()
     {
-      Debug.Log("<color=cyan>=== BẮT ĐẦU CẤU HÌNH SWORD SLASH TRAIL & HIT IMPACT CHO PLAYER ===</color>");
+      Debug.Log("<color=cyan>=== BẮT ĐẦU CẤU HÌNH SWORD SLASH TRAIL, HIT IMPACT & PARRY VFX CHO PLAYER ===</color>");
 
       // 1. Tìm Prefab Slash VFX
       GameObject slashVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PRIMARY_SLASH_VFX_PATH);
@@ -67,24 +70,35 @@ namespace InfiniteLabyrinth.Editor
         impactVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SOURCE_IMPACT_VFX_PATH);
       }
 
+      // 3. Tìm Prefab Parry VFX
+      GameObject parryVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PRIMARY_PARRY_VFX_PATH);
+      if (parryVfxPrefab == null)
+      {
+        parryVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RESOURCES_PARRY_VFX_PATH);
+      }
+
       Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Slash VFX: {slashVfxPrefab.name}</color>");
       if (impactVfxPrefab != null)
       {
         Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Hit Impact VFX: {impactVfxPrefab.name}</color>");
       }
+      if (parryVfxPrefab != null)
+      {
+        Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Parry VFX: {parryVfxPrefab.name}</color>");
+      }
 
-      // 3. Cấu hình trên Player Prefab
-      bool prefabSuccess = SetupPlayerPrefab(slashVfxPrefab, impactVfxPrefab);
+      // 4. Cấu hình trên Player Prefab
+      bool prefabSuccess = SetupPlayerPrefab(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab);
 
-      // 4. Cấu hình Scene Instance nếu có trong Scene đang mở
-      SetupSceneInstances(slashVfxPrefab, impactVfxPrefab);
+      // 5. Cấu hình Scene Instance nếu có trong Scene đang mở
+      SetupSceneInstances(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab);
 
       AssetDatabase.SaveAssets();
       AssetDatabase.Refresh();
 
       if (prefabSuccess)
       {
-        Debug.Log("<color=green>=== HOÀN TẤT! ĐÃ GẮN PLAYER SLASH & HIT IMPACT VFX THÀNH CÔNG VÀO PLAYER PREFAB ===</color>");
+        Debug.Log("<color=green>=== HOÀN TẤT! ĐÃ GẮN PLAYER SLASH, HIT IMPACT & PARRY VFX THÀNH CÔNG VÀO PLAYER PREFAB ===</color>");
       }
       else
       {
@@ -92,7 +106,7 @@ namespace InfiniteLabyrinth.Editor
       }
     }
 
-    private static bool SetupPlayerPrefab(GameObject slashVfxPrefab, GameObject impactVfxPrefab)
+    private static bool SetupPlayerPrefab(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab)
     {
       GameObject playerAsset = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_PREFAB_PATH);
       if (playerAsset == null)
@@ -152,6 +166,20 @@ namespace InfiniteLabyrinth.Editor
           }
         }
 
+        // Cấu hình Parry VFX cho PlayerFeedback trên Player
+        PlayerFeedback feedback = root.GetComponent<PlayerFeedback>();
+        if (feedback != null && parryVfxPrefab != null)
+        {
+          SerializedObject soFeedback = new SerializedObject(feedback);
+          SerializedProperty propParry = soFeedback.FindProperty("parryVfxPrefab");
+          if (propParry != null)
+          {
+            propParry.objectReferenceValue = parryVfxPrefab;
+            soFeedback.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[PlayerSlashVfxSetup] + Đã cấu hình Parry VFX cho PlayerFeedback trên Player.prefab");
+          }
+        }
+
         // Đồng bộ liên kết vào PlayerCombat (nằm trên con MainModel của Player)
         PlayerCombat combat = root.GetComponentInChildren<PlayerCombat>(true);
         if (combat != null)
@@ -172,7 +200,7 @@ namespace InfiniteLabyrinth.Editor
       return true;
     }
 
-    private static void SetupSceneInstances(GameObject slashVfxPrefab, GameObject impactVfxPrefab)
+    private static void SetupSceneInstances(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab)
     {
       PlayerCombat[] scenePlayers = Object.FindObjectsByType<PlayerCombat>(FindObjectsSortMode.None);
       if (scenePlayers == null || scenePlayers.Length == 0) return;
@@ -226,6 +254,19 @@ namespace InfiniteLabyrinth.Editor
           {
             propImpact.objectReferenceValue = impactVfxPrefab;
             soWeapon.ApplyModifiedPropertiesWithoutUndo();
+          }
+        }
+
+        // Cấu hình PlayerFeedback trong Scene
+        PlayerFeedback sceneFeedback = rootGo.GetComponent<PlayerFeedback>();
+        if (sceneFeedback != null && parryVfxPrefab != null)
+        {
+          SerializedObject soFeedback = new SerializedObject(sceneFeedback);
+          SerializedProperty propParry = soFeedback.FindProperty("parryVfxPrefab");
+          if (propParry != null)
+          {
+            propParry.objectReferenceValue = parryVfxPrefab;
+            soFeedback.ApplyModifiedPropertiesWithoutUndo();
           }
         }
 
@@ -350,6 +391,14 @@ namespace InfiniteLabyrinth.Editor
       if (GUILayout.Button("💥 Test Thử Hit Impact VFX (Chém Trúng Đích)", GUILayout.Height(30)))
       {
         slashScript.TestImpact();
+      }
+      GUI.backgroundColor = Color.white;
+
+      EditorGUILayout.Space(4);
+      GUI.backgroundColor = new Color(0.35f, 0.85f, 1f);
+      if (GUILayout.Button("🛡️ Test Thử Parry VFX (Gạt Đòn Lưỡi Kiếm)", GUILayout.Height(30)))
+      {
+        slashScript.TestParry();
       }
       GUI.backgroundColor = Color.white;
 

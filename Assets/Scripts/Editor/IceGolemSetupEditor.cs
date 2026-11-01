@@ -221,10 +221,12 @@ namespace InfiniteLabyrinth.EditorTools
 
                 SerializedObject soController = new SerializedObject(controller);
 
-                // Tìm Animator trên IceGolemModel
+                // Tìm Animator trên IceGolemModel và tắt applyRootMotion để chống lệch model khỏi Hitbox và VFX
                 Animator anim = root.GetComponentInChildren<Animator>();
                 if (anim != null)
                 {
+                    anim.applyRootMotion = false;
+                    anim.transform.localPosition = Vector3.zero;
                     soController.FindProperty("anim").objectReferenceValue = anim;
                 }
 

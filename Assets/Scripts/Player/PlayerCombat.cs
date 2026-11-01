@@ -14,6 +14,7 @@ public class PlayerCombat : MonoBehaviour
 
   [Header("Weapon & Damage Settings")]
   [SerializeField] private WeaponHitbox weaponHitbox;
+  public WeaponHitbox WeaponHitbox => weaponHitbox;
   [SerializeField] private float attack1Damage = 15f;
   [SerializeField] private float attack2Damage = 20f;
   [SerializeField] private float attack3Damage = 35f;

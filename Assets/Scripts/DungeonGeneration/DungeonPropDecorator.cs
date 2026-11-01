@@ -271,6 +271,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
   public List<GameObject> breakableBarrelPrefabs = new List<GameObject>();
   public GameObject regularChestPrefab;
   public GameObject goldChestPrefab;
+  public GameObject bossChestPrefab;
   [Header("Prefabs Mẫu Kiến Trúc & Tiểu Cảnh (Templates)")]
   public List<GameObject> wallTemplatePrefabs = new List<GameObject>();
   public List<GameObject> propTemplatePrefabs = new List<GameObject>();
@@ -480,9 +481,13 @@ public partial class DungeonPropDecorator : MonoBehaviour
         {
           regularChestPrefab = go;
         }
-        else if (n == "Interactive_Chest_Gold")
+        else if (n == "Interactive_Chest_Gold" || n == "Interactive_Chest_Rare")
         {
           goldChestPrefab = go;
+        }
+        else if (n == "Interactive_Chest_Boss")
+        {
+          bossChestPrefab = go;
         }
       }
     }

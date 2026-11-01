@@ -168,8 +168,13 @@
     + [`WeaponHitbox.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/WeaponHitbox.cs) tự động kích nổ `Impact VFX` ngay tại `hitPoint` (điểm tiếp xúc va chạm thực tế) khi chém trúng đối tượng có HP (Layer `Enemy` & `Damageable`, có `IDamageable`/`Health`).
     + Tự động kích hoạt đồng loạt mọi `ParticleSystem` con (kể cả root có `playOnAwake = false`), góc tứa ngược chiều chém (`-hitDirection`).
     + Bổ sung nút bấm `[ 💥 Test Thử Hit Impact VFX ]` ngay trên Custom Inspector [`PlayerSlashVFXEditor`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs).
+  - **Hiệu Ứng Tóe Lửa Gạt Đòn Parry (Parry Clashing Spark VFX - `PlayerFeedback.cs`, `Parry VFX.prefab`):**
+    + Khi người chơi giơ thế thủ (RMB) và đón đỡ thành công đòn đánh của quái trong khung giờ vàng (`parryWindowDuration = 0.28s`), [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs) kích hoạt `ExecuteParrySuccess`.
+    + **Định Vị Điểm Chạm Giữa Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (`swordTransform.TransformPoint(box.center)` với local center Y = 0.81m) kèm bù trừ `parryBladeOffset`, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
+    + Kết hợp cùng Hitlag khựng hình 0.2s, Camera zoom cận cảnh (`TriggerParryZoom`) và làm choáng kẻ tấn công để mở cửa sổ Counter Attack.
+    + Bổ sung nút bấm `[ 🛡️ Test Thử Parry VFX (Gạt Đòn Lưỡi Kiếm) ]` trực quan trên Inspector [`PlayerSlashVFX`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerSlashVFX.cs).
   - **Công Cụ Tự Động Hóa Unity Editor 1-Click & Custom Inspector:**
-    + [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash Trail & Hit Impact VFX Cho Kiếm Player (1-Click)`.
+    + [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click)`.
     + Custom Inspector cho `PlayerSlashVFX` với 6 nút Test chém trực quan và Gizmos vẽ trước mặt phẳng chém trong Scene View.
 
 - [ ] **D-02: Cơ chế Boss Arena tại Boss Room** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
@@ -205,7 +210,66 @@
       + Pha 5: Kéo camera trượt êm ái (EaseInOut) từ đấu trường quay về sau vai Player, mở lại toàn bộ quyền điều khiển và kích hoạt Boss vào trạng thái chiến đấu.
     - **Tự Động Hóa 1-Click Unity Editor & Runtime:** Tích hợp menu `Infinite Labyrinth -> Boss -> 7. Cấu Hình Cutscene Intro & Boss HUD (Task D02-4)` và cơ chế `[RuntimeInitializeOnLoadMethod]` tự động khởi chạy mượt mà ngay khi bấm Play Mode.
   - [ ] **D02-5: Hoàn Tất Chiến Thắng (Victory Fanfare), Rơi Thưởng Đại Lượng & Cổng Dịch Chuyển Tầng Kế:**
-    - Hiển thị biểu ngữ 'VICTORY ACHIEVED', nổ tung vàng/đồ quý, mở lại cửa và kích hoạt Cổng Dịch Chuyển lựa chọn Về Làng hoặc Xuống Tầng 2.
+    - [x] **D02-5A: Hệ Thống 3 Cấp Độ Rương & VFX Tia Sáng Mở Nắp (Chest Tiers & Opening Light Rays VFX):**
+      + Chuẩn hóa 3 Prefabs rương hoàn chỉnh tại `Assets/Prefabs/RPG/`:
+        * 🟢 `Interactive_Chest` (Rương Thường): Model `chest.fbx`, chùm tia sáng màu Xanh Lá (`#22C55E`), Point Light xanh dịu.
+        * 🟣 `Interactive_Chest_Rare` (Rương Hiếm): Model `chest_gold.fbx`, chùm tia sáng màu Tím Thần Bí (`#A855F7`), Point Light tím.
+        * 🟡 `Interactive_Chest_Boss` (Rương Boss): Model `chest_gold.fbx` phóng to (Scale 1.35x), chùm tia sáng màu Vàng Kim Thánh Quang (`#F59E0B`), Point Light vàng kim.
+      + Hệ thống Particle System Tia Sáng mở nắp kết hợp 3 tầng: Chớp sáng lóa bùng nổ (`Flash Flare` qua Point Light pulse) + Luồng tia sáng nón vươn cao (`Rays` - Conical Light Beams) + Hạt sao lấp lánh (`Stars` - Star Sparkles) + Vòng hào quang (`Circles`).
+      + Nâng cấp [`ChestInteractable.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Inventory/ChestInteractable.cs):
+        * Tự động nhận diện child `OpenVFX` và tắt hoàn toàn khi rương đóng (`m_IsActive: 0`).
+        * Đồng bộ mở nắp (`openEulerOffset: -120°`) và kích nổ tia sáng khi nắp vừa hé mở (`vfxDelay = 0.05s`).
+        * Coroutine `FlashLightRoutine` tạo hiệu ứng chớp sáng bùng nổ (1.75x peak intensity) rồi dịu về base intensity.
+        * Hỗ trợ Custom Editor [`ChestInteractableEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/ChestInteractableEditor.cs) với 2 nút test `[ 🔓 Mở Rương ]` và `[ 🔒 Đóng Lại ]` trực quan trong Play Mode.
+      + Cập nhật [`DungeonLightOptimizer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonLightOptimizer.cs): Miễn nhiễm culling cho đèn và hạt của `ChestInteractable` và `WorldItemPickup`.
+      + Cập nhật [`DungeonPropDecorator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonPropDecorator.cs): Nạp tự động `regularChestPrefab`, `goldChestPrefab` (hỗ trợ `Interactive_Chest_Rare`), và `bossChestPrefab` (chuẩn bị cho D02-5C).
+    - [x] **D02-5B: Đạo Diễn Chiến Thắng Boss & Biểu Ngữ "VICTORY ACHIEVED" (Boss Victory Cinematic & Banner):**
+      + Xây dựng bộ điều phối [`BossVictoryDirector.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Interaction/BossVictoryDirector.cs):
+        * Lắng nghe sự kiện kết liễu `IceGolemController.OnBossDefeated` khi Boss tụt về 0 HP (hoặc phím K trong Play Mode).
+        * Khựng hình Hitlag 0.22s (`timeScale = 0.05f`) tôn vinh đòn kết liễu Souls-like -> Tạm khóa điều khiển Player (`PlayerController`, `PlayerCombat`).
+        * Chuyển mượt mà Camera tới góc 3/4 mạn phải trên đầu Boss (cự ly 7.0m, cao 3.5m, nghiêng 45°), kết hợp camera drift chậm trong lúc Boss phát hoạt ảnh ngã gục `Dead` xuống sàn đấu trường.
+        * Đồng bộ làm mờ dần thanh máu Boss trên HUD (`FadeOutOnDeathRoutine`).
+      + Diễn hoạt biểu ngữ hoàng kim Souls-like **`VICTORY ACHIEVED`** (`BossVictoryBanner` trong `EnemyCanvas`):
+        * Tự động quét và liên kết `CanvasGroup`, `Image` (Banner) và `TextMeshProUGUI` (Text), đảm bảo Text luôn hiển thị phía trên Banner.
+        * Fade In và nở nhẹ (Scale 0.88 -> 1.0) trong 0.7s, hiệu ứng thở nhẹ (Breathing Scale 1.025x), giữ sáng rực rỡ 2.2s rồi Fade Out êm ái 1.0s.
+        * Phát âm thanh chuông ngân / hợp xướng chiến thắng (Victory Fanfare) khi mở biểu ngữ.
+      + Khôi phục Camera và quyền điều khiển Player sau khi biểu ngữ tắt (cung cấp event `OnVictoryBannerComplete` sẵn sàng kết nối Task D02-5C).
+      + Tích hợp Custom Editor [`BossVictoryDirectorEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/BossVictoryDirectorEditor.cs) với MenuItem 1-Click: `Infinite Labyrinth -> Boss -> 8. Cấu Hình Đạo Diễn Chiến Thắng & Victory Banner (Task D02-5B)` và 2 nút Test trực quan trong Play Mode.
+    - [x] **D02-5C: Sinh Rương Boss & Cổng Dịch Chuyển Trên Bục Đá 12m (Pedestal Spawner & Massive Loot Drop):**
+      + **Đạo Diễn Điện Ảnh Lia Cam Lên Bục Đá 12m (`BossVictoryDirector.cs`):**
+        * Ngay khi biểu ngữ "VICTORY ACHIEVED" mờ dần, camera trượt mượt mà (`panToPedestalDuration = 1.6f`, `SmoothStep`) từ góc gục của Boss hướng lên đài cao 12m của `BossArena_Pedestal` ở vách Bắc.
+        * Thiết lập góc máy tôn vinh (`pedestalCamLocalOffset: (3.5m, 2.8m, -14.0m)`) bao trọn sàn tế đàn đá cổ kính, ngắm trọn vẹn cả Rương Boss ở tiền cảnh và Cổng Dịch Chuyển ở hậu cảnh.
+      + **Khoảnh Khắc Giáng Thế & Cột Sáng Thần Thánh (Socket Spawner & Divine Flare):**
+        * Tự động quét và định vị chính xác 2 socket trên đỉnh bục: `[BossChest_Socket]` (Z = 3.95m) và `[Portal_Socket]` (Z = 9.0m).
+        * Đồng loạt sinh `Interactive_Chest_Boss.prefab` và `portal.prefab` (`VictoryPortal`), xoay mặt về hướng Nam đón chào Player.
+        * Kích hoạt cột hào quang vàng rực rỡ (`PedestalSpawnFlareRoutine` - Point Light range 24m, intensity 8.5f tỏa sáng rồi mờ dần 1.8s) kèm âm thanh giáng thế uy nghiêm.
+        * Camera giữ ngắm bục với hiệu ứng trôi chậm điện ảnh (`pedestalHoldDuration = 2.2f`, `cinematicDriftSpeed`) trước khi trượt mượt mà quay về sau lưng Player (`returnToPlayerDuration = 1.5f`) và khôi phục toàn bộ quyền điều khiển.
+      + **Khắc Phục Lỗi Reset Episode ML-Agents Khi Boss Tử Trận (`IceGolemAgent.cs` & `Boss_IceGolem.prefab`):**
+        * Triệt tiêu hiện tượng Boss hồi sinh lại trên bục đá và Player bị dịch chuyển ngược về phòng khởi đầu khi Boss chết.
+        * Nguyên nhân: Script huấn luyện ML-Agents `IceGolemAgent` trước đó bật mặc định `respawnBossOnDeath = true`, tự động kích hoạt `DelayedEpisodeReset(1.2f) -> EndEpisode()` đưa Boss và Player về tọa độ ban đầu.
+        * Khắc phục: Đưa `respawnBossOnDeath = false` (trong cả code lẫn prefab `Boss_IceGolem.prefab`), tự động phát hiện `DungeonManager` để vô hiệu hóa hoàn toàn cơ chế reset episode trong màn chơi thực tế; khi Boss ngã xuống sẽ tắt agent và giữ nguyên xác trên sàn đấu trường.
+      + **Cấu Hình Cơn Mưa Chiến Lợi Phẩm Rương Boss (`Interactive_Chest_Boss`):**
+        * Thiết lập bảng rơi đồ hoàng kim: Rơi 100% 2-4 Bình Máu lớn, 2-5 Đá Nâng Cấp, Kiếm Xương, Giáp Da và từ **150 đến 300 Vàng**.
+        * Kích hoạt cơ chế quạt đồ hình nón phía trước (`useForwardCone = true`, `dropConeAngle = 130°`), tung chiến lợi phẩm bung tỏa đều trên mặt sàn bục đá ngay trước mắt người chơi.
+      + **Tích Hợp MenuItem Unity Editor 1-Click:**
+        * `Infinite Labyrinth -> Boss -> 9. Cấu Hình Đạo Diễn Sinh Rương & Cổng Bục Đá (Task D02-5C)` tự động kiểm tra và thiết lập tham chiếu prefabs hoàn chỉnh.
+      + **Khắc Phục Lỗi Lệch Model Boss Về Phía Trước So Với Hitbox & VFX (`IceGolemController.cs` & `Boss_IceGolem.prefab`):**
+        * Triệt tiêu hiện tượng 3D mesh model của Boss bị trôi/đẩy về phía trước một khoảng xa so với CapsuleCollider (hitbox) và Body Aura Light (VFX).
+        * **Nguyên nhân cốt lõi:**
+          - Model `IceGolemModel` là đối tượng con (child) của GameObject gốc `Boss_IceGolem` và mang component `Animator`.
+          - Mặc định Unity bật `applyRootMotion = true` trên Humanoid Animator. Khi các hoạt cảnh có Root Motion phát (nhất là `JumpingDown.anim` nhảy tiếp đất từ bục với độ dịch chuyển `RootT.z` lên tới `+0.46m`, `RunAttack.fbx` với `RootT.z = +0.375m`, hoặc `Attack`), Unity tự động áp lực di chuyển Root Motion vào `IceGolemModel.transform.localPosition` dọc trục Z thay vì di chuyển GameObject cha.
+          - Trong khi đó, toàn bộ việc di chuyển của Boss trong `IceGolemController` đã được điều khiển 100% bằng script (`transform.position += ...`), không hề cần Root Motion.
+          - Kết quả: Model bị trôi về phía trước dọc trục Z, trong khi Hitbox (`CapsuleCollider`) và VFX (`Boss_Aura_Light`) vẫn nằm cố định trên GameObject cha.
+        * **Khắc phục triệt để:**
+          - Tắt hoàn toàn `applyRootMotion = false` trong code [`IceGolemController.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Characters/Boss/Script_Boss/IceGolemController.cs) tại `Awake()`, `Start()`, `OnEnable()`, `SetStandbyOnPedestal()`, `WeakenRoutine()`, `PedestalJumpDownRoutine()`, `JumpDownRoutine()`, `JumpAttackRoutine()` và `RunAttackRoutine()`.
+          - Thêm `LateUpdate()` trong `IceGolemController.cs`: Tự động khóa chặt `anim.transform.localPosition.x = 0` và `anim.transform.localPosition.z = 0` ngay sau bước tính toán hoạt cảnh của Unity mỗi frame, bảo đảm Model visual luôn luôn đồng trục 100% với Root Collider và VFX.
+          - Cấu hình tường minh `m_ApplyRootMotion: 0` trên Animator component trong Prefab [`Boss_IceGolem.prefab`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Characters/Boss/IceGolem/Boss_IceGolem.prefab) và đồng bộ trong [`IceGolemSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/IceGolemSetupEditor.cs).
+    - [ ] **D02-5D: Giao Diện Lựa Chọn Cổng Dịch Chuyển 2 Cửa Sổ (Portal Choice UI - Return to Haven / Floor 2 / Stay):**
+      + Tạo prefab UI `VictoryPortalChoiceUI.prefab`:
+        * 🏡 **Cửa sổ Bên Trái (Về Làng):** Background ảnh Làng Haven Village, tiêu đề *"TRỞ VỀ NGÔI LÀNG"*, mô tả lưu toàn bộ chiến lợi phẩm, tăng ngày `CurrentDay + 1`. Cơ chế **Giữ 2.0s để xác nhận (Hold to Confirm)** với thanh/vòng tròn HoldFill tiến trình.
+        * ⚔️ **Cửa sổ Bên Phải (Tiến Vào Tầng 2):** Background ảnh Hầm ngục Dungeon tăm tối, tiêu đề *"TIẾN VÀO TẦNG KẾ"*, mô tả giữ nguyên đồ, thử thách khắc nghiệt hơn với loot giá trị hơn. Cơ chế **Giữ 2.0s để xác nhận**.
+        * 🚪 **Nút "STAY" ở giữa bên dưới:** Click hoặc bấm [ESC] đóng UI ngay lập tức để Player tự do ở lại gom nhặt nốt đồ trong hầm ngục. Khi sẵn sàng, chỉ cần tương tác lại với Cổng để mở bảng.
+      + Tích hợp chuyển Scene qua [`LoadingScreenManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenManager.cs) để nạp cảnh kèm hiệu ứng chuyển cảnh mượt mà, mẹo sinh tồn và ảnh nền.
 
 ---
 

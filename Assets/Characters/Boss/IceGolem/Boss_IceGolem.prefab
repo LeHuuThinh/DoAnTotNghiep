@@ -142,7 +142,7 @@ Transform:
   m_GameObject: {fileID: 8850410555655432218}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 235.16293, y: 19.91457, z: 92.77542}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -501,7 +501,7 @@ MonoBehaviour:
   whiffAttackPenalty: -0.4
   takeDamagePenalty: -0.8
   deathPenalty: -3
-  respawnBossOnDeath: 1
+  respawnBossOnDeath: 0
   lockNormalSpeed: 1
 --- !u!114 &7629390967331010991
 MonoBehaviour:
@@ -710,6 +710,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: f376a4160334de74db1bfc86fa1d2eb4, type: 2}
+    - target: {fileID: 5866666021909216657, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6476668869268357951, guid: b5b9b67da9c37804daa64ac364bda5f3, type: 3}
       propertyPath: m_Layer
       value: 9

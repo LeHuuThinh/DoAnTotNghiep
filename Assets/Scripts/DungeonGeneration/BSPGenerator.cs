@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BSPGenerator : MonoBehaviour
 {
@@ -45,6 +45,8 @@ public class BSPGenerator : MonoBehaviour
   [Header("Cài đặt Cửa Khởi Đầu")]
   public Transform startDoorMarker;
   public float tileSize = 2f;
+  [Tooltip("Khoảng cách tối thiểu (tile) từ cửa khởi đầu tới mép gần nhất của phòng được chọn nối. Ngăn phòng spawn quá sát rìa vùng khởi đầu. 4m / tileSize=2 = 2 tiles.")]
+  public int startRoomMinGapTiles = 2;
 
   [Header("Cài đặt Tầng 2 (Gác Lửng Mezzanine)")]
   public MezzanineSettings mezzanineSettings = new MezzanineSettings();
@@ -402,12 +404,26 @@ public class BSPGenerator : MonoBehaviour
   void ConnectStartRoom(DungeonData data)
   {
     if (data.rooms.Count == 0 || startDoorMarker == null) return;
-    Vector2Int gridDoorPos = new Vector2Int(Mathf.FloorToInt(startDoorMarker.position.x / tileSize), Mathf.FloorToInt(startDoorMarker.position.z / tileSize));
-    RectInt closestRoom = data.rooms[0];
+    Vector2Int gridDoorPos = new Vector2Int(
+      Mathf.FloorToInt(startDoorMarker.position.x / tileSize),
+      Mathf.FloorToInt(startDoorMarker.position.z / tileSize));
+
+    RectInt closestRoom = default;
     float minDistance = float.MaxValue;
 
+    // --- Lần 1: tìm phòng gần nhất NHƯNG mép gần nhất phải cách cửa khởi đầu >= startRoomMinGapTiles ---
     foreach (RectInt room in data.rooms)
     {
+      if (room.Equals(data.bossRoomBounds)) continue;
+
+      // Tính khoảng cách từ gridDoorPos tới mép gần nhất của phòng (không phải tâm)
+      int nearestEdgeX = Mathf.Clamp(gridDoorPos.x, room.x, room.x + room.width - 1);
+      int nearestEdgeY = Mathf.Clamp(gridDoorPos.y, room.y, room.y + room.height - 1);
+      float edgeDist = Vector2Int.Distance(gridDoorPos, new Vector2Int(nearestEdgeX, nearestEdgeY));
+
+      // Bỏ qua phòng có mép quá gần cửa khởi đầu
+      if (edgeDist < startRoomMinGapTiles) continue;
+
       Vector2Int roomCenter = new Vector2Int(room.x + room.width / 2, room.y + room.height / 2);
       float distance = Vector2.Distance(gridDoorPos, roomCenter);
       if (distance < minDistance)
@@ -416,6 +432,27 @@ public class BSPGenerator : MonoBehaviour
         closestRoom = room;
       }
     }
+
+    // --- Fallback: nếu tất cả phòng đều quá gần, lấy phòng gần nhất không điều kiện ---
+    if (closestRoom.width == 0)
+    {
+      Debug.LogWarning("[BSPGenerator] ConnectStartRoom: Không tìm được phòng nào đủ khoảng cách tối thiểu " +
+                       $"({startRoomMinGapTiles} tiles). Dùng phòng gần nhất không điều kiện.");
+      minDistance = float.MaxValue;
+      foreach (RectInt room in data.rooms)
+      {
+        if (room.Equals(data.bossRoomBounds)) continue;
+        Vector2Int roomCenter = new Vector2Int(room.x + room.width / 2, room.y + room.height / 2);
+        float distance = Vector2.Distance(gridDoorPos, roomCenter);
+        if (distance < minDistance)
+        {
+          minDistance = distance;
+          closestRoom = room;
+        }
+      }
+    }
+
+    if (closestRoom.width == 0) return;
 
     // Điểm cắm vào mép dưới phòng gần nhất (Y = closestRoom.y), TUYỆT ĐỐI không đi sâu vào lòng phòng!
     int halfThick = corridorThickness / 2;

@@ -123,9 +123,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   * **Năng lượng Chiêu thức (Spirit / Focus):** Max 150. **Không tự hồi**, chỉ tích lũy khi chém trúng quái (+12 thường, +30 gồng, +35 counter, +40 parry chuẩn). Tiêu hao cho kỹ năng:
     * **Phím E:** Sóng kiếm chém xa (`ProjectileSlash.cs`, tốn 50 Spirit).
     * **Phím Q:** Phép nổ năng lượng diện rộng (`AoeSpell.cs`, tốn 100 Spirit).
-* **Cơ chế Đỡ đòn & Phản công (Parry & Counter - `PlayerCombat.cs`):**
+* **Cơ chế Đỡ đòn & Phản công (Parry & Counter - `PlayerCombat.cs` & `PlayerFeedback.cs`):**
   * Chuột phải (RMB) kích hoạt thế thủ với cửa sổ vàng `parryWindowDuration = 0.28s`.
-  * Parry trúng đòn: Hoàn trả thể lực, nạp mạnh Spirit, làm choáng đối thủ và mở ra đòn Counter sát thương cực lớn.
+  * **Hiệu Ứng Tóe Lửa Va Chạm Lưỡi Kiếm (`Parry VFX.prefab`):**
+    * Khi đòn đánh của quái chạm vào Player trong cửa sổ Parry, `Health.onCheckParryOrBlock` kích hoạt `PlayerFeedback.ExecuteParrySuccess`.
+    * **Định Vị Điểm Chạm Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (`swordTransform.TransformPoint(box.center)` với local center Y = 0.81m) kèm tùy biến bù trừ `parryBladeOffset`, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
+    * **Phản Hồi Thị Giác & Xung Lực:** Khựng hình Hitlag 0.2s (`parryHitlagDuration`), Camera zoom cận cảnh kịch tính (`TriggerParryZoom`), tia lửa vàng/trắng tóe ngược chiều cú chém của quái, ngắt chiêu đòn đánh và làm choáng kẻ tấn công.
+  * Parry trúng đòn: Hoàn trả thể lực, nạp mạnh Spirit (+40), làm choáng đối thủ và mở ra đòn Counter sát thương cực lớn.
 * **Cơ chế Né đòn & Di chuyển (`PlayerController.cs`):**
   * Phím Shift: Nhấn nhả (< 0.25s) để Lăn né với 0.45s thời gian bất tử (I-frames); Giữ (> 0.25s) để Sprint.
   * Khóa mục tiêu (Target Lock Souls-like): Camera tập trung vào mục tiêu, nhân vật chuyển sang thế vờn/bước ngang (`strafeSpeed`).
@@ -179,6 +183,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
      * **Khóa mục tiêu & Tự động hóa an toàn:**
        * Tự động phát hiện Player (`autoFindPlayer`), tự xoay mặt đối diện đối thủ (`alwaysFacePlayer`, `facePlayerOnAttack`, tốc độ `facePlayerSpeed = 240 deg/s`).
        * Cơ chế tự bảo vệ chống duplicate component trong `Awake()` và Menu dọn dẹp Scene Editor (`Infinite Labyrinth -> Boss -> 3. Dọn Dẹp Scene & Khắc Phục Lỗi Ice Golem`).
+     * **Đạo Diễn Điện Ảnh Chiến Thắng, Biểu Ngữ "VICTORY ACHIEVED" & Bục Đá 12m (`BossVictoryDirector.cs` - Task D02-5B & D02-5C):**
+       * Lắng nghe sự kiện `IceGolemController.OnBossDefeated` khi Boss cạn máu (hoặc phím K trong Play Mode).
+       * Khựng hình Hitlag 0.22s (`Time.timeScale = 0.05f`) tôn vinh nhát chém kết liễu, tạm khóa điều khiển Player.
+       * Camera Cinematic trượt mượt mà tới góc 3/4 mạn phải (cự ly 7.0m, cao 3.5m) ngắm Boss phát hoạt ảnh ngã gục `Dead` xuống sàn đấu trường kèm camera drift chậm.
+       * Biểu ngữ hoàng kim Souls-like `BossVictoryBanner` trong `EnemyCanvas` bừng sáng giữa màn hình (Fade In, Breathing Scale, giữ sáng 2.2s rồi Fade Out).
+       * **Đạo diễn Bục Đá 12m & Sinh Thưởng (Task D02-5C):** Ngay sau khi banner tắt, camera lia mượt mà lên đỉnh Bục Đá cao 12m (`BossArena_Pedestal`) ở vách Bắc; đồng loạt sinh Rương Boss (`Interactive_Chest_Boss`) và Cổng Dịch Chuyển (`VictoryPortal`) tại các socket `[BossChest_Socket]` và `[Portal_Socket]`; kích nổ cột sáng thần thánh (Point Light range 24m) và giữ camera ngắm bục 2.2s trước khi trượt êm ái quay về sau lưng Player và mở lại toàn bộ điều khiển.
+       * **Vô hiệu hóa Reset Episode ML-Agents:** Khóa cờ `respawnBossOnDeath = false` trên `IceGolemAgent.cs` và `Boss_IceGolem.prefab`, bảo đảm Boss nằm gục vĩnh viễn trên sàn khi tử trận và không vô tình reset episode khiến Boss quay lại bục hay Player bị dịch chuyển về phòng khởi đầu.
 
   2. **Trùm Lửa: Red Ignis (`Boss_RedIgnis.prefab` - The Crimson Duelist):**
      * **Định vị chiến đấu:** Kiếm sĩ tốc độ cao, phản xạ nhanh, áp sát chớp nhoáng, vờn đối thủ.
@@ -294,6 +305,11 @@ flowchart TD
 ### D. Phân Hệ Tiến Trình RPG (RPG Progression & Economy)
 1. **Hệ Thống Rơi Đồ Thế Giới (Loot Drop & World Drops):**
    * **Nguồn rơi đồ:** Quái vật chết (`Health.onDeath`), Thùng gỗ/hòm đập vỡ (`BreakableProp.cs` nhận đòn qua `IDamageable`), Rương kho báu mở (`ChestInteractable.cs`).
+   * **Hệ Thống 3 Cấp Độ Rương & VFX Tia Sáng Mở Nắp (Chest Tiers & Opening Light Rays):**
+     * **Rương Thường (`Interactive_Chest.prefab`):** Model rương gỗ cổ điển, phát chùm tia sáng xanh lá (`#22C55E`).
+     * **Rương Hiếm (`Interactive_Chest_Rare.prefab`):** Model viền vàng nạm ngọc, phát chùm tia sáng tím thần bí (`#A855F7`).
+     * **Rương Boss (`Interactive_Chest_Boss.prefab`):** Model rương hoàng kim đại thánh đường (scale 1.35x), phát chùm tia sáng vàng kim rực rỡ (`#F59E0B`).
+     * **Cơ chế tia sáng đa tầng (`OpenVFX`):** Gồm `Point Light` (Flash Flare bùng nổ khi hé nắp qua `FlashLightRoutine`), `Rays` (luồng tia sáng nón vươn cao), `Stars` (hạt sao lấp lánh) và `Circles` (vòng hào quang). Tự động kích hoạt đồng bộ khi nắp rương hé mở (`vfxDelay = 0.05s`) qua `ChestInteractable.cs`.
    * **Hiệu ứng vật lý văng đồ (Arc Pop Physics):** Vật phẩm búng nảy theo hình vòng cung parabol nhẹ khi xuất hiện (`LootDropper.cs`), tránh đè dính chùm.
    * **Vật phẩm thế giới (`WorldItemPickup.cs`):** Model 3D thu nhỏ, xoay lơ lửng, tia sáng hào quang nhẹ (Loot Beam/Glow) tương ứng theo độ hiếm.
    * **Tương tác nhặt đồ:** Player lại gần trong bán kính 2m hiển thị Pickup Prompt UI (Icon + Tên + Phím `[F]`). Tiền Vàng hỗ trợ cơ chế tự động bay hút (Magnetic Auto-pickup) khi lại gần.

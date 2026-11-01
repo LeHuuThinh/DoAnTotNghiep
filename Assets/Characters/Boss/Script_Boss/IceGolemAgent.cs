@@ -65,7 +65,7 @@ public class IceGolemAgent : Agent
 
     [Header("=== CÀI ĐẶT HỒI SINH (RESPAWN) ===")]
     [Tooltip("Nếu false, khi Boss chết sẽ nằm gục luôn trên sàn, KHÔNG hồi sinh để tiếp tục train")]
-    [SerializeField] private bool respawnBossOnDeath = true;
+    [SerializeField] private bool respawnBossOnDeath = false;
 
     [Header("=== ĐIỀU KHIỂN TỐC ĐỘ GAME (TIME SCALE) ===")]
     [Tooltip("Khóa tốc độ game ở mức 1x bình thường để người chơi kịp quan sát / tự đánh")]
@@ -91,6 +91,11 @@ public class IceGolemAgent : Agent
     private Vector3 playerVelocity;
 
     // Public properties để Arena Manager truy cập
+        public void SetRespawnOnDeath(bool enable)
+    {
+        respawnBossOnDeath = enable;
+    }
+
     public IceGolemController Controller => controller;
     public Health BossHealth => bossHealth;
     public Transform PlayerTarget => playerTransform;
@@ -99,6 +104,12 @@ public class IceGolemAgent : Agent
     {
         initialBossPosition = transform.position;
         initialBossRotation = transform.rotation;
+        // Trong chế độ chơi Dungeon / Campaign thực tế (có DungeonManager), luôn tắt tự động hồi sinh / reset episode
+        if (FindFirstObjectByType<DungeonManager>() != null)
+        {
+            respawnBossOnDeath = false;
+        }
+
         if (arenaCenter == Vector3.zero)
         {
             arenaCenter = initialBossPosition;
@@ -607,7 +618,10 @@ public class IceGolemAgent : Agent
     {
         AddReward(defeatPlayerReward); // +5.0
         Debug.Log("<color=cyan>[ML-Agents]</color> 🏆 BOSS CHIẾN THẮNG HIỆP ĐẤU! Thưởng +" + defeatPlayerReward);
-        StartCoroutine(DelayedEpisodeReset(1.2f));
+        if (respawnBossOnDeath)
+        {
+            StartCoroutine(DelayedEpisodeReset(1.2f));
+        }
     }
 
     private System.Collections.IEnumerator DelayedEpisodeReset(float delay)

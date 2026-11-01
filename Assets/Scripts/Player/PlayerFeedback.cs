@@ -17,6 +17,16 @@ public class PlayerFeedback : MonoBehaviour
   [SerializeField] private float poiseRecoveryRate = 35f;
 
   [Header("Parry Feedback Settings")]
+  [Tooltip("VFX tia lửa tóe ra khi gạt đòn (Parry) thành công ngay tại điểm chạm trên lưỡi kiếm")]
+  [SerializeField] private GameObject parryVfxPrefab;
+  [Tooltip("Thời gian tự hủy instance Parry VFX (giây)")]
+  [SerializeField] private float parryVfxDestroyDelay = 1.5f;
+  [Tooltip("Tỉ lệ phóng to/thu nhỏ của Parry VFX")]
+  [SerializeField] private float parryVfxScale = 1.0f;
+  [Tooltip("Độ lệch vị trí dọc theo chiều dài lưỡi kiếm (m) tính từ giữa lưỡi kiếm. Dương = tiến về đầu mũi kiếm, Âm = lùi về chuôi kiếm.")]
+  [SerializeField] private float parryBladeOffset = 0f;
+  [Tooltip("Âm thanh keng kim loại khi gạt kiếm thành công (tùy chọn)")]
+  [SerializeField] private AudioClip parrySfx;
   [Tooltip("Thời gian hitlag khựng hình khi Parry thành công (giây thực tế)")]
   [SerializeField] private float parryHitlagDuration = 0.2f;
   [Tooltip("Tốc độ thời gian khi khựng hitlag (0.05 = làm chậm 95%)")]
@@ -126,7 +136,7 @@ public class PlayerFeedback : MonoBehaviour
   {
     if (IsParrying)
     {
-      ExecuteParrySuccess(attacker);
+      ExecuteParrySuccess(attacker, hitPoint, hitDirection);
       return true; // Gạt đòn thành công -> Bỏ qua 100% sát thương, KHÔNG TRỪ MÁU!
     }
     return false;
@@ -205,7 +215,7 @@ public class PlayerFeedback : MonoBehaviour
     }
   }
 
-  public void ExecuteParrySuccess(Transform incomingAttacker = null)
+  public void ExecuteParrySuccess(Transform incomingAttacker = null, Vector3 hitPoint = default, Vector3 hitDirection = default)
   {
     Debug.Log("<color=yellow>[PARRY THÀNH CÔNG!] Keng!</color>");
 
@@ -275,7 +285,10 @@ public class PlayerFeedback : MonoBehaviour
       }
     }
 
-    // Báo cho PlayerCombat mở cửa sổ Counter Attack
+    // 4. KÍCH HOẠT PARRY VFX NGAY TẠI GIỮA LƯỠI KIẾM CỦA PLAYER
+    SpawnParryVfx(parriedEnemy);
+
+    // 5. Báo cho PlayerCombat mở cửa sổ Counter Attack
     if (playerCombat != null)
     {
       playerCombat.OnParrySuccess();
@@ -284,6 +297,139 @@ public class PlayerFeedback : MonoBehaviour
     {
       Debug.LogError("Chưa tìm thấy PlayerCombat trên Player!");
     }
+  }
+
+  /// <summary>
+  /// Sinh hiệu ứng tia lửa Parry VFX ngay tại vị trí GIỮA LƯỠI KIẾM của Player khi gạt đòn thành công.
+  /// </summary>
+  public void SpawnParryVfx(Transform attacker = null)
+  {
+    if (parryVfxPrefab == null)
+    {
+      // Fallback: Nạp từ thư mục Resources
+      parryVfxPrefab = Resources.Load<GameObject>("Parry VFX");
+      if (parryVfxPrefab == null)
+      {
+        parryVfxPrefab = Resources.Load<GameObject>("Impact VFX");
+      }
+      if (parryVfxPrefab == null) return;
+    }
+
+    Vector3 spawnPos = Vector3.zero;
+
+    // 1. Tìm thanh kiếm và Collider lưỡi kiếm của Player
+    Collider swordCollider = null;
+    Transform swordTransform = null;
+
+    if (playerCombat != null && playerCombat.WeaponHitbox != null)
+    {
+      swordCollider = playerCombat.WeaponHitbox.GetComponent<Collider>();
+      swordTransform = playerCombat.WeaponHitbox.transform;
+    }
+    else
+    {
+      WeaponHitbox hitbox = GetComponentInChildren<WeaponHitbox>(true);
+      if (hitbox != null)
+      {
+        swordCollider = hitbox.GetComponent<Collider>();
+        swordTransform = hitbox.transform;
+      }
+    }
+
+    // 2. Định vị vị trí chuẩn xác: GIỮA LƯỠI KIẾM (Center of Sword Blade)
+    if (swordCollider is BoxCollider box && swordTransform != null)
+    {
+      // Sử dụng trực tiếp tâm hình học của BoxCollider lưỡi kiếm (local center = 0.81m)
+      spawnPos = swordTransform.TransformPoint(box.center);
+      if (parryBladeOffset != 0f)
+      {
+        spawnPos += swordTransform.up * parryBladeOffset;
+      }
+    }
+    else if (swordCollider != null)
+    {
+      spawnPos = swordCollider.bounds.center;
+      if (swordTransform != null && parryBladeOffset != 0f)
+      {
+        spawnPos += swordTransform.up * parryBladeOffset;
+      }
+    }
+    else if (swordTransform != null)
+    {
+      // Vị trí giữa thân kiếm nhô lên phía trên chuôi kiếm (local Y ~ 0.81m)
+      spawnPos = swordTransform.position + swordTransform.up * (0.81f + parryBladeOffset);
+    }
+    else
+    {
+      // Failsafe tổng thể: Vị trí giơ kiếm đón đỡ ngang ngực/mắt phía trước người chơi
+      spawnPos = transform.position + transform.forward * 0.65f + Vector3.up * 1.35f;
+    }
+
+    // 3. Tính toán góc quay của tia lửa tóe ra (bắn văng về phía trước đối thủ)
+    Vector3 sparkDirection = Vector3.zero;
+    if (attacker != null)
+    {
+      sparkDirection = (attacker.position - transform.position);
+      sparkDirection.y = 0f;
+    }
+    else
+    {
+      sparkDirection = transform.forward;
+    }
+
+    if (sparkDirection.sqrMagnitude < 0.001f)
+    {
+      sparkDirection = transform.forward;
+    }
+    sparkDirection.Normalize();
+    sparkDirection.y = 0.15f; // Chếch nhẹ lên trên tạo độ văng tóe sống động
+    sparkDirection.Normalize();
+
+    Quaternion spawnRot = Quaternion.LookRotation(sparkDirection);
+
+    // 4. Sinh instance VFX và kích hoạt toàn bộ ParticleSystem con
+    GameObject vfxInstance = Instantiate(parryVfxPrefab, spawnPos, spawnRot);
+    if (Mathf.Abs(parryVfxScale - 1.0f) > 0.01f)
+    {
+      vfxInstance.transform.localScale = vfxInstance.transform.localScale * parryVfxScale;
+    }
+
+    ParticleSystem rootPs = vfxInstance.GetComponent<ParticleSystem>();
+    if (rootPs != null)
+    {
+      rootPs.Play(true);
+    }
+    else
+    {
+      foreach (ParticleSystem ps in vfxInstance.GetComponentsInChildren<ParticleSystem>())
+      {
+        ps.Play(true);
+      }
+    }
+
+    if (parrySfx != null)
+    {
+      AudioSource.PlayClipAtPoint(parrySfx, spawnPos);
+    }
+
+    if (parryVfxDestroyDelay > 0f)
+    {
+      Destroy(vfxInstance, parryVfxDestroyDelay);
+    }
+  }
+
+  /// <summary>
+  /// Overload tương thích ngược
+  /// </summary>
+  public void SpawnParryVfx(Vector3 hitPoint, Vector3 hitDirection, Transform attacker = null)
+  {
+    SpawnParryVfx(attacker);
+  }
+
+  [ContextMenu("🛡️ Test Parry VFX")]
+  public void TestParryVfx()
+  {
+    SpawnParryVfx(null);
   }
 
   public void TriggerHitlag(float duration, float scale = 0.05f)

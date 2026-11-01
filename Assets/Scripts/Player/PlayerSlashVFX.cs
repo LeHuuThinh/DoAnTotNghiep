@@ -493,6 +493,32 @@ public class PlayerSlashVFX : MonoBehaviour
     }
   }
 
+  [ContextMenu("🛡️ Test Parry VFX")]
+  public void TestParry()
+  {
+    PlayerFeedback feedback = GetComponentInChildren<PlayerFeedback>(true);
+    if (feedback == null && transform.root != null)
+    {
+      feedback = transform.root.GetComponentInChildren<PlayerFeedback>(true);
+    }
+
+    if (feedback != null)
+    {
+      feedback.TestParryVfx();
+    }
+    else
+    {
+      GameObject parryPrefab = Resources.Load<GameObject>("Parry VFX");
+      if (parryPrefab != null)
+      {
+        Transform root = slashSpawnRoot != null ? slashSpawnRoot : transform.root;
+        Vector3 testPos = root != null ? root.position + root.forward * 0.8f + Vector3.up * 1.15f : transform.position + Vector3.forward * 0.8f + Vector3.up * 1.15f;
+        GameObject inst = Instantiate(parryPrefab, testPos, Quaternion.identity);
+        Destroy(inst, 1.5f);
+      }
+    }
+  }
+
   /// <summary>
   /// Thiết lập Prefab mặc định từ code hoặc Editor Setup
   /// </summary>

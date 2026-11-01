@@ -562,6 +562,12 @@ public class IceGolemController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
+
         if (health == null)
         {
             health = GetComponent<Health>();
@@ -609,6 +615,11 @@ public class IceGolemController : MonoBehaviour
         {
             anim = GetComponentInChildren<Animator>();
         }
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
 
         rb = GetComponent<Rigidbody>();
         bossCollider = GetComponent<Collider>();
@@ -640,6 +651,12 @@ public class IceGolemController : MonoBehaviour
 
     void Start()
     {
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
+
         ApplyBossStats();
         if (enableBodyAuraLight)
         {
@@ -722,6 +739,20 @@ public class IceGolemController : MonoBehaviour
         HandleFacingPlayer();
 
         HandleNewInputSystem();
+    }
+
+    void LateUpdate()
+    {
+        // Khóa chặt model visual bám sát tâm Root GameObject (X=0, Z=0)
+        // Triệt tiêu mọi lực kéo Root Motion từ hoạt cảnh, đảm bảo Model, Hitbox và VFX luôn trùng khớp 100%
+        if (anim != null)
+        {
+            Vector3 cur = anim.transform.localPosition;
+            if (cur.x != 0f || cur.z != 0f)
+            {
+                anim.transform.localPosition = new Vector3(0f, cur.y, 0f);
+            }
+        }
     }
 
     /// <summary>
@@ -1100,14 +1131,14 @@ public class IceGolemController : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        bool prevRootMotion = anim != null && anim.applyRootMotion;
+        bool prevRootMotion = false;
         if (anim != null)
         {
-            anim.applyRootMotion = true;
+            anim.applyRootMotion = false;
         }
 
         Transform modelTransform = anim != null ? anim.transform : null;
-        Vector3 originalModelLocalPos = modelTransform != null ? modelTransform.localPosition : Vector3.zero;
+        Vector3 originalModelLocalPos = Vector3.zero;
 
         if (modelTransform != null && weakenVisualHeightOffset != 0f)
         {
@@ -1263,7 +1294,7 @@ public class IceGolemController : MonoBehaviour
 
         // 1. Kích hoạt hoạt cảnh chao đảo 50%HP
         Transform staggerModelTf = anim != null ? anim.transform : null;
-        Vector3 origStaggerLocalPos = staggerModelTf != null ? staggerModelTf.localPosition : Vector3.zero;
+        Vector3 origStaggerLocalPos = Vector3.zero;
 
         // Bu dap do cao model de triet tieu viec chan bi lun xuong dat khi chao dao 50% HP
         if (staggerModelTf != null && phase2StaggerVisualHeightOffset != 0f)
@@ -2252,6 +2283,11 @@ public class IceGolemController : MonoBehaviour
         }
 
         isRunAttacking = false;
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
         ApplyCombatPacing();
     }
 
@@ -3013,7 +3049,7 @@ public class IceGolemController : MonoBehaviour
         }
 
         Transform modelTransform = anim != null ? anim.transform : null;
-        Vector3 originalModelLocalPos = modelTransform != null ? modelTransform.localPosition : Vector3.zero;
+        Vector3 originalModelLocalPos = Vector3.zero;
 
         // Bù đắp độ cao model để triệt tiêu việc chân và thân bị lún xuống đất
         if (modelTransform != null && gumoVisualHeightOffset != 0f)
@@ -3593,6 +3629,12 @@ public class IceGolemController : MonoBehaviour
 
         transform.position = targetLandingPos;
 
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
+
         if (rb != null)
         {
             rb.isKinematic = originalKinematic;
@@ -3675,6 +3717,12 @@ public class IceGolemController : MonoBehaviour
         }
 
         transform.position = targetLandingPos;
+
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
 
         if (rb != null)
         {
@@ -4031,7 +4079,12 @@ public class IceGolemController : MonoBehaviour
                 rb.linearVelocity = Vector3.zero;
                 rb.isKinematic = true;
             }
-            if (anim != null) anim.SetFloat(SpeedHash, 0f);
+            if (anim != null)
+            {
+                anim.applyRootMotion = false;
+                anim.transform.localPosition = Vector3.zero;
+                anim.SetFloat(SpeedHash, 0f);
+            }
         }
         else
         {
@@ -4097,6 +4150,12 @@ public class IceGolemController : MonoBehaviour
         }
 
         transform.position = targetLandingPos;
+
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+            anim.transform.localPosition = Vector3.zero;
+        }
 
         if (rb != null)
         {

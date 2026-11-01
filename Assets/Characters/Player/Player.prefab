@@ -2129,6 +2129,11 @@ MonoBehaviour:
   maxPoise: 150
   poiseRecoveryDelay: 5
   poiseRecoveryRate: 30
+  parryVfxPrefab: {fileID: 1035977224672214417, guid: 2f89b4dc8b38c1946a8d2a55383a0260, type: 3}
+  parryVfxDestroyDelay: 1.5
+  parryVfxScale: 1
+  parryBladeOffset: 0
+  parrySfx: {fileID: 0}
   parryHitlagDuration: 0.2
   parryTimeScale: 0.05
   hitVfxPrefab: {fileID: 6823200998282874702, guid: 5eb0f2b3596c4364187316482650f753, type: 3}

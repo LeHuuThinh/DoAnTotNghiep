@@ -56,6 +56,13 @@ public class DungeonLightOptimizer : MonoBehaviour
       Light l = lights[i];
       if (l == null) continue;
 
+      // Bỏ qua đèn thuộc đối tượng tương tác (Rương báu, item pickup) để tránh bật/tắt nhầm
+      if (l.GetComponentInParent<InfiniteLabyrinth.Inventory.ChestInteractable>() != null ||
+          l.GetComponentInParent<InfiniteLabyrinth.Inventory.WorldItemPickup>() != null)
+      {
+        continue;
+      }
+
       // Tìm gốc ngọn đuốc / đèn (thường là parent hoặc grandparent dưới nhóm Lights)
       Transform root = l.transform;
       while (root.parent != null &&
@@ -88,6 +95,13 @@ public class DungeonLightOptimizer : MonoBehaviour
     {
       ParticleSystem ps = allParticles[i];
       if (ps == null || registeredParticles.Contains(ps)) continue;
+
+      // Bỏ qua hạt thuộc đối tượng tương tác (Rương báu, item pickup)
+      if (ps.GetComponentInParent<InfiniteLabyrinth.Inventory.ChestInteractable>() != null ||
+          ps.GetComponentInParent<InfiniteLabyrinth.Inventory.WorldItemPickup>() != null)
+      {
+        continue;
+      }
 
       ManagedLightSource src = new ManagedLightSource
       {
