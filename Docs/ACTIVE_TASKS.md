@@ -308,6 +308,28 @@
   - Khắc phục triệt để lỗi vật lý tà áo `UnityChanSpringBone`: Dọn sạch mảng null (19 -> 12 xương), gỡ bỏ 4 xương ngọn leaf bones lỗi, vô hiệu hóa khóa góc xoay và sàn ảo ảo giác, viết tool tự động `SpringManagerHelper.cs`.
   - Khắc phục lỗi lún đất & co ngắn chiều cao: Ánh xạ chuẩn xương `Hips -> mixamorig:Hips` trong `RedIgnis.fbx`, chuẩn hóa hoạt ảnh bước đi `Ignis_Walk.fbx` với `Based Upon = Feet / Center of Mass` và bù trừ cao độ Offset Y.
   - Tích hợp Vũ khí Kiếm Siu Nhân Đỏ (`KiemSiuNhanDo.fbx`): Cài đặt Import Settings chuẩn vật thể tĩnh (`Animation Type: None`), gắn vào lòng bàn tay phải qua `RightHand_Socket` trên xương `mixamorig:RightHand`.
+  - Bộ công cụ cân chỉnh kiếm & chuẩn hóa T-Pose (`IgnisWeaponAligner.cs`): Giải quyết góc lệch -45.8° xương cổ tay FBX gốc, chuẩn hóa T-Pose tuyệt đối qua `HumanPoseHandler` (muscles = 0), cố định vị trí socket `Hand_R_Weapon` (pos: `0.175, 0.094, -0.074`, rot: `Euler(-0.953, -53.529, 83.786)`), bảo toàn 100% tỷ lệ Scale kiếm `{0.8, 0.8, 1.0}` do người dùng tinh chỉnh.
+
+- [x] **BOSS-03: Bộ Điều Khiển Chiến Đấu Trùm Red Ignis (`RedIgnisController.cs`, `Ignis_animator.controller` & Bộ VFX Độc Lập)** *(HOÀN THÀNH)*
+  - **Lập trình `RedIgnisController.cs` (Kế thừa kiến trúc chuẩn `IceGolemController.cs`):**
+    + *Bảng thông số sinh tồn:* Máu `bossMaxHealth = 1200`, Poise `maxPoise = 400` kèm trạng thái choáng vỡ thế `WeakenRoutine` (2.5s), tự động đồng bộ vào component `Health`.
+    + *Động cơ di chuyển (Locomotion Engine):* Hỗ trợ phím mũi tên bàn phím (Arrow Keys: Up/Down/Left/Right) lẫn API `Move(float h, float v)` cho AI. Tự động nội suy mượt mà qua DampTime (4 hướng: `WalkT_RI`, `WalkBackRI`, `WalkLeftRI`, `WalkRightRI`, `IdleRI`), tự động xoay mặt theo Player `facePlayerSpeed = 280°/s`, bám sát mặt đất chống lún/lơ lửng.
+    + *Trọn bộ 4 kỹ năng chiến đấu (Phím 1..4):*
+      - Phím 1: `AttackSlashRI` (Xoay người chém dọc từ trên xuống) ➔ Phóng đạn kiếm bay dọc xoay 90° (`Ignis_Slash_Vertical.prefab`).
+      - Phím 2: `HorizontalSlashRI` (Chém ngang) ➔ Phóng đạn kiếm bay ngang (`Ignis_Slash_Horizontal.prefab`).
+      - Phím 3: `JumpAttackRI` (Nhảy tới 1 đoạn chém xuống ngang) ➔ Nhảy lướt tới trước, dậm đất gây sát thương nổ lan AoE và hiệu ứng dậm đất.
+      - Phím 4: `ComboAttackRI` (Chém liên tục 4 nhát) ➔ Lướt chém 4 nhát liên hoàn kèm hiệu ứng vệt chém.
+      - Phím K: Thử nghiệm hạ gục Boss (`Die()`).
+  - **Hệ thống VFX độc lập (`Assets/Characters/Boss/IgnisDo/VFX/`):**
+    + Không can thiệp hay sửa đổi thư mục gốc `Assets/VFX/`.
+    + Script đạn chiến đấu `RedIgnisSlashProjectile.cs` quét tia Raycast liên tục chống xuyên tường, gây sát thương lên Player và tạo hiệu ứng nổ va chạm.
+    + Prefab đạn kiếm ngang (`Ignis_Slash_Horizontal`) và đạn kiếm dọc 90° (`Ignis_Slash_Vertical`).
+  - **Animator Controller chuẩn mực (`Ignis_animator.controller`):**
+    + Cấu hình Entry trỏ trực tiếp vào `IdleRI`.
+    + Đầy đủ tham số `MoveType`, `Speed`, `MoveX`, `MoveZ`, các triggers tấn công, `Dead`, `Weaken`.
+    + Nối toàn bộ Transitions 4 hướng di chuyển không delay và Transitions các chiêu thức quay về `IdleRI`.
+  - **Công Cụ Tự Động Hóa Editor (`SetupRedIgnisAnimatorAndPrefabs.cs` & `IgnisWeaponAligner.cs`):**
+    + Tích hợp nút 1-Click tự động cấu hình toàn diện Red Ignis trên giao diện Inspector.
 
 - [x] **ML-01: Tích hợp Unity ML-Agents Package & Môi Trường Huấn Luyện**
   - Đã tích hợp gói chính thức com.unity.ml-agents: 4.1.0 (khớp chuẩn Unity 6 và Unity AI Inference 2.6.1) vào thư mục Packages/com.unity.ml-agents.

@@ -154,15 +154,27 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * Tự động phát hiện Player (`autoFindPlayer`), tự xoay mặt đối diện đối thủ (`alwaysFacePlayer`, `facePlayerOnAttack`, tốc độ `facePlayerSpeed = 240 deg/s`).
        * Cơ chế tự bảo vệ chống duplicate component trong `Awake()` và Menu dọn dẹp Scene Editor (`Infinite Labyrinth -> Boss -> 3. Dọn Dẹp Scene & Khắc Phục Lỗi Ice Golem`).
 
-  2. **Trùm Lửa: Red Ignis (`Boss_RedIgnis.prefab` - The Crimson Duelist):**
-     * **Định vị chiến đấu:** Kiếm sĩ tốc độ cao, phản xạ nhanh, áp sát chớp nhoáng, vờn đối thủ.
+  2. **Trùm Lửa: Red Ignis (`Boss_RedIgnis.prefab` - The Crimson Duelist / True Flame Ignis):**
+     * **Định vị chiến đấu:** Kiếm sĩ tốc độ cao, phản xạ chớp nhoáng (`facePlayerSpeed = 280 deg/s`), áp sát và vờn đối thủ ở cự ly trung bình (4-6m), sở hữu thanh kiếm ma thuật rực lửa.
+     * **Chỉ số sinh tồn & Bảng thông số Inspector (`RedIgnisController.cs`):**
+       * **Máu tối đa (`bossMaxHealth` = 1200 HP):** Máu độc lập cho mỗi Phase (Phase 1: 1200 HP, Phase 2: Hồi sinh đầy 100% = 1200 HP).
+       * **Thanh chịu đòn Poise (`maxPoise` = 400 điểm):** Độc lập với sát thương máu, không tự hồi phục trong trận đấu. Bị bào mòn bởi đòn đánh Player (Chém thường: 25-35, Chém 3 / Charge 1: 50, Charge 2 / Skill E: 70, Counter / Skill Q: 100).
+       * **Cơ chế Suy yếu (Poise Break / Weaken):** Khi Poise về 0, kích hoạt trạng thái choáng vỡ thế (`Weaken`) khựng lại 2.2s mở ra cửa sổ cho Player phản công dồn sát thương.
+       * **Vận tốc di chuyển:** Tốc độ bước thường `moveSpeed = 4.2m/s` (Phase 1) ➔ `5.5m/s` (Phase 2, tăng +30%); Tốc độ dạt ngang `strafeSpeed = 3.2m/s`.
      * **Cơ Chế 2 Pha Đột Biến (Two-Phase Boss - Rebirth on Death with New Appearance):**
        * **Phase 1 (The Crimson Duelist):** Thanh kiếm đơn, dáng đứng thanh thoát, di chuyển vờn (strafing) ở cự ly 4-6m, chém nhanh, lướt sườn bọc lót.
        * **Thời Khắc Chuyển Pha (Phase Transition on Death):** Khi thanh máu Phase 1 tụt về 0, Boss **không chết ngay** mà kích hoạt chuỗi Tái Sinh (Resurrection):
          - Quỵ gối rơi vào trạng thái bất tử tạm thời (`invulnerable = true`).
          - Bùng nổ vụ nổ sóng nhiệt (Heat Wave Explosion) đẩy lùi Player ra xa.
          - **LỘT XÁC DIỆN MẠO MỚI (New Appearance Transformation):** Hoán đổi Mesh/Model hoặc kích hoạt hào quang lửa rực cháy (Flaming Wings / Dark Flame Aura), vũ khí bao phủ bởi ngọn lửa cuồng nộ (Blazing Blade), phục hồi 100% thanh máu với danh xưng mới.
-       * **Phase 2 (True Flame Ignis - The Awakened):** Tốc độ di chuyển tăng 30%, nhịp vung kiếm dồn dập, mở khóa chiêu thức tối thượng (Sóng lửa chém xa, Lướt chém để lại vệt lửa rực cháy mặt sàn).
+       * **Phase 2 (True Flame Ignis - The Awakened):** Tốc độ di chuyển tăng 30%, nhịp vung kiếm dồn dập, mở khóa 2 chiêu thức tối thượng (Lướt chém để lại vệt lửa rực cháy mặt sàn và Bão lửa cuồng nộ AOE).
+     * **Bộ Chiêu Thức Hoàn Chỉnh (6 Kỹ Năng Chiến Đấu trên `RedIgnisController.cs`):**
+       * `Skill 1: Slash Attack` *(Phím 1)*: Đòn chém lướt ngang ngực chớp nhoáng (cooldown 1.5s, damage 22, poise 30), kết hợp VFX vệt lửa kiếm `Assets/VFX/C Sword Slash/Slash Fire VFX.prefab` và `CFXR4 Sword Hit FIRE (Cross).prefab`.
+       * `Skill 2: Triple Slash Combo` *(Phím 2)*: Chuỗi 3 nhát chém biến ảo tăng dần tốc độ và sát thương (cooldown 4.5s, damage 18 + 20 + 32, poise 80), kết hợp VFX `CFXR4 Sword Trail FIRE (360 Spiral).prefab`.
+       * `Skill 3: Flame Thrust / Dash Slash` *(Phím 3)*: Lướt nhanh 8m xuyên qua sườn đối thủ (cooldown 6.0s, damage 30, knockback 3.5m) — kỹ năng chủ lực trừng phạt Player khi lùi xa uống máu (*Heal-Punish*).
+       * `Skill 4: Fire Wave` *(Phím 4)*: Vung kiếm phóng lưỡi sóng lửa kiếm bay xa 16m (cooldown 7.0s, damage 35, tốc độ bay 14m/s, nổ va chạm `Fire Impact.prefab`), sử dụng `Assets/VFX/C Sword Slash/Projectiles/Slash Projectile VFX Fire.prefab`.
+       * `Skill 5: Blazing Trail Dash` *(Phím 5 - Mở khóa Phase 2)*: Boss lướt chém với vận tốc 14m/s để lại vệt lửa rực cháy mặt sàn trong 4.0s (cooldown 8.0s, damage va chạm 35 + damage lửa sàn 8/s), ép Player phải liên tục di chuyển không thể đứng yên.
+       * `Skill 6: Flame Burst AOE` *(Phím 6 - Mở khóa Phase 2)*: Boss tụ lực cắm kiếm xuống đất kích nổ bão lửa cuồng nộ bán kính 7.5m (cooldown 11.0s, damage 45, knockback 5.0m, phá 60% Poise của Player), tạo vùng sóng lửa quét sàn uy lực.
      * **Hệ thống Vật lý Áo choàng (`UnityChanSpringBone`):**
        * Quản lý bằng `SpringManager.cs` và `SpringBone.cs` đã được vá mã nguồn triệt tiêu 100% lỗi `NullReferenceException`.
        * Tối ưu hóa chuỗi 12 xương hợp lệ (loại bỏ 4 xương ngọn leaf bones `Bone.013`, `Bone.025`, `Bone.035`, `Bone.037` để triệt tiêu lỗi quẹo 90 độ; dọn sạch 7 ô null trong mảng).
@@ -173,6 +185,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
      * **Vũ Khí Kiếm Siu Nhân Đỏ (`KiemSiuNhanDo.fbx`):**
        * Thiết lập Import Settings chuẩn vũ khí tĩnh: `Animation Type: None` (tab Rig), tắt `Import Animation`.
        * Gắn vào tay phải qua điểm neo `RightHand_Socket` trên xương `mixamorig:RightHand`, đồng bộ chuyển động 100% theo mọi cử động bàn tay.
+       * **Giải quyết góc lệch xương cổ tay FBX gốc:** Xương `mixamorig:RightHand` trong file FBX gốc mang góc xoay nghỉ `Euler(-1.1°, -45.8°, 2.7°)`. Tool biên tập `IgnisWeaponAligner.cs` tích hợp chuẩn hóa T-Pose bằng `HumanPoseHandler` (đặt 100% muscles = 0), cố định vị trí chuôi kiếm vào lòng bàn tay `Hand_R_Weapon`:
+         + `localPosition: (0.175, 0.094, -0.074)`
+         + `localRotation: Euler(-0.953, -53.529, 83.786)` (quaternion: `x: -0.306, y: -0.330, z: 0.593, w: 0.667`)
+         + `localScale: (0.8, 0.8, 1.0)` (Bảo toàn 100% tỷ lệ kiếm mỹ thuật do người dùng cấu hình).
+     * **Kiến Trúc Điều Khiển & Giao Tiếp Học Máy (Brain - Body):**
+       * **Body (`RedIgnisController.cs`):** Quản lý 6 chiêu thức, hoạt ảnh, hệ thống hồi chiêu độc lập, thanh máu, Poise, chuỗi Tái Sinh Phase 2, và bộ phím nóng thử nghiệm thủ công (Phím 1..6 và phím Mũi Tên di chuyển 4 hướng).
+       * **Brain (`RedIgnisAgent.cs`):** Bộ não học máy kế thừa `Unity.MLAgents.Agent`, giao tiếp với Body qua các hàm công khai `Move(h, v)`, `CastAttack(skillIndex)`, `CanCastAttack(skillIndex)`, `GetCooldownNormalized(skillIndex)`, và cờ trạng thái `isPhase2`.
 
 ---
 

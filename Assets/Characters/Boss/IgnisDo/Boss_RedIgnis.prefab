@@ -73,9 +73,12 @@ GameObject:
   m_Component:
   - component: {fileID: 4345900317041521329}
   - component: {fileID: 3649202453250265302}
-  m_Layer: 0
+  - component: {fileID: 3806274301772261097}
+  - component: {fileID: 3806274301772261098}
+  - component: {fileID: 3806274301772261099}
+  m_Layer: 9
   m_Name: Boss_RedIgnis
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -90,10 +93,11 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.15471035, z: 0, w: 0.98795986}
   m_LocalPosition: {x: 241.71373, y: 19.91457, z: 83.937614}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.9999999, y: 1.9999999, z: 1.9999999}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 819811194924355601}
+  - {fileID: 7491440902550185309}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -17.8, z: 0}
 --- !u!114 &3649202453250265302
@@ -138,6 +142,169 @@ MonoBehaviour:
   collisionColor: {r: 1, g: 0, b: 0, a: 1}
   groundCollisionColor: {r: 0, g: 1, b: 0, a: 1}
   angleLimitDrawScale: 0.05
+--- !u!143 &3806274301772261097
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.4500002
+  m_Radius: 0.35
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.7250001, z: 0}
+--- !u!114 &3806274301772261098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 1200
+  currentHealth: 1200
+  isInvulnerable: 0
+  onHealthChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onTakeDamage:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3806274301772261099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a5ee9058e934ab6b551ab1be0312156, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bossMaxHealth: 1200
+  maxPoise: 400
+  currentPoise: 400
+  weakenDuration: 2.5
+  onPoiseChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onStaminaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onHealthChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  moveSpeed: 4.2
+  strafeSpeed: 3.2
+  moveAcceleration: 9
+  moveDeceleration: 12
+  locomotionDampTime: 0.1
+  alwaysFacePlayer: 1
+  facePlayerSpeed: 280
+  gravity: -20
+  groundedGravity: -5
+  playerTarget: {fileID: 0}
+  autoFindPlayer: 1
+  weaponSocket: {fileID: 766709305620523826}
+  slashSpawnPoint: {fileID: 7491440902550185309}
+  attackSlashSwingVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  verticalSlashPrefab: {fileID: 6882116249847192011, guid: 961e8d8af5a54582affa38e44bd17694, type: 3}
+  attackSlashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
+  slashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
+  attackSlashDamage: 65
+  attackSlashCooldown: 3
+  attackSlashDelay: 0.42
+  attackSlashProjectileSpeed: 22
+  attackSlashTiltAngle: 90
+  attackSlashHeightOffset: 0
+  attackSlashTotalDuration: 1.5
+  horizontalSlashSwingVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  horizontalSlashPrefab: {fileID: 6882116249847192011, guid: 568e826b7f774d91902e6ac634684310, type: 3}
+  horizontalSlashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
+  horizontalSlashDamage: 50
+  horizontalSlashCooldown: 3.5
+  horizontalSlashDelay: 0.4
+  horizontalSlashProjectileSpeed: 20
+  horizontalSlashTiltAngle: 0
+  horizontalSlashHeightOffset: 0
+  horizontalSlashTotalDuration: 1.6
+  jumpImpactVfxPrefab: {fileID: 3432958286849152088, guid: 1b9373aad324493c8d86f10019999259, type: 3}
+  jumpAttackDamage: 80
+  jumpAttackCooldown: 5
+  jumpAttackWindupDelay: 0.25
+  jumpAttackLeapDuration: 0.55
+  jumpLeapDistance: 7.5
+  jumpAttackApexHeight: 1.8
+  jumpAttackRadius: 4
+  jumpImpactHeightOffset: 0
+  jumpAttackRecoveryDuration: 0.85
+  comboSlashVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  comboHitDamage: 35
+  comboAttackCooldown: 6
+  comboHitTimers:
+  - 0.4
+  - 0.95
+  - 1.55
+  - 2.2
+  comboLungeDistance: 0.75
+  comboHitRadius: 3.2
+  comboVfxHeightOffset: 0
+  comboRecoveryDuration: 0.9
+  hitFlashDuration: 0.12
+  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+--- !u!1 &5183950090897731107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7491440902550185309}
+  m_Layer: 0
+  m_Name: SlashSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7491440902550185309
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5183950090897731107}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.08, y: 0.75, z: 0.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4345900317041521329}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6911256532254517642
 GameObject:
   m_ObjectHideFlags: 0
