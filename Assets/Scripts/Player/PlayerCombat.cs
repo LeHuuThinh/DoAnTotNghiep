@@ -662,6 +662,9 @@ public class PlayerCombat : MonoBehaviour
   /// </summary>
   public void SpawnSlashProjectileEvent()
   {
+    // Kích hoạt vệt chém kiếm của Skill E (E Slash VFX)
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillE);
+
     if (slashProjectilePrefab == null) return;
 
     Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : (transform.position + transform.forward + Vector3.up * 1.2f);
@@ -680,6 +683,9 @@ public class PlayerCombat : MonoBehaviour
   /// </summary>
   public void SpawnAoeSpellEvent()
   {
+    // Kích hoạt vệt chém đập đất của Skill Q (Q Slash VFX)
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
+
     if (aoeSpellPrefab == null) return;
 
     Vector3 spawnPos = transform.root.position;
@@ -690,6 +696,16 @@ public class PlayerCombat : MonoBehaviour
       spell.Initialize(transform.root);
     }
   }
+
+  /// <summary>
+  /// Animation Event gọi vệt chém Skill E độc lập nếu muốn căn nhịp riêng biệt với việc phóng đạn
+  /// </summary>
+  public void PlaySkillESlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillE);
+
+  /// <summary>
+  /// Animation Event gọi vệt chém Skill Q độc lập nếu muốn căn nhịp riêng biệt với việc nổ AOE
+  /// </summary>
+  public void PlaySkillQSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
 
   /// <summary>
   /// Gắn ở cuối 2 clip Skill để trả lại quyền điều khiển

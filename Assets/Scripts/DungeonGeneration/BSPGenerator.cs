@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class BSPGenerator : MonoBehaviour
 {
@@ -45,8 +45,8 @@ public class BSPGenerator : MonoBehaviour
   [Header("Cài đặt Cửa Khởi Đầu")]
   public Transform startDoorMarker;
   public float tileSize = 2f;
-  [Tooltip("Khoảng cách tối thiểu (tile) từ cửa khởi đầu tới mép gần nhất của phòng được chọn nối. Ngăn phòng spawn quá sát rìa vùng khởi đầu. 4m / tileSize=2 = 2 tiles.")]
-  public int startRoomMinGapTiles = 2;
+  [Tooltip("Khoảng cách tối thiểu (tile) từ cửa khởi đầu tới mép gần nhất của các phòng hầm ngục. Tạo vùng đệm an toàn ngăn phòng sinh quá sát phòng khởi đầu, chống va chạm tường và kẹt ngàm nối cửa (Ví dụ: 4 tiles = 8m, 6 tiles = 12m).")]
+  public int startRoomMinGapTiles = 4;
 
   [Header("Cài đặt Tầng 2 (Gác Lửng Mezzanine)")]
   public MezzanineSettings mezzanineSettings = new MezzanineSettings();
@@ -90,8 +90,17 @@ public class BSPGenerator : MonoBehaviour
     // 3. PHÂN CHIA BSP KHU VỰC HẦM NGỤC CHÍNH (MAIN DUNGEON)
     // Toàn bộ hầm ngục thông thường sinh trong vùng Y từ startRoomHeight đến aveY
     // Đảm bảo 100% không một phòng thường nào có thể chạm hoặc đè lên phòng Boss hay Đại Lộ!
-    int mainDungeonHeight = aveY - startRoomHeight;
-    BSPNode mainDungeonRoot = new BSPNode(new RectInt(0, startRoomHeight, mapWidth, mainDungeonHeight));
+    int doorGridY = (startDoorMarker != null)
+      ? Mathf.FloorToInt(startDoorMarker.position.z / tileSize)
+      : startRoomHeight;
+    int minDungeonY = Mathf.Max(startRoomHeight, doorGridY) + Mathf.Max(2, startRoomMinGapTiles);
+    if (minDungeonY > aveY - minNodeSize * 2)
+    {
+      minDungeonY = Mathf.Max(startRoomHeight, aveY - minNodeSize * 2);
+    }
+
+    int mainDungeonHeight = aveY - minDungeonY;
+    BSPNode mainDungeonRoot = new BSPNode(new RectInt(0, minDungeonY, mapWidth, mainDungeonHeight));
 
     BSPNode bossZoneNode = new BSPNode(new RectInt(0, aveY, mapWidth, (startRoomHeight + mapHeight) - aveY));
     bossZoneNode.isBossNode = true;
@@ -409,68 +418,65 @@ public class BSPGenerator : MonoBehaviour
       Mathf.FloorToInt(startDoorMarker.position.z / tileSize));
 
     RectInt closestRoom = default;
-    float minDistance = float.MaxValue;
+    float bestScore = float.MaxValue;
 
-    // --- Lần 1: tìm phòng gần nhất NHƯNG mép gần nhất phải cách cửa khởi đầu >= startRoomMinGapTiles ---
+    // Tìm phòng phù hợp nhất để nối với phòng khởi đầu:
+    // Ưu tiên cự ly gần và trực diện thẳng hàng với trục X của cửa khởi đầu
     foreach (RectInt room in data.rooms)
     {
       if (room.Equals(data.bossRoomBounds)) continue;
 
-      // Tính khoảng cách từ gridDoorPos tới mép gần nhất của phòng (không phải tâm)
-      int nearestEdgeX = Mathf.Clamp(gridDoorPos.x, room.x, room.x + room.width - 1);
-      int nearestEdgeY = Mathf.Clamp(gridDoorPos.y, room.y, room.y + room.height - 1);
-      float edgeDist = Vector2Int.Distance(gridDoorPos, new Vector2Int(nearestEdgeX, nearestEdgeY));
+      Vector2 roomCenter = new Vector2(room.x + room.width / 2f, room.y + room.height / 2f);
+      float dist = Vector2.Distance(gridDoorPos, roomCenter);
+      float xOffset = Mathf.Abs(gridDoorPos.x - roomCenter.x);
+      float score = dist + xOffset * 0.4f;
 
-      // Bỏ qua phòng có mép quá gần cửa khởi đầu
-      if (edgeDist < startRoomMinGapTiles) continue;
-
-      Vector2Int roomCenter = new Vector2Int(room.x + room.width / 2, room.y + room.height / 2);
-      float distance = Vector2.Distance(gridDoorPos, roomCenter);
-      if (distance < minDistance)
+      if (score < bestScore)
       {
-        minDistance = distance;
+        bestScore = score;
         closestRoom = room;
-      }
-    }
-
-    // --- Fallback: nếu tất cả phòng đều quá gần, lấy phòng gần nhất không điều kiện ---
-    if (closestRoom.width == 0)
-    {
-      Debug.LogWarning("[BSPGenerator] ConnectStartRoom: Không tìm được phòng nào đủ khoảng cách tối thiểu " +
-                       $"({startRoomMinGapTiles} tiles). Dùng phòng gần nhất không điều kiện.");
-      minDistance = float.MaxValue;
-      foreach (RectInt room in data.rooms)
-      {
-        if (room.Equals(data.bossRoomBounds)) continue;
-        Vector2Int roomCenter = new Vector2Int(room.x + room.width / 2, room.y + room.height / 2);
-        float distance = Vector2.Distance(gridDoorPos, roomCenter);
-        if (distance < minDistance)
-        {
-          minDistance = distance;
-          closestRoom = room;
-        }
       }
     }
 
     if (closestRoom.width == 0) return;
 
+    data.startRoomBounds = closestRoom;
+
     // Điểm cắm vào mép dưới phòng gần nhất (Y = closestRoom.y), TUYỆT ĐỐI không đi sâu vào lòng phòng!
     int halfThick = corridorThickness / 2;
-    int targetX = Mathf.Clamp(gridDoorPos.x, closestRoom.x + halfThick + 1, closestRoom.x + closestRoom.width - halfThick - 1);
+    int minTargetX = closestRoom.x + halfThick + 1;
+    int maxTargetX = closestRoom.x + closestRoom.width - halfThick - 1;
+    if (maxTargetX < minTargetX)
+    {
+      minTargetX = closestRoom.x + closestRoom.width / 2;
+      maxTargetX = minTargetX;
+    }
+    int targetX = Mathf.Clamp(gridDoorPos.x, minTargetX, maxTargetX);
     int targetY = closestRoom.y;
 
     if (gridDoorPos.x == targetX)
     {
+      // Nếu phòng thẳng hàng với cửa: Đi thẳng 1 mạch không cần rẽ
       CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, targetX, targetY, data);
     }
     else
     {
-      // Nếu lệch X, rẽ chữ L bên ngoài phòng trước khi cắm vào mép dưới
-      int midY = (gridDoorPos.y + targetY) / 2;
-      CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, gridDoorPos.x, midY, data);
-      CreateCorridorSegment(gridDoorPos.x, midY, targetX, midY, data);
-      CreateCorridorSegment(targetX, midY, targetX, targetY, data);
+      // Nếu lệch X: Rẽ chữ Z (dogleg) an toàn ở khoảng giữa.
+      // Bảo đảm đoạn dẫn ra khỏi cửa thẳng tối thiểu (minTurnY) và đoạn đâm vào phòng thẳng tối thiểu (maxTurnY)
+      int minTurnY = gridDoorPos.y + corridorThickness + 1;
+      int maxTurnY = targetY - corridorThickness;
+      int turnY = (gridDoorPos.y + targetY) / 2;
+      if (maxTurnY >= minTurnY)
+      {
+        turnY = Mathf.Clamp(turnY, minTurnY, maxTurnY);
+      }
+
+      CreateCorridorSegment(gridDoorPos.x, gridDoorPos.y, gridDoorPos.x, turnY, data);
+      CreateCorridorSegment(gridDoorPos.x, turnY, targetX, turnY, data);
+      CreateCorridorSegment(targetX, turnY, targetX, targetY, data);
     }
+
+    Debug.Log($"<color=cyan>[BSPGenerator]</color> 🚪 Đã kết nối Cửa Khởi Đầu ({gridDoorPos.x}, {gridDoorPos.y}) vào phòng đầu tiên: X={closestRoom.x}, Y={closestRoom.y} ({closestRoom.width}x{closestRoom.height})");
   }
 
   void ConnectGrandBossAvenue(DungeonData data, int aveX, int aveY, int aveThick, int aveLen)

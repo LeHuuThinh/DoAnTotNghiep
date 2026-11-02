@@ -47,6 +47,16 @@
   - Bổ sung cơ chế `ResolveDungeonFolder` thông minh trong [`DungeonPropDecorator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonPropDecorator.cs) và [`DungeonRenderer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRenderer.cs), tự động phát hiện đường dẫn mới và hỗ trợ fallback.
   - Triệt tiêu 6 warnings "Folder not found" và lỗi `NullReferenceException` của Unity UIElements ListView khi render Inspector.
 
+- [x] **FIX-03: Khắc phục phòng đầu tiên sinh quá sát Phòng Khởi Đầu (Vùng đệm an toàn Start Room Min Gap)**
+  - **Nguyên nhân gốc rễ:**
+    + Trước đây `startRoomMinGapTiles` chỉ được kiểm tra ở bước `ConnectStartRoom` để lọc phòng kết nối, trong khi toàn bộ các phòng thường đã được tạo sẵn từ trước trong `CreateRooms` với node gốc `mainDungeonRoot` bắt đầu ngay tại `startRoomHeight` (trùng với tọa độ cửa `gridDoorPos.y`).
+    + Các phòng thông thường có thể sinh ở tọa độ `roomY = startRoomHeight + 1` (chỉ cách cửa 1 tile = 2m). Kể cả khi `ConnectStartRoom` bỏ qua phòng này, phòng vẫn tồn tại trên bản đồ 3D và tường của nó vẫn bị va chạm hoặc đè vào ngàm nối của phòng khởi đầu.
+    + Khi phòng bị lệch X nhẹ, khoảng cách chéo Euclidean vẫn `>= startRoomMinGapTiles` khiến code cũ vẫn chọn phòng sát cửa và tạo đoạn rẽ ngang cắt ngang miệng cửa ở `midY = gridDoorPos.y`.
+  - **Khắc phục triệt để:**
+    + **Bảo vệ từ gốc phân chia không gian BSP:** Đưa `startRoomMinGapTiles` vào thiết lập `minDungeonY = Mathf.Max(startRoomHeight, doorGridY) + Mathf.Max(2, startRoomMinGapTiles)` cho `mainDungeonRoot`. Tuyệt đối không một phòng nào trong toàn bộ hầm ngục có thể sinh trong vùng đệm an toàn trước cửa phòng khởi đầu.
+    + **Đồng bộ liên kết phòng:** Lưu `data.startRoomBounds = closestRoom` trong `ConnectStartRoom` và cập nhật `DungeonRoomAnalyzer` ưu tiên gán `data.startRoom` theo `data.startRoomBounds`, đảm bảo phòng kết nối thực tế đồng bộ 100% với phòng bắt đầu của BFS đồ thị và Mini-map.
+    + **Hành lang dẫn lối an toàn:** Tự động dẫn đoạn hành lang thẳng tối thiểu ra khỏi cửa (`minTurnY = gridDoorPos.y + corridorThickness + 1`) trước khi rẽ Z, loại bỏ hoàn toàn nguy cơ tường hành lang gãy góc đè lên ngàm nối cửa khởi đầu.
+
 - [x] **PCG-03: Hệ thống sinh Thùng Gỗ Đập Được & Rương Báu (Interactive Chests & Breakable Barrels)**
   - Tự động nạp các Prefabs từ Assets/Prefabs/RPG/ (Breakable_Barrel_Small/Medium/Large, Interactive_Chest, Interactive_Chest_Gold).
   - **Khai thác Template Sockets:** Nhận diện toàn bộ các socket user gắn sẵn ([Loot_Barrel_Socket], [Loot_Chest_Socket]), roll xúc xắc theo tỉ lệ Inspector và sinh thùng/rương chính xác tại tọa độ socket.
@@ -173,6 +183,11 @@
     + **Định Vị Điểm Chạm Giữa Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (`swordTransform.TransformPoint(box.center)` với local center Y = 0.81m) kèm bù trừ `parryBladeOffset`, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
     + Kết hợp cùng Hitlag khựng hình 0.2s, Camera zoom cận cảnh (`TriggerParryZoom`) và làm choáng kẻ tấn công để mở cửa sổ Counter Attack.
     + Bổ sung nút bấm `[ 🛡️ Test Thử Parry VFX (Gạt Đòn Lưỡi Kiếm) ]` trực quan trên Inspector [`PlayerSlashVFX`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerSlashVFX.cs).
+  - **Tích Hợp Slash Trail Riêng Cho Kỹ Năng E & Q (`E Slash VFX`, `Q Slash VFX`):**
+    + *Skill E (Chém Kiếm Khí Tầm Xa):* Tự động kích hoạt `E Slash VFX.prefab` khi vung kiếm phóng đạn kiếm khí tại Animation Event `SpawnSlashProjectileEvent`.
+    + *Skill Q (Đập Đòn AOE Chấn Địa):* Tự động kích hoạt `Q Slash VFX.prefab` khi cắm kiếm giáng trần tại Animation Event `SpawnAoeSpellEvent`.
+    + Hỗ trợ cấu hình độc lập vị trí, góc xoay, kích thước và thời lượng trong `skillEConfig` & `skillQConfig` trên [`PlayerSlashVFX.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerSlashVFX.cs).
+    + Bổ sung 2 nút test trực quan `[ 🌀 Test Skill E Slash ]` và `[ 💥 Test Skill Q Slash ]` trên Custom Inspector [`PlayerSlashVFXEditor`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) (hoạt động mượt mà trong cả Edit Mode và Play Mode).
   - **Công Cụ Tự Động Hóa Unity Editor 1-Click & Custom Inspector:**
     + [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click)`.
     + Custom Inspector cho `PlayerSlashVFX` với 6 nút Test chém trực quan và Gizmos vẽ trước mặt phẳng chém trong Scene View.
@@ -295,12 +310,14 @@
           - Tắt hoàn toàn `applyRootMotion = false` trong code [`IceGolemController.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Characters/Boss/Script_Boss/IceGolemController.cs) tại `Awake()`, `Start()`, `OnEnable()`, `SetStandbyOnPedestal()`, `WeakenRoutine()`, `PedestalJumpDownRoutine()`, `JumpDownRoutine()`, `JumpAttackRoutine()` và `RunAttackRoutine()`.
           - Thêm `LateUpdate()` trong `IceGolemController.cs`: Tự động khóa chặt `anim.transform.localPosition.x = 0` và `anim.transform.localPosition.z = 0` ngay sau bước tính toán hoạt cảnh của Unity mỗi frame, bảo đảm Model visual luôn luôn đồng trục 100% với Root Collider và VFX.
           - Cấu hình tường minh `m_ApplyRootMotion: 0` trên Animator component trong Prefab [`Boss_IceGolem.prefab`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Characters/Boss/IceGolem/Boss_IceGolem.prefab) và đồng bộ trong [`IceGolemSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/IceGolemSetupEditor.cs).
-    - [ ] **D02-5D: Giao Diện Lựa Chọn Cổng Dịch Chuyển 2 Cửa Sổ (Portal Choice UI - Return to Haven / Floor 2 / Stay):**
-      + Tạo prefab UI `VictoryPortalChoiceUI.prefab`:
-        * 🏡 **Cửa sổ Bên Trái (Về Làng):** Background ảnh Làng Haven Village, tiêu đề *"TRỞ VỀ NGÔI LÀNG"*, mô tả lưu toàn bộ chiến lợi phẩm, tăng ngày `CurrentDay + 1`. Cơ chế **Giữ 2.0s để xác nhận (Hold to Confirm)** với thanh/vòng tròn HoldFill tiến trình.
-        * ⚔️ **Cửa sổ Bên Phải (Tiến Vào Tầng 2):** Background ảnh Hầm ngục Dungeon tăm tối, tiêu đề *"TIẾN VÀO TẦNG KẾ"*, mô tả giữ nguyên đồ, thử thách khắc nghiệt hơn với loot giá trị hơn. Cơ chế **Giữ 2.0s để xác nhận**.
-        * 🚪 **Nút "STAY" ở giữa bên dưới:** Click hoặc bấm [ESC] đóng UI ngay lập tức để Player tự do ở lại gom nhặt nốt đồ trong hầm ngục. Khi sẵn sàng, chỉ cần tương tác lại với Cổng để mở bảng.
-      + Tích hợp chuyển Scene qua [`LoadingScreenManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenManager.cs) để nạp cảnh kèm hiệu ứng chuyển cảnh mượt mà, mẹo sinh tồn và ảnh nền.
+    - [x] **D02-5D: Giao Diện Lựa Chọn Cổng Dịch Chuyển 2 Cửa Sổ (Portal Choice UI - Return to Haven / Floor 2 / Stay):**
+      + Tích hợp và hoàn thiện `VictoryPortalUI` trong `Canvas.prefab` và Scene:
+        * 🏡 **Cửa sổ Bên Trái (Về Làng):** Background ảnh Làng Haven Village (`TownImg`), tiêu đề *"Village"*, nút *"RETURN TO VILLAGE"*. Cơ chế **Giữ 2.0s để xác nhận (Hold to Confirm)** bằng giữ chuột trái hoặc phím [1]/[Q] với thanh tiến trình `HoldFill` (0 -> 100%). Buông tay sẽ tự động tụt lùi nhanh.
+        * ⚔️ **Cửa sổ Bên Phải (Tiến Vào Tầng 2):** Background ảnh Hầm ngục Dungeon (`DungeonImg`), tiêu đề *"Dungeon"*, nút *"GO TO FLOOR 2"*. Cơ chế **Giữ 2.0s để xác nhận** bằng giữ chuột trái hoặc phím [2]/[E] với thanh tiến trình `HoldFill`.
+        * 🚪 **Nút "STAY" ở giữa bên dưới & Phím [ESC]:** Click nút hoặc bấm [ESC] đóng UI mượt mà qua CanvasGroup Fade, khóa lại con trỏ chuột và khôi phục toàn bộ quyền di chuyển/camera của Player để tự do ở lại nhặt rương Boss và loot đồ. Khi muốn rời đi, chỉ cần tương tác lại [F] với Cổng để mở lại bảng.
+        * 🌀 **Cơ chế Đè Giữ & Juice Feedback:** Tự động điều chỉnh kích thước nút nhún nhẹ (Pulse scale 1.03x) trong lúc đè giữ, chống spam đè giữ kép, quản lý trạng thái Cursor (`CursorLockMode.None`/`Locked`) kết hợp đồng bộ chặt chẽ với `ThirdPersonCamera.cs` và `PlayerController.cs`.
+        * 🚀 **Chuyển Scene đồng bộ:** Tích hợp với [`LoadingScreenManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenManager.cs) tải bất đồng bộ mượt mà về làng (`LandScene`) hoặc xuống tầng kế tiếp (`DungeonScene`, targetFloor: 2).
+        * 🛠️ **Bộ công cụ Editor:** `VictoryPortalUIEditor.cs` hỗ trợ 1-click Auto-Wire toàn bộ tham chiếu và nút kiểm thử Test Open / Test Close cả trong Play Mode lẫn Edit Mode.
 
 ---
 

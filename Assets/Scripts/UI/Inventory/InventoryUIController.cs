@@ -69,6 +69,33 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private GameObject tabArmorHighlight;
     [SerializeField] private GameObject tabItemHighlight;
 
+    [Header("=== HOẠT ẢNH CHUYỂN CẢNH (SOULS-LIKE TRANSITIONS) ===")]
+    [Tooltip("Panel bên trái chứa 3D Preview, Trang bị và Stats")]
+    [SerializeField] private RectTransform leftPanel;
+
+    [Tooltip("Panel bên phải chứa Lưới 30 ô đồ và các nút Tab")]
+    [SerializeField] private RectTransform rightPanel;
+
+    [Tooltip("Lớp phủ nền đen toàn màn hình")]
+    [SerializeField] private Image darkOverlay;
+
+    [Tooltip("Thời gian mở túi đồ (giây)")]
+    [SerializeField] private float openDuration = 0.20f;
+
+    [Tooltip("Thời gian đóng túi đồ (giây)")]
+    [SerializeField] private float closeDuration = 0.12f;
+
+    [Tooltip("Độ trượt ngang hai cánh từ mép vào (pixel)")]
+    [SerializeField] private float slideOffset = 40f;
+
+    private CanvasGroup leftCanvasGroup;
+    private CanvasGroup rightCanvasGroup;
+    private Vector2 leftOriginalPos;
+    private Vector2 rightOriginalPos;
+    private float overlayMaxAlpha = 0.7058824f;
+    private bool hasCachedPositions = false;
+    private Coroutine activeTransitionRoutine;
+
     private InventoryTab currentTab = InventoryTab.All;
     private PlayerController cachedPlayerController;
 
@@ -80,6 +107,9 @@ namespace InfiniteLabyrinth.UI
       {
         rootCanvasGroup = GetComponent<CanvasGroup>();
       }
+
+      AutoFindPanels();
+      CacheOriginalPositions();
 
       if (closeButton != null)
       {
@@ -107,6 +137,39 @@ namespace InfiniteLabyrinth.UI
       {
         armorSlot.OnClicked += HandleEquipmentSlotClicked;
       }
+    }
+
+    private void AutoFindPanels()
+    {
+      if (leftPanel == null) leftPanel = transform.Find("LeftPanel") as RectTransform;
+      if (rightPanel == null) rightPanel = transform.Find("RightPanel") as RectTransform;
+      if (darkOverlay == null) darkOverlay = transform.Find("DarkOverlay")?.GetComponent<Image>();
+    }
+
+    private void CacheOriginalPositions()
+    {
+      if (hasCachedPositions) return;
+
+      AutoFindPanels();
+
+      if (leftPanel != null)
+      {
+        leftOriginalPos = leftPanel.anchoredPosition;
+        leftCanvasGroup = leftPanel.GetComponent<CanvasGroup>() ?? leftPanel.gameObject.AddComponent<CanvasGroup>();
+      }
+
+      if (rightPanel != null)
+      {
+        rightOriginalPos = rightPanel.anchoredPosition;
+        rightCanvasGroup = rightPanel.GetComponent<CanvasGroup>() ?? rightPanel.gameObject.AddComponent<CanvasGroup>();
+      }
+
+      if (darkOverlay != null)
+      {
+        overlayMaxAlpha = darkOverlay.color.a > 0.05f ? darkOverlay.color.a : 0.7058824f;
+      }
+
+      hasCachedPositions = true;
     }
 
     private void Start()
@@ -268,7 +331,7 @@ namespace InfiniteLabyrinth.UI
 
       if (itemDetailPopup != null)
       {
-        itemDetailPopup.Hide();
+        itemDetailPopup.HideImmediate();
       }
 
       // 2. Mở khóa con trỏ chuột
@@ -288,7 +351,52 @@ namespace InfiniteLabyrinth.UI
         characterPreview.EnablePreview(true);
       }
 
-      // 5. Hiện Canvas sau khi tất cả thành phần UI đã được đồng bộ chuẩn xác
+      // 5. Chạy hoạt ảnh mở hai cánh (Dual-Pane Entrance Transition)
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+      }
+
+      activeTransitionRoutine = StartCoroutine(AnimateOpenRoutine());
+    }
+
+    public void CloseInventory()
+    {
+      if (!IsOpen) return;
+      IsOpen = false;
+
+      // 1. Khóa tương tác UI ngay lập tức
+      if (rootCanvasGroup != null)
+      {
+        rootCanvasGroup.interactable = false;
+        rootCanvasGroup.blocksRaycasts = false;
+      }
+
+      // 2. Đóng popup chi tiết tức thì
+      if (itemDetailPopup != null)
+      {
+        itemDetailPopup.HideImmediate();
+      }
+
+      // 3. Đóng modal phân bổ điểm tiềm năng nếu đang mở
+      if (AttributeAllocationUI.Instance != null && AttributeAllocationUI.Instance.IsVisible)
+      {
+        AttributeAllocationUI.Instance.HideImmediate();
+      }
+
+      // 4. Chạy hoạt ảnh đóng hai cánh (Dual-Pane Exit Transition)
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+      }
+
+      activeTransitionRoutine = StartCoroutine(AnimateCloseRoutine());
+    }
+
+    private System.Collections.IEnumerator AnimateOpenRoutine()
+    {
+      CacheOriginalPositions();
+
       if (rootCanvasGroup != null)
       {
         rootCanvasGroup.alpha = 1f;
@@ -299,13 +407,161 @@ namespace InfiniteLabyrinth.UI
       {
         gameObject.SetActive(true);
       }
+
+      Vector2 leftStartPos = leftOriginalPos + new Vector2(-slideOffset, 0f);
+      Vector2 rightStartPos = rightOriginalPos + new Vector2(slideOffset, 0f);
+      Vector3 startScale = Vector3.one * 0.97f;
+
+      if (leftPanel != null)
+      {
+        leftPanel.anchoredPosition = leftStartPos;
+        leftPanel.localScale = startScale;
+      }
+      if (leftCanvasGroup != null) leftCanvasGroup.alpha = 0f;
+
+      if (rightPanel != null)
+      {
+        rightPanel.anchoredPosition = rightStartPos;
+        rightPanel.localScale = startScale;
+      }
+      if (rightCanvasGroup != null) rightCanvasGroup.alpha = 0f;
+
+      if (darkOverlay != null)
+      {
+        Color c = darkOverlay.color;
+        c.a = 0f;
+        darkOverlay.color = c;
+      }
+
+      float elapsed = 0f;
+      float staggerDelay = 0.02f;
+
+      while (elapsed < openDuration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / openDuration);
+
+        // 1. Lớp phủ nền mờ dần
+        if (darkOverlay != null)
+        {
+          float eOverlay = UITransitionHelper.EaseOutQuad(t);
+          Color c = darkOverlay.color;
+          c.a = Mathf.Lerp(0f, overlayMaxAlpha, eOverlay);
+          darkOverlay.color = c;
+        }
+
+        // 2. Cửa sổ trái (Left Panel) trượt từ mép trái vào tâm
+        if (leftPanel != null)
+        {
+          float eLeft = UITransitionHelper.EaseOutCubic(t);
+          leftPanel.anchoredPosition = Vector2.LerpUnclamped(leftStartPos, leftOriginalPos, eLeft);
+          leftPanel.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, eLeft);
+          if (leftCanvasGroup != null) leftCanvasGroup.alpha = Mathf.Lerp(0f, 1f, eLeft);
+        }
+
+        // 3. Cửa sổ phải (Right Panel) trượt từ mép phải vào tâm (trễ 0.02s)
+        if (rightPanel != null)
+        {
+          float tRight = Mathf.Clamp01((elapsed - staggerDelay) / (openDuration - staggerDelay));
+          float eRight = UITransitionHelper.EaseOutCubic(tRight);
+          rightPanel.anchoredPosition = Vector2.LerpUnclamped(rightStartPos, rightOriginalPos, eRight);
+          rightPanel.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, eRight);
+          if (rightCanvasGroup != null) rightCanvasGroup.alpha = Mathf.Lerp(0f, 1f, eRight);
+        }
+
+        yield return null;
+      }
+
+      ResetPanelsToOriginal();
+      activeTransitionRoutine = null;
     }
 
-    public void CloseInventory()
+    private System.Collections.IEnumerator AnimateCloseRoutine()
+    {
+      CacheOriginalPositions();
+
+      Vector2 leftTargetPos = leftOriginalPos + new Vector2(-slideOffset * 0.5f, 0f);
+      Vector2 rightTargetPos = rightOriginalPos + new Vector2(slideOffset * 0.5f, 0f);
+      Vector3 endScale = Vector3.one * 0.98f;
+
+      float currentOverlayAlpha = darkOverlay != null ? darkOverlay.color.a : 0f;
+      float elapsed = 0f;
+
+      while (elapsed < closeDuration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / closeDuration);
+        float e = UITransitionHelper.EaseInQuad(t);
+
+        // 1. Lớp phủ nền mờ dần về 0
+        if (darkOverlay != null)
+        {
+          Color c = darkOverlay.color;
+          c.a = Mathf.Lerp(currentOverlayAlpha, 0f, e);
+          darkOverlay.color = c;
+        }
+
+        // 2. Cánh trái trượt nhẹ ra ngoài
+        if (leftPanel != null)
+        {
+          leftPanel.anchoredPosition = Vector2.LerpUnclamped(leftOriginalPos, leftTargetPos, e);
+          leftPanel.localScale = Vector3.LerpUnclamped(Vector3.one, endScale, e);
+          if (leftCanvasGroup != null) leftCanvasGroup.alpha = Mathf.Lerp(1f, 0f, e);
+        }
+
+        // 3. Cánh phải trượt nhẹ ra ngoài
+        if (rightPanel != null)
+        {
+          rightPanel.anchoredPosition = Vector2.LerpUnclamped(rightOriginalPos, rightTargetPos, e);
+          rightPanel.localScale = Vector3.LerpUnclamped(Vector3.one, endScale, e);
+          if (rightCanvasGroup != null) rightCanvasGroup.alpha = Mathf.Lerp(1f, 0f, e);
+        }
+
+        yield return null;
+      }
+
+      // Ẩn Canvas gốc
+      if (rootCanvasGroup != null)
+      {
+        rootCanvasGroup.alpha = 0f;
+      }
+      else
+      {
+        gameObject.SetActive(false);
+      }
+
+      ResetPanelsToOriginal();
+
+      // Khóa lại con trỏ chuột
+      Cursor.lockState = CursorLockMode.Locked;
+      Cursor.visible = false;
+
+      // Mở khóa di chuyển nhân vật
+      CachePlayerController();
+      if (cachedPlayerController != null)
+      {
+        cachedPlayerController.UnlockMovement();
+      }
+
+      // Tắt camera xem trước 3D
+      if (characterPreview != null)
+      {
+        characterPreview.EnablePreview(false);
+      }
+
+      activeTransitionRoutine = null;
+    }
+
+    private void ForceCloseImmediately()
     {
       IsOpen = false;
 
-      // 1. Ẩn Canvas
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
+
       if (rootCanvasGroup != null)
       {
         rootCanvasGroup.alpha = 0f;
@@ -317,45 +573,13 @@ namespace InfiniteLabyrinth.UI
         gameObject.SetActive(false);
       }
 
-      // 2. Khóa lại con trỏ chuột
-      Cursor.lockState = CursorLockMode.Locked;
-      Cursor.visible = false;
+      ResetPanelsToOriginal();
 
-      // 3. Mở khóa di chuyển nhân vật
-      CachePlayerController();
-      if (cachedPlayerController != null)
+      if (darkOverlay != null)
       {
-        cachedPlayerController.UnlockMovement();
-      }
-
-      // 4. Tắt camera xem trước 3D để tiết kiệm 100% tài nguyên GPU
-      if (characterPreview != null)
-      {
-        characterPreview.EnablePreview(false);
-      }
-
-      // 5. Đóng popup chi tiết
-      if (itemDetailPopup != null)
-      {
-        itemDetailPopup.Hide();
-      }
-
-      // 6. Đóng modal phân bổ điểm tiềm năng nếu đang mở
-      if (AttributeAllocationUI.Instance != null && AttributeAllocationUI.Instance.IsVisible)
-      {
-        AttributeAllocationUI.Instance.Hide();
-      }
-    }
-
-    private void ForceCloseImmediately()
-    {
-      IsOpen = false;
-
-      if (rootCanvasGroup != null)
-      {
-        rootCanvasGroup.alpha = 0f;
-        rootCanvasGroup.interactable = false;
-        rootCanvasGroup.blocksRaycasts = false;
+        Color c = darkOverlay.color;
+        c.a = 0f;
+        darkOverlay.color = c;
       }
 
       if (characterPreview != null)
@@ -365,12 +589,39 @@ namespace InfiniteLabyrinth.UI
 
       if (itemDetailPopup != null)
       {
-        itemDetailPopup.Hide();
+        itemDetailPopup.HideImmediate();
       }
 
       if (AttributeAllocationUI.Instance != null)
       {
         AttributeAllocationUI.Instance.HideImmediate();
+      }
+    }
+
+    private void ResetPanelsToOriginal()
+    {
+      if (hasCachedPositions)
+      {
+        if (leftPanel != null)
+        {
+          leftPanel.anchoredPosition = leftOriginalPos;
+          leftPanel.localScale = Vector3.one;
+        }
+        if (leftCanvasGroup != null) leftCanvasGroup.alpha = 1f;
+
+        if (rightPanel != null)
+        {
+          rightPanel.anchoredPosition = rightOriginalPos;
+          rightPanel.localScale = Vector3.one;
+        }
+        if (rightCanvasGroup != null) rightCanvasGroup.alpha = 1f;
+
+        if (darkOverlay != null && IsOpen)
+        {
+          Color c = darkOverlay.color;
+          c.a = overlayMaxAlpha;
+          darkOverlay.color = c;
+        }
       }
     }
 

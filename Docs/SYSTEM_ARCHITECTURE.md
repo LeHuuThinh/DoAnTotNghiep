@@ -35,7 +35,7 @@ flowchart TD
 
 ### A. Phân Hệ Dungeon PCG (Procedural Content Generation)
 Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bước qua cổng:
-1. **Phân chia không gian (`BSPGenerator.cs`, `BSPNode.cs`):** Thuật toán Binary Space Partitioning chia khối không gian, tạo các phòng và kết nối bằng mạng lưới hành lang.
+1. **Phân chia không gian (`BSPGenerator.cs`, `BSPNode.cs`):** Thuật toán Binary Space Partitioning chia khối không gian, tạo các phòng và kết nối bằng mạng lưới hành lang. Tích hợp vùng đệm an toàn `startRoomMinGapTiles` ngăn phòng thường sinh quá sát phòng khởi đầu và vùng cấm địa Đại Lộ Boss.
 2. **Phân tích hình học & Tìm phòng Boss (`DungeonRoomAnalyzer.cs`):**
    * Sử dụng thuật toán **BFS / Flood-Fill** từ phòng khởi đầu (`startRoom`) để đo độ dài đường đi ngắn nhất.
    * Phòng xa nhất và có không gian đủ lớn sẽ được chọn làm **Boss Room** (`ceilingHeight = 16f`, vòm trần đồ sộ chuẩn đấu trường).
@@ -112,7 +112,7 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
       + *Charge Hit 1:* Chém mở màn lấy đà gồng lực (Rotation: `-176.57°, -92.12°, -45°`, Scale 1.1x).
       + *Charge Hit 2:* Nhát bổ thẳng đứng từ trên cao cắm xuống đất (Rotation: `-90°, -92.12°, -90°`, Scale 1.35x).
       + *Counter Attack:* Cú chém phản đòn bùng nổ năng lượng diện rộng (Rotation: `-176.57°, -92.12°, -15°`, Scale 1.5x).
-    * **Cơ Chế Tự Phục Hồi & Tự Động Hóa 1-Click:** `PlayerCombat` tự động tìm kiếm và gắn `PlayerSlashVFX` khi khởi chạy, tự động fallback nạp `Resources/Slash VFX` nếu thiếu tham chiếu. Hỗ trợ công cụ `PlayerSlashVfxSetupEditor.cs` với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash Trail VFX Cho Kiếm Player (1-Click)` và Custom Editor với 6 nút Test nhát chém trực quan trong Scene View.
+    * **Cơ Chế Tự Phục Hồi & Tự Động Hóa 1-Click:** `PlayerCombat` tự động tìm kiếm và gắn `PlayerSlashVFX` khi khởi chạy, tự động fallback nạp `Resources/Slash VFX`, `Resources/E Slash VFX`, `Resources/Q Slash VFX` nếu thiếu tham chiếu. Hỗ trợ cấu hình độc lập cho cả 6 đòn đánh cơ bản và 2 kỹ năng đặc biệt (E: Sóng kiếm khí, Q: Đập đất AOE). Hỗ trợ công cụ `PlayerSlashVfxSetupEditor.cs` với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click)` và Custom Editor với đầy đủ 8 nút Test trực quan trong Scene View.
   * **Hiệu ứng Tia Lửa Va Chạm Khi Chém Trúng Đích (Hit Impact Burst VFX - `WeaponHitbox.cs`, `Impact VFX.prefab`):**
     * **Tách rời Impact khỏi Slash Trail (Decoupled Impact):** Tắt Impact gắn cứng trong prefab đường kiếm để tránh nổ chớp sáng vô lý khi chém trượt trong không khí.
     * **Kích hoạt Đúng Điểm Chạm (Contact Point Burst):** `WeaponHitbox.cs` chỉ kích nổ `Impact VFX` khi va chạm với các mục tiêu thuộc Layer `Enemy` (9) hoặc `Damageable` (8) và có thành phần `IDamageable`/`Health`.

@@ -78,10 +78,26 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Text hiển thị thông báo trạng thái / phản hồi (Ví dụ: 'Không đủ vàng!')")]
     [SerializeField] private TextMeshProUGUI statusMessageText;
 
+    [Header("=== HOẠT ẢNH TRANSITION (SOULS-LIKE) ===")]
+    [Tooltip("Thời lượng mở modal (giây)")]
+    [SerializeField] private float openDuration = 0.16f;
+
+    [Tooltip("Thời lượng đóng modal (giây)")]
+    [SerializeField] private float closeDuration = 0.10f;
+
+    [Tooltip("Độ trượt từ dưới lên (pixel)")]
+    [SerializeField] private float slideOffset = 22f;
+
     // Điểm cộng tạm thời trong phiên mở bảng
     private int tempAtk = 0;
     private int tempHp = 0;
     private int tempStamina = 0;
+
+    private RectTransform modalRect;
+    private Vector2 originalAnchoredPosition;
+    private bool hasCachedOriginalPos = false;
+    private Coroutine activeTransitionRoutine;
+    private Coroutine modalPunchRoutine;
 
     private int TotalTempAdded => tempAtk + tempHp + tempStamina;
     private int RemainingPoints
@@ -116,10 +132,19 @@ namespace InfiniteLabyrinth.UI
         modalRoot = gameObject;
       }
 
+      if (modalRect == null)
+      {
+        modalRect = (modalRoot != null ? modalRoot.transform : transform) as RectTransform;
+      }
+
       if (modalCanvasGroup == null)
       {
-        modalCanvasGroup = GetComponent<CanvasGroup>();
+        modalCanvasGroup = (modalRoot != null ? modalRoot.GetComponent<CanvasGroup>() : null)
+                        ?? GetComponent<CanvasGroup>()
+                        ?? gameObject.AddComponent<CanvasGroup>();
       }
+
+      CacheOriginalPosition();
 
       // Tự động dò tìm các GameObject và Component theo cấu trúc Canvas
       if (confirmButton == null || atkPlusButton == null || resetPriceText == null)
@@ -129,6 +154,34 @@ namespace InfiniteLabyrinth.UI
 
       FixButtonColors();
       SetupButtonListeners();
+    }
+
+    private void CacheOriginalPosition()
+    {
+      if (hasCachedOriginalPos) return;
+      if (modalRect == null)
+      {
+        modalRect = (modalRoot != null ? modalRoot.transform : transform) as RectTransform;
+      }
+      if (modalRect != null)
+      {
+        originalAnchoredPosition = modalRect.anchoredPosition;
+        hasCachedOriginalPos = true;
+      }
+    }
+
+    private void OnDisable()
+    {
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
+      if (modalPunchRoutine != null)
+      {
+        StopCoroutine(modalPunchRoutine);
+        modalPunchRoutine = null;
+      }
     }
 
     private void FixButtonColors()
@@ -327,17 +380,17 @@ namespace InfiniteLabyrinth.UI
       if (confirmButton != null) confirmButton.onClick.AddListener(HandleConfirmClicked);
       if (resetStatsButton != null) resetStatsButton.onClick.AddListener(HandleResetStatsClicked);
 
-      if (atkPlusButton != null) atkPlusButton.onClick.AddListener(() => ChangePoint(ref tempAtk, 1));
-      if (atkMinusButton != null) atkMinusButton.onClick.AddListener(() => ChangePoint(ref tempAtk, -1));
+      if (atkPlusButton != null) atkPlusButton.onClick.AddListener(() => ChangePoint(ref tempAtk, 1, atkPointsAddedText, atkValueText));
+      if (atkMinusButton != null) atkMinusButton.onClick.AddListener(() => ChangePoint(ref tempAtk, -1, atkPointsAddedText, atkValueText));
 
-      if (hpPlusButton != null) hpPlusButton.onClick.AddListener(() => ChangePoint(ref tempHp, 1));
-      if (hpMinusButton != null) hpMinusButton.onClick.AddListener(() => ChangePoint(ref tempHp, -1));
+      if (hpPlusButton != null) hpPlusButton.onClick.AddListener(() => ChangePoint(ref tempHp, 1, hpPointsAddedText, hpValueText));
+      if (hpMinusButton != null) hpMinusButton.onClick.AddListener(() => ChangePoint(ref tempHp, -1, hpPointsAddedText, hpValueText));
 
-      if (staminaPlusButton != null) staminaPlusButton.onClick.AddListener(() => ChangePoint(ref tempStamina, 1));
-      if (staminaMinusButton != null) staminaMinusButton.onClick.AddListener(() => ChangePoint(ref tempStamina, -1));
+      if (staminaPlusButton != null) staminaPlusButton.onClick.AddListener(() => ChangePoint(ref tempStamina, 1, staminaPointsAddedText, staminaValueText));
+      if (staminaMinusButton != null) staminaMinusButton.onClick.AddListener(() => ChangePoint(ref tempStamina, -1, staminaPointsAddedText, staminaValueText));
     }
 
-    private void ChangePoint(ref int pointVar, int delta)
+    private void ChangePoint(ref int pointVar, int delta, TextMeshProUGUI addedText, TextMeshProUGUI valueText)
     {
       if (delta > 0 && RemainingPoints <= 0) return;
       if (delta < 0 && pointVar <= 0) return;
@@ -345,10 +398,15 @@ namespace InfiniteLabyrinth.UI
       pointVar += delta;
       if (statusMessageText != null) statusMessageText.text = "";
       RefreshUI();
+
+      // Hiệu ứng Micro Punch cho text tăng/giảm điểm
+      if (addedText != null) StartCoroutine(PunchTextRoutine(addedText, 1.25f, 0.10f));
+      if (valueText != null) StartCoroutine(PunchTextRoutine(valueText, 1.15f, 0.08f));
+      if (availablePointsText != null) StartCoroutine(PunchTextRoutine(availablePointsText, 1.15f, 0.08f));
     }
 
     /// <summary>
-    /// Mở Modal phân bổ điểm tiềm năng
+    /// Mở Modal phân bổ điểm tiềm năng với hoạt ảnh trượt nhẹ từ dưới lên + mờ dần
     /// </summary>
     public void Show()
     {
@@ -358,20 +416,27 @@ namespace InfiniteLabyrinth.UI
 
       if (statusMessageText != null) statusMessageText.text = "";
 
+      CacheOriginalPosition();
+
       if (modalRoot != null) modalRoot.SetActive(true);
 
       if (modalCanvasGroup != null)
       {
-        modalCanvasGroup.alpha = 1f;
         modalCanvasGroup.blocksRaycasts = true;
         modalCanvasGroup.interactable = true;
       }
 
       RefreshUI();
+
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+      }
+      activeTransitionRoutine = StartCoroutine(AnimateModalOpenRoutine());
     }
 
     /// <summary>
-    /// Đóng Modal
+    /// Đóng Modal với hoạt ảnh mờ dần và trượt nhẹ xuống
     /// </summary>
     public void Hide()
     {
@@ -381,22 +446,39 @@ namespace InfiniteLabyrinth.UI
 
       if (modalCanvasGroup != null)
       {
-        modalCanvasGroup.alpha = 0f;
-        modalCanvasGroup.blocksRaycasts = false;
         modalCanvasGroup.interactable = false;
+        modalCanvasGroup.blocksRaycasts = false;
       }
 
-      if (modalRoot != null && modalCanvasGroup == null)
+      if (activeTransitionRoutine != null)
       {
-        modalRoot.SetActive(false);
+        StopCoroutine(activeTransitionRoutine);
+      }
+
+      if (gameObject.activeSelf && (modalCanvasGroup != null ? modalCanvasGroup.alpha > 0.05f : true))
+      {
+        activeTransitionRoutine = StartCoroutine(AnimateModalCloseRoutine());
+      }
+      else
+      {
+        HideImmediate();
       }
     }
 
+    /// <summary>
+    /// Đóng Modal tức thì không qua hoạt ảnh (khi đóng Inventory)
+    /// </summary>
     public void HideImmediate()
     {
       tempAtk = 0;
       tempHp = 0;
       tempStamina = 0;
+
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
 
       if (modalCanvasGroup != null)
       {
@@ -404,10 +486,162 @@ namespace InfiniteLabyrinth.UI
         modalCanvasGroup.blocksRaycasts = false;
         modalCanvasGroup.interactable = false;
       }
-      else if (modalRoot != null)
+
+      if (modalRect != null && hasCachedOriginalPos)
+      {
+        modalRect.anchoredPosition = originalAnchoredPosition;
+        modalRect.localScale = Vector3.one;
+      }
+
+      if (modalRoot != null)
       {
         modalRoot.SetActive(false);
       }
+    }
+
+    private System.Collections.IEnumerator AnimateModalOpenRoutine()
+    {
+      CacheOriginalPosition();
+
+      Vector2 startPos = originalAnchoredPosition + new Vector2(0f, -slideOffset);
+      Vector3 startScale = Vector3.one * 0.94f;
+
+      if (modalRect != null)
+      {
+        modalRect.anchoredPosition = startPos;
+        modalRect.localScale = startScale;
+      }
+
+      if (modalCanvasGroup != null)
+      {
+        modalCanvasGroup.alpha = 0f;
+      }
+
+      float elapsed = 0f;
+      while (elapsed < openDuration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / openDuration);
+        float e = UITransitionHelper.EaseOutCubic(t);
+
+        if (modalRect != null)
+        {
+          modalRect.anchoredPosition = Vector2.LerpUnclamped(startPos, originalAnchoredPosition, e);
+          modalRect.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, e);
+        }
+
+        if (modalCanvasGroup != null)
+        {
+          modalCanvasGroup.alpha = Mathf.Lerp(0f, 1f, e);
+        }
+
+        yield return null;
+      }
+
+      if (modalRect != null)
+      {
+        modalRect.anchoredPosition = originalAnchoredPosition;
+        modalRect.localScale = Vector3.one;
+      }
+      if (modalCanvasGroup != null)
+      {
+        modalCanvasGroup.alpha = 1f;
+      }
+
+      activeTransitionRoutine = null;
+    }
+
+    private System.Collections.IEnumerator AnimateModalCloseRoutine()
+    {
+      CacheOriginalPosition();
+
+      Vector2 startPos = modalRect != null ? modalRect.anchoredPosition : originalAnchoredPosition;
+      Vector2 targetPos = originalAnchoredPosition + new Vector2(0f, -slideOffset * 0.6f);
+      Vector3 startScale = modalRect != null ? modalRect.localScale : Vector3.one;
+      Vector3 endScale = Vector3.one * 0.96f;
+      float startAlpha = modalCanvasGroup != null ? modalCanvasGroup.alpha : 1f;
+
+      float elapsed = 0f;
+      while (elapsed < closeDuration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / closeDuration);
+        float e = UITransitionHelper.EaseInQuad(t);
+
+        if (modalRect != null)
+        {
+          modalRect.anchoredPosition = Vector2.LerpUnclamped(startPos, targetPos, e);
+          modalRect.localScale = Vector3.LerpUnclamped(startScale, endScale, e);
+        }
+
+        if (modalCanvasGroup != null)
+        {
+          modalCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, e);
+        }
+
+        yield return null;
+      }
+
+      if (modalCanvasGroup != null) modalCanvasGroup.alpha = 0f;
+      if (modalRect != null)
+      {
+        modalRect.anchoredPosition = originalAnchoredPosition;
+        modalRect.localScale = Vector3.one;
+      }
+
+      if (modalRoot != null) modalRoot.SetActive(false);
+      activeTransitionRoutine = null;
+    }
+
+    private System.Collections.IEnumerator PunchTextRoutine(TextMeshProUGUI text, float punchScale, float duration)
+    {
+      if (text == null) yield break;
+
+      Transform tr = text.transform;
+      Vector3 startScale = Vector3.one * punchScale;
+      float elapsed = 0f;
+
+      tr.localScale = startScale;
+
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        float e = UITransitionHelper.EaseOutQuad(t);
+
+        tr.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, e);
+        yield return null;
+      }
+
+      tr.localScale = Vector3.one;
+    }
+
+    private void TriggerSuccessPunch()
+    {
+      if (modalPunchRoutine != null) StopCoroutine(modalPunchRoutine);
+      modalPunchRoutine = StartCoroutine(ModalSuccessPunchRoutine());
+    }
+
+    private System.Collections.IEnumerator ModalSuccessPunchRoutine()
+    {
+      if (modalRect == null) yield break;
+
+      Vector3 punchScale = Vector3.one * 1.025f;
+      float punchDuration = 0.16f;
+      float elapsed = 0f;
+
+      while (elapsed < punchDuration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / punchDuration);
+        float e = UITransitionHelper.EaseOutQuad(t);
+
+        modalRect.localScale = Vector3.LerpUnclamped(punchScale, Vector3.one, e);
+        yield return null;
+      }
+
+      modalRect.localScale = Vector3.one;
+      modalPunchRoutine = null;
     }
 
     public void Toggle()
@@ -446,8 +680,15 @@ namespace InfiniteLabyrinth.UI
         if (statusMessageText != null)
         {
           statusMessageText.text = $"<color=#A5D6A7>✓ Successfully allocated +{addedTotal} points!</color>";
+          StartCoroutine(PunchTextRoutine(statusMessageText, 1.15f, 0.12f));
         }
         RefreshUI();
+        TriggerSuccessPunch();
+
+        // Punch các giá trị chỉ số để ăn mừng chỉ số vĩnh viễn tăng
+        if (atkValueText != null) StartCoroutine(PunchTextRoutine(atkValueText, 1.2f, 0.12f));
+        if (hpValueText != null) StartCoroutine(PunchTextRoutine(hpValueText, 1.2f, 0.12f));
+        if (staminaValueText != null) StartCoroutine(PunchTextRoutine(staminaValueText, 1.2f, 0.12f));
       }
       else
       {
@@ -481,8 +722,11 @@ namespace InfiniteLabyrinth.UI
         if (statusMessageText != null)
         {
           statusMessageText.text = $"<color=#A5D6A7>✓ Reset stats successful! Refunded {pointsRefunded} points.</color>";
+          StartCoroutine(PunchTextRoutine(statusMessageText, 1.15f, 0.12f));
         }
         RefreshUI();
+        TriggerSuccessPunch();
+        if (availablePointsText != null) StartCoroutine(PunchTextRoutine(availablePointsText, 1.3f, 0.15f));
       }
     }
 

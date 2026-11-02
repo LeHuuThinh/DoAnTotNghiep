@@ -5142,6 +5142,7 @@ MonoBehaviour:
   interactionRadius: 3.5
   teleportSound: {fileID: 0}
   teleportVfxPrefab: {fileID: 0}
+  openVictoryChoiceUI: 1
 --- !u!65 &4098856531247470947
 BoxCollider:
   m_ObjectHideFlags: 0

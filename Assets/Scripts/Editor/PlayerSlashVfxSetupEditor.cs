@@ -21,7 +21,13 @@ namespace InfiniteLabyrinth.Editor
     private const string PRIMARY_PARRY_VFX_PATH = "Assets/Characters/Player/Skill/Parry VFX.prefab";
     private const string RESOURCES_PARRY_VFX_PATH = "Assets/Resources/Parry VFX.prefab";
 
-    private const string PREF_KEY = "PlayerSlashVfx_AutoSetup_v3";
+    private const string PRIMARY_E_SLASH_VFX_PATH = "Assets/Characters/Player/Skill/E Slash VFX.prefab";
+    private const string RESOURCES_E_SLASH_VFX_PATH = "Assets/Resources/E Slash VFX.prefab";
+
+    private const string PRIMARY_Q_SLASH_VFX_PATH = "Assets/Characters/Player/Skill/Q Slash VFX.prefab";
+    private const string RESOURCES_Q_SLASH_VFX_PATH = "Assets/Resources/Q Slash VFX.prefab";
+
+    private const string PREF_KEY = "PlayerSlashVfx_AutoSetup_v4";
 
     [InitializeOnLoadMethod]
     private static void AutoRunSetupOnce()
@@ -77,6 +83,19 @@ namespace InfiniteLabyrinth.Editor
         parryVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RESOURCES_PARRY_VFX_PATH);
       }
 
+      // 4. Tìm Prefab E Slash VFX & Q Slash VFX
+      GameObject eSlashVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PRIMARY_E_SLASH_VFX_PATH);
+      if (eSlashVfxPrefab == null)
+      {
+        eSlashVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RESOURCES_E_SLASH_VFX_PATH);
+      }
+
+      GameObject qSlashVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PRIMARY_Q_SLASH_VFX_PATH);
+      if (qSlashVfxPrefab == null)
+      {
+        qSlashVfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RESOURCES_Q_SLASH_VFX_PATH);
+      }
+
       Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Slash VFX: {slashVfxPrefab.name}</color>");
       if (impactVfxPrefab != null)
       {
@@ -86,12 +105,20 @@ namespace InfiniteLabyrinth.Editor
       {
         Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Parry VFX: {parryVfxPrefab.name}</color>");
       }
+      if (eSlashVfxPrefab != null)
+      {
+        Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab E Slash VFX: {eSlashVfxPrefab.name}</color>");
+      }
+      if (qSlashVfxPrefab != null)
+      {
+        Debug.Log($"<color=green>[PlayerSlashVfxSetup] ✔️ Đã tìm thấy Prefab Q Slash VFX: {qSlashVfxPrefab.name}</color>");
+      }
 
-      // 4. Cấu hình trên Player Prefab
-      bool prefabSuccess = SetupPlayerPrefab(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab);
+      // 5. Cấu hình trên Player Prefab
+      bool prefabSuccess = SetupPlayerPrefab(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab, eSlashVfxPrefab, qSlashVfxPrefab);
 
-      // 5. Cấu hình Scene Instance nếu có trong Scene đang mở
-      SetupSceneInstances(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab);
+      // 6. Cấu hình Scene Instance nếu có trong Scene đang mở
+      SetupSceneInstances(slashVfxPrefab, impactVfxPrefab, parryVfxPrefab, eSlashVfxPrefab, qSlashVfxPrefab);
 
       AssetDatabase.SaveAssets();
       AssetDatabase.Refresh();
@@ -106,7 +133,7 @@ namespace InfiniteLabyrinth.Editor
       }
     }
 
-    private static bool SetupPlayerPrefab(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab)
+    private static bool SetupPlayerPrefab(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab, GameObject eSlashVfxPrefab, GameObject qSlashVfxPrefab)
     {
       GameObject playerAsset = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_PREFAB_PATH);
       if (playerAsset == null)
@@ -143,6 +170,20 @@ namespace InfiniteLabyrinth.Editor
         if (propDefaultPrefab != null)
         {
           propDefaultPrefab.objectReferenceValue = slashVfxPrefab;
+        }
+
+        SerializedProperty propSkillEPrefab = soSlash.FindProperty("skillEConfig.customPrefab");
+        if (propSkillEPrefab != null && eSlashVfxPrefab != null)
+        {
+          propSkillEPrefab.objectReferenceValue = eSlashVfxPrefab;
+          Debug.Log("[PlayerSlashVfxSetup] + Đã gắn E Slash VFX cho Skill E");
+        }
+
+        SerializedProperty propSkillQPrefab = soSlash.FindProperty("skillQConfig.customPrefab");
+        if (propSkillQPrefab != null && qSlashVfxPrefab != null)
+        {
+          propSkillQPrefab.objectReferenceValue = qSlashVfxPrefab;
+          Debug.Log("[PlayerSlashVfxSetup] + Đã gắn Q Slash VFX cho Skill Q");
         }
 
         SerializedProperty propRoot = soSlash.FindProperty("slashSpawnRoot");
@@ -200,7 +241,7 @@ namespace InfiniteLabyrinth.Editor
       return true;
     }
 
-    private static void SetupSceneInstances(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab)
+    private static void SetupSceneInstances(GameObject slashVfxPrefab, GameObject impactVfxPrefab, GameObject parryVfxPrefab, GameObject eSlashVfxPrefab, GameObject qSlashVfxPrefab)
     {
       PlayerCombat[] scenePlayers = Object.FindObjectsByType<PlayerCombat>(FindObjectsSortMode.None);
       if (scenePlayers == null || scenePlayers.Length == 0) return;
@@ -235,6 +276,18 @@ namespace InfiniteLabyrinth.Editor
         if (propDefaultPrefab != null && propDefaultPrefab.objectReferenceValue == null)
         {
           propDefaultPrefab.objectReferenceValue = slashVfxPrefab;
+        }
+
+        SerializedProperty propSkillEPrefab = soSlash.FindProperty("skillEConfig.customPrefab");
+        if (propSkillEPrefab != null && (propSkillEPrefab.objectReferenceValue == null || eSlashVfxPrefab != null))
+        {
+          propSkillEPrefab.objectReferenceValue = eSlashVfxPrefab;
+        }
+
+        SerializedProperty propSkillQPrefab = soSlash.FindProperty("skillQConfig.customPrefab");
+        if (propSkillQPrefab != null && (propSkillQPrefab.objectReferenceValue == null || qSlashVfxPrefab != null))
+        {
+          propSkillQPrefab.objectReferenceValue = qSlashVfxPrefab;
         }
 
         SerializedProperty propRoot = soSlash.FindProperty("slashSpawnRoot");
@@ -383,6 +436,19 @@ namespace InfiniteLabyrinth.Editor
       if (GUILayout.Button("🔥 Test Counter Attack (Phản công uy lực)", GUILayout.Height(30)))
       {
         slashScript.TestCounter();
+      }
+      GUI.backgroundColor = Color.white;
+
+      EditorGUILayout.Space(6);
+      GUI.backgroundColor = new Color(0.25f, 0.85f, 1f);
+      if (GUILayout.Button("🌀 Test Skill E Slash (Chém Kiếm Khí)", GUILayout.Height(30)))
+      {
+        slashScript.TestSkillE();
+      }
+      GUI.backgroundColor = new Color(1f, 0.65f, 0.2f);
+      if (GUILayout.Button("💥 Test Skill Q Slash (Đập Đất AOE)", GUILayout.Height(30)))
+      {
+        slashScript.TestSkillQ();
       }
       GUI.backgroundColor = Color.white;
 

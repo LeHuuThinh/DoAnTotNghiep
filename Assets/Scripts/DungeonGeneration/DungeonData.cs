@@ -20,6 +20,7 @@ public class DungeonData
   public RoomData bossPrevRoom;   // Phòng kề trước phòng Boss
   public RoomData keyRoom;        // Phòng tế đàn nhánh cụt chứa Chìa Khóa Hầm Ngục
   public bool hasSpawnedDungeonKey; // Cờ đánh dấu đã sinh chìa khóa hầm ngục
+  public RectInt startRoomBounds;  // Giới hạn căn phòng đầu tiên nối với cửa khởi đầu
   public RectInt bossRoomBounds;   // Giới hạn căn phòng Boss Khổng Lồ do BSP tạo ra
   public RectInt bossPrevRoomBounds; // Giới hạn căn phòng kề nối vào cửa ngõ Đại Lộ Boss
   public RectInt bossCorridor;     // Hành lang nối trực tiếp vào phòng Boss (được mở rộng gấp đôi)

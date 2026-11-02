@@ -74,6 +74,7 @@ namespace InfiniteLabyrinth.UI
 
     private Health targetBossHealth;
     private bool isNameAnchoredOnBar = false;
+    private bool isNameSequencePlaying = false;
 
     public bool IsNameAnchoredOnBar => isNameAnchoredOnBar;
 
@@ -256,6 +257,9 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void PlayNameSequence()
     {
+      // Bảo vệ chống kích hoạt trùng lặp hoặc khi Tên đã neo trên thanh máu
+      if (isNameSequencePlaying || isNameAnchoredOnBar) return;
+      isNameSequencePlaying = true;
       StartCoroutine(NameIntroSequenceRoutine());
     }
 
@@ -337,6 +341,7 @@ namespace InfiniteLabyrinth.UI
 
       textTransform.localScale = endScale;
       isNameAnchoredOnBar = true;
+      isNameSequencePlaying = false;
 
       Debug.Log($"<color=cyan>[BossHUDController]</color> 👑 Boss Title sequence complete! Tên trùm đã neo chuẩn xác trên thanh máu tại {textTransform.position}");
     }

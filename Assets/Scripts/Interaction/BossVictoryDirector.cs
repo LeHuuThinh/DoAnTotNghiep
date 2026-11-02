@@ -471,6 +471,17 @@ namespace InfiniteLabyrinth.Interaction
           {
             spawnedVictoryPortalInstance = Instantiate(victoryPortalPrefab, portalPos, portalRot, pedestalObj.transform);
             spawnedVictoryPortalInstance.name = "VictoryPortal";
+
+            PortalController portalCtrl = spawnedVictoryPortalInstance.GetComponentInChildren<PortalController>(true);
+            if (portalCtrl != null)
+            {
+              portalCtrl.SetVictoryPortalMode(true);
+              Debug.Log("<color=green>[BossVictoryDirector]</color> 🌀 Đã kích hoạt VictoryPortalMode cho Cổng Chiến Thắng!");
+            }
+            else
+            {
+              Debug.LogWarning("[BossVictoryDirector] ⚠️ Không tìm thấy PortalController trên prefab VictoryPortal!");
+            }
           }
 
           // Hiệu ứng ánh sáng thần thánh bừng nở trên bục đá

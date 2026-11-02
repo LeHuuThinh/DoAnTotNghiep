@@ -153,6 +153,28 @@ namespace InfiniteLabyrinth.UI
     private void HandlePointsChanged(int points)
     {
       UpdateAttributeButtonBadge();
+      if (attributePointsButton != null && points > 0 && gameObject.activeInHierarchy)
+      {
+        StartCoroutine(PunchButtonRoutine(attributePointsButton.transform, 1.12f, 0.12f));
+      }
+    }
+
+    private System.Collections.IEnumerator PunchButtonRoutine(Transform tr, float scale, float duration)
+    {
+      if (tr == null) yield break;
+      Vector3 startScale = Vector3.one * scale;
+      float elapsed = 0f;
+      tr.localScale = startScale;
+
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        float e = UITransitionHelper.EaseOutQuad(t);
+        tr.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, e);
+        yield return null;
+      }
+      tr.localScale = Vector3.one;
     }
 
     private void CachePlayerReferences()
@@ -309,6 +331,11 @@ namespace InfiniteLabyrinth.UI
 
     private void HandleAttributePointsClicked()
     {
+      if (attributePointsButton != null && gameObject.activeInHierarchy)
+      {
+        StartCoroutine(PunchButtonRoutine(attributePointsButton.transform, 0.94f, 0.08f));
+      }
+
       OnAttributePointsClicked?.Invoke();
 
       if (attributeAllocationModal != null)

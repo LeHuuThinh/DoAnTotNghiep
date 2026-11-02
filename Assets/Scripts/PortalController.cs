@@ -36,6 +36,31 @@ public class PortalController : MonoBehaviour, IInteractable
   [SerializeField] private AudioClip teleportSound;
   [SerializeField] private GameObject teleportVfxPrefab;
 
+  [Header("=== GIAO DIỆN CỔNG THẮNG TRẬN (TASK D02-5D) ===")]
+  [Tooltip("Nếu bật, tương tác cổng sẽ mở giao diện 2 cửa sổ VictoryPortalUI (Về làng / Đi tầng 2 / Ở lại) thay vì chuyển cảnh ngay")]
+  [SerializeField] private bool openVictoryChoiceUI = false;
+
+  public void SetVictoryPortalMode(bool isVictoryPortal)
+  {
+    openVictoryChoiceUI = isVictoryPortal;
+    if (isVictoryPortal)
+    {
+      interactionPrompt = "Vào Cổng Thắng Trận (Giữ F)";
+      targetName = "Cổng Chiến Thắng";
+      requiresHold = true;
+      requiredHoldTime = 2.0f;
+    }
+  }
+
+  public bool IsVictoryPortal()
+  {
+    if (openVictoryChoiceUI) return true;
+    if (gameObject.name.Contains("Victory") || (transform.root != null && transform.root.name.Contains("Victory"))) return true;
+    if (transform.parent != null && (transform.parent.name.Contains("Socket") || transform.parent.name.Contains("Pedestal") || transform.parent.name.Contains("Boss") || transform.parent.name.Contains("Victory"))) return true;
+    if (SceneManager.GetActiveScene().name == "DungeonScene") return true;
+    return false;
+  }
+
   // Triển khai IInteractable
   public string InteractionPrompt => interactionPrompt;
   public string TargetName => targetName;
@@ -64,6 +89,31 @@ public class PortalController : MonoBehaviour, IInteractable
   public void OnInteract(GameObject player)
   {
     if (isTransitioning) return;
+
+    // Nếu là Cổng Thắng Trận (Task D02-5D): Mở giao diện 2 cửa sổ thay vì chuyển cảnh tức thì
+    if (openVictoryChoiceUI || IsVictoryPortal())
+    {
+      VictoryPortalUI ui = VictoryPortalUI.Instance;
+      if (ui == null)
+      {
+        ui = FindFirstObjectByType<VictoryPortalUI>(FindObjectsInactive.Include);
+      }
+
+      if (ui != null)
+      {
+        Debug.Log("<color=gold>[PortalController]</color> 🌀 Người chơi đã đè giữ Cổng Chiến Thắng -> Mở giao diện VictoryPortalUI!");
+        ui.Open();
+        return;
+      }
+      else
+      {
+        Debug.LogError("[PortalController] ❌ Không tìm thấy VictoryPortalUI trong Scene!");
+      }
+
+      // Tuyệt đối không tự động nhảy về LandScene khi chưa chọn trên bảng
+      return;
+    }
+
     isTransitioning = true;
 
     if (teleportSound != null)

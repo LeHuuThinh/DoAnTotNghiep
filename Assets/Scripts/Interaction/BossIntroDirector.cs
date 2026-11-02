@@ -18,7 +18,7 @@ namespace InfiniteLabyrinth.Interaction
 
     [Header("=== TRẠNG THÁI CUTSCENE ===")]
     [Tooltip("Bật/tắt chế độ giật góc máy Camera cutscene điện ảnh (Mặc định = false để người chơi tự do điều khiển nhảy né sóng và theo dõi góc nhìn gameplay trực tiếp)")]
-    [SerializeField] private bool enableCinematicCameraCutscene = false;
+    [SerializeField] private bool enableCinematicCameraCutscene = true;
     [SerializeField] private bool isPlayingCutscene = false;
     [SerializeField] private bool hasPlayedIntro = false;
 
@@ -45,12 +45,14 @@ namespace InfiniteLabyrinth.Interaction
     [SerializeField] private float anticipationDriftSpeed = 0.6f;
 
     [Header("=== PHA 3: BOSS NHẢY XUỐNG & RUNG MÀN HÌNH ===")]
-    [Tooltip("Thời gian camera lia hạ góc chúc theo nhịp rơi của Boss (giây)")]
-    [SerializeField] private float jumpCamFollowDuration = 1.25f;
+    [Tooltip("Thời gian tối đa camera lia hạ góc chúc bám theo nhịp rơi của Boss (giây, hoạt ảnh nhún đà + rơi ~2.0s)")]
+    [SerializeField] private float jumpCamFollowDuration = 2.5f;
     [Tooltip("Cường độ rung màn hình khi Boss tiếp đất")]
     [SerializeField] private float landingShakeIntensity = 0.45f;
     [Tooltip("Thời gian rung màn hình khi tiếp đất")]
     [SerializeField] private float landingShakeDuration = 0.55f;
+    [Tooltip("Thời gian chờ Boss tiếp đất đứng dậy hồi vị vững vàng trước khi bước sang Pha 4 phun băng & hiện Banner Tên (giây, mặc định 1.0s theo yêu cầu)")]
+    [SerializeField] private float postLandingRecoveryDelay = 1.0f;
 
     [Header("=== PHA 4: BỐ CỤC 1/3 (BOSS BÊN TRÁI - BANNER BÊN PHẢI) ===")]
     [Tooltip("Thời gian chuyển camera mượt mà sang vị trí lệch phải trước khi Boss phun băng (giây)")]
@@ -109,24 +111,23 @@ namespace InfiniteLabyrinth.Interaction
     private void HandlePlayerEnteredArena()
     {
       if (hasPlayedIntro || isPlayingCutscene) return;
-      hasPlayedIntro = true;
 
-      // Tìm Boss và liên kết thanh máu HUD
-      IceGolemController boss = FindFirstObjectByType<IceGolemController>();
-      if (boss != null)
-      {
-        Health bossHealth = boss.GetComponent<Health>();
-        if (bossHealth != null && BossHUDController.Instance != null)
-        {
-          BossHUDController.Instance.BindBossHealth(bossHealth);
-          BossHUDController.Instance.PlayNameSequence();
-        }
-      }
-
-      // Nếu không bật Cutscene giật Camera: Cho phép người chơi tự do điều khiển và Boss tự nhảy
+      // Nếu không bật Cutscene giật Camera (Chế độ Gameplay Trực Tiếp):
       if (!enableCinematicCameraCutscene)
       {
+        hasPlayedIntro = true;
         Debug.Log("<color=cyan>[BossIntroDirector]</color> ⚔️ Chế độ Gameplay Trực Tiếp: Người chơi giữ trọn quyền điều khiển để nhảy né sóng, Boss tự thi triển JumpDown!");
+        IceGolemController bossDirect = FindFirstObjectByType<IceGolemController>();
+        if (bossDirect != null)
+        {
+          Health bossHealth = bossDirect.GetComponent<Health>();
+          if (bossHealth != null && BossHUDController.Instance != null)
+          {
+            BossHUDController.Instance.BindBossHealth(bossHealth);
+            BossHUDController.Instance.PlayNameSequence();
+          }
+          bossDirect.PlayJumpDown();
+        }
         return;
       }
 
@@ -295,6 +296,12 @@ namespace InfiniteLabyrinth.Interaction
 
       // CHẤN ĐỘNG TIẾP ĐẤT: RUNG MÀN HÌNH CỰC MẠNH (CAMERA SHAKE)
       yield return StartCoroutine(CameraShakeRoutine(camTrans, landingShakeDuration, landingShakeIntensity));
+
+      // DELAY CHỜ BOSS TIẾP ĐẤT ĐỨNG DẬY HỒI VỊ XONG XUÔI (MẶC ĐỊNH 1.0S THEO YÊU CẦU)
+      if (postLandingRecoveryDelay > 0f)
+      {
+        yield return new WaitForSeconds(postLandingRecoveryDelay);
+      }
 
       // =========================================================================
       // PHA 4: OFFSET CAMERA SANG PHẢI (BOSS BÊN TRÁI - BANNER BÊN PHẢI) & PHUN BĂNG

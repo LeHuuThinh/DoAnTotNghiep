@@ -73,7 +73,14 @@ public static class DungeonRoomAnalyzer
     {
       gridDoorPos = new Vector2Int(Mathf.FloorToInt(startDoorMarker.position.x / tileSize), Mathf.FloorToInt(startDoorMarker.position.z / tileSize));
     }
-    data.startRoom = FindStartRoom(data, gridDoorPos);
+    if (data.startRoomBounds.width > 0)
+    {
+      data.startRoom = data.roomDataList.Find(r => r.bounds.Equals(data.startRoomBounds));
+    }
+    if (data.startRoom == null)
+    {
+      data.startRoom = FindStartRoom(data, gridDoorPos);
+    }
     if (data.startRoom != null)
     {
       data.startRoom.type = RoomType.Start;

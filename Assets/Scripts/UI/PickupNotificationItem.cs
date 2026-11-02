@@ -129,31 +129,44 @@ namespace InfiniteLabyrinth.UI
 
     private IEnumerator AnimateRoutine(float displayDuration)
     {
-      // 1. PHASE 1: FADE IN MƯỢT MÀ
+      // 1. PHASE 1: FADE IN + ZOOM SCALE MƯỢT MÀ (SOULS-LIKE)
       canvasGroup.alpha = 0f;
+      Vector3 startScale = Vector3.one * 0.92f;
+      transform.localScale = startScale;
+
       float elapsed = 0f;
-      float fadeInTime = 0.2f;
+      float fadeInTime = 0.16f;
 
       while (elapsed < fadeInTime)
       {
         elapsed += Time.unscaledDeltaTime;
-        canvasGroup.alpha = Mathf.Clamp01(elapsed / fadeInTime);
+        float t = Mathf.Clamp01(elapsed / fadeInTime);
+        float e = UITransitionHelper.EaseOutQuad(t);
+
+        canvasGroup.alpha = Mathf.Lerp(0f, 1f, e);
+        transform.localScale = Vector3.LerpUnclamped(startScale, Vector3.one, e);
         yield return null;
       }
 
       canvasGroup.alpha = 1f;
+      transform.localScale = Vector3.one;
 
       // 2. PHASE 2: GIỮ NGUYÊN HIỂN THỊ
       yield return new WaitForSecondsRealtime(displayDuration);
 
       // 3. PHASE 3: FADE OUT MỜ DẦN BIẾN MẤT
       elapsed = 0f;
-      float fadeOutTime = 0.3f;
+      float fadeOutTime = 0.22f;
+      Vector3 endScale = Vector3.one * 0.95f;
 
       while (elapsed < fadeOutTime)
       {
         elapsed += Time.unscaledDeltaTime;
-        canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeOutTime);
+        float t = Mathf.Clamp01(elapsed / fadeOutTime);
+        float e = UITransitionHelper.EaseInQuad(t);
+
+        canvasGroup.alpha = Mathf.Lerp(1f, 0f, e);
+        transform.localScale = Vector3.LerpUnclamped(Vector3.one, endScale, e);
         yield return null;
       }
 

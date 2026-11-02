@@ -44,12 +44,25 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Nút Vứt bỏ vật phẩm ra sàn")]
     [SerializeField] private Button btnDrop;
 
+    [Header("=== HIỆU ỨNG HOẠT ẢNH POPUP (SOULS-LIKE) ===")]
+    [Tooltip("Thời lượng mở popup (giây)")]
+    [SerializeField] private float openDuration = 0.10f;
+
+    [Tooltip("Thời lượng trượt giữa các ô đồ khi đang mở sẵn (giây)")]
+    [SerializeField] private float slideDuration = 0.08f;
+
+    [Tooltip("Thời lượng đóng popup (giây)")]
+    [SerializeField] private float closeDuration = 0.07f;
+
     // Trạng thái hiện tại
     private InventorySlotUI currentBagSlot;
     private EquipmentSlotUI currentEquipSlot;
     private ItemData currentItem;
     private bool isEquippedTarget = false;
     private bool isInitialized = false;
+
+    private CanvasGroup popupCanvasGroup;
+    private Coroutine activeTransitionRoutine;
 
     public InventorySlotUI CurrentBagSlot => currentBagSlot;
     public EquipmentSlotUI CurrentEquipSlot => currentEquipSlot;
@@ -103,6 +116,20 @@ namespace InfiniteLabyrinth.UI
       if (btnUnequip == null) btnUnequip = transform.Find("ActionButton/BtnUnequip")?.GetComponent<Button>();
       if (btnUse == null) btnUse = transform.Find("ActionButton/BtnUse")?.GetComponent<Button>();
       if (btnDrop == null) btnDrop = transform.Find("ActionButton/BtnDrop")?.GetComponent<Button>();
+
+      if (popupCanvasGroup == null)
+      {
+        popupCanvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+      }
+    }
+
+    private void OnDisable()
+    {
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
     }
 
     /// <summary>
@@ -128,9 +155,8 @@ namespace InfiniteLabyrinth.UI
       isEquippedTarget = false;
 
       currentBagSlot.SetSelected(true);
-      gameObject.SetActive(true);
       UpdateUIContent();
-      PositionNearSlot(slot.transform as RectTransform);
+      ShowNearSlotAnimated(slot.transform as RectTransform);
     }
 
     /// <summary>
@@ -156,59 +182,189 @@ namespace InfiniteLabyrinth.UI
       isEquippedTarget = true;
 
       currentEquipSlot.SetSelected(true);
-      gameObject.SetActive(true);
       UpdateUIContent();
-      PositionNearSlot(eqSlot.transform as RectTransform);
+      ShowNearSlotAnimated(eqSlot.transform as RectTransform);
     }
 
     /// <summary>
-    /// Tự động định vị Popup theo ô đồ: Góc trên trái nằm ở tâm ô đồ, 
-    /// nếu tràn cạnh dưới hoặc cạnh phải màn hình thì tự động đảo góc (pivot) sang dưới hoặc trái
+    /// Hiển thị và định vị popup với hoạt ảnh Souls-like (Trượt mượt nếu đang mở sẵn, Pop card nếu mở mới)
     /// </summary>
-    private void PositionNearSlot(RectTransform slotRect)
+    private void ShowNearSlotAnimated(RectTransform slotRect)
     {
       if (slotRect == null) return;
 
-      RectTransform popupRect = transform as RectTransform;
-      RectTransform parentRect = transform.parent as RectTransform;
-      if (popupRect == null || parentRect == null) return;
-
-      Canvas canvas = GetComponentInParent<Canvas>();
-      Camera cam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
-
-      // 1. Lấy vị trí tâm của ô đồ trên màn hình (Screen Space)
-      Vector3 slotWorldCenter = slotRect.position;
-      Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, slotWorldCenter);
-
-      // 2. Chuyển sang toạ độ local của parentRect (InventoryUI)
-      if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPos, cam, out Vector2 localPoint))
+      if (!CalculatePositionNearSlot(slotRect, out Vector2 targetPivot, out Vector2 targetPos))
       {
         return;
       }
 
-      // 3. Kích thước popup
+      RectTransform popupRect = transform as RectTransform;
+      if (popupRect == null) return;
+
+      bool isAlreadyShowing = gameObject.activeSelf && (popupCanvasGroup != null && popupCanvasGroup.alpha > 0.1f);
+
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
+
+      gameObject.SetActive(true);
+      if (popupCanvasGroup != null)
+      {
+        popupCanvasGroup.blocksRaycasts = true;
+        popupCanvasGroup.interactable = true;
+      }
+
+      // Nếu đang mở sẵn và cùng Pivot -> Trượt mượt mà (Smooth Slide) sang ô mới
+      if (isAlreadyShowing && popupRect.pivot == targetPivot)
+      {
+        activeTransitionRoutine = StartCoroutine(SlideToSlotRoutine(targetPos, slideDuration));
+      }
+      else
+      {
+        // Mở mới hoặc đổi hướng pivot -> Pop mở nhanh dứt khoát
+        popupRect.pivot = targetPivot;
+        popupRect.anchoredPosition = targetPos;
+        activeTransitionRoutine = StartCoroutine(AnimateOpenRoutine(openDuration));
+      }
+    }
+
+    /// <summary>
+    /// Tự động tính toán vị trí bám theo ô đồ
+    /// </summary>
+    private bool CalculatePositionNearSlot(RectTransform slotRect, out Vector2 targetPivot, out Vector2 targetPos)
+    {
+      targetPivot = new Vector2(0f, 1f);
+      targetPos = Vector2.zero;
+
+      if (slotRect == null) return false;
+
+      RectTransform popupRect = transform as RectTransform;
+      RectTransform parentRect = transform.parent as RectTransform;
+      if (popupRect == null || parentRect == null) return false;
+
+      Canvas canvas = GetComponentInParent<Canvas>();
+      Camera cam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
+
+      Vector3 slotWorldCenter = slotRect.position;
+      Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, slotWorldCenter);
+
+      if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPos, cam, out targetPos))
+      {
+        return false;
+      }
+
       float popupWidth = popupRect.rect.width > 0f ? popupRect.rect.width : 280f;
       float popupHeight = popupRect.rect.height > 0f ? popupRect.rect.height : 380f;
 
-      // 4. Quyết định Pivot:
-      // Mặc định mở sang phải (pivot.x = 0) và xuống dưới (pivot.y = 1) -> Góc trên trái nằm ở giữa ô đồ
       float pivotX = 0f;
       float pivotY = 1f;
 
-      // Nếu không đủ chỗ bên phải màn hình -> mở sang trái (pivot.x = 1)
       if (screenPos.x + popupWidth > Screen.width - 20f)
       {
         pivotX = 1f;
       }
 
-      // Nếu không đủ chỗ bên dưới màn hình -> mở lên trên (pivot.y = 0)
       if (screenPos.y - popupHeight < 20f)
       {
         pivotY = 0f;
       }
 
-      popupRect.pivot = new Vector2(pivotX, pivotY);
-      popupRect.anchoredPosition = localPoint;
+      targetPivot = new Vector2(pivotX, pivotY);
+      return true;
+    }
+
+    private System.Collections.IEnumerator SlideToSlotRoutine(Vector2 targetPos, float duration)
+    {
+      RectTransform popupRect = transform as RectTransform;
+      Vector2 startPos = popupRect.anchoredPosition;
+      Vector3 startScale = Vector3.one * 0.96f;
+      Vector3 endScale = Vector3.one;
+
+      if (popupCanvasGroup != null) popupCanvasGroup.alpha = 1f;
+
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        float e = UITransitionHelper.EaseOutQuad(t);
+
+        popupRect.anchoredPosition = Vector2.LerpUnclamped(startPos, targetPos, e);
+        popupRect.localScale = Vector3.LerpUnclamped(startScale, endScale, e);
+        yield return null;
+      }
+
+      popupRect.anchoredPosition = targetPos;
+      popupRect.localScale = Vector3.one;
+      activeTransitionRoutine = null;
+    }
+
+    private System.Collections.IEnumerator AnimateOpenRoutine(float duration)
+    {
+      RectTransform popupRect = transform as RectTransform;
+      Vector3 startScale = Vector3.one * 0.92f;
+      Vector3 endScale = Vector3.one;
+
+      if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
+      popupRect.localScale = startScale;
+
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        float e = UITransitionHelper.EaseOutCubic(t);
+
+        popupRect.localScale = Vector3.LerpUnclamped(startScale, endScale, e);
+        if (popupCanvasGroup != null)
+        {
+          popupCanvasGroup.alpha = Mathf.Lerp(0f, 1f, e);
+        }
+        yield return null;
+      }
+
+      popupRect.localScale = Vector3.one;
+      if (popupCanvasGroup != null) popupCanvasGroup.alpha = 1f;
+      activeTransitionRoutine = null;
+    }
+
+    private System.Collections.IEnumerator AnimateCloseRoutine(float duration)
+    {
+      RectTransform popupRect = transform as RectTransform;
+      Vector3 startScale = popupRect != null ? popupRect.localScale : Vector3.one;
+      Vector3 endScale = Vector3.one * 0.95f;
+      float startAlpha = popupCanvasGroup != null ? popupCanvasGroup.alpha : 1f;
+
+      if (popupCanvasGroup != null)
+      {
+        popupCanvasGroup.blocksRaycasts = false;
+        popupCanvasGroup.interactable = false;
+      }
+
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        float e = UITransitionHelper.EaseInQuad(t);
+
+        if (popupRect != null)
+        {
+          popupRect.localScale = Vector3.LerpUnclamped(startScale, endScale, e);
+        }
+        if (popupCanvasGroup != null)
+        {
+          popupCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, e);
+        }
+        yield return null;
+      }
+
+      if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
+      if (popupRect != null) popupRect.localScale = Vector3.one;
+      gameObject.SetActive(false);
+      activeTransitionRoutine = null;
     }
 
     private void UpdateUIContent()
@@ -426,7 +582,7 @@ namespace InfiniteLabyrinth.UI
     }
 
     /// <summary>
-    /// Đóng popup và hủy viền chọn ô
+    /// Đóng popup với hoạt ảnh mờ dần và co nhẹ
     /// </summary>
     public void Hide()
     {
@@ -443,6 +599,61 @@ namespace InfiniteLabyrinth.UI
       }
 
       currentItem = null;
+
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
+
+      if (gameObject.activeSelf && popupCanvasGroup != null && popupCanvasGroup.alpha > 0.05f)
+      {
+        activeTransitionRoutine = StartCoroutine(AnimateCloseRoutine(closeDuration));
+      }
+      else
+      {
+        HideImmediate();
+      }
+    }
+
+    /// <summary>
+    /// Đóng popup tức thì không qua hoạt ảnh (dùng khi đóng túi đồ hoặc chuyển cảnh)
+    /// </summary>
+    public void HideImmediate()
+    {
+      if (currentBagSlot != null)
+      {
+        currentBagSlot.SetSelected(false);
+        currentBagSlot = null;
+      }
+
+      if (currentEquipSlot != null)
+      {
+        currentEquipSlot.SetSelected(false);
+        currentEquipSlot = null;
+      }
+
+      currentItem = null;
+
+      if (activeTransitionRoutine != null)
+      {
+        StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = null;
+      }
+
+      if (popupCanvasGroup != null)
+      {
+        popupCanvasGroup.alpha = 0f;
+        popupCanvasGroup.blocksRaycasts = false;
+        popupCanvasGroup.interactable = false;
+      }
+
+      RectTransform popupRect = transform as RectTransform;
+      if (popupRect != null)
+      {
+        popupRect.localScale = Vector3.one;
+      }
+
       gameObject.SetActive(false);
     }
   }

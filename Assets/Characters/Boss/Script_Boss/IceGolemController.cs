@@ -624,9 +624,15 @@ public class IceGolemController : MonoBehaviour
 
     private void HandlePlayerEnteredArena()
     {
+        // Khi có BossIntroDirector trong Scene, Director sẽ điều phối góc máy và thời điểm Boss nhảy ở Pha 3
+        if (BossIntroDirector.Instance != null)
+        {
+            return;
+        }
+
         if (!hasTriggeredJumpDown && !isOpeningSequence)
         {
-            Debug.Log("<color=cyan>[IceGolemController]</color> 🚪 Nhận tín hiệu Player đã bước qua cửa vào Đấu Trường! Khởi động chuỗi JumpDown mở màn.");
+            Debug.Log("<color=cyan>[IceGolemController]</color> 🚪 Nhận tín hiệu Player đã bước qua cửa vào Đấu Trường (Không có BossIntroDirector)! Khởi động chuỗi JumpDown mở màn.");
             TriggerOpeningJumpDownSequence();
         }
     }
@@ -762,8 +768,8 @@ public class IceGolemController : MonoBehaviour
         {
             if (anim != null) anim.SetFloat(SpeedHash, 0f);
 
-            // Tầm nhìn không giới hạn (100m - 200m): Quét liên tục để nhận biết khi Player bước qua cửa vào phòng
-            if (!hasTriggeredJumpDown && triggerJumpDownOnDetectPlayer)
+            // Tầm nhìn không giới hạn (100m - 200m): Chỉ quét nhận diện khi KHÔNG có BossIntroDirector
+            if (BossIntroDirector.Instance == null && !hasTriggeredJumpDown && triggerJumpDownOnDetectPlayer)
             {
                 CheckPlayerEnteredArenaVision();
             }
@@ -791,6 +797,9 @@ public class IceGolemController : MonoBehaviour
     /// </summary>
     private void CheckPlayerEnteredArenaVision()
     {
+        // Khi có BossIntroDirector quản lý Cutscene, Director sẽ ra lệnh nhảy đúng thời điểm điện ảnh
+        if (BossIntroDirector.Instance != null) return;
+
         if (hasTriggeredJumpDown || isOpeningSequence || isDead) return;
 
         Transform target = GetPlayerTarget();
@@ -4599,12 +4608,12 @@ public class IceGolemController : MonoBehaviour
     /// <summary>
     /// Kích hoạt chuỗi động tác cố định JumpDown từ trên bục đá (giống như Weaken hay 50% HP)
     /// </summary>
-    public void TriggerOpeningJumpDownSequence(System.Action onLanded = null)
+    public void TriggerOpeningJumpDownSequence(System.Action onLanded = null, Vector3 customLandingPos = default)
     {
         if (hasTriggeredJumpDown || isOpeningSequence || isDead) return;
         hasTriggeredJumpDown = true;
         if (openingSequenceCoroutine != null) StopCoroutine(openingSequenceCoroutine);
-        openingSequenceCoroutine = StartCoroutine(OpeningJumpDownSequenceRoutine(onLanded));
+        openingSequenceCoroutine = StartCoroutine(OpeningJumpDownSequenceRoutine(onLanded, customLandingPos));
     }
 
     /// <summary>
@@ -4612,10 +4621,10 @@ public class IceGolemController : MonoBehaviour
     /// </summary>
     public void PlayIntroJumpDownFromPedestal(Vector3 targetLandingPos, System.Action onLanded = null)
     {
-        TriggerOpeningJumpDownSequence(onLanded);
+        TriggerOpeningJumpDownSequence(onLanded, targetLandingPos);
     }
 
-    private IEnumerator OpeningJumpDownSequenceRoutine(System.Action onLanded)
+    private IEnumerator OpeningJumpDownSequenceRoutine(System.Action onLanded, Vector3 customLandingPos = default)
     {
         isOpeningSequence = true;
         isJumpingDown = true;
@@ -4651,8 +4660,19 @@ public class IceGolemController : MonoBehaviour
         Vector3 startPos = transform.position;
         Vector3 targetLandingPos;
 
+        // Nếu có customLandingPos từ Director thì ưu tiên sử dụng chính xác điểm tiếp đất đó
+        if (customLandingPos != Vector3.zero)
+        {
+            targetLandingPos = customLandingPos;
+            Vector3 toCustom = targetLandingPos - startPos;
+            toCustom.y = 0f;
+            if (toCustom.sqrMagnitude > 0.1f)
+            {
+                transform.rotation = Quaternion.LookRotation(toCustom.normalized);
+            }
+        }
         // Nếu Boss đang ở trên bục đá (Y > 2.5m): Điểm tiếp đất nằm trên sàn đấu trường phía trước bục
-        if (startPos.y > 2.5f)
+        else if (startPos.y > 2.5f)
         {
             Vector3 jumpDir;
             float jumpDist;
@@ -4815,12 +4835,21 @@ public class IceGolemController : MonoBehaviour
         // 8. KẾT THÚC CHUỖI CỐ ĐỊNH & BÀN GIAO QUYỀN ĐIỀU KHIỂN CHO AI
         isJumpingDown = false;
         isOpeningSequence = false;
-        isCinematicStandby = false;
         openingSequenceCoroutine = null;
         if (anim != null) anim.ResetTrigger(JumpDownHash);
 
-        ApplyCombatPacing();
-        Debug.Log("<color=green>[IceGolemController]</color> ⚔️ Hoàn tất chuỗi JumpDown mở màn! Bàn giao quyền điều khiển cho AI.");
+        // Nếu đang trong Cutscene điện ảnh, duy trì isCinematicStandby để Director điều khiển tiếp Pha 4 (phun băng) và Pha 5
+        bool isDirectorCutscenePlaying = BossIntroDirector.Instance != null && BossIntroDirector.Instance.IsPlayingCutscene;
+        if (!isDirectorCutscenePlaying)
+        {
+            isCinematicStandby = false;
+            ApplyCombatPacing();
+            Debug.Log("<color=green>[IceGolemController]</color> ⚔️ Hoàn tất chuỗi JumpDown mở màn! Bàn giao quyền điều khiển cho AI.");
+        }
+        else
+        {
+            Debug.Log("<color=cyan>[IceGolemController]</color> 🎬 Đã tiếp đất trong Cutscene! Duy trì Standby để tiếp tục chuỗi đạo diễn.");
+        }
     }
 
     /// <summary>

@@ -17,7 +17,9 @@ public class PlayerSlashVFX : MonoBehaviour
     Attack3,
     Charge1,
     Charge2,
-    Counter
+    Counter,
+    SkillE,
+    SkillQ
   }
 
   [System.Serializable]
@@ -126,6 +128,31 @@ public class PlayerSlashVFX : MonoBehaviour
     parentToPlayer = false
   };
 
+  [Header("Skill Slash Configurations")]
+  [Tooltip("Skill E: Chém kiếm khí tầm xa (Sword Wave Slash)")]
+  [SerializeField]
+  private SlashVfxConfig skillEConfig = new SlashVfxConfig
+  {
+    attackName = "Skill E (Sword Wave Slash)",
+    positionOffset = new Vector3(0.0f, 1.15f, 0.65f),
+    rotationOffset = new Vector3(-176.57f, -92.12f, 0.0f),
+    scale = new Vector3(1.35f, 1.35f, 1.35f),
+    lifetime = 0.85f,
+    parentToPlayer = false
+  };
+
+  [Tooltip("Skill Q: Đập đòn AOE chấn địa xuống đất (Ground Slam AOE)")]
+  [SerializeField]
+  private SlashVfxConfig skillQConfig = new SlashVfxConfig
+  {
+    attackName = "Skill Q (AOE Ground Slam)",
+    positionOffset = new Vector3(0.0f, 0.85f, 0.75f),
+    rotationOffset = new Vector3(-90.0f, -92.12f, -90.0f),
+    scale = new Vector3(1.6f, 1.6f, 1.6f),
+    lifetime = 1.0f,
+    parentToPlayer = false
+  };
+
   [Header("Gizmos Debug Settings")]
   [SerializeField] private bool showGizmosInEditor = true;
   [SerializeField] private SlashAttackType gizmoPreviewAttack = SlashAttackType.Attack1;
@@ -154,6 +181,28 @@ public class PlayerSlashVFX : MonoBehaviour
     if (defaultSlashVfxPrefab == null)
     {
       defaultSlashVfxPrefab = Resources.Load<GameObject>("Slash VFX");
+    }
+
+    if (skillEConfig.customPrefab == null)
+    {
+      skillEConfig.customPrefab = Resources.Load<GameObject>("E Slash VFX");
+#if UNITY_EDITOR
+      if (skillEConfig.customPrefab == null)
+      {
+        skillEConfig.customPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Player/Skill/E Slash VFX.prefab");
+      }
+#endif
+    }
+
+    if (skillQConfig.customPrefab == null)
+    {
+      skillQConfig.customPrefab = Resources.Load<GameObject>("Q Slash VFX");
+#if UNITY_EDITOR
+      if (skillQConfig.customPrefab == null)
+      {
+        skillQConfig.customPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Player/Skill/Q Slash VFX.prefab");
+      }
+#endif
     }
 
     ActiveSlowMoScale = gameSpeed;
@@ -439,6 +488,8 @@ public class PlayerSlashVFX : MonoBehaviour
       SlashAttackType.Charge1 => chargeHit1Config,
       SlashAttackType.Charge2 => chargeHit2Config,
       SlashAttackType.Counter => counterAttackConfig,
+      SlashAttackType.SkillE => skillEConfig,
+      SlashAttackType.SkillQ => skillQConfig,
       _ => attack1Config
     };
   }
@@ -464,6 +515,12 @@ public class PlayerSlashVFX : MonoBehaviour
 
   [ContextMenu("⚡ Test Counter Attack Slash")]
   public void TestCounter() => PlaySlash(SlashAttackType.Counter);
+
+  [ContextMenu("🌀 Test Skill E Slash")]
+  public void TestSkillE() => PlaySlash(SlashAttackType.SkillE);
+
+  [ContextMenu("💥 Test Skill Q Slash")]
+  public void TestSkillQ() => PlaySlash(SlashAttackType.SkillQ);
 
   [ContextMenu("💥 Test Hit Impact VFX")]
   public void TestImpact()
@@ -528,6 +585,8 @@ public class PlayerSlashVFX : MonoBehaviour
   }
 
   public GameObject DefaultPrefab => defaultSlashVfxPrefab;
+  public SlashVfxConfig SkillEConfig => skillEConfig;
+  public SlashVfxConfig SkillQConfig => skillQConfig;
 
   private void OnDrawGizmosSelected()
   {

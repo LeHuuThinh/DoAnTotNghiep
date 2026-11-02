@@ -2132,7 +2132,7 @@ MonoBehaviour:
   parryVfxPrefab: {fileID: 1035977224672214417, guid: 2f89b4dc8b38c1946a8d2a55383a0260, type: 3}
   parryVfxDestroyDelay: 1.5
   parryVfxScale: 1
-  parryBladeOffset: 0
+  parryBladeOffset: -0.3
   parrySfx: {fileID: 0}
   parryHitlagDuration: 0.2
   parryTimeScale: 0.05
@@ -2183,7 +2183,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5452323325029716220}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec3cd82e468d3fa44a17a9bf447fdab2, type: 3}
   m_Name: 
@@ -2222,53 +2222,69 @@ MonoBehaviour:
   attack1Config:
     attackName: Attack 1 (Diagonal Down-Left)
     customPrefab: {fileID: 0}
-    positionOffset: {x: 0.18, y: 1.18, z: 0.62}
-    rotationOffset: {x: -176.57, y: -92.12, z: -92.12}
-    scale: {x: 1, y: 1, z: 1}
+    positionOffset: {x: -0.15, y: 1.29, z: -0.54}
+    rotationOffset: {x: -26, y: 97.4, z: 0}
+    scale: {x: 2, y: 1, z: 1.2}
     lifetime: 0.8
     parentToPlayer: 0
   attack2Config:
     attackName: Attack 2 (Slash Up-Right)
     customPrefab: {fileID: 0}
-    positionOffset: {x: -0.12, y: 1.15, z: 0.62}
-    rotationOffset: {x: -85.89, y: -183.54, z: 0.65}
+    positionOffset: {x: -0.25, y: 1.45, z: -0.51}
+    rotationOffset: {x: 13.6, y: -80.6, z: 192.2}
     scale: {x: 1.05, y: 1.05, z: 1.05}
     lifetime: 0.8
     parentToPlayer: 0
   attack3Config:
     attackName: Attack 3 (Horizontal Sweep Finisher)
     customPrefab: {fileID: 0}
-    positionOffset: {x: 0, y: 1.1, z: 0.68}
-    rotationOffset: {x: -176.57, y: -92.12, z: 0.09}
-    scale: {x: 1.25, y: 1.25, z: 1.25}
+    positionOffset: {x: 0.22, y: 1.6, z: 0.1}
+    rotationOffset: {x: -49.46, y: -261.9, z: -0.03}
+    scale: {x: 1.25, y: 1.25, z: 0.8}
     lifetime: 0.85
     parentToPlayer: 0
   chargeHit1Config:
     attackName: Charge Hit 1 (Windup Slash)
     customPrefab: {fileID: 0}
-    positionOffset: {x: 0.15, y: 1.25, z: 0.6}
-    rotationOffset: {x: -176.57, y: -92.12, z: -45}
-    scale: {x: 1.1, y: 1.1, z: 1.1}
+    positionOffset: {x: -0.02, y: 1.5, z: -1.39}
+    rotationOffset: {x: 0, y: 98.13, z: 0}
+    scale: {x: 2, y: 1.1, z: 1.1}
     lifetime: 0.8
     parentToPlayer: 0
   chargeHit2Config:
     attackName: Charge Hit 2 (Vertical Slam)
     customPrefab: {fileID: 0}
-    positionOffset: {x: 0, y: 0.95, z: 0.72}
-    rotationOffset: {x: -90, y: -92.12, z: -90}
-    scale: {x: 1.35, y: 1.35, z: 1.35}
+    positionOffset: {x: -0.04, y: 1.24, z: -2.1}
+    rotationOffset: {x: 190.5, y: 87.9, z: 0}
+    scale: {x: 2.5, y: 1.35, z: 1}
     lifetime: 0.9
     parentToPlayer: 0
   counterAttackConfig:
     attackName: Counter Attack (Explosive Sweep)
     customPrefab: {fileID: 0}
-    positionOffset: {x: 0, y: 1.15, z: 0.7}
-    rotationOffset: {x: -176.57, y: -92.12, z: -15}
-    scale: {x: 1.5, y: 1.5, z: 1.5}
+    positionOffset: {x: -0.49, y: 1.5, z: -0.31}
+    rotationOffset: {x: -179.7, y: 94.3, z: -8}
+    scale: {x: 1.6, y: 1.5, z: 1.5}
+    lifetime: 1
+    parentToPlayer: 0
+  skillEConfig:
+    attackName: Skill E (Sword Wave Slash)
+    customPrefab: {fileID: 5545173171955001552, guid: 2883ccad47c2761449354730ea658542, type: 3}
+    positionOffset: {x: 0.27, y: 1.75, z: -0.13}
+    rotationOffset: {x: -205.7, y: 28.66, z: -5.8}
+    scale: {x: 1.35, y: 1.35, z: 1.35}
+    lifetime: 0.85
+    parentToPlayer: 0
+  skillQConfig:
+    attackName: Skill Q (AOE Ground Slam)
+    customPrefab: {fileID: 5545173171955001552, guid: 4a803c53778b8db459fb4a4062306eef, type: 3}
+    positionOffset: {x: 0.2, y: 1.7, z: -0.35}
+    rotationOffset: {x: -90, y: -198.4, z: -90}
+    scale: {x: 1.6, y: 1.6, z: 1.6}
     lifetime: 1
     parentToPlayer: 0
   showGizmosInEditor: 1
-  gizmoPreviewAttack: 0
+  gizmoPreviewAttack: 7
   gizmoColor: {r: 1, g: 0.9, b: 0.4, a: 0.75}
   gameSpeed: 1
   enableSlowMoHotkeys: 1

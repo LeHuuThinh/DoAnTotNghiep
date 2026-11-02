@@ -579,6 +579,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
   private void HandleFreeCameraInput()
   {
+    if (InfiniteLabyrinth.UI.VictoryPortalUI.IsOpen) return;
     if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
 
     Vector2 mouseDelta = Mouse.current.delta.ReadValue();
@@ -605,6 +606,11 @@ public class ThirdPersonCamera : MonoBehaviour
       }
 
       if (InfiniteLabyrinth.UI.InventoryUIController.IsOpen)
+      {
+        return;
+      }
+
+      if (InfiniteLabyrinth.UI.VictoryPortalUI.IsOpen)
       {
         return;
       }
