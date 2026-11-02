@@ -40,13 +40,23 @@ namespace InfiniteLabyrinth.Interaction
         gateController = GetComponentInParent<BossGateController>() ?? FindAnyObjectByType<BossGateController>();
       }
 
-      // Chỉ kích hoạt khóa đấu trường khi cổng đã được mở và người chơi tiến vào trong
-      if (gateController != null && gateController.IsOpened)
+      // Kích hoạt khóa đấu trường khi cổng đã được mở và người chơi tiến vào trong (hoặc khi không có cổng)
+      if (gateController != null)
+      {
+        if (gateController.IsOpened)
+        {
+          hasTriggered = true;
+          gateController.LockArena();
+          OnPlayerEnteredArena?.Invoke();
+          Debug.Log("<color=cyan>[BossArenaTrigger]</color> ⚔️ Player stepped across the arena threshold! Lock-in engaged.");
+          gameObject.SetActive(false);
+        }
+      }
+      else
       {
         hasTriggered = true;
-        gateController.LockArena();
         OnPlayerEnteredArena?.Invoke();
-        Debug.Log("<color=cyan>[BossArenaTrigger]</color> ⚔️ Player stepped across the arena threshold! Lock-in engaged.");
+        Debug.Log("<color=cyan>[BossArenaTrigger]</color> ⚔️ Player entered arena trigger without gate controller!");
         gameObject.SetActive(false);
       }
     }
