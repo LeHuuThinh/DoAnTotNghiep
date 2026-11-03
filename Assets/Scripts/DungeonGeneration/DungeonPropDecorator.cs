@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -512,7 +513,76 @@ public partial class DungeonPropDecorator : MonoBehaviour
 #endif
 
   /// <summary>
-  /// Khởi tạo và phân bổ toàn bộ đạo cụ trang trí, cụm templates và nguồn sáng cho hầm ngục
+  /// Coroutine phân mảnh thời gian (Time-Sliced) trang trí hầm ngục qua từng phòng,
+  /// nhường lượt mỗi frame để Main Thread vẽ UI Sprite Animation mượt mà 60 FPS không bị khựng.
+  /// </summary>
+  public IEnumerator DecorateDungeonRoutine(DungeonData data, Transform dungeonParent, float tileSize, System.Action<float> onProgress = null)
+  {
+    if (data == null || dungeonParent == null) yield break;
+    EnsurePrefabsLoaded();
+
+    GameObject propsRoot = new GameObject("Dungeon_Props");
+    propsRoot.transform.SetParent(dungeonParent, false);
+
+    // 1. TRANG TRÍ TỪNG CĂN PHÒNG THEO CHỦ ĐỀ (Time-slicing qua từng phòng)
+    if (data.roomDataList != null)
+    {
+      int totalRooms = data.roomDataList.Count;
+      int processed = 0;
+
+      foreach (var room in data.roomDataList)
+      {
+        DecorateRoom(room, propsRoot.transform, data, tileSize);
+        processed++;
+
+        float roomProgress = (float)processed / Mathf.Max(1, totalRooms);
+        onProgress?.Invoke(Mathf.Lerp(0.0f, 0.85f, roomProgress));
+
+        // Nhường lượt sang frame kế tiếp sau mỗi phòng để Main Thread cập nhật UI
+        yield return null;
+      }
+    }
+
+    // 2. CHIẾU SÁNG DỌC CÁC HÀNH LANG (CORRIDORS)
+    if (enableLighting && enableCorridorLighting)
+    {
+      DecorateCorridors(data, propsRoot.transform, tileSize);
+      onProgress?.Invoke(0.92f);
+      yield return null;
+    }
+
+    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG VÀ HIỆU ỨNG HẠT (LIGHT & PARTICLE CULLER)
+    if (enableLightCulling)
+    {
+      activeLightOptimizer = propsRoot.AddComponent<DungeonLightOptimizer>();
+      activeLightOptimizer.maxLightDistance = lightCullingDistance;
+      activeLightOptimizer.cullParticles = true;
+      activeLightOptimizer.RefreshLights();
+    }
+
+    // 4. TỰ ĐỘNG TẮT SHADOW CASTER CHO DIRECTIONAL LIGHT CƯỜNG ĐỘ 0
+    Light[] sceneLights = Object.FindObjectsByType<Light>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+    foreach (var l in sceneLights)
+    {
+      if (l != null && l.type == LightType.Directional && l.intensity <= 0.01f)
+      {
+        l.shadows = LightShadows.None;
+        l.enabled = false;
+      }
+    }
+
+    // 5. ĐỒNG BỘ TẦM NHÌN XA CỦA CAMERA CHÍNH (FAR CLIP PLANE)
+    if (cameraFarClipPlane > 10f && Camera.main != null)
+    {
+      Camera.main.farClipPlane = cameraFarClipPlane;
+    }
+
+    onProgress?.Invoke(1.0f);
+    yield return null;
+  }
+
+  /// <summary>
+  /// Khởi tạo và phân bổ toàn bộ đạo cụ trang trí, cụm templates và nguồn sáng cho hầm ngục (Đồng bộ)
   /// </summary>
   public void DecorateDungeon(DungeonData data, Transform dungeonParent, float tileSize)
   {

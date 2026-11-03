@@ -21,6 +21,9 @@ namespace InfiniteLabyrinth.Editor
     private const string MonsterFillPath = "Assets/UI RPG/GameUI/Monster_Fill.png";
     private const string SpinnerSpritePath = "Assets/UI RPG/PlayerHUD 2/Exp_Circle.png";
     private const string UiLinePath = "Assets/UI RPG/GameUI/UI_Line.png";
+    private const string MemeSpriteSheetPath = "Assets/UI RPG/GameImage/2_MemeSpriteSheet.png";
+    private const string LegacyMemeSpriteSheetPath = "Assets/UI RPG/GameImage/MemeSpriteSheet.png";
+    public static string ResolvedMemePath => File.Exists(MemeSpriteSheetPath) ? MemeSpriteSheetPath : LegacyMemeSpriteSheetPath;
 
     [InitializeOnLoadMethod]
     private static void AutoRunSetupOnce()
@@ -326,7 +329,7 @@ namespace InfiniteLabyrinth.Editor
       pctTmp.color = new Color(1f, 0.84f, 0.31f); // #FFD54F
       pctTmp.raycastTarget = false;
 
-      // Spinner Container
+      // Spinner Container (Icon bên cạnh % tiến trình)
       GameObject spinObj = new GameObject("SpinnerContainer");
       spinObj.transform.SetParent(bottomObj.transform, false);
       RectTransform spinRt = spinObj.AddComponent<RectTransform>();
@@ -334,15 +337,28 @@ namespace InfiniteLabyrinth.Editor
       spinRt.anchorMax = new Vector2(0.5f, 0f);
       spinRt.pivot = new Vector2(0.5f, 0.5f);
       spinRt.anchoredPosition = new Vector2(620, 42);
-      spinRt.sizeDelta = new Vector2(36, 36);
+      spinRt.sizeDelta = new Vector2(56, 56);
 
       GameObject spinIconObj = new GameObject("SpinnerIcon");
       spinIconObj.transform.SetParent(spinObj.transform, false);
       RectTransform spinIconRt = spinIconObj.AddComponent<RectTransform>();
       SetFullStretch(spinIconRt);
       Image spinImg = spinIconObj.AddComponent<Image>();
-      if (spinnerSprite != null) spinImg.sprite = spinnerSprite;
-      spinImg.color = new Color(1f, 0.84f, 0.31f, 0.9f);
+
+      // Tự động kiểm tra xem có MemeSpriteSheet hay không (ưu tiên 2_MemeSpriteSheet 190 frames)
+      Sprite[] memeSprites = LoadAllSpritesFromPath(ResolvedMemePath);
+      bool hasMeme = memeSprites != null && memeSprites.Length > 0;
+
+      if (hasMeme)
+      {
+        spinImg.sprite = memeSprites[0];
+        spinImg.color = Color.white; // Giữ nguyên màu gốc của hoạt ảnh Meme
+      }
+      else
+      {
+        if (spinnerSprite != null) spinImg.sprite = spinnerSprite;
+        spinImg.color = new Color(1f, 0.84f, 0.31f, 0.9f);
+      }
       spinImg.raycastTarget = false;
 
       // 6. Link Serialized Properties in LoadingScreenUI
@@ -357,6 +373,25 @@ namespace InfiniteLabyrinth.Editor
       so.FindProperty("progressFillImage").objectReferenceValue = fillImg;
       so.FindProperty("percentText").objectReferenceValue = pctTmp;
       so.FindProperty("spinnerTransform").objectReferenceValue = spinIconRt;
+      so.FindProperty("spinnerImage").objectReferenceValue = spinImg;
+
+      if (hasMeme)
+      {
+        so.FindProperty("enableSpinnerRotation").boolValue = false;
+        so.FindProperty("enableSpriteAnimation").boolValue = true;
+        so.FindProperty("animationFps").floatValue = 24f;
+
+        SerializedProperty framesProp = so.FindProperty("animationFrames");
+        framesProp.arraySize = memeSprites.Length;
+        for (int i = 0; i < memeSprites.Length; i++)
+        {
+          framesProp.GetArrayElementAtIndex(i).objectReferenceValue = memeSprites[i];
+        }
+      }
+      else
+      {
+        so.FindProperty("enableSpinnerRotation").boolValue = true;
+      }
       so.ApplyModifiedPropertiesWithoutUndo();
 
       // 7. Save as Prefab
@@ -368,7 +403,8 @@ namespace InfiniteLabyrinth.Editor
       AssetDatabase.Refresh();
 
       Debug.Log($"<color=green>[LoadingScreen]</color> 🚀 Đã tạo thành công Prefab LoadingScreenCanvas tại:\n" +
-                $"1. {ResourcePrefabPath}\n2. {RpgPrefabPath}");
+                $"1. {ResourcePrefabPath}\n2. {RpgPrefabPath}" +
+                (hasMeme ? $"\n🎬 Đã tự động gắn {memeSprites.Length} frames MemeSpriteSheet!" : ""));
 
       GameObject createdPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ResourcePrefabPath);
       Selection.activeObject = createdPrefab;
@@ -416,6 +452,199 @@ namespace InfiniteLabyrinth.Editor
         new LoadingTip("ROGUELITE", "If you fall in battle, you will awaken at the Village Bell with the rising of a new dawn."),
         new LoadingTip("ROGUELITE", "Deeper dungeon floors yield rarer equipment, greater heaps of gold, and tougher adversaries.")
       };
+    }
+
+    [MenuItem("Infinite Labyrinth/UI/3. Nạp Hoạt Ảnh MemeSpriteSheet Vào Loading Canvas (1-Click)", false, 3)]
+    public static void ApplyMemeSpriteSheetToExistingPrefabs()
+    {
+      string activePath = ResolvedMemePath;
+      Sprite[] sprites = LoadAllSpritesFromPath(activePath);
+      if (sprites == null || sprites.Length == 0)
+      {
+        Debug.LogWarning($"[LoadingScreenSetupEditor] Không tìm thấy Sprite nào tại: {activePath}. Hãy đảm bảo bạn đã cắt ảnh trong Sprite Editor!");
+        return;
+      }
+
+      UpdatePrefabWithSpriteSheet(ResourcePrefabPath, sprites);
+      UpdatePrefabWithSpriteSheet(RpgPrefabPath, sprites);
+
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      Debug.Log($"<color=green>[LoadingScreen]</color> 🎬 Đã nạp thành công {sprites.Length} frames từ '{activePath}' vào cả 2 Prefab LoadingScreenCanvas!");
+    }
+
+    private static void UpdatePrefabWithSpriteSheet(string prefabPath, Sprite[] sprites)
+    {
+      GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
+      if (contents == null) return;
+
+      LoadingScreenUI ui = contents.GetComponent<LoadingScreenUI>();
+      if (ui != null)
+      {
+        ui.LoadFramesFromSpriteSheet(ResolvedMemePath);
+
+        Transform spinContainer = contents.transform.Find("BottomPanel/SpinnerContainer");
+        if (spinContainer != null)
+        {
+          RectTransform spinRt = spinContainer.GetComponent<RectTransform>();
+          if (spinRt != null) spinRt.sizeDelta = new Vector2(56, 56);
+
+          Transform icon = spinContainer.Find("SpinnerIcon");
+          if (icon != null)
+          {
+            Image img = icon.GetComponent<Image>();
+            if (img != null)
+            {
+              img.color = Color.white;
+              if (sprites.Length > 0) img.sprite = sprites[0];
+            }
+          }
+        }
+      }
+
+      PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
+      PrefabUtility.UnloadPrefabContents(contents);
+    }
+
+    [MenuItem("Infinite Labyrinth/UI/4. Tạo Prefab Hoạt Ảnh Meme (UI & Scene 3D) (1-Click)", false, 4)]
+    public static void CreateMemePrefabs()
+    {
+      string activePath = ResolvedMemePath;
+      Sprite[] sprites = LoadAllSpritesFromPath(activePath);
+      if (sprites == null || sprites.Length == 0)
+      {
+        Debug.LogWarning($"[LoadingScreenSetupEditor] Không tìm thấy Sprite nào tại: {activePath}!");
+        return;
+      }
+
+      string folder = "Assets/Prefabs/RPG";
+      if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+      // 1. Tạo Prefab UI (kéo vào bất kỳ Canvas / Panel / HUD / Menu nào)
+      string uiPrefabPath = $"{folder}/MemeAnimated_UI.prefab";
+      GameObject uiObj = new GameObject("MemeAnimated_UI");
+      RectTransform rt = uiObj.AddComponent<RectTransform>();
+      rt.sizeDelta = new Vector2(100, 100);
+      Image img = uiObj.AddComponent<Image>();
+      img.sprite = sprites[0];
+      img.color = Color.white;
+      img.preserveAspect = true;
+
+      UISpriteSheetAnimator uiAnim = uiObj.AddComponent<UISpriteSheetAnimator>();
+      uiAnim.Frames = sprites;
+      uiAnim.Fps = 24f;
+      uiAnim.PreviewInEditor = true;
+
+      PrefabUtility.SaveAsPrefabAsset(uiObj, uiPrefabPath);
+      Object.DestroyImmediate(uiObj);
+
+      // 2. Tạo Prefab World (kéo thẳng vào Scene 3D xem thử hoặc làm đồ vật/NPC)
+      string worldPrefabPath = $"{folder}/MemeAnimated_World.prefab";
+      GameObject worldObj = new GameObject("MemeAnimated_World");
+      SpriteRenderer sr = worldObj.AddComponent<SpriteRenderer>();
+      sr.sprite = sprites[0];
+      sr.color = Color.white;
+
+      UISpriteSheetAnimator worldAnim = worldObj.AddComponent<UISpriteSheetAnimator>();
+      worldAnim.Frames = sprites;
+      worldAnim.Fps = 24f;
+      worldAnim.PreviewInEditor = true;
+
+      PrefabUtility.SaveAsPrefabAsset(worldObj, worldPrefabPath);
+      Object.DestroyImmediate(worldObj);
+
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      Debug.Log($"<color=green>[LoadingScreen]</color> 🎬 Đã tạo thành công 2 Prefab hoạt ảnh Meme:\n" +
+                $"1. UI Prefab: <b>{uiPrefabPath}</b> (kéo vào bất kỳ UI Canvas nào)\n" +
+                $"2. 3D Scene Prefab: <b>{worldPrefabPath}</b> (kéo thẳng vào Scene 3D)");
+
+      Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(uiPrefabPath);
+    }
+
+    [MenuItem("Infinite Labyrinth/UI/5. Tối Ưu Nét Căng & Khử Dính Viền MemeSpriteSheet (1-Click)", false, 5)]
+    public static void OptimizeMemeSpriteSheet()
+    {
+      string path = ResolvedMemePath;
+      TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+      if (importer == null)
+      {
+        Debug.LogWarning($"[LoadingScreenSetupEditor] Không tìm thấy TextureImporter tại: {path}");
+        return;
+      }
+
+      // 1. Tăng Max Texture Size lên 8192
+      importer.maxTextureSize = 8192;
+      importer.textureCompression = TextureImporterCompression.Uncompressed;
+      importer.filterMode = FilterMode.Bilinear;
+
+      // Cấu hình riêng cho PC Standalone (Không nén, RGBA32, 8192)
+      TextureImporterPlatformSettings pcSettings = importer.GetPlatformTextureSettings("Standalone");
+      pcSettings.overridden = true;
+      pcSettings.maxTextureSize = 8192;
+      pcSettings.format = TextureImporterFormat.RGBA32;
+      pcSettings.textureCompression = TextureImporterCompression.Uncompressed;
+      importer.SetPlatformTextureSettings(pcSettings);
+
+      // 2. Thụt lề an toàn 2px cho mỗi frame để tạo khoảng đệm (Safe Padding) chống dính viền 100%
+      SpriteMetaData[] sheet = importer.spritesheet;
+      if (sheet != null && sheet.Length > 0)
+      {
+        for (int i = 0; i < sheet.Length; i++)
+        {
+          Rect r = sheet[i].rect;
+          // Nếu kích thước là 720x720, thụt lề 2px mỗi phía -> 716x716
+          if (r.width >= 720 && r.height >= 720)
+          {
+            sheet[i].rect = new Rect(r.x + 2, r.y + 2, r.width - 4, r.height - 4);
+          }
+        }
+        importer.spritesheet = sheet;
+      }
+
+      importer.SaveAndReimport();
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Cập nhật lại vào prefabs
+      ApplyMemeSpriteSheetToExistingPrefabs();
+
+      Debug.Log($"<color=green>[Sprite Sheet Optimizer]</color> 🚀 Đã tối ưu MemeSpriteSheet thành công!\n" +
+                $"• Max Texture Size: <b>8192</b> (Nét gấp 4 lần)\n" +
+                $"• Compression: <b>Uncompressed RGBA32</b> (Không mất chi tiết)\n" +
+                $"• Safe Margin: <b>Thụt lề 2px</b> (Triệt tiêu 100% dính viền sang frame khác).");
+    }
+
+    public static Sprite[] LoadAllSpritesFromPath(string texturePath)
+    {
+      UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(texturePath);
+      if (assets == null || assets.Length == 0) return null;
+
+      List<Sprite> sprites = new List<Sprite>();
+      foreach (var obj in assets)
+      {
+        if (obj is Sprite s)
+        {
+          sprites.Add(s);
+        }
+      }
+
+      if (sprites.Count == 0) return null;
+
+      sprites.Sort((a, b) => ExtractTrailingNumber(a.name).CompareTo(ExtractTrailingNumber(b.name)));
+      return sprites.ToArray();
+    }
+
+    private static int ExtractTrailingNumber(string name)
+    {
+      int lastUnderscore = name.LastIndexOf('_');
+      if (lastUnderscore >= 0 && int.TryParse(name.Substring(lastUnderscore + 1), out int num))
+      {
+        return num;
+      }
+      return 0;
     }
   }
 }

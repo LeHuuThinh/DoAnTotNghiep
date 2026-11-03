@@ -64,7 +64,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 * **Giao diện Người chơi Souls-like (`PlayerHUD.cs`):**
   * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ `ghostShrinkDelay = 0.5s` khi dính đòn.
   * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
-  * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
+  * **Cụm 4 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm - 60), Q (Nổ năng lượng - 90) hoặc R (Tuyệt kỹ Ult - 175).
+* **Giao diện Kỹ năng & Cooldown (`SkillIconUI.cs`):**
+  * Tự động quản lý 3 ô chiêu thức `SkillE`, `SkillQ`, `SkillR` trong cụm `SkillIconUI`.
+  * **Ma trận phản hồi 2 tầng (Dual-State Feedback):**
+    * `Corner` (Viền góc): Bật khi đủ Spirit, tắt khi thiếu Spirit để người chơi biết trước đã tích trữ đủ năng lượng hay chưa.
+    * `Icon` Alpha: Đạt 1.0 (sáng rực) khi hội tụ đủ 2 điều kiện (Đủ Spirit & Không CD); mờ còn 0.1 khi đang CD hoặc thiếu tài nguyên.
+    * `CDFill`: Lớp phủ tối đếm ngược thời gian hồi chiêu ($1.0 \to 0.0$). Tùy chọn hiển thị Text số giây CD.
 * **Giao Diện Thanh Máu Quái Vật World Space Souls-like (EnemyHealthBarUI.cs):**
   * **Billboard 3D Thông Minh:** Tự động xoay mặt vuông góc 100% về phía Camera người chơi (CameraAligned), phẳng phiu và không bị méo lệch góc nhìn ở mọi hướng quan sát. Hỗ trợ tùy chọn khóa trục Y (lockYAxis).
   * **Khai Thác Sprite Grayscale & Hiệu Ứng Souls-like:**
@@ -120,9 +126,10 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 * **Hệ thống Tài nguyên Player (`PlayerStats.cs`):**
   * **Máu (Health):** Gắn liền với `Health.cs` và interface `IDamageable.cs`.
   * **Thể lực (Stamina):** Max 100. Tiêu hao khi Lướt/Lăn né (Roll: 20), Chạy nhanh (Sprint: 15/s), Chém thường (15), Chém gồng (30), Giơ thế đỡ hụt (20). Tự động hồi phục sau 0.85s trễ.
-  * **Năng lượng Chiêu thức (Spirit / Focus):** Max 150. **Không tự hồi**, chỉ tích lũy khi chém trúng quái (+12 thường, +30 gồng, +35 counter, +40 parry chuẩn). Tiêu hao cho kỹ năng:
-    * **Phím E:** Sóng kiếm chém xa (`ProjectileSlash.cs`, tốn 50 Spirit).
-    * **Phím Q:** Phép nổ năng lượng diện rộng (`AoeSpell.cs`, tốn 100 Spirit).
+  * **Năng lượng Chiêu thức (Spirit / Focus):** Max 200 (chia 4 sao trên HUD, mỗi sao 50 Spirit). **Không tự hồi**, chỉ tích lũy khi chém trúng quái (+12 thường, +30 gồng, +35 counter, +40 parry chuẩn). Tiêu hao cho kỹ năng:
+    * **Phím E:** Sóng kiếm chém xa (`ProjectileSlash.cs`, tốn 50 Spirit - 1 sao).
+    * **Phím Q:** Phép nổ năng lượng diện rộng (`AoeSpell.cs`, tốn 100 Spirit - 2 sao).
+    * **Phím R:** Tuyệt kỹ Tối thượng Càn quét Khổng lồ (`Skill Ult.anim`, tốn 200 Spirit - 4 sao / Max thanh). Nhân vật tụ lực gồng kiếm (Hyper Armor + Invulnerable), chớp sáng ngang lưỡi kiếm (Sword Gleam Flare), đơ game (Freeze Frame / Hitlag 0.1s), Zoom Punch Camera nén lực, sau đó bung nhát chém ngang phẳng cực đại kèm Slow-motion 0.95s thực tế, vệt kiếm Ultra-wide Slash Trail scale 2.6x và Gigantic Cleave Hitbox quét diện rộng bán kính 5.5m hình quạt 240 độ (hỗ trợ Scene View Gizmos trực quan). Đồng bộ hoàn toàn hệ thống Slow-mo qua `ActiveSlowMoScale` và đa dạng phím tắt [T] / [-] / [=].
 * **Cơ chế Đỡ đòn & Phản công (Parry & Counter - `PlayerCombat.cs` & `PlayerFeedback.cs`):**
   * Chuột phải (RMB) kích hoạt thế thủ với cửa sổ vàng `parryWindowDuration = 0.28s`.
   * **Hiệu Ứng Tóe Lửa Va Chạm Lưỡi Kiếm (`Parry VFX.prefab`):**

@@ -23,6 +23,12 @@ public class ProjectileSlash : MonoBehaviour
     [Header("Hit Effect (Tùy chọn)")]
     [SerializeField] private GameObject hitVfxPrefab;
 
+    [Header("Hitlag Settings")]
+    [Tooltip("Thời gian khựng đơ game (giây) khi sóng kiếm chém trúng quái vật (0.15s - 0.2s tạo độ đanh xé toạc mục tiêu)")]
+    [SerializeField] private float hitlagDuration = 0.18f;
+    [Range(0.01f, 0.2f)]
+    [SerializeField] private float hitlagTimeScale = 0.05f;
+
     [Header("Spawn Safety")]
     [SerializeField] private float spawnGracePeriod = 0.08f;
 
@@ -127,6 +133,7 @@ public class ProjectileSlash : MonoBehaviour
                 hasHit = true;
                 Vector3 hitPoint = GetSafeHitPoint(other);
                 damageable.TakeDamage(damage, hitPoint, transform.forward, knockback);
+                TriggerPlayerHitlag();
 
                 SpawnHitVfx(hitPoint, -transform.forward);
                 Destroy(gameObject);
@@ -179,5 +186,21 @@ public class ProjectileSlash : MonoBehaviour
             Quaternion spawnRot = Quaternion.LookRotation(normal);
             Instantiate(hitVfxPrefab, spawnPos, spawnRot);
         }
+    }
+
+    private void TriggerPlayerHitlag()
+    {
+        if (hitlagDuration <= 0f) return;
+        if (attacker != null)
+        {
+            PlayerFeedback feedback = attacker.GetComponent<PlayerFeedback>() ?? attacker.GetComponentInChildren<PlayerFeedback>();
+            if (feedback != null)
+            {
+                feedback.TriggerHitlag(hitlagDuration, hitlagTimeScale);
+                return;
+            }
+        }
+        PlayerFeedback anyFeedback = FindAnyObjectByType<PlayerFeedback>();
+        anyFeedback?.TriggerHitlag(hitlagDuration, hitlagTimeScale);
     }
 }

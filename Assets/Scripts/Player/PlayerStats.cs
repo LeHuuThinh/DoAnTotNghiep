@@ -33,16 +33,18 @@ public class PlayerStats : MonoBehaviour
   [SerializeField] private float parryWhiffCost = 20f;
 
   [Header("=== SPIRIT (NĂNG LƯỢNG KỸ NĂNG) ===")]
-  [Tooltip("Năng lượng kỹ năng tối đa (Cap = 150)")]
-  [SerializeField] private float maxSpirit = 150f;
+  [Tooltip("Năng lượng kỹ năng tối đa (Cap = 200)")]
+  [SerializeField] private float maxSpirit = 200f;
   [Tooltip("Năng lượng kỹ năng hiện tại (theo dõi thời gian thực)")]
   [SerializeField] private float currentSpirit = 0f;
 
   [Header("Spirit Costs (Tiêu Hao Cho Kỹ Năng)")]
   [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng E (Slash Projectile)")]
-  [SerializeField] private float skillECost = 50f;
+  [SerializeField] private float skillECost = 60f;
   [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng Q (AOE Spell)")]
-  [SerializeField] private float skillQCost = 100f;
+  [SerializeField] private float skillQCost = 90f;
+  [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng R (Ultimate Colossal Slash)")]
+  [SerializeField] private float skillRCost = 175f;
 
   [Header("Spirit Gains (Tích Lũy Từ Combat)")]
   [Tooltip("Năng lượng nhận được khi chém thường trúng quái")]
@@ -75,6 +77,7 @@ public class PlayerStats : MonoBehaviour
 
   public float SkillECost => skillECost;
   public float SkillQCost => skillQCost;
+  public float SkillRCost => skillRCost;
 
   public float SpiritGainOnLightHit => spiritGainOnLightHit;
   public float SpiritGainOnChargeHit => spiritGainOnChargeHit;

@@ -58,12 +58,28 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Speed at which progress bar visually catches up to target progress (per second)")]
     [SerializeField] private float progressLerpSpeed = 3.5f;
 
-    [Header("=== SOULS ANIMATED SPINNER ===")]
-    [Tooltip("Rotating icon indicating the background engine is active")]
+    [Header("=== ANIMATED SPINNER / SPRITE SHEET ===")]
+    [Tooltip("Transform for the spinner icon")]
     [SerializeField] private RectTransform spinnerTransform;
 
-    [Tooltip("Rotation speed in degrees per second")]
+    [Tooltip("Image component displaying the spinner icon or animation frames")]
+    [SerializeField] private Image spinnerImage;
+
+    [Tooltip("Bật xoay 360 độ liên tục (Nếu dùng chuỗi ảnh Sprite Sheet thì TẮT tính năng này)")]
+    [SerializeField] private bool enableSpinnerRotation = false;
+
+    [Tooltip("Tốc độ xoay (độ/giây, chỉ áp dụng khi enableSpinnerRotation = true)")]
     [SerializeField] private float spinnerRotateSpeed = -200f;
+
+    [Header("=== SPRITE SHEET ANIMATION ===")]
+    [Tooltip("Bật hoạt ảnh Sprite Sheet (chạy chuỗi frame liên tục)")]
+    [SerializeField] private bool enableSpriteAnimation = true;
+
+    [Tooltip("Tốc độ khung hình (FPS) cho hoạt ảnh Sprite (mặc định 24 FPS)")]
+    [SerializeField] private float animationFps = 24f;
+
+    [Tooltip("Danh sách các frame Sprite (cắt từ Sprite Sheet)")]
+    [SerializeField] private Sprite[] animationFrames;
 
     [Header("=== EDITOR PREVIEW (INSPECTOR CONTROLS) ===")]
     [Tooltip("Enable to inspect and tweak the Loading Screen layout directly in Scene & Game view without entering Play mode!")]
@@ -77,15 +93,23 @@ namespace InfiniteLabyrinth.UI
     private float targetProgress = 0f;
     private float displayedProgress = 0f;
     private Coroutine currentFadeRoutine;
+    private int currentFrameIndex = 0;
+    private float animationTimer = 0f;
 
     public bool IsVisible => canvasGroup != null && canvasGroup.alpha > 0.01f;
     public float DisplayedProgress => displayedProgress;
     public bool EditorPreviewMode => editorPreviewMode;
     public float PreviewProgress => previewProgress;
+    public int AnimationFrameCount => animationFrames != null ? animationFrames.Length : 0;
+    public float AnimationFps => animationFps;
+    public bool EnableSpriteAnimation => enableSpriteAnimation;
+    public bool EnableSpinnerRotation => enableSpinnerRotation;
 
     private void Awake()
     {
       if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+      if (spinnerImage == null && spinnerTransform != null) spinnerImage = spinnerTransform.GetComponent<Image>();
+      if (!enableSpinnerRotation && spinnerTransform != null) spinnerTransform.localRotation = Quaternion.identity;
       
       editorPreviewMode = false;
       // Default to invisible and non-blocking in Play mode
@@ -160,6 +184,16 @@ namespace InfiniteLabyrinth.UI
           backgroundImage.texture = bgTex;
           backgroundImage.color = Color.white;
         }
+
+        if (enableSpriteAnimation && animationFrames != null && animationFrames.Length > 0)
+        {
+          if (spinnerImage == null && spinnerTransform != null) spinnerImage = spinnerTransform.GetComponent<Image>();
+          if (spinnerImage != null && animationFrames[0] != null)
+          {
+            spinnerImage.sprite = animationFrames[0];
+            spinnerImage.color = Color.white;
+          }
+        }
       }
 
       ApplyProgressVisuals(previewProgress);
@@ -171,17 +205,89 @@ namespace InfiniteLabyrinth.UI
       previewProgress = Mathf.Clamp01(val);
       ApplyProgressVisuals(previewProgress);
     }
+
+    /// <summary>
+    /// Nạp tự động toàn bộ Sprite cắt từ Sprite Sheet theo thứ tự số tự nhiên (1..N).
+    /// </summary>
+    public void LoadFramesFromSpriteSheet(string assetPath)
+    {
+      UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath);
+      System.Collections.Generic.List<Sprite> sprites = new System.Collections.Generic.List<Sprite>();
+      foreach (var obj in assets)
+      {
+        if (obj is Sprite s)
+        {
+          sprites.Add(s);
+        }
+      }
+
+      if (sprites.Count == 0)
+      {
+        Debug.LogWarning($"[LoadingScreenUI] Không tìm thấy Sprite nào được cắt tại: {assetPath}");
+        return;
+      }
+
+      // Sắp xếp tự nhiên theo số thứ tự cuối tên (vd: MemeSpriteSheet_0, MemeSpriteSheet_1, ... MemeSpriteSheet_191)
+      sprites.Sort((a, b) => ExtractTrailingNumber(a.name).CompareTo(ExtractTrailingNumber(b.name)));
+
+      animationFrames = sprites.ToArray();
+      enableSpriteAnimation = true;
+      enableSpinnerRotation = false;
+
+      if (spinnerTransform != null)
+      {
+        spinnerTransform.localRotation = Quaternion.identity;
+        if (spinnerImage == null) spinnerImage = spinnerTransform.GetComponent<Image>();
+      }
+
+      if (spinnerImage != null)
+      {
+        spinnerImage.sprite = animationFrames[0];
+        spinnerImage.color = Color.white;
+      }
+
+      Debug.Log($"<color=green>[LoadingScreenUI]</color> 🎬 Đã nạp thành công {animationFrames.Length} frames từ '{assetPath}'!");
+    }
+
+    private static int ExtractTrailingNumber(string name)
+    {
+      int lastUnderscore = name.LastIndexOf('_');
+      if (lastUnderscore >= 0 && int.TryParse(name.Substring(lastUnderscore + 1), out int num))
+      {
+        return num;
+      }
+      return 0;
+    }
 #endif
 
     private void Update()
     {
-      // 1. Continuous spinner rotation using unscaled time
-      if (spinnerTransform != null && IsVisible)
+      // 1. Continuous spinner rotation (chỉ chạy khi được bật)
+      if (enableSpinnerRotation && spinnerTransform != null && IsVisible)
       {
         spinnerTransform.Rotate(0f, 0f, spinnerRotateSpeed * Time.unscaledDeltaTime);
       }
 
-      // 2. Smooth progress bar interpolation
+      // 2. Sprite Sheet Frame Animation using unscaledDeltaTime (mượt mà cả khi scene đang load)
+      if (enableSpriteAnimation && animationFrames != null && animationFrames.Length > 0 && IsVisible)
+      {
+        animationTimer += Time.unscaledDeltaTime;
+        float frameDuration = 1f / Mathf.Max(1f, animationFps);
+
+        if (animationTimer >= frameDuration)
+        {
+          int framesToAdvance = Mathf.FloorToInt(animationTimer / frameDuration);
+          animationTimer %= frameDuration;
+          currentFrameIndex = (currentFrameIndex + framesToAdvance) % animationFrames.Length;
+
+          if (spinnerImage != null && animationFrames[currentFrameIndex] != null)
+          {
+            spinnerImage.sprite = animationFrames[currentFrameIndex];
+          }
+        }
+      }
+
+      // 3. Smooth progress bar interpolation
       if (displayedProgress < targetProgress)
       {
         displayedProgress = Mathf.MoveTowards(displayedProgress, targetProgress, progressLerpSpeed * Time.unscaledDeltaTime);
@@ -195,10 +301,26 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void Show(string sceneName, int floorNumber, LoadingScreenData data, Action onFadeInComplete = null, bool instant = false)
     {
-      // 1. Reset progress
+      // 1. Reset progress & animation
       targetProgress = 0f;
       displayedProgress = 0f;
       ApplyProgressVisuals(0f);
+
+      currentFrameIndex = 0;
+      animationTimer = 0f;
+      if (enableSpriteAnimation && animationFrames != null && animationFrames.Length > 0)
+      {
+        if (spinnerImage == null && spinnerTransform != null) spinnerImage = spinnerTransform.GetComponent<Image>();
+        if (spinnerImage != null && animationFrames[0] != null)
+        {
+          spinnerImage.sprite = animationFrames[0];
+          spinnerImage.color = Color.white;
+        }
+      }
+      if (!enableSpinnerRotation && spinnerTransform != null)
+      {
+        spinnerTransform.localRotation = Quaternion.identity;
+      }
 
       // 2. Populate Header
       if (data != null)

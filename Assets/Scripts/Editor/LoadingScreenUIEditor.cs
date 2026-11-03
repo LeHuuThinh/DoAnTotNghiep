@@ -72,6 +72,30 @@ namespace InfiniteLabyrinth.Editor
       }
 
       EditorGUILayout.EndVertical();
+
+      EditorGUILayout.Space(6);
+      EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+      EditorGUILayout.LabelField("🎬 HOẠT ẢNH SPINNER / SPRITE SHEET", titleStyle);
+
+      EditorGUILayout.HelpBox(
+        "Thay thế icon xoay tròn bằng hoạt ảnh Sprite Sheet chuyển động cạnh số % (VD: Meme, Chibi, Lửa ma mị).\n" +
+        $"• Số Frame hiện có: {ui.AnimationFrameCount} frames\n" +
+        $"• Trạng thái xoay 360°: {(ui.EnableSpinnerRotation ? "Đang BẬT" : "Đã TẮT (Chuẩn cho Sprite Sheet)")}\n" +
+        $"• Trạng thái hoạt ảnh: {(ui.EnableSpriteAnimation ? "Đang BẬT" : "Đang TẮT")}",
+        MessageType.None
+      );
+
+      string activePath = LoadingScreenSetupEditor.ResolvedMemePath;
+      GUI.backgroundColor = new Color(0.4f, 0.85f, 1f);
+      if (GUILayout.Button($"🎬 Tự Động Nạp Frames từ {(activePath.Contains("2_") ? "2_MemeSpriteSheet (190 Frames)" : "MemeSpriteSheet")} (1-Click)", GUILayout.Height(32)))
+      {
+        Undo.RecordObject(ui, "Load MemeSpriteSheet Frames");
+        ui.LoadFramesFromSpriteSheet(activePath);
+        EditorUtility.SetDirty(ui);
+      }
+      GUI.backgroundColor = Color.white;
+
+      EditorGUILayout.EndVertical();
       EditorGUILayout.Space(10);
 
       // Default Inspector

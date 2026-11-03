@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -31,13 +32,57 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private GameObject swordAuraBlueVfx;
   [Tooltip("Aura kiếm màu vàng cam cho Skill Q (Gồng nổ AOE chấn địa)")]
   [SerializeField] private GameObject swordAuraOrangeVfx;
+  [Tooltip("Aura kiếm màu đỏ / vàng kim cho Tuyệt kỹ Ult R")]
+  [SerializeField] private GameObject swordAuraUltVfx;
 
-  private enum ActiveSkillType { None, SkillE, SkillQ }
+  [Header("Ultimate Skill (R) Settings")]
+  [Tooltip("Sát thương cơ bản của Tuyệt kỹ Ult R")]
+  [SerializeField] private float ultDamage = 140f;
+  [Tooltip("Lực đẩy lùi (Knockback) của Tuyệt kỹ Ult R")]
+  [SerializeField] private float ultKnockback = 3.5f;
+  [Tooltip("Sát thương Poise (phá thế quái vật) của Tuyệt kỹ Ult R")]
+  [SerializeField] private float ultPoiseDamage = 180f;
+  [Tooltip("Bán kính quét diện rộng (m) của Hitbox chém Ult R")]
+  [SerializeField] private float ultHitboxRadius = 5.5f;
+  [Tooltip("Độ lệch tâm quét về phía trước mặt nhân vật (m)")]
+  [SerializeField] private float ultHitboxForwardOffset = 2.2f;
+  [Tooltip("Độ cao tâm quét sát thương so với chân nhân vật (m). 1.15m khớp chuẩn vị trí vệt chém Slash VFX")]
+  [SerializeField] private float ultHitboxHeightOffset = 1.15f;
+  [Tooltip("Góc quét hình quạt phía trước mặt (độ). 240 = quét rộng trước mặt, 360 = trọn vẹn toàn bộ 360 độ")]
+  [Range(60f, 360f)]
+  [SerializeField] private float ultHitboxAngle = 240f;
+  [Header("Skill Ult (R) Hitbox Visualizer (Gizmos)")]
+  [Tooltip("Bật hiển thị khung Hitbox Ult trong cửa sổ Scene View để dễ dàng căn chỉnh khớp vệt chém")]
+  [SerializeField] private bool showUltHitboxGizmos = true;
+  [SerializeField] private Color ultHitboxGizmoColor = new Color(1f, 0.22f, 0.22f, 0.35f);
+  [Header("Skill Ult (R) Cinematic & Slow Motion")]
+  [Tooltip("Thời gian đơ game (freeze frame / hitlag) ngay khoảnh khắc chuẩn bị chém (giây)")]
+  [SerializeField] private float ultFreezeDuration = 0.1f;
+  [Tooltip("Thời gian làm chậm thực tế khi vung nhát chém Ult (giây thực tế). 0.8s - 1.2s tạo cảm giác chém ngang đầm chắc, mãn nhãn")]
+  [SerializeField] private float ultSlowMoDuration = 0.95f;
+  [Tooltip("Thời gian khựng đơ game (giây) ngay khoảnh khắc nhát chém Ult chạm trúng quái vật (0.2s - 0.25s tạo độ đanh uy lực cực đại)")]
+  [SerializeField] private float ultImpactHitlag = 0.22f;
+  [Tooltip("Tốc độ thời gian khi slow motion (0.28 = làm chậm ~72%)")]
+  [Range(0.05f, 0.5f)]
+  [SerializeField] private float ultSlowMoTimeScale = 0.28f;
+  [Tooltip("VFX chớp sáng ngang trên lưỡi kiếm ngay trước khi chém")]
+  [SerializeField] private GameObject swordGleamVfxPrefab;
+  [Tooltip("Độ lệch vị trí chớp sáng dọc theo lưỡi kiếm (m). Dương = tiến về mũi kiếm, Âm = lùi về chuôi")]
+  [SerializeField] private float ultGleamBladeOffset = 0.15f;
+  [Tooltip("Góc xoay điều chỉnh thêm của VFX chớp sáng Gleam (Euler Angles)")]
+  [SerializeField] private Vector3 ultGleamRotationOffset = Vector3.zero;
+  [Tooltip("Tỷ lệ phóng to/thu nhỏ của VFX chớp sáng Gleam")]
+  [SerializeField] private float ultGleamScale = 1.0f;
+  [Tooltip("Điểm neo thân kiếm / lưỡi kiếm để phát sinh chớp sáng")]
+  [SerializeField] private Transform swordTransform;
+
+  private enum ActiveSkillType { None, SkillE, SkillQ, SkillR }
   private ActiveSkillType currentActiveSkill = ActiveSkillType.None;
 
   [Header("Skill Cooldowns")]
-  [SerializeField] private float skillECooldown = 4.0f;
-  [SerializeField] private float skillQCooldown = 8.0f;
+  [SerializeField] private float skillECooldown = 6.0f;
+  [SerializeField] private float skillQCooldown = 10.0f;
+  [SerializeField] private float skillRCooldown = 20.0f;
 
   [Header("Knockback Settings")]
   [SerializeField] private float attack1Knockback = 0f;
@@ -111,6 +156,9 @@ public class PlayerCombat : MonoBehaviour
   // Biến CD SKill
   private float skillETimer = 0f;
   private float skillQTimer = 0f;
+  private float skillRTimer = 0f;
+  private Coroutine ultTimeDilationCoroutine;
+  private bool isUltSlowMoActive = false;
 
   // Biến Charge Attack
   private float holdTimer = 0f;
@@ -135,6 +183,7 @@ public class PlayerCombat : MonoBehaviour
   private static readonly int CounterAttackTriggerHash = Animator.StringToHash("CounterAttack");
   private static readonly int SkillETriggerHash = Animator.StringToHash("Skill_E");
   private static readonly int SkillQTriggerHash = Animator.StringToHash("Skill_Q");
+  private static readonly int SkillRTriggerHash = Animator.StringToHash("Skill_R");
 
   private void Awake()
   {
@@ -159,6 +208,7 @@ public class PlayerCombat : MonoBehaviour
     {
       weaponHitbox.Initialize(transform.root);
       weaponHitbox.OnHitTarget += HandleWeaponHitTarget;
+      if (swordTransform == null) swordTransform = weaponHitbox.transform;
     }
   }
 
@@ -232,7 +282,8 @@ public class PlayerCombat : MonoBehaviour
         }
       }
 
-      if (attackTimer >= 2.0f)
+      float maxAttackTimeout = (currentActiveSkill == ActiveSkillType.SkillR) ? 4.5f : 2.0f;
+      if (attackTimer >= maxAttackTimeout)
       {
         ForceResetCombat();
       }
@@ -266,6 +317,7 @@ public class PlayerCombat : MonoBehaviour
     // Đếm ngược Cooldown của Kỹ năng
     if (skillETimer > 0f) skillETimer -= Time.deltaTime;
     if (skillQTimer > 0f) skillQTimer -= Time.deltaTime;
+    if (skillRTimer > 0f) skillRTimer -= Time.deltaTime;
 
   }
 
@@ -379,6 +431,25 @@ public class PlayerCombat : MonoBehaviour
         }
 
         ExecuteSkillQ();
+        return;
+      }
+
+      // Phím R: Tuyệt kỹ Tối thượng Ultimate - Chém Ngang Càn Quét (Tiêu hao 200 Spirit - Max Thanh)
+      if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && skillRTimer <= 0f)
+      {
+        float rCost = playerStats != null ? playerStats.SkillRCost : 200f;
+        if (playerStats != null && !playerStats.HasSpirit(rCost))
+        {
+          Debug.Log("<color=red>[Skill Ult]</color> Chưa đủ Spirit để tung Tuyệt Kỹ! Cần: " + rCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+          return;
+        }
+
+        if (playerStats != null)
+        {
+          playerStats.ConsumeSpirit(rCost);
+        }
+
+        ExecuteSkillR();
         return;
       }
     }
@@ -592,7 +663,25 @@ public class PlayerCombat : MonoBehaviour
     isChargeAttackActive = false;
     SetCounterAttackActive(false);
 
-    if (playerFeedback != null) playerFeedback.IsParrying = false;
+    // Chỉ dập tắt Time.timeScale nếu KHÔNG đang trong pha Ult Slow-mo tự nhiên
+    if (!isUltSlowMoActive)
+    {
+      if (ultTimeDilationCoroutine != null)
+      {
+        StopCoroutine(ultTimeDilationCoroutine);
+        ultTimeDilationCoroutine = null;
+      }
+      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
+    }
+
+    if (health != null) health.SetInvulnerable(false);
+    if (playerFeedback != null)
+    {
+      playerFeedback.IsParrying = false;
+      playerFeedback.DisableHyperArmor();
+    }
     if (animator != null)
     {
       animator.SetInteger(ComboStepHash, 0);
@@ -629,6 +718,24 @@ public class PlayerCombat : MonoBehaviour
     animator.SetTrigger(SkillQTriggerHash);
   }
 
+  private void ExecuteSkillR()
+  {
+    isAttacking = true;
+    currentActiveSkill = ActiveSkillType.SkillR;
+    skillRTimer = skillRCooldown;
+    targetLayerWeight = 0f;
+
+    if (playerController != null) playerController.LockMovement();
+
+    // Tuyệt kỹ Tối thượng 200 Spirit: Bật Hyper Armor và Invulnerable để quái không ngắt được chiêu
+    if (playerFeedback != null) playerFeedback.EnableHyperArmor();
+    if (health != null) health.SetInvulnerable(true);
+
+    EnableSwordAura();
+
+    animator.SetTrigger(SkillRTriggerHash);
+  }
+
   // =========================================================================
   // ANIMATION EVENTS CHO SKILLS
   // =========================================================================
@@ -643,6 +750,12 @@ public class PlayerCombat : MonoBehaviour
     {
       swordAuraOrangeVfx.SetActive(true);
     }
+    else if (currentActiveSkill == ActiveSkillType.SkillR)
+    {
+      if (swordAuraUltVfx != null) swordAuraUltVfx.SetActive(true);
+      else if (swordAuraOrangeVfx != null) swordAuraOrangeVfx.SetActive(true);
+      else if (swordAuraVfx != null) swordAuraVfx.SetActive(true);
+    }
     else if (swordAuraVfx != null)
     {
       swordAuraVfx.SetActive(true);
@@ -653,18 +766,16 @@ public class PlayerCombat : MonoBehaviour
   {
     if (swordAuraBlueVfx != null) swordAuraBlueVfx.SetActive(false);
     if (swordAuraOrangeVfx != null) swordAuraOrangeVfx.SetActive(false);
+    if (swordAuraUltVfx != null) swordAuraUltVfx.SetActive(false);
     if (swordAuraVfx != null) swordAuraVfx.SetActive(false);
     currentActiveSkill = ActiveSkillType.None;
   }
 
   /// <summary>
-  /// Gắn Event này đúng thời điểm vung kiếm trong clip Skill E
+  /// Gắn Event này đúng thời điểm vung kiếm trong clip Skill E (Chỉ lo việc phóng đạn kiếm khí)
   /// </summary>
   public void SpawnSlashProjectileEvent()
   {
-    // Kích hoạt vệt chém kiếm của Skill E (E Slash VFX)
-    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillE);
-
     if (slashProjectilePrefab == null) return;
 
     Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : (transform.position + transform.forward + Vector3.up * 1.2f);
@@ -679,13 +790,10 @@ public class PlayerCombat : MonoBehaviour
   }
 
   /// <summary>
-  /// Gắn Event này đúng thời điểm cắm kiếm xuống đất / bộc phát chiêu trong clip Skill Q
+  /// Gắn Event này đúng thời điểm cắm kiếm xuống đất / bộc phát chiêu trong clip Skill Q (Chỉ lo việc sinh phép nổ AOE)
   /// </summary>
   public void SpawnAoeSpellEvent()
   {
-    // Kích hoạt vệt chém đập đất của Skill Q (Q Slash VFX)
-    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
-
     if (aoeSpellPrefab == null) return;
 
     Vector3 spawnPos = transform.root.position;
@@ -708,11 +816,261 @@ public class PlayerCombat : MonoBehaviour
   public void PlaySkillQSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
 
   /// <summary>
-  /// Gắn ở cuối 2 clip Skill để trả lại quyền điều khiển
+  /// Animation Event: Khoảnh khắc chuẩn bị chém ngang của Skill Ult
+  /// Kích hoạt chớp sáng ngang trên kiếm + Đơ game (freeze frame / hitlag) 0.1s + Camera Zoom Punch
+  /// </summary>
+  public void OnUltPreSlashGleam()
+  {
+    SpawnSwordGleamVfx();
+
+    // Giật camera Zoom Punch nén lực
+    if (playerController != null && playerController.ThirdPersonCamera != null)
+    {
+      playerController.ThirdPersonCamera.TriggerParryZoom();
+    }
+
+    // Đơ game 0.1s (Freeze Frame unscaled)
+    if (ultTimeDilationCoroutine != null) StopCoroutine(ultTimeDilationCoroutine);
+    ultTimeDilationCoroutine = StartCoroutine(UltPreSlashFreezeRoutine());
+  }
+
+  /// <summary>
+  /// Alias ngắn gọn cho Animation Event chớp sáng kiếm Ult
+  /// </summary>
+  public void OnUltGleam() => OnUltPreSlashGleam();
+
+  private IEnumerator UltPreSlashFreezeRoutine()
+  {
+    float originalScale = Time.timeScale > 0.01f ? Time.timeScale : 1.0f;
+    Time.timeScale = 0.02f; // Khựng đơ thế giới
+    Time.fixedDeltaTime = 0.02f * Time.timeScale;
+    yield return new WaitForSecondsRealtime(ultFreezeDuration);
+    float restoreScale = originalScale > 0.05f ? originalScale : (PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f);
+    Time.timeScale = restoreScale;
+    Time.fixedDeltaTime = 0.02f * restoreScale;
+  }
+
+  private void SpawnSwordGleamVfx()
+  {
+    GameObject gleamPrefab = swordGleamVfxPrefab;
+    if (gleamPrefab == null)
+    {
+#if UNITY_EDITOR
+      gleamPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Player/Skill/Ult Gleam VFX.prefab");
+#endif
+      if (gleamPrefab == null)
+      {
+        gleamPrefab = Resources.Load<GameObject>("Ult Gleam VFX");
+      }
+      if (gleamPrefab == null)
+      {
+        gleamPrefab = Resources.Load<GameObject>("Light Flare");
+      }
+#if UNITY_EDITOR
+      if (gleamPrefab == null)
+      {
+        gleamPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/A VFX Prefabs/Other/Light Flare.prefab");
+      }
+      if (gleamPrefab == null)
+      {
+        gleamPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/A VFX Prefabs/Sword Trails/Plain/CFXR4 Sword Hit PLAIN (Cross).prefab");
+      }
+#endif
+    }
+
+    Transform root = transform.root;
+    Transform parentTarget = swordTransform != null ? swordTransform : (weaponHitbox != null ? weaponHitbox.transform : null);
+
+    Vector3 gleamPos;
+    Quaternion gleamRot;
+
+    BoxCollider box = weaponHitbox != null ? weaponHitbox.GetComponent<BoxCollider>() : null;
+    if (parentTarget != null && box != null)
+    {
+      // Lấy đúng tâm lưỡi kiếm (local center Y ~ 0.81m) kèm độ lệch tiến về phía mũi kiếm
+      gleamPos = parentTarget.TransformPoint(box.center + Vector3.up * ultGleamBladeOffset);
+      gleamRot = parentTarget.rotation * Quaternion.Euler(ultGleamRotationOffset);
+    }
+    else if (parentTarget != null)
+    {
+      gleamPos = parentTarget.position + parentTarget.up * (0.8f + ultGleamBladeOffset);
+      gleamRot = parentTarget.rotation * Quaternion.Euler(ultGleamRotationOffset);
+    }
+    else
+    {
+      gleamPos = root.position + root.forward * 0.9f + Vector3.up * 1.15f;
+      gleamRot = root.rotation * Quaternion.Euler(ultGleamRotationOffset);
+    }
+
+    if (gleamPrefab != null)
+    {
+      // Gắn làm con của parentTarget (thanh kiếm) để khi nhân vật cử động trong 0.1s, chớp sáng bám chặt theo kiếm
+      GameObject gleamInst = parentTarget != null
+        ? Instantiate(gleamPrefab, gleamPos, gleamRot, parentTarget)
+        : Instantiate(gleamPrefab, gleamPos, gleamRot);
+
+      // Giữ nguyên tỷ lệ chuẩn của prefab, nhân theo thanh trượt scale
+      Vector3 origScale = gleamPrefab.transform.localScale;
+      gleamInst.transform.localScale = origScale * ultGleamScale;
+
+      // Kích hoạt tất cả ParticleSystem con và ép useUnscaledTime = true để không bị đơ theo TimeScale
+      ParticleSystem[] allPS = gleamInst.GetComponentsInChildren<ParticleSystem>(true);
+      foreach (ParticleSystem ps in allPS)
+      {
+        var main = ps.main;
+        main.useUnscaledTime = true;
+        main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+        ps.Play(true);
+      }
+
+      Destroy(gleamInst, 1.2f);
+    }
+  }
+
+  /// <summary>
+  /// Animation Event: Khoảnh khắc vung chém ngang của Skill Ult
+  /// Kích hoạt Slow motion 0.5s + Vệt kiếm khổng lồ + Quét Hitbox siêu to
+  /// </summary>
+  public void OnUltSlashRelease()
+  {
+    // 1. Slow motion trong lúc chém ngang
+    TriggerUltSlowMo();
+
+    // 2. Kích hoạt vệt chém ngang khổng lồ
+    PlaySkillUltSlash();
+
+    // 3. Quét Hitbox siêu to
+    TriggerUltHitbox();
+  }
+
+  /// <summary>
+  /// Alias ngắn gọn cho Animation Event chém ngang của Ult (tương ứng tên event OnUltSlash trên timeline)
+  /// </summary>
+  public void OnUltSlash() => OnUltSlashRelease();
+
+  /// <summary>
+  /// Animation Event độc lập: Kích hoạt vệt chém khổng lồ cho Skill Ult
+  /// </summary>
+  public void PlaySkillUltSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillUlt);
+  public void PlayUltSlash() => PlaySkillUltSlash();
+
+  /// <summary>
+  /// Animation Event độc lập: Kích hoạt Slow Motion 0.5s cho Skill Ult
+  /// </summary>
+  public void TriggerUltSlowMo()
+  {
+    if (ultTimeDilationCoroutine != null) StopCoroutine(ultTimeDilationCoroutine);
+    ultTimeDilationCoroutine = StartCoroutine(UltSlashSlowMoRoutine());
+  }
+  public void OnUltSlowMo() => TriggerUltSlowMo();
+
+  /// <summary>
+  /// Animation Event độc lập: Kích hoạt quét Hitbox sát thương diện rộng của Ult
+  /// </summary>
+  public void TriggerUltHitbox() => ExecuteUltGiganticHitbox();
+  public void OnUltSlashHitbox() => TriggerUltHitbox();
+
+  private IEnumerator UltSlashSlowMoRoutine()
+  {
+    isUltSlowMoActive = true;
+    Time.timeScale = ultSlowMoTimeScale; // 0.28x
+    Time.fixedDeltaTime = 0.02f * Time.timeScale;
+    yield return new WaitForSecondsRealtime(ultSlowMoDuration); // Thời gian làm chậm thực tế
+    float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
+    Time.timeScale = restoreScale;
+    Time.fixedDeltaTime = 0.02f * restoreScale;
+    isUltSlowMoActive = false;
+    ultTimeDilationCoroutine = null;
+  }
+
+  /// <summary>
+  /// Quét sát thương hình quạt diện rộng cực đại phía trước người chơi
+  /// </summary>
+  private void ExecuteUltGiganticHitbox()
+  {
+    Transform root = transform.root;
+    Vector3 origin = root.position;
+    Vector3 center = origin + root.forward * ultHitboxForwardOffset + Vector3.up * ultHitboxHeightOffset;
+
+    LayerMask targetLayers = (weaponHitbox != null && weaponHitbox.TargetLayers.value != 0)
+      ? weaponHitbox.TargetLayers
+      : ((1 << 9) | (1 << 8)); // Enemy (9), Damageable (8)
+
+    Collider[] colliders = Physics.OverlapSphere(center, ultHitboxRadius, targetLayers);
+    HashSet<IDamageable> damagedEntities = new HashSet<IDamageable>();
+
+    float totalDamage = ultDamage + TotalAttackBonus * 2.5f;
+
+    foreach (Collider col in colliders)
+    {
+      if (col == null || col.transform.root == root) continue;
+
+      // Kiểm tra góc quét hình quạt phía trước nếu ultHitboxAngle < 360
+      if (ultHitboxAngle < 359f)
+      {
+        Vector3 dirToTarget = col.bounds.center - (origin + Vector3.up * ultHitboxHeightOffset);
+        dirToTarget.y = 0f;
+        if (dirToTarget.sqrMagnitude > 0.001f)
+        {
+          float angle = Vector3.Angle(root.forward, dirToTarget.normalized);
+          if (angle > ultHitboxAngle * 0.5f) continue;
+        }
+      }
+
+      IDamageable damageable = col.GetComponentInParent<IDamageable>();
+      if (damageable != null && !damagedEntities.Contains(damageable))
+      {
+        damagedEntities.Add(damageable);
+
+        Vector3 hitPoint = col.ClosestPoint(center);
+        Vector3 hitDirection = (col.transform.position - origin);
+        hitDirection.y = 0.08f;
+        hitDirection.Normalize();
+
+        // 1. Gây sát thương Poise cực mạnh (Lập tức phá vỡ thế mọi quái thường)
+        Health targetHealth = damageable as Health ?? (damageable as Component)?.GetComponentInParent<Health>();
+        if (targetHealth != null)
+        {
+          targetHealth.SetIncomingPoiseDamage(ultPoiseDamage);
+        }
+
+        // 2. Kích hoạt Impact VFX tại điểm chạm
+        if (weaponHitbox != null)
+        {
+          weaponHitbox.SpawnHitImpactVfx(hitPoint, hitDirection);
+        }
+
+        // 3. Gây sát thương và đẩy văng (Knockback mạnh)
+        damageable.TakeDamage(totalDamage, hitPoint, hitDirection, ultKnockback, root);
+      }
+    }
+
+    // Kích hoạt Impact Hitlag 0.22s khi nhát chém trúng ít nhất 1 mục tiêu
+    if (damagedEntities.Count > 0 && ultImpactHitlag > 0f)
+    {
+      playerFeedback?.TriggerHitlag(ultImpactHitlag, 0.05f);
+    }
+  }
+
+  /// <summary>
+  /// Gắn ở cuối các clip Skill để trả lại quyền điều khiển
   /// </summary>
   public void OnSkillAnimationEnd()
   {
     DisableSwordAura();
+    // Chỉ dập tắt Time.timeScale nếu KHÔNG đang trong pha Ult Slow-mo tự nhiên
+    if (!isUltSlowMoActive)
+    {
+      if (ultTimeDilationCoroutine != null)
+      {
+        StopCoroutine(ultTimeDilationCoroutine);
+        ultTimeDilationCoroutine = null;
+      }
+      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
+    }
+    if (health != null) health.SetInvulnerable(false);
     if (playerFeedback != null) playerFeedback.DisableHyperArmor();
     if (animator != null) animator.speed = 1f;
     ForceResetCombat();
@@ -792,8 +1150,104 @@ public class PlayerCombat : MonoBehaviour
   }
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
+
+  // =========================================================================
+  // ANIMATION EVENTS PHÁT VỆT CHÉM SLASH VFX ĐỘC LẬP CHO TẤT CẢ CÁC ĐÒN ĐÁNH
+  // (Cho phép kéo chỉnh Animation Event trên timeline tách rời với Hitbox va chạm)
+  // =========================================================================
+  public void PlayAttack1Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack1);
+  public void PlayAttack2Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack2);
+  public void PlayAttack3Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack3);
+  public void PlayChargeHit1Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
+  public void PlayChargeHit2Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
+  public void PlayCounterSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
+
   // Thêm vào PlayerCombat để PlayerController có thể đọc được
   public bool IsBlockingOrParrying => isParryActive;
   public bool IsAttacking => isAttacking;
   public PlayerSlashVFX SlashVFX => playerSlashVFX;
+
+  // Skill Cooldown Getters (Dành cho UI hiển thị thời gian hồi chiêu)
+  public float SkillECooldown => skillECooldown;
+  public float SkillQCooldown => skillQCooldown;
+  public float SkillRCooldown => skillRCooldown;
+
+  public float SkillETimer => skillETimer;
+  public float SkillQTimer => skillQTimer;
+  public float SkillRTimer => skillRTimer;
+
+#if UNITY_EDITOR
+  private void OnDrawGizmosSelected()
+  {
+    if (!showUltHitboxGizmos) return;
+    DrawUltHitboxGizmo(true);
+  }
+
+  /// <summary>
+  /// Vẽ trực quan Hitbox chém Ult (R) trong Scene View để dễ dàng căn chỉnh kích thước, bán kính, góc chém khớp với VFX
+  /// </summary>
+  private void DrawUltHitboxGizmo(bool isSelected)
+  {
+    Transform root = transform.root != null ? transform.root : transform;
+    Vector3 origin = root.position;
+    Vector3 waistCenter = origin + Vector3.up * ultHitboxHeightOffset;
+    Vector3 hitboxCenter = waistCenter + root.forward * ultHitboxForwardOffset;
+
+    Color baseColor = ultHitboxGizmoColor;
+    if (!isSelected) baseColor.a *= 0.5f;
+
+    // 1. Trục tâm từ nhân vật tới tâm Hitbox
+    Gizmos.color = isSelected ? Color.yellow : new Color(1f, 0.9f, 0.2f, 0.4f);
+    Gizmos.DrawLine(waistCenter, hitboxCenter);
+    Gizmos.DrawWireSphere(hitboxCenter, 0.15f);
+
+    // 2. Mũi tên chỉ hướng chém phía trước
+    Gizmos.color = Color.cyan;
+    Vector3 fwdEnd = hitboxCenter + root.forward * (ultHitboxRadius * 0.45f);
+    Gizmos.DrawLine(hitboxCenter, fwdEnd);
+
+    // 3. Khung cầu Wireframe quét va chạm Physics.OverlapSphere
+    Gizmos.color = baseColor;
+    Gizmos.DrawWireSphere(hitboxCenter, ultHitboxRadius);
+
+    // 4. Handles vẽ lát cắt đĩa chém ngang (Horizontal Cleave Disc) & Hình quạt góc quét
+    UnityEditor.Handles.color = baseColor;
+    UnityEditor.Handles.DrawWireDisc(hitboxCenter, Vector3.up, ultHitboxRadius);
+
+    if (ultHitboxAngle < 359f)
+    {
+      float halfAngle = ultHitboxAngle * 0.5f;
+      Vector3 leftDir = Quaternion.Euler(0f, -halfAngle, 0f) * root.forward;
+      Vector3 rightDir = Quaternion.Euler(0f, halfAngle, 0f) * root.forward;
+      float reachDistance = ultHitboxForwardOffset + ultHitboxRadius;
+
+      UnityEditor.Handles.color = new Color(baseColor.r, baseColor.g, baseColor.b, isSelected ? 0.22f : 0.10f);
+      UnityEditor.Handles.DrawSolidArc(waistCenter, Vector3.up, leftDir, ultHitboxAngle, reachDistance);
+
+      UnityEditor.Handles.color = new Color(baseColor.r, baseColor.g, baseColor.b, isSelected ? 0.9f : 0.5f);
+      UnityEditor.Handles.DrawLine(waistCenter, waistCenter + leftDir * reachDistance);
+      UnityEditor.Handles.DrawLine(waistCenter, waistCenter + rightDir * reachDistance);
+      UnityEditor.Handles.DrawWireArc(waistCenter, Vector3.up, leftDir, ultHitboxAngle, reachDistance);
+    }
+    else
+    {
+      UnityEditor.Handles.color = new Color(baseColor.r, baseColor.g, baseColor.b, isSelected ? 0.2f : 0.08f);
+      UnityEditor.Handles.DrawSolidDisc(hitboxCenter, Vector3.up, ultHitboxRadius);
+    }
+
+    if (isSelected)
+    {
+      GUIStyle labelStyle = new GUIStyle(GUI.skin.label)
+      {
+        alignment = TextAnchor.MiddleCenter,
+        fontSize = 11,
+        fontStyle = FontStyle.Bold
+      };
+      labelStyle.normal.textColor = Color.white;
+
+      string info = $"⚔️ Skill Ult Hitbox (R)\nBán kính: {ultHitboxRadius:F1}m | Đẩy trước: {ultHitboxForwardOffset:F1}m\nCao: {ultHitboxHeightOffset:F2}m | Góc: {ultHitboxAngle}°";
+      UnityEditor.Handles.Label(hitboxCenter + Vector3.up * (ultHitboxRadius + 0.35f), info, labelStyle);
+    }
+  }
+#endif
 }

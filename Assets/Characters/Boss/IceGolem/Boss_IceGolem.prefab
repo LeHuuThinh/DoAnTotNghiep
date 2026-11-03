@@ -510,7 +510,7 @@ MonoBehaviour:
   takeDamagePenalty: -0.8
   deathPenalty: -3
   respawnBossOnDeath: 0
-  lockNormalSpeed: 1
+  lockNormalSpeed: 0
   movePersistenceTime: 0.5
   minStrafeDistance: 2.5
   minStrafeDuration: 1.2

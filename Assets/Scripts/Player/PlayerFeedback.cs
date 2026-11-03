@@ -124,7 +124,9 @@ public class PlayerFeedback : MonoBehaviour
 
     if (hitStopCoroutine != null)
     {
-      Time.timeScale = 1f;
+      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
       hitStopCoroutine = null;
     }
   }
@@ -437,7 +439,9 @@ public class PlayerFeedback : MonoBehaviour
     if (hitStopCoroutine != null)
     {
       StopCoroutine(hitStopCoroutine);
-      Time.timeScale = 1f;
+      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
     }
     hitStopCoroutine = StartCoroutine(HitStopRoutine(duration, scale));
   }
@@ -445,8 +449,11 @@ public class PlayerFeedback : MonoBehaviour
   private IEnumerator HitStopRoutine(float duration, float scale)
   {
     Time.timeScale = scale;
+    Time.fixedDeltaTime = 0.02f * scale;
     yield return new WaitForSecondsRealtime(duration);
-    Time.timeScale = 1f;
+    float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+    Time.timeScale = restoreScale;
+    Time.fixedDeltaTime = 0.02f * restoreScale;
     hitStopCoroutine = null;
   }
 

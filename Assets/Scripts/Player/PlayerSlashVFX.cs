@@ -19,7 +19,8 @@ public class PlayerSlashVFX : MonoBehaviour
     Charge2,
     Counter,
     SkillE,
-    SkillQ
+    SkillQ,
+    SkillUlt
   }
 
   [System.Serializable]
@@ -153,6 +154,18 @@ public class PlayerSlashVFX : MonoBehaviour
     parentToPlayer = false
   };
 
+  [Tooltip("Skill Ult: Chém ngang càn quét khổng lồ (Colossal Horizontal Sweep)")]
+  [SerializeField]
+  private SlashVfxConfig skillUltConfig = new SlashVfxConfig
+  {
+    attackName = "Skill Ult (Colossal Horizontal Sweep)",
+    positionOffset = new Vector3(0.0f, 1.15f, 0.9f),
+    rotationOffset = new Vector3(-176.57f, -92.12f, 0.0f),
+    scale = new Vector3(2.6f, 1.25f, 2.6f),
+    lifetime = 1.1f,
+    parentToPlayer = false
+  };
+
   [Header("Gizmos Debug Settings")]
   [SerializeField] private bool showGizmosInEditor = true;
   [SerializeField] private SlashAttackType gizmoPreviewAttack = SlashAttackType.Attack1;
@@ -163,13 +176,11 @@ public class PlayerSlashVFX : MonoBehaviour
   [Range(0.05f, 1.0f)]
   [SerializeField] private float gameSpeed = 1.0f;
 
-  [Tooltip("Bật phím tắt Slow Motion: [ giảm tốc độ, ] tăng tốc độ, \\ về 1.0x, Giữ G hoặc T để slow-mo")]
+  [Tooltip("Bật phím tắt Slow Motion: [ giảm tốc độ, ] tăng tốc độ")]
   [SerializeField] private bool enableSlowMoHotkeys = true;
-  [SerializeField] private float slowMoHoldScale = 0.15f;
 
   public static float ActiveSlowMoScale { get; set; } = 1.0f;
   public float GameSpeed => gameSpeed;
-  private bool isHoldingSlowMo = false;
 
   private void Awake()
   {
@@ -205,16 +216,28 @@ public class PlayerSlashVFX : MonoBehaviour
 #endif
     }
 
+    if (skillUltConfig.customPrefab == null)
+    {
+      skillUltConfig.customPrefab = Resources.Load<GameObject>("Slash VFX");
+#if UNITY_EDITOR
+      if (skillUltConfig.customPrefab == null)
+      {
+        skillUltConfig.customPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Player/Skill/Slash VFX.prefab");
+      }
+#endif
+    }
+
     ActiveSlowMoScale = gameSpeed;
     if (Application.isPlaying && gameSpeed < 0.99f)
     {
       Time.timeScale = gameSpeed;
+      Time.fixedDeltaTime = 0.02f * gameSpeed;
     }
   }
 
   private void OnValidate()
   {
-    if (Application.isPlaying && !isHoldingSlowMo)
+    if (Application.isPlaying)
     {
       ApplyTimeScale(gameSpeed);
     }
@@ -224,35 +247,17 @@ public class PlayerSlashVFX : MonoBehaviour
   {
     if (!enableSlowMoHotkeys || Keyboard.current == null) return;
 
+    var kb = Keyboard.current;
+
     // Phím [ : Giảm tốc độ (1.0 -> 0.5 -> 0.25 -> 0.1 -> 0.05)
-    if (Keyboard.current.leftBracketKey.wasPressedThisFrame)
+    if (kb.leftBracketKey != null && kb.leftBracketKey.wasPressedThisFrame)
     {
       StepDownTimeScale();
     }
     // Phím ] : Tăng tốc độ (0.05 -> 0.1 -> 0.25 -> 0.5 -> 1.0)
-    else if (Keyboard.current.rightBracketKey.wasPressedThisFrame)
+    else if (kb.rightBracketKey != null && kb.rightBracketKey.wasPressedThisFrame)
     {
       StepUpTimeScale();
-    }
-    // Phím \ : Trả về 1.0x chuẩn
-    else if (Keyboard.current.backslashKey.wasPressedThisFrame)
-    {
-      ApplyTimeScale(1.0f);
-    }
-
-    // Giữ phím G hoặc T: Chạy siêu chậm (0.15x) trong lúc giữ, nhả ra trả về tốc độ trước đó
-    bool isHoldDown = (Keyboard.current.gKey != null && Keyboard.current.gKey.isPressed) ||
-                      (Keyboard.current.tKey != null && Keyboard.current.tKey.isPressed);
-
-    if (isHoldDown && !isHoldingSlowMo)
-    {
-      isHoldingSlowMo = true;
-      Time.timeScale = slowMoHoldScale;
-    }
-    else if (!isHoldDown && isHoldingSlowMo)
-    {
-      isHoldingSlowMo = false;
-      Time.timeScale = ActiveSlowMoScale;
     }
   }
 
@@ -292,7 +297,8 @@ public class PlayerSlashVFX : MonoBehaviour
     gameSpeed = scale;
     ActiveSlowMoScale = scale;
     Time.timeScale = scale;
-    Debug.Log($"<color=yellow>[SlowMotion]</color> ⏱️ Tốc độ Game hiện tại: {scale:F2}x (Bấm [ / ] hoặc kéo Inspector)");
+    Time.fixedDeltaTime = 0.02f * scale;
+    Debug.Log($"<color=yellow>[SlowMotion]</color> ⏱️ Tốc độ Game hiện tại: {scale:F2}x (Phím [ / ])");
   }
 
   /// <summary>
@@ -303,12 +309,14 @@ public class PlayerSlashVFX : MonoBehaviour
     scale = Mathf.Clamp(scale, 0.05f, 2.0f);
     ActiveSlowMoScale = scale;
     Time.timeScale = scale;
+    Time.fixedDeltaTime = 0.02f * scale;
     Debug.Log($"<color=yellow>[SlowMotion]</color> ⏱️ Tốc độ Game hiện tại: {scale:F2}x");
   }
 
   private void OnDisable()
   {
     Time.timeScale = 1.0f;
+    Time.fixedDeltaTime = 0.02f;
     ActiveSlowMoScale = 1.0f;
     gameSpeed = 1.0f;
 #if UNITY_EDITOR
@@ -396,6 +404,15 @@ public class PlayerSlashVFX : MonoBehaviour
     // Áp dụng tỷ lệ scale tương ứng
     Vector3 originalScale = prefabToSpawn.transform.localScale;
     vfxInstance.transform.localScale = Vector3.Scale(originalScale, config.scale);
+
+    // Đồng bộ ParticleSystem scalingMode = Hierarchy cho toàn bộ các ParticleSystem (cả root lẫn con như Slash Distortion, Flying)
+    // để mesh và kích thước hạt của đường chém phụ co giãn chuẩn 100% theo Transform cha
+    ParticleSystem[] allPS = vfxInstance.GetComponentsInChildren<ParticleSystem>(true);
+    foreach (ParticleSystem ps in allPS)
+    {
+      var main = ps.main;
+      main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+    }
 
     float duration = config.lifetime > 0f ? config.lifetime : 0.8f;
 
@@ -490,6 +507,7 @@ public class PlayerSlashVFX : MonoBehaviour
       SlashAttackType.Counter => counterAttackConfig,
       SlashAttackType.SkillE => skillEConfig,
       SlashAttackType.SkillQ => skillQConfig,
+      SlashAttackType.SkillUlt => skillUltConfig,
       _ => attack1Config
     };
   }
@@ -521,6 +539,9 @@ public class PlayerSlashVFX : MonoBehaviour
 
   [ContextMenu("💥 Test Skill Q Slash")]
   public void TestSkillQ() => PlaySlash(SlashAttackType.SkillQ);
+
+  [ContextMenu("⚔️ Test Skill Ult Slash (Colossal)")]
+  public void TestSkillUlt() => PlaySlash(SlashAttackType.SkillUlt);
 
   [ContextMenu("💥 Test Hit Impact VFX")]
   public void TestImpact()
@@ -587,6 +608,7 @@ public class PlayerSlashVFX : MonoBehaviour
   public GameObject DefaultPrefab => defaultSlashVfxPrefab;
   public SlashVfxConfig SkillEConfig => skillEConfig;
   public SlashVfxConfig SkillQConfig => skillQConfig;
+  public SlashVfxConfig SkillUltConfig => skillUltConfig;
 
   private void OnDrawGizmosSelected()
   {

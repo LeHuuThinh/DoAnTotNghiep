@@ -429,7 +429,7 @@ public class PlayerHUD : MonoBehaviour
     if (spiritStarFills == null || spiritStarFills.Length == 0 || playerStats == null) return;
 
     int starCount = spiritStarFills.Length; // Thường là 3 ngôi sao
-    float maxSpirit = playerStats.MaxSpirit > 0f ? playerStats.MaxSpirit : 150f;
+    float maxSpirit = playerStats.MaxSpirit > 0f ? playerStats.MaxSpirit : 200f;
     float currentSpirit = Mathf.Clamp(playerStats.CurrentSpirit, 0f, maxSpirit);
 
     // Mỗi ngôi sao tương ứng với một phân đoạn năng lượng (Ví dụ: 150 / 3 = 50 điểm mỗi sao)

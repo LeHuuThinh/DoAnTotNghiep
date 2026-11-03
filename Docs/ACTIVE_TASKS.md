@@ -122,6 +122,33 @@
     - **Chạy trực tiếp từ Scene Dungeon (Cold Start Play):** Cấu hình `showLoadingScreenOnStart = true` trong [`DungeonManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs). Khi ấn Play ngay trong `DungeonScene`, hệ thống kích hoạt `RunInSceneLoading` với cờ `instant: true` để che màn hình ngay từ Frame 0, khóa input người chơi và hiển thị mẹo/background ngẫu nhiên trong lúc PCG kiến tạo hầm ngục.
     - **Tích hợp Admin Console:** Nút "Regenerate Dungeon" (`~` / `F1`) kích hoạt `LoadingScreenManager.Instance.RunInSceneLoading(...)` chạy trơn tru mượt mà ngay trong scene.
     - **Tùy biến & Xem trước Inspector:** Cung cấp Custom Editor [`LoadingScreenUIEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenUIEditor.cs) với các nút tiện ích: `👁️ Bật Xem Trước (Alpha = 1)`, `🙈 Ẩn Màn Hình (Alpha = 0)`, `🎲 Đổi Ngẫu Nhiên Mẹo & Ảnh Nền`, và thanh trượt `% Tiến Trình` thời gian thực trên Scene & Game view.
+  - [x] **LD-07: Hoạt ảnh Sprite Sheet (Meme / Animated Icon) cạnh % tiến trình:**
+    - **Kiến trúc Sprite Sheet Animation:** Nâng cấp [`LoadingScreenUI.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenUI.cs) hỗ trợ chạy chuỗi frame bằng `Time.unscaledDeltaTime` (đảm bảo 60 FPS mượt mà ngay cả khi scene đang freeze load). Bổ sung cờ `enableSpinnerRotation = false` (tắt xoay 360 độ) và `enableSpriteAnimation = true` (bật hoạt ảnh chuỗi ảnh cắt).
+    - **Tự động hóa 1-Click (192 Frames):** Bổ sung công cụ nạp tự động thông minh trong [`LoadingScreenSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenSetupEditor.cs) với MenuItem `Infinite Labyrinth -> UI -> 3. Nạp Hoạt Ảnh MemeSpriteSheet Vào Loading Canvas (1-Click)` và nút bấm trong Inspector [`LoadingScreenUIEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenUIEditor.cs). Tự động sắp xếp tự nhiên 192 frame (`MemeSpriteSheet_0` -> `_191`), căn chỉnh kích thước (56x56) và thiết lập màu gốc không bị ám vàng.
+  - [x] **LD-08: Tối ưu hóa Time-Slicing Coroutine khử khựng đơ UI trong lúc sinh PCG:**
+    - **Trang trí Props & Gộp Mesh Đa Khung Hình:** Bổ sung `DecorateDungeonRoutine` trong [`DungeonPropDecorator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonPropDecorator.cs) nhường lượt (`yield return null`) sau mỗi căn phòng, giải phóng Main Thread không bị block 250ms khi gộp Mesh tĩnh.
+    - **Sinh Quái Theo Chặng (Staged Enemy Spawning):** Bổ sung `SpawnEnemiesRoutine` trong [`ProceduralEnemySpawner.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/ProceduralEnemySpawner.cs) trải đều việc instantiate quái vật qua từng frame, triệt tiêu spike lag 150ms.
+    - **Đồng Bộ Dựng Hình & NavMesh:** Nâng cấp [`DungeonRenderer.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRenderer.cs) và [`DungeonManager.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs) kết nối chuỗi Coroutines nhịp nhàng, đảm bảo Main Thread duy trì 60 FPS liên tục và hoạt ảnh Meme Sprite chạy trơn tru tuyệt đối từ 0% đến 100%.
+  - [x] **LD-09: Component độc lập `UISpriteSheetAnimator` & Prefabs Meme tái sử dụng (UI & 3D Scene):**
+    - **Component Đa Năng:** Tạo [`UISpriteSheetAnimator.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/UISpriteSheetAnimator.cs) hoạt động cho cả `Image` (UI Canvas) lẫn `SpriteRenderer` (3D World Space), tích hợp `[ExecuteAlways]` cho phép xem hoạt ảnh chạy trực tiếp ngay trong Scene & Game View của Unity Editor mà không cần nhấn Play.
+    - **Inspector Điều Khiển:** Tạo [`UISpriteSheetAnimatorEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/UISpriteSheetAnimatorEditor.cs) với các nút Play/Pause/Stop, thanh trượt Scrubber xem từng frame, và nút nạp 192 frames tự động.
+    - **Tạo Prefabs 1-Click:** Thêm MenuItem `Infinite Labyrinth -> UI -> 4. Tạo Prefab Hoạt Ảnh Meme (UI & Scene 3D) (1-Click)` tạo sẵn 2 prefabs chuẩn: `MemeAnimated_UI.prefab` (kéo vào bất kỳ Canvas nào) và `MemeAnimated_World.prefab` (kéo thẳng vào Scene 3D).
+
+- [x] **UI-04: Toggle Switch chuyển đổi xem trước 3D / 2D trong Inventory (`CharacterPreviewToggleUI.cs`)**
+  - **Kiến trúc Toggle Switch [ 3D | 2D ] (Sliding Handle):**
+    - Tạo controller [`CharacterPreviewToggleUI.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Inventory/CharacterPreviewToggleUI.cs) điều khiển cụm nút chuyển đổi 3D/2D ở góc trên phải `ModelPreview`.
+    - Hiệu ứng trượt mượt mà cho con trỏ `SlidingHandle` (trượt giữa $X = -26.3$ và $X = +28.1$ trong $0.15\text{s}$ bằng hàm `Mathf.SmoothStep` qua unscaled delta time).
+    - Đổi màu nhãn chữ TextMeshPro: Nút đang chọn sáng vàng kim đặc trưng (`#FFE073`), nút không chọn chuyển xám mờ (`#999999`).
+    - Lưu trữ lựa chọn của người chơi qua `PlayerPrefs` ("InfiniteLabyrinth_PreviewMode") để ghi nhớ xuyên suốt các lần mở túi đồ.
+  - **Tối ưu hóa GPU & Hiệu Năng Tuyệt Đối (Zero 3D Camera Overhead khi ở chế độ 2D):**
+    - Khi ở chế độ **2D**: Ẩn `CharacterPreviewBox`, TẮT hoàn toàn `previewCamera` và `previewLight` qua `characterPreviewController.EnablePreview(false)` $\to$ giải phóng 100% chi phí Render của buồng soi 3D! Đồng thời kích hoạt `Character2DBox` chạy hoạt ảnh meme 190 frame (hoặc ảnh Splash Art 2D sau này).
+    - Khi ở chế độ **3D**: Kích hoạt lại `CharacterPreviewBox`, bật camera xem trước 3D và ẩn `Character2DBox`.
+  - **Đồng bộ hóa với `InventoryUIController.cs`:**
+    - Kết nối `previewModeToggle` vào [`InventoryUIController.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Inventory/InventoryUIController.cs), đảm bảo khi người chơi bấm `Tab` mở túi đồ thì hiển thị đúng chế độ đã lưu mà không bị camera 3D chạy ngầm.
+  - **Công cụ Editor Tự Động Hóa 1-Click:**
+    - Tạo [`CharacterPreviewToggleEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/CharacterPreviewToggleEditor.cs) với Custom Inspector và MenuItem: `Infinite Labyrinth -> UI -> 6. Cấu Hình & Kết Nối Toggle 2D-3D Preview (1-Click)`.
+    - Tự động nạp toàn bộ 190 frames từ `2_MemeSpriteSheet.png` vào `UISpriteSheetAnimator` của `Character2DBox`, bật `preserveAspect = true` chống méo hình.
+
 - [x] **D-01: Bộ sinh quái tự động cho hầm ngục theo Biệt Đội / Cụm (`ProceduralEnemySpawner.cs`)**
   - Hệ thống sinh quái theo Biệt Đội (Squad / Pack System) kết hợp định vị không gian (Spatial Clustering):
     - **Tổ hợp Biệt Đội chuẩn RPG:**
@@ -191,6 +218,38 @@
   - **Công Cụ Tự Động Hóa Unity Editor 1-Click & Custom Inspector:**
     + [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs) với MenuItem `Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click)`.
     + Custom Inspector cho `PlayerSlashVFX` với 6 nút Test chém trực quan và Gizmos vẽ trước mặt phẳng chém trong Scene View.
+
+- [x] **SKILL-01: Tuyệt Kỹ Tối Thượng Phím R (Ultimate Colossal Slash & Impact System)**
+  - **Tài Nguyên & Cooldown:** Nâng trần Spirit lên `maxSpirit = 200` (đồng bộ 4 sao trên PlayerHUD, mỗi sao 50 Spirit). Tiêu hao toàn bộ thanh `skillRCost = 200` khi kích hoạt phím R (`Keyboard.current.rKey`), hồi chiêu `skillRCooldown = 12.0s`.
+  - **Bảo Vệ Nhân Vật (Hyper Armor & Invulnerability):** Kích hoạt Hyper Armor và trạng thái Bất tử tạm thời trong suốt chuỗi thi triển, chống việc bị quái thường bắn tên hoặc đánh lắt nhắt làm ngắt chiêu 200 Spirit.
+  - **Chuỗi Tác Động Thời Gian & Hiệu Ứng Điện Ảnh (Time Dilation & Cinematic Juice):**
+    + *Pha 1 (Gồng Tụ Lực $t = 0 \to 1.48\text{s}$):* Bật hào quang kiếm (`swordAuraUltVfx`), chân cắm trụ dồn đà về hông.
+    + *Pha 2 (Đỉnh Điểm Chớp Sáng $t = 1.48\text{s}$):* Đòn đánh chuẩn bị bung ra $\to$ vệt sáng chớp ngang lưỡi kiếm (`SpawnSwordGleamVfx`) + Đơ game (Freeze frame / Hitlag) $0.1\text{s}$ unscaled realtime (`Time.timeScale = 0.02f`) + Giật camera Zoom Punch nén lực.
+    + *Pha 3 (Bung Chém Ngang Cực Đại $t = 1.62\text{s}$):* Kích hoạt Slow-motion $0.95\text{s}$ thực tế (`Time.timeScale = 0.28f`, đồng bộ `Time.fixedDeltaTime`) + vệt kiếm chém ngang khổng lồ (`PlayerSlashVFX.SlashAttackType.SkillUlt`, scale ngang $2.6\text{x}$) + Gigantic Cleave Hitbox quét diện rộng bán kính $5.5\text{m}$, đẩy trước $2.2\text{m}$, cao độ $1.15\text{m}$, góc quạt $240^\circ$ phía trước mặt nhân vật.
+    + *Hitbox Visualizer (Scene View Gizmos):* Vẽ trực quan tâm va chạm, mũi tên định hướng, hình cầu Wireframe, đĩa chém ngang và quạt góc quét bằng Handles/Gizmos trong Scene View (`PlayerCombat.cs`) kèm nhãn thông số thời gian thực để căn chỉnh khớp 100% với VFX.
+    + *Chỉ số Uy Lực:* Sát thương cơ bản $140$ (+ $2.5\text{x}$ bonus trang bị/tiềm năng), Sát thương Poise $180$ (lập tức đánh vỡ thế mọi quái thường và làm chao đảo Boss), Lực đẩy Knockback $3.5\text{m}$ thổi bay kẻ địch, đồng thời phát sinh Hit VFX và Impact VFX tại từng điểm tiếp xúc va chạm.
+    + *Pha 4 (Thu Chiêu $t = 2.55\text{s}$):* Tắt hào quang kiếm, khôi phục tốc độ chuẩn theo `ActiveSlowMoScale`, gỡ bất tử/hyper armor và mở khóa di chuyển tự do.
+  - **Cấu hình Animation Events & 1-Click Test:** Nướng 5 Animation Events chuẩn xác vào [`Skill Ult.anim`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Characters/Player/Animation/Skill%20Ult.anim); bổ sung nút test `[ ⚔️ Test Skill Ult Slash (Chém Ngang Khổng Lồ) ]` trong [`PlayerSlashVfxSetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/PlayerSlashVfxSetupEditor.cs).
+  - **Đồng Bộ Hệ Thống Slow Motion & Hotkeys:**
+    + Khắc phục triệt để hiện tượng lệch `Time.timeScale`: Thay thế toàn bộ lệnh gán cứng `Time.timeScale = 1.0f` ở cuối chiêu/thoát kẹt/hitlag bằng `ActiveSlowMoScale` và đồng bộ `Time.fixedDeltaTime = 0.02f * scale`.
+    + Đa dạng hóa phím tắt điều chỉnh thời gian (chống kẹt bộ gõ tiếng Việt Telex Unikey/EVKey): Phím `T` chạm nhả để luân chuyển vòng lặp (`1.0x -> 0.5x -> 0.25x -> 0.1x -> 1.0x`); `[` hoặc `-` để giảm tốc độ; `]` hoặc `=` để tăng tốc độ; `\` hoặc `0` hoặc `Backspace` để reset 1.0x; giữ `G` để slow-mo tức thì 0.15x. Hiển thị tốc độ chính xác 2 chữ số thập phân trên HUD (`PlayerBotAI.cs`).
+
+- [x] **UI-SKILL-01: Hệ Thống Giao Diện Kỹ Năng & Hồi Chiêu (SkillIconUI Cooldown & Spirit Feedback)**
+  - **Cấu trúc phân cấp UI:** Tích hợp trực tiếp cụm `SkillIconUI` trong Canvas gồm 3 ô kỹ năng `SkillE` (size 100x100), `SkillQ` (size 100x100), `SkillR` (size 150x150). Mỗi ô gồm 4 thành phần: `Icon` (ảnh chiêu), `Corner` (hoa văn viền góc), `CDFill` (ảnh Type = Filled đếm ngược), `KeyIcon` (badge chữ E/Q/R).
+  - **Ma trận trạng thái hiển thị 2 tầng (Dual-State Feedback Matrix):**
+    + *Đủ Spirit & Không CD (Sẵn sàng thi triển):* `Icon` Alpha = 1.0 (sáng rực rỡ), `Corner` Active (hiện viền vàng), `CDFill` = 0 (ẩn).
+    + *Đủ Spirit & Đang CD:* `Icon` Alpha = 0.1 (tối/mờ), `Corner` Active (vẫn hiện vì đủ Spirit), `CDFill` chạy đếm ngược ($1.0 \to 0.0$).
+    + *Thiếu Spirit & Không CD:* `Icon` Alpha = 0.1 (tối/mờ), `Corner` Inactive (tắt viền báo thiếu tài nguyên), `CDFill` = 0 (ẩn).
+    + *Thiếu Spirit & Đang CD:* `Icon` Alpha = 0.1 (tối/mờ), `Corner` Inactive (tắt viền), `CDFill` chạy đếm ngược ($1.0 \to 0.0$).
+  - **Chỉ số cấu hình động:** Đọc trực tiếp từ Inspector: E Cost 60 (CD 6s), Q Cost 90 (CD 10s), R Cost 175 (CD 20s). Hỗ trợ script quản lý tự động [`SkillIconUI.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/SkillIconUI.cs) và Editor 1-Click Auto Setup [`SkillIconUISetupEditor.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/SkillIconUISetupEditor.cs).
+
+- [x] **COMBAT-HITLAG-01: Hệ Thống Hitlag Va Chạm Trúng Đích Cho Bộ 3 Kỹ Năng (E, Q, R)**
+  - **Khảo sát hiện trạng:** Cả 3 skill trước đây hoàn toàn chưa có Hitlag lúc chạm mục tiêu (Skill R chỉ có đơ 0.1s lúc tụ lực gồng kiếm, lúc chém trúng quái không có khựng).
+  - **Tích hợp Hitlag chuẩn Game Hành Động (~0.2s):**
+    + *Skill E (Sóng kiếm chém xa - [`ProjectileSlash.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/ProjectileSlash.cs)):* Bổ sung `hitlagDuration = 0.18s` khi đạn sóng kiếm cắt trúng quái vật, tạo độ đanh xé toạc mục tiêu trước khi nổ bùm.
+    + *Skill Q (Đập đất nổ AOE - [`AoeSpell.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/AoeSpell.cs)):* Bổ sung `hitlagDuration = 0.20s` khi vụ nổ trúng ít nhất 1 quái vật, tạo cảm giác chấn động ngàn cân lúc hất văng quái lên không trung.
+    + *Skill R (Tuyệt kỹ Ult Càn Quét - [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs)):* Bổ sung `ultImpactHitlag = 0.22s` ngay khi lưỡi kiếm khổng lồ quét trúng nhóm quái vật trong `ExecuteUltGiganticHitbox()`. Phối hợp với Slow-motion $0.25\text{x}$ tạo độ khựng đanh cực mạnh, giật nén lực trước khi quái vật vỡ thế và bay tung tóe.
+    + Toàn bộ Hitlag đều kích hoạt thông qua [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs), tự động khôi phục đúng theo `ActiveSlowMoScale` và đồng bộ `Time.fixedDeltaTime = 0.02f * scale`.
 
 - [ ] **D-02: Cơ chế Boss Arena tại Boss Room** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
   - [x] **D02-1: Sinh Phòng Boss Khổng Lồ (x3-x5), Đại Lộ Hành Lang Dài 40m Uy Nghi, 4 Cột Trụ & 3 Tầng Ánh Sáng (PCG Geometry & Lighting):**

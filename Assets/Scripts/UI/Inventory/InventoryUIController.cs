@@ -35,6 +35,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Controller hiển thị 3D Character Preview")]
     [SerializeField] private CharacterPreviewController characterPreview;
 
+    [Tooltip("Toggle chuyển đổi xem trước 3D / 2D")]
+    [SerializeField] private CharacterPreviewToggleUI previewModeToggle;
+
     [Tooltip("Ô trang bị Vũ khí")]
     [SerializeField] private EquipmentSlotUI weaponSlot;
 
@@ -106,6 +109,11 @@ namespace InfiniteLabyrinth.UI
       if (rootCanvasGroup == null)
       {
         rootCanvasGroup = GetComponent<CanvasGroup>();
+      }
+
+      if (previewModeToggle == null)
+      {
+        previewModeToggle = GetComponentInChildren<CharacterPreviewToggleUI>(true);
       }
 
       AutoFindPanels();
@@ -345,8 +353,12 @@ namespace InfiniteLabyrinth.UI
         cachedPlayerController.LockMovement();
       }
 
-      // 4. Kích hoạt camera xem trước 3D
-      if (characterPreview != null)
+      // 4. Kích hoạt camera xem trước (áp dụng theo chế độ 3D hoặc 2D)
+      if (previewModeToggle != null)
+      {
+        previewModeToggle.ApplyCurrentModeToPreview();
+      }
+      else if (characterPreview != null)
       {
         characterPreview.EnablePreview(true);
       }

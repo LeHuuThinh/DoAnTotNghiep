@@ -8,6 +8,7 @@ public class WeaponHitbox : MonoBehaviour
   [Header("Hitbox Settings")]
   [Tooltip("Chỉ gây sát thương lên các Layer được chọn (ví dụ: Enemy, Breakable)")]
   [SerializeField] private LayerMask targetLayers;
+  public LayerMask TargetLayers => targetLayers;
 
   [Header("Hit Impact VFX Settings")]
   [Tooltip("Hiệu ứng va chạm (Impact burst) phát sinh ngay tại điểm tiếp xúc khi chém trúng mục tiêu có HP (Layer Enemy / Damageable)")]
