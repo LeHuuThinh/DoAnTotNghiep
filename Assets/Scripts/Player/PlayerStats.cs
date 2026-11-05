@@ -86,11 +86,78 @@ public class PlayerStats : MonoBehaviour
 
   private float baseMaxStamina = -1f;
 
+  private static float? s_PersistentSpirit = null;
+
+  public static void ResetPersistentSpirit()
+  {
+    s_PersistentSpirit = 0f;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.ResetPlayerSpirit();
+    }
+  }
+
+  public static void SetPersistentSpirit(float spirit)
+  {
+    s_PersistentSpirit = spirit;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerSpirit(spirit);
+    }
+  }
+
+  /// <summary>
+  /// Hồi đầy 100% Thần lực (Spirit) - Dành cho Chuông Làng hoặc Hồi sinh
+  /// </summary>
+  public void RefillSpiritToFull()
+  {
+    currentSpirit = maxSpirit;
+    s_PersistentSpirit = maxSpirit;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerSpirit(maxSpirit);
+    }
+    onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
+  }
+
   private void Awake()
   {
     baseMaxStamina = maxStamina;
     currentStamina = maxStamina;
-    currentSpirit = Mathf.Clamp(currentSpirit, 0f, maxSpirit);
+
+    // Khôi phục Năng lượng Kỹ năng (Spirit) xuyên Scene
+    if (s_PersistentSpirit.HasValue)
+    {
+      currentSpirit = Mathf.Clamp(s_PersistentSpirit.Value, 0f, maxSpirit);
+    }
+    else if (GameManager.HasInstance && GameManager.Instance.HasSavedSpirit)
+    {
+      currentSpirit = Mathf.Clamp(GameManager.Instance.SavedSpirit, 0f, maxSpirit);
+      s_PersistentSpirit = currentSpirit;
+    }
+    else
+    {
+      currentSpirit = Mathf.Clamp(currentSpirit, 0f, maxSpirit);
+      s_PersistentSpirit = currentSpirit;
+    }
+  }
+
+  private void OnDisable()
+  {
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+    {
+      GameManager.Instance.SavePlayerSpirit(currentSpirit);
+    }
+  }
+
+  private void OnDestroy()
+  {
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+    {
+      GameManager.Instance.SavePlayerSpirit(currentSpirit);
+    }
   }
 
   /// <summary>
@@ -208,6 +275,8 @@ public class PlayerStats : MonoBehaviour
     }
 
     currentSpirit = Mathf.Max(0f, currentSpirit - amount);
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance) GameManager.Instance.SavePlayerSpirit(currentSpirit);
     onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
     return true;
   }
@@ -216,6 +285,8 @@ public class PlayerStats : MonoBehaviour
   {
     if (amount <= 0f) return;
     currentSpirit = Mathf.Min(maxSpirit, currentSpirit + amount);
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance) GameManager.Instance.SavePlayerSpirit(currentSpirit);
     onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
   }
 }

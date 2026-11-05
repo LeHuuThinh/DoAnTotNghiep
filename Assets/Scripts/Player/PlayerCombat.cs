@@ -160,6 +160,25 @@ public class PlayerCombat : MonoBehaviour
   private Coroutine ultTimeDilationCoroutine;
   private bool isUltSlowMoActive = false;
 
+  /// <summary>
+  /// Trạng thái toàn cục báo hiệu chiêu Ult đang trong pha Slow Motion để các hệ thống Hitlag không đè mất nhịp làm chậm
+  /// </summary>
+  public static bool IsAnyUltSlowMoActive { get; private set; }
+  public static float ActiveUltSlowMoScale { get; private set; } = 0.28f;
+
+  /// <summary>
+  /// Lấy tốc độ thời gian chuẩn sau khi kết thúc một hiệu ứng Hitlag.
+  /// Nếu người chơi đang trong pha Ult chém ngang, trả về tốc độ slow-mo của Ult thay vì ép về 1.0f!
+  /// </summary>
+  public static float GetActiveCombatTimeScale()
+  {
+    if (IsAnyUltSlowMoActive)
+    {
+      return ActiveUltSlowMoScale;
+    }
+    return PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
+  }
+
   // Biến Charge Attack
   private float holdTimer = 0f;
   private bool isHoldingMouse = false;
@@ -215,6 +234,19 @@ public class PlayerCombat : MonoBehaviour
   private void OnDisable()
   {
     SetCounterAttackActive(false);
+    if (isUltSlowMoActive)
+    {
+      if (ultTimeDilationCoroutine != null)
+      {
+        StopCoroutine(ultTimeDilationCoroutine);
+        ultTimeDilationCoroutine = null;
+      }
+      isUltSlowMoActive = false;
+      IsAnyUltSlowMoActive = false;
+      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
+    }
   }
 
   private void OnDestroy()
@@ -973,13 +1005,34 @@ public class PlayerCombat : MonoBehaviour
   private IEnumerator UltSlashSlowMoRoutine()
   {
     isUltSlowMoActive = true;
-    Time.timeScale = ultSlowMoTimeScale; // 0.28x
-    Time.fixedDeltaTime = 0.02f * Time.timeScale;
-    yield return new WaitForSecondsRealtime(ultSlowMoDuration); // Thời gian làm chậm thực tế
+    IsAnyUltSlowMoActive = true;
+    ActiveUltSlowMoScale = ultSlowMoTimeScale;
+
+    // Nếu hiện tại không có hitlag nào đang khựng game (ở 0.05f) thì áp dụng ngay tốc độ slow-mo
+    if (!PlayerFeedback.IsAnyHitlagActive && !WeaponHitbox.IsHitlagActive)
+    {
+      Time.timeScale = ultSlowMoTimeScale; // 0.28x
+      Time.fixedDeltaTime = 0.02f * Time.timeScale;
+    }
+
+    // Đếm thời lượng slow-mo bằng unscaled time, nhưng TẠM DỪNG đếm khi hitlag đang diễn ra
+    // để sau khi khựng đơ 0.22s xong, người chơi vẫn được chiêm ngưỡng trọn vẹn slow-mo!
+    float elapsed = 0f;
+    while (elapsed < ultSlowMoDuration)
+    {
+      if (!PlayerFeedback.IsAnyHitlagActive && !WeaponHitbox.IsHitlagActive)
+      {
+        elapsed += Time.unscaledDeltaTime;
+      }
+      yield return null;
+    }
+
+    isUltSlowMoActive = false;
+    IsAnyUltSlowMoActive = false;
+
     float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1.0f;
     Time.timeScale = restoreScale;
     Time.fixedDeltaTime = 0.02f * restoreScale;
-    isUltSlowMoActive = false;
     ultTimeDilationCoroutine = null;
   }
 

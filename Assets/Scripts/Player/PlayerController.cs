@@ -445,6 +445,35 @@ public class PlayerController : MonoBehaviour
             finalVelocity.y = verticalVelocity;
         }
         characterController.Move(finalVelocity * Time.deltaTime);
+
+        // =====================================================================
+        // STEP-DOWN GROUND SNAPPING (Khắc phục triệt để lỗi khựng khi đi xuống bậc thang/thềm)
+        // =====================================================================
+        // Khi vừa bước qua mép bậc thang/bậc thềm đi xuống:
+        // - Frame trước nhân vật đang tiếp đất vững (wasGrounded)
+        // - Nhân vật không đang trong giai đoạn lấy đà nhảy (isPreparingJump) và không đang bay lên (isJumping)
+        // - Sau cú di chuyển ngang (Move), chân bị lơ lửng ngoài mép bậc thang (!characterController.isGrounded)
+        // => Lập tức dò tìm bậc thang bên dưới (tối đa stepOffset + 0.35m) và kéo dính sát chân xuống bậc ngay trong frame này!
+        if (wasGrounded && !isPreparingJump && !isJumping && verticalVelocity <= 0.1f && !characterController.isGrounded)
+        {
+            float maxStepDown = characterController.stepOffset + 0.35f;
+            Vector3 rayStart = transform.position + Vector3.up * 0.2f;
+            LayerMask snapMask = ~((1 << gameObject.layer) | (1 << 2)); // Bỏ qua Player & Ignore Raycast
+
+            float castRadius = characterController.radius * 0.75f;
+            if (Physics.SphereCast(rayStart, castRadius, Vector3.down, out RaycastHit stepHit, maxStepDown + 0.2f, snapMask, QueryTriggerInteraction.Ignore))
+            {
+                if (Vector3.Angle(stepHit.normal, Vector3.up) <= characterController.slopeLimit)
+                {
+                    float snapDist = stepHit.distance - 0.2f;
+                    if (snapDist > 0.005f)
+                    {
+                        characterController.Move(Vector3.down * snapDist);
+                        wasGrounded = characterController.isGrounded;
+                    }
+                }
+            }
+        }
     }
 
     [Header("=== DEBUG & DIAGNOSTICS ===")]

@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2269750618251915867}
+  - component: {fileID: 2800342097552681852}
+  - component: {fileID: 6913639164991437415}
   m_Layer: 0
   m_Name: Portal
   m_TagString: Untagged
@@ -32,6 +34,49 @@ Transform:
   - {fileID: 3851072282640637705}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2800342097552681852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3510524232103096406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3d5a66aabfd0bb4eb8c7cb55abd91d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  targetSceneName: LandScene
+  targetFloor: 1
+  interactionPrompt: Enter the Portal
+  targetName: DungeonPortal
+  requiresHold: 1
+  requiredHoldTime: 2
+  interactionRadius: 3.5
+  teleportSound: {fileID: 0}
+  teleportVfxPrefab: {fileID: 0}
+  openVictoryChoiceUI: 0
+--- !u!65 &6913639164991437415
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3510524232103096406}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.694157, y: 7.25631, z: 5.381193}
+  m_Center: {x: 0, y: 3.3641665, z: -1.0873928}
 --- !u!1 &3593854691471674078
 GameObject:
   m_ObjectHideFlags: 0
@@ -5016,8 +5061,6 @@ GameObject:
   - component: {fileID: 3808530716363313848}
   - component: {fileID: 3115327662438711801}
   - component: {fileID: 3915100489100903750}
-  - component: {fileID: 3273918478657094559}
-  - component: {fileID: 4098856531247470947}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -5121,46 +5164,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -2772984192921939391, guid: bd1b98edaed629949aafba8cae339988, type: 3}
---- !u!114 &3273918478657094559
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7926673155511163882}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3d5a66aabfd0bb4eb8c7cb55abd91d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  targetSceneName: LandScene
-  targetFloor: 1
-  interactionPrompt: Enter the Portal
-  targetName: DungeonPortal
-  requiresHold: 1
-  requiredHoldTime: 2
-  interactionRadius: 3.5
-  teleportSound: {fileID: 0}
-  teleportVfxPrefab: {fileID: 0}
-  openVictoryChoiceUI: 1
---- !u!65 &4098856531247470947
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7926673155511163882}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.005219689, y: 0.0052390797, z: 0.009980472}
-  m_Center: {x: 0.0015405513, y: 3.597789e-10, z: -2.9802322e-10}

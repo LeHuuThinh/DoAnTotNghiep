@@ -33,10 +33,93 @@ public class Health : MonoBehaviour, IDamageable
 
   private float baseMaxHealth = -1f;
 
+  private static float? s_PersistentPlayerHealth = null;
+
+  public static void ResetPersistentPlayerHealth()
+  {
+    s_PersistentPlayerHealth = null;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.ClearSavedHealth();
+    }
+  }
+
+  public static void SetPersistentPlayerHealth(float hp)
+  {
+    s_PersistentPlayerHealth = hp;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerHealth(hp);
+    }
+  }
+
+  /// <summary>
+  /// Hồi đầy 100% máu (Dành cho Chuông Làng hoặc Hồi sinh sau tử trận)
+  /// </summary>
+  public void RefillToFull()
+  {
+    isDead = false;
+    currentHealth = maxHealth;
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = maxHealth;
+      if (GameManager.HasInstance)
+      {
+        GameManager.Instance.SavePlayerHealth(maxHealth);
+      }
+    }
+    onHealthChanged?.Invoke(currentHealth, maxHealth);
+  }
+
   private void Awake()
   {
     baseMaxHealth = maxHealth;
     currentHealth = maxHealth;
+
+    // Item 1: Bảo lưu lượng máu còn lại của Player xuyên TẤT CẢ các Scene (Dù xuống tầng hay về Làng)
+    if (CompareTag("Player"))
+    {
+      if (s_PersistentPlayerHealth.HasValue)
+      {
+        currentHealth = Mathf.Clamp(s_PersistentPlayerHealth.Value, 1f, maxHealth);
+        Debug.Log($"<color=cyan>[Health]</color> 🩸 Đã khôi phục Máu từ scene trước (static cache): {currentHealth:F0}/{maxHealth:F0}");
+      }
+      else if (GameManager.HasInstance && GameManager.Instance.HasSavedHealth)
+      {
+        currentHealth = Mathf.Clamp(GameManager.Instance.SavedHealth, 1f, maxHealth);
+        s_PersistentPlayerHealth = currentHealth;
+        Debug.Log($"<color=cyan>[Health]</color> 🩸 Đã khôi phục Máu từ scene trước (GameManager): {currentHealth:F0}/{maxHealth:F0}");
+      }
+      else
+      {
+        currentHealth = maxHealth;
+        s_PersistentPlayerHealth = currentHealth;
+      }
+    }
+  }
+
+  private void OnDisable()
+  {
+    if (CompareTag("Player") && !isDead)
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+      {
+        GameManager.Instance.SavePlayerHealth(currentHealth);
+      }
+    }
+  }
+
+  private void OnDestroy()
+  {
+    if (CompareTag("Player") && !isDead)
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+      {
+        GameManager.Instance.SavePlayerHealth(currentHealth);
+      }
+    }
   }
 
   /// <summary>
@@ -92,6 +175,11 @@ public class Health : MonoBehaviour, IDamageable
 
     // 3. Nếu không parry thì trừ máu bình thường
     currentHealth = Mathf.Max(0f, currentHealth - actualDamage);
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance) GameManager.Instance.SavePlayerHealth(currentHealth);
+    }
     Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
 
     // Kích hoạt sự kiện nhận đòn
@@ -110,6 +198,11 @@ public class Health : MonoBehaviour, IDamageable
     if (isDead || amount <= 0f) return;
 
     currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance) GameManager.Instance.SavePlayerHealth(currentHealth);
+    }
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 

@@ -59,6 +59,7 @@ public class PlayerFeedback : MonoBehaviour
   private Coroutine staggerCoroutine;
   private Coroutine knockbackCoroutine;
   private Coroutine hitStopCoroutine;
+  public static bool IsAnyHitlagActive { get; private set; }
 
   private static readonly int GetHitHash = Animator.StringToHash("GetHit");
   private static readonly int DieHash = Animator.StringToHash("Die");
@@ -124,10 +125,11 @@ public class PlayerFeedback : MonoBehaviour
 
     if (hitStopCoroutine != null)
     {
-      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+      float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
       Time.timeScale = restoreScale;
       Time.fixedDeltaTime = 0.02f * restoreScale;
       hitStopCoroutine = null;
+      IsAnyHitlagActive = false;
     }
   }
 
@@ -439,22 +441,25 @@ public class PlayerFeedback : MonoBehaviour
     if (hitStopCoroutine != null)
     {
       StopCoroutine(hitStopCoroutine);
-      float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+      float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
       Time.timeScale = restoreScale;
       Time.fixedDeltaTime = 0.02f * restoreScale;
+      IsAnyHitlagActive = false;
     }
     hitStopCoroutine = StartCoroutine(HitStopRoutine(duration, scale));
   }
 
   private IEnumerator HitStopRoutine(float duration, float scale)
   {
+    IsAnyHitlagActive = true;
     Time.timeScale = scale;
     Time.fixedDeltaTime = 0.02f * scale;
     yield return new WaitForSecondsRealtime(duration);
-    float restoreScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+    float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
     Time.timeScale = restoreScale;
     Time.fixedDeltaTime = 0.02f * restoreScale;
     hitStopCoroutine = null;
+    IsAnyHitlagActive = false;
   }
 
   private IEnumerator StaggerRoutine()

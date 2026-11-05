@@ -41,6 +41,7 @@ public class WeaponHitbox : MonoBehaviour
   private static Coroutine activeHitlagCoroutine;
   private static WeaponHitbox activeRunner;
   private static float activeHitlagEndTime;
+  public static bool IsHitlagActive => activeHitlagCoroutine != null;
 
   // Event thông báo chém trúng mục tiêu (dùng cho tích nộ/spirit, lifesteal...)
   public event System.Action<IDamageable, float> OnHitTarget;
@@ -153,7 +154,9 @@ public class WeaponHitbox : MonoBehaviour
     if (activeHitlagCoroutine != null && activeRunner != null)
     {
       activeRunner.StopCoroutine(activeHitlagCoroutine);
-      Time.timeScale = 1f;
+      float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
     }
 
     activeRunner = this;
@@ -164,8 +167,11 @@ public class WeaponHitbox : MonoBehaviour
   private IEnumerator HitlagRoutine(float duration)
   {
     Time.timeScale = hitlagTimeScale; // Làm chậm thế giới xuống còn 5% để tạo độ khựng đanh
+    Time.fixedDeltaTime = 0.02f * Time.timeScale;
     yield return new WaitForSecondsRealtime(duration);
-    Time.timeScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;    // Trả lại tốc độ slow-mo hiện tại
+    float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
+    Time.timeScale = restoreScale;    // Trả lại tốc độ slow-mo hiện tại hoặc tốc độ gốc
+    Time.fixedDeltaTime = 0.02f * restoreScale;
     activeHitlagCoroutine = null;
     activeRunner = null;
   }
@@ -236,7 +242,9 @@ public class WeaponHitbox : MonoBehaviour
     // Failsafe: Đảm bảo thời gian không bao giờ bị kẹt lại nếu kiếm bị tắt đột ngột
     if (activeRunner == this && activeHitlagCoroutine != null)
     {
-      Time.timeScale = PlayerSlashVFX.ActiveSlowMoScale > 0f ? PlayerSlashVFX.ActiveSlowMoScale : 1f;
+      float restoreScale = PlayerCombat.GetActiveCombatTimeScale();
+      Time.timeScale = restoreScale;
+      Time.fixedDeltaTime = 0.02f * restoreScale;
       activeHitlagCoroutine = null;
       activeRunner = null;
     }

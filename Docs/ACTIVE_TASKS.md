@@ -74,6 +74,33 @@
   - Bổ sung cơ chế **Hysteresis Buffer (đệm 6m)** chống nhấp nháy đèn ở ranh giới.
   - Mở rộng thanh trượt `Light Culling Distance` (10m - 150m, mặc định 80m) và đồng bộ `Camera Far Clip Plane` (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
 
+
+- [x] **OPT-02: Tối ưu hóa hiệu năng LandScene (Ngôi Làng Haven Village Hub - Nâng FPS từ ~65 lên 110+ FPS)**
+  - **Tối ưu hóa Địa hình (Terrain Optimization):**
+    + Kích hoạt GPU Instancing cho bề mặt địa hình (drawInstanced = true), giảm mạnh CPU draw calls.
+    + Cắt giảm cự ly render cây cối từ 5.000m xuống 	reeDistance = 200m và billboard xuống 120m (khớp hoàn hảo tầm nhìn camera 150m, không render cây thừa ngoài màn hình).
+    + Nâng heightmapPixelError = 10 tối ưu hóa lưới đa giác low-poly.
+    + Vô hiệu hóa shadowCastingMode = Off cho Terrain để loại bỏ shadow caster pass địa hình.
+  - **Mặt Nước (Water) & Post Processing (Volumes):**
+    + Tắt Cast Shadows = Off trên tấm phẳng mặt nước Water (loại bỏ bóng phẳng xuống đáy sông).
+    + Dọn dẹp GameObject Bloom trùng lặp trong Scene, chỉ giữ duy nhất Global Volume.
+    + Tắt highQualityFiltering = 0 trên URP Bloom trong SampleSceneProfile.asset (tiết kiệm GPU bicubic pass).
+  - **Bộ Công Cụ Tự Động Hóa 1-Click (LandSceneOptimizerEditor.cs):**
+    + MenuItem: Infinite Labyrinth -> Optimization -> 1. Tối Ưu Hóa LandScene (1-Click).
+    + **Gộp Mesh Sỏi Đá (Gravel Combine):** Gộp 94 viên sỏi rời rạc thành 1 Mesh 32-bit duy nhất (Gravel_Combined_Mesh.asset), cắt giảm 93 Draw Calls và 93 GameObjects. Hỗ trợ nút Hoàn tác an toàn Revert Gravel.
+    + **Đánh dấu Static & Lọc Bóng Đổ Làng (Village Static Batching):** Đánh dấu BatchingStatic | OccludeeStatic | OccluderStatic cho toàn bộ 214 đối tượng làng; lọc tắt bóng đổ (Cast Shadows = Off) cho các đạo cụ nhỏ (sỏi, bụi hoa, hàng rào, chum vại, thùng nhỏ, cọc gỗ) và chỉ giữ bóng đổ cho công trình lớn (nhà, cối xay gió, lò rèn, tháp ma thuật).
+    + **Tối ưu hóa Toàn Diện 61 Dân Làng NPC (NpcPatrol.cs & LandSceneOptimizerEditor.cs):**
+      * **Tối ưu hóa Hoạt ảnh & Xương:** Tự động thiết lập nimator.cullingMode = CullUpdateTransforms ngắt 100% tính toán ma trận xoay xương khi NPC khuất tầm nhìn camera.
+      * **Hạ cấp Né tránh:** Chuyển gent.obstacleAvoidanceType = LowQualityObstacleAvoidance, tiết kiệm 70% CPU tính toán RVO né tránh va chạm cho dân làng đi dạo.
+      * **Hệ thống Ngủ đông Theo Cự Ly (Distance LOD Hibernation):** NPC trong bán kính 40m hoạt động bình thường; ngoài 48m tự động dừng NavMeshAgent (isStopped = true), ngắt né tránh, chuyển nimator.cullingMode = CullCompletely và bỏ qua Update() (0% CPU khi ở xa). Tích hợp Time-slicing (0.35s) quét xen kẽ triệt tiêu giật lag.
+      * **Bộ Nhớ Đệm Tĩnh Waypoints:** Chia sẻ mảng sharedWaypoints dùng chung, loại bỏ 61 lần quét GameObject.Find và cấp phát bộ nhớ mảng dư thừa.
+      * **Công cụ Cân Bằng Dân Số:** Nút bấm Cân Bằng Dân Số NPC (giữ 24 NPC đại diện, ẩn 37 NPC dư) và nút Bật Lại Toàn Bộ 61 NPC trực tiếp trên Editor Window.
+  - **Tích Hợp Tự Phục Hồi Admin Console (Admin Cheat Console Self-Healing):**
+    + Khắc phục sự cố kéo AdminCheatCanvas.prefab vào LandScene không mở được bằng phím ~ / F1: Tự động gọi AdminCheatManager.EnsureInstance() trong Awake() và Start() của AdminCheatUI.cs, khởi tạo tức thì GameObject AdminCheatManager với DontDestroyOnLoad.
+    + Bổ sung lắng nghe phím nóng dự phòng trực tiếp trên AdminCheatUI.cs cho cả ~ (Backquote), F1 và F2 (khắc phục triệt để lỗi bộ gõ tiếng Việt Unikey/EVKey nuốt phím ~).
+    + Bổ sung cơ chế chống bấm đúp cùng frame (lastToggleFrame) trong AdminCheatManager.ToggleMenu().
+    + Thiết lập tọa độ dịch chuyển (Teleport Matrix) dành riêng cho LandScene: Chuông làng (Village Bell), Cổng dịch chuyển (Portal), Tiệm rèn (Smithy), Cửa hàng vũ khí (Weapons Shop), Cối xay gió (Windmill Lookout).
+    + Cập nhật Mini Debug Overlay: Hiển thị trạng thái Location: Haven Village Hub (Peaceful) khi ở trong làng.
 - [x] **UI-01: Cập nhật `PlayerHUD` hiển thị đầy đủ 3 thanh tài nguyên Souls-like**
   - **Thanh Máu (Health Bar):** MainFill màu đỏ tươi kèm **Ghost Bar** màu vàng nhạt tụt đuổi từ từ sau thời gian trễ khi dính đòn.
   - **Thanh Thể lực (Stamina Bar):** Màu vàng/cam, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
@@ -251,6 +278,29 @@
     + *Skill R (Tuyệt kỹ Ult Càn Quét - [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs)):* Bổ sung `ultImpactHitlag = 0.22s` ngay khi lưỡi kiếm khổng lồ quét trúng nhóm quái vật trong `ExecuteUltGiganticHitbox()`. Phối hợp với Slow-motion $0.25\text{x}$ tạo độ khựng đanh cực mạnh, giật nén lực trước khi quái vật vỡ thế và bay tung tóe.
     + Toàn bộ Hitlag đều kích hoạt thông qua [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs), tự động khôi phục đúng theo `ActiveSlowMoScale` và đồng bộ `Time.fixedDeltaTime = 0.02f * scale`.
 
+- [x] **COMBAT-SLOWMO-01: Bảo Vệ Nhịp Slow-Motion Skill Ult Không Bị Đè Bởi Hitlag / Đòn Kết Liễu Quái**
+  - **Nguyên nhân gốc rễ:**
+    + Khi Skill R chém trúng và kết liễu quái vật, hiệu ứng khựng đòn Hitlag (0.22s / 0.18s ở `timeScale = 0.05f`) kích hoạt.
+    + Trong cả [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs) và [`WeaponHitbox.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/WeaponHitbox.cs), sau khi hết 0.22s khựng, code cũ khôi phục cứng về `PlayerSlashVFX.ActiveSlowMoScale` (mặc định là 1.0f).
+    + Do đó, nhát chém Ult đang trong pha Slow-mo $0.28\text{x}$ ngay lập tức bị cưỡng bức tăng tốc về $1.0\text{x}$ bình thường, làm cắt phăng toàn bộ đoạn Slow-mo tráng lệ còn lại của nhát chém.
+  - **Khắc phục triệt để:**
+    + *Cơ chế Nhận Diện Trạng Thái Toàn Cục:* Bổ sung `PlayerCombat.IsAnyUltSlowMoActive` và `PlayerCombat.GetActiveCombatTimeScale()`. Nếu đang trong pha Ult chém ngang, mọi Coroutine Hitlag kết thúc đều khôi phục về đúng tốc độ Slow-mo của Ult (`ultSlowMoTimeScale = 0.28f`) thay vì ép về $1.0\text{x}$.
+    + *Đóng Băng Bộ Đếm Slow-Mo Khi Khựng:* Trong [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs), bộ đếm thời lượng `ultSlowMoDuration` (0.95s) tạm dừng khi `IsAnyHitlagActive` đang chạy ở `0.05f`. Nhờ vậy, sau khi hết 0.22s đơ game dính đòn, người chơi vẫn được thưởng thức trọn vẹn 100% thời lượng Slow-mo tráng lệ của nhát chém quét qua xác quái vật bay tung tóe.
+    + *Đồng bộ toàn diện:* Cập nhật cả [`PlayerCombat.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerCombat.cs), [`PlayerFeedback.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerFeedback.cs), và [`WeaponHitbox.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/WeaponHitbox.cs) đồng nhất.
+
+- [x] **COMBAT-02: Nâng Cấp Khóa Mục Tiêu Chuẩn Souls-like & Bộ Lọc Cao Độ Tầng 2 (`TargetLockSystem.cs`)**
+  - **Bộ Lọc Chênh Lệch Cao Độ Tầng 2 (`maxLockElevationDifference = 4.2m`):**
+    + Triệt tiêu hoàn toàn lỗi camera ngửa $65^\circ$ lên trần nhà khi Player đứng sàn tầng 1 ($Y=0$) chém chết quái rồi tự động lock quái trên gác lửng tầng 2 ($Y=8.0\text{m}$).
+    + Áp dụng đồng bộ cho cả: Bấm khóa lần đầu (`LockClosestTarget`), Tự động đổi mục tiêu khi quái chết (`TrySwitchToNextTarget`), và Chuyển mục tiêu thủ công bằng chuột (`TrySwitchTargetDirection`).
+    + Giữ nguyên khả năng khóa Boss khổng lồ Ice Golem (chân Boss ở sàn tầng 1, $\Delta Y \approx 0$) và giao chiến linh hoạt trên bậc thang dốc.
+    + Bổ sung cơ chế tự ngắt khóa an toàn `breakLockElevationDifference = 6.5m` nếu Player hoặc quái rơi/nhảy sang tầng khác.
+  - **Cơ Chế Chuyển Mục Tiêu Bằng Vẩy Chuột (Mouse Flick Switch - Screen Space):**
+    + Nhận diện vận tốc chuột ngang (`Mouse.current.delta.x`) với cơ chế tích lũy xung lực và suy hao tự nhiên (`flickDecayRate = 120/s`), giúp phân biệt chính xác giữa rê chuột chậm và vẩy chuột dứt khoát (`mouseFlickThreshold = 20`).
+    + Ánh xạ sang tọa độ Viewport (`WorldToViewportPoint`) để xác định chính xác quái vật nào ở bên Trái hay bên Phải màn hình so với mục tiêu hiện tại.
+    + Tích hợp thời gian hồi chiêu bảo vệ `switchCooldown = 0.25s` chống tình trạng nhảy cóc liên tiếp nhiều quái.
+    + Kết nối mượt mà với [`ThirdPersonCamera.cs`](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/ThirdPersonCamera.cs) (thời gian lia mượt `targetSwitchSmoothDuration = 0.35s`).
+    + Hỗ trợ tùy chọn phụ cuộn con lăn chuột (`enableScrollWheelSwitch`) linh hoạt cho người chơi.
+
 - [ ] **D-02: Cơ chế Boss Arena tại Boss Room** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
   - [x] **D02-1: Sinh Phòng Boss Khổng Lồ (x3-x5), Đại Lộ Hành Lang Dài 40m Uy Nghi, 4 Cột Trụ & 3 Tầng Ánh Sáng (PCG Geometry & Lighting):**
     - Cấp phát phân vùng lá BSP lớn chuyên biệt (bossNodeMinSize = 48, bossRoomMinSize = 26, bossRoomMaxSize = 30) tại điểm neo xa nhất so với cửa khởi đầu (bossTargetPoint), neo phòng Boss sát biên Bắc (trên cùng) để chừa trọn vẹn khoảng không phía Nam làm Đại Lộ. Diện tích phòng Boss đạt 676 - 900 tiles (52m - 60m), gấp 3 - 5 lần phòng thường (~200 tiles) với vòm trần đồ sộ cao 24m chuẩn thánh đường Souls-like.
@@ -382,22 +432,56 @@
 
 ## 🚩 GIAI ĐOẠN 2: Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Game Loop & Day System)
 
-- [ ] **GM-01: Quản lý vòng lặp ngày & tầng (`DayManager.cs` / `GameManager.cs`)**
-  - Lưu trữ biến tĩnh `CurrentDay` (bắt đầu từ Day 1) và `CurrentFloor` (Tầng 1).
-  - Sử dụng cơ chế DontDestroyOnLoad để giữ dữ liệu xuyên cảnh.
+- [x] **GM-01: Quản lý vòng lặp ngày & tầng (`GameManager.cs`, `InfoUIController.cs`):**
+  - **Kiến trúc Trình Quản Lý Toàn Cục (`GameManager.cs`):**
+    + Thiết kế Singleton `DontDestroyOnLoad` với `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` tự động khởi chạy và duy trì xuyên cảnh.
+    + Quản lý biến tiến trình `CurrentDay` (bắt đầu từ Day 1) và `CurrentFloor` (Tầng 1).
+    + Các sự kiện Action toàn cục: `OnDayChanged`, `OnFloorChanged`, `OnGameStateChanged`.
+    + Toàn bộ API tiến trình: `AdvanceDay()`, `SetDay()`, `AdvanceFloor()`, `SetFloor()`, `ResetFloorToTown()`, `ResetProgress()`.
+    + Tự động đồng bộ số tầng từ `LoadingScreenManager.Instance.CurrentFloor` khi chuyển cảnh.
+  - **Hệ Thống Hiển Thị Giao Diện Thông Tin Thế Giới (`InfoUIController.cs`):**
+    + **`TopCornerInfo` (HUD Góc Trên Phải):** Tự động đồng bộ `DayCount` ("Day N"), `DungeonFloor` ("Floor X" trong Dungeon hoặc ẩn khi ở Làng), và `CurrentPlace` ("Infinite Labyrinth" / "Haven Village").
+    + **`MidScreenInfo` (Cinematic Area Intro Banner):** Hoạt cảnh phong cách Souls-like mở màn khi vừa đặt chân đến vùng đất mới.
+      * Tự động nhận diện thời điểm hoàn tất nạp scene (`LoadingScreenManager.OnLoadCompleted` hoặc Play Mode direct start).
+      * Fade In 0.85s kết hợp nhẹ hiệu ứng phóng to Cinematic Scale (0.94 -> 1.0) -> Giữ sáng rõ 2.2s -> Fade Out 1.0s.
+      * Nội dung động: `"HAVEN VILLAGE" - Day N — Safe Sanctuary` hoặc `"INFINITE LABYRINTH" - Floor X — The Frostbound Crypt`.
+    + **Tự Động Hóa 1-Click Unity Editor & Runtime Wire:**
+      * Hỗ trợ MenuItem `Infinite Labyrinth -> UI -> 1. Cấu Hình InfoUI & Area Intro Banner (Task GM-01)`.
+      * Cơ chế `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` tự động tìm và gắn `InfoUIController` vào `TopCornerInfo` nếu scene chưa có sẵn.
 
-- [ ] **GM-02: Cơ chế Tử trận & Hồi sinh tại Chuông Làng (Death & Respawn Loop)**
-  - Khi Máu người chơi = 0 trong `DungeonScene`:
-    - Hiển thị màn hình You Died ngắn gọn.
-    - Tăng `CurrentDay += 1`.
-    - Load lại `LandScene` và đặt vị trí người chơi ngay cạnh **Chuông Trung Tâm Làng**.
-    - Hồi phục 100% Máu/Stamina.
+- [x] **GM-02: Cơ chế Tử trận & Hồi sinh tại Chuông Làng (Death & Respawn Loop):**
+  - **Màn Hình Tử Trận Souls-like (`DeadScreenUIController.cs`):**
+    + Quản lý `DeadScreenUI` qua `CanvasGroup` (mặc định ẩn `alpha = 0, blocksRaycasts = false`).
+    + Tự động lắng nghe sự kiện `Health.onDeath` từ Player khi Máu = 0 trong `DungeonScene`.
+    + Chờ 1.2s (`deathDelay`) cho hoạt cảnh ngã gục `Death` chạm đất -> Mở khóa con trỏ chuột (`CursorLockMode.None`) -> Fade In biểu ngữ `YOU DIED` và nút `BtnRespawn`.
+    + Tích hợp MenuItem 1-Click `Infinite Labyrinth -> UI -> 2. Cấu Hình DeadScreenUI & Respawn Loop (Task GM-02)` kèm `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` tự động liên kết.
+  - **Vòng Lặp Hồi Sinh Xuyên Cảnh (`GameManager.cs` - `RespawnAtVillage()`):**
+    + Tăng ngày mới: `CurrentDay += 1`.
+    + Đặt lại tầng ngục logic: `CurrentFloor = 1`.
+    + Chuyển cảnh về `LandScene` thông qua `LoadingScreenManager.Instance.LoadScene("LandScene", 1)`.
+    + Tự động định vị Player tại **Chuông Trung Tâm Làng** (`bell.transform.position + Vector3.back * 2.5f`) có kiểm tra va chạm NavMesh an toàn.
+    + Hồi phục 100% Máu (`Health.Revive()`) và 100% Thể lực (`PlayerStats.RestoreStamina(9999f)`).
+    + Khôi phục toàn bộ quyền điều khiển (`PlayerController`, `CharacterController`, `PlayerCombat`, `TargetLockSystem`, `RHandAdjust`, `Animator.Rebind()`).
+    + Khóa lại con trỏ chuột cho góc nhìn thứ 3 và tự động kích hoạt `InfoUIController` phát biểu ngữ giới thiệu Làng (`HAVEN VILLAGE - Day N`).
 
-- [ ] **GM-03: Cơ chế Chiến thắng Tầng & Lựa chọn Đi tiếp / Về Làng**
-  - Khi Boss chết: Hiện UI thông báo chiến thắng.
-  - Người chơi có 2 lựa chọn:
-    1. **Về Làng:** Load về `LandScene`, giữ lại toàn bộ đồ và chuyển sang Day tiếp theo.
-    2. **Xuống Tầng Kế Tiếp (Floor + 1):** Load lại `DungeonScene` với seed mới, tăng chỉ số quái và tỷ lệ rớt đồ.
+- [x] **GM-03: Cơ chế Chiến thắng Tầng & Lựa chọn Đi tiếp / Về Làng (`VictoryPortalUI.cs`, `GameManager.cs`):**
+  - **Tích Hợp Toàn Diện với Task D02-5:**
+    + D02-5B & D02-5C: Biểu ngữ hoàng kim Souls-like "VICTORY ACHIEVED", lia Camera lên bục đá 12m, sinh Rương Boss và Cổng Dịch Chuyển Thắng Trận (Victory Portal).
+    + D02-5D: Giao diện 2 cửa sổ `VictoryPortalUI` hỗ trợ cơ chế Hold-to-Confirm 2.0s, nút Stay / phím ESC để quay lại nhặt loot.
+  - **Kết Nối Logic với `GameManager.cs`:**
+    + **Lựa chọn 1: Trở Về Làng (Return to Haven):**
+      * Bảo toàn 100% kho đồ và trang bị hiện có trong `InventoryManager.cs`.
+      * Chuyển sang ngày mới: `GameManager.Instance.AdvanceDay()` (`CurrentDay += 1`).
+      * Đặt lại số tầng logic: `GameManager.Instance.ResetFloorToTown()` (`CurrentFloor = 1`).
+      * Nạp `LandScene` qua `LoadingScreenManager.Instance.LoadScene("LandScene", 1)`.
+    + **Lựa chọn 2: Tiến Vào Tầng Kế Tiếp (Go to Next Floor):**
+      * Tự động tính toán số tầng tiếp theo động: `int targetFloor = GameManager.Instance.CurrentFloor + 1`.
+      * Cập nhật tiêu đề và text nút hiển thị linh hoạt: `"GO TO FLOOR {targetFloor}"` / `"FLOOR {targetFloor}"`.
+      * Cập nhật tiến trình: `GameManager.Instance.SetFloor(targetFloor)`.
+      * Tải `DungeonScene` với seed mới và độ sâu mới qua `LoadingScreenManager.Instance.LoadScene("DungeonScene", targetFloor)`.
+  - **Công Cụ Tự Động Hóa 1-Click Unity Menu:**
+    + Hỗ trợ cấu hình nhanh qua menu: `Infinite Labyrinth -> Core Loop & UI -> 3. Cấu Hình Victory Portal (GM-03)` và `Tools -> Infinite Labyrinth -> Core Loop -> 3. Setup Victory Portal (GM-03)`.
+    + Master 1-Click Menu: `Infinite Labyrinth -> Core Loop & UI -> ⚡ Cấu Hình Toàn Bộ Vòng Lặp (GM-01 -> GM-03) (1-Click)` thiết lập đồng bộ toàn bộ Canvas và Scene.
 
 ---
 

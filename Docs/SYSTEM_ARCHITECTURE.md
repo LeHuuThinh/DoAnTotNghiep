@@ -137,9 +137,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
     * **Định Vị Điểm Chạm Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (`swordTransform.TransformPoint(box.center)` với local center Y = 0.81m) kèm tùy biến bù trừ `parryBladeOffset`, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
     * **Phản Hồi Thị Giác & Xung Lực:** Khựng hình Hitlag 0.2s (`parryHitlagDuration`), Camera zoom cận cảnh kịch tính (`TriggerParryZoom`), tia lửa vàng/trắng tóe ngược chiều cú chém của quái, ngắt chiêu đòn đánh và làm choáng kẻ tấn công.
   * Parry trúng đòn: Hoàn trả thể lực, nạp mạnh Spirit (+40), làm choáng đối thủ và mở ra đòn Counter sát thương cực lớn.
-* **Cơ chế Né đòn & Di chuyển (`PlayerController.cs`):**
+* **Cơ chế Né đòn & Di chuyển (`PlayerController.cs` & `TargetLockSystem.cs`):**
   * Phím Shift: Nhấn nhả (< 0.25s) để Lăn né với 0.45s thời gian bất tử (I-frames); Giữ (> 0.25s) để Sprint.
-  * Khóa mục tiêu (Target Lock Souls-like): Camera tập trung vào mục tiêu, nhân vật chuyển sang thế vờn/bước ngang (`strafeSpeed`).
+  * **Hệ thống Khóa Mục Tiêu Souls-like (`TargetLockSystem.cs`):**
+    * Bấm Chuột giữa (Middle Mouse) để bật/tắt khóa mục tiêu gần nhất. Nhân vật chuyển sang thế vờn/bước ngang (`strafeSpeed`), camera tập trung vào đối thủ (`ThirdPersonCamera.cs`).
+    * **Chuyển mục tiêu bằng vẩy chuột (Mouse Flick Switch):** Khi đang lock, vẩy chuột sang trái hoặc phải (`delta.x` vượt `mouseFlickThreshold = 20`) để chuyển khóa sang con quái gần nhất ở phía tương ứng trên màn hình (Viewport Space). Tích hợp bộ lọc xung lực tự nhiên (`flickDecayRate = 120/s`) và hồi chiêu `switchCooldown = 0.25s` chống giật nhảy cóc.
+    * **Bộ lọc chênh lệch cao độ tầng 2 (`maxLockElevationDifference = 4.2m`):** Triệt tiêu 100% hiện tượng camera ngửa lên trần gác lửng tầng 2 (cao 8m) khi quái tầng 1 chết hoặc khi bấm khóa. Tự ngắt khóa an toàn nếu khoảng cách độ cao vượt quá `breakLockElevationDifference = 6.5m`.
+    * Tự động chuyển mượt sang quái tiếp theo khi quái hiện tại chết (`TrySwitchToNextTarget`).
   * Nhảy & Rơi (Jump, Fall, Air Control, phân biệt tiếp đất nhẹ và Hard Landing khựng chân khi rơi từ gác lửng).
 * **Đạo diễn Lượt đánh Quái (`AttackTokenDirector.cs`):**
   * Áp dụng hệ thống Token Pool. Quái bao vây chỉ giữ cự ly vờn; chỉ quái nào xin được "Attack Token" từ Director mới được lao vào tấn công, chống spam hội đồng.
@@ -377,6 +381,14 @@ flowchart TD
    * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
    * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu (Đá cường hóa kiếm) và Vàng để nâng cấp vũ khí (+1, +2...), tăng sát thương chém và hiệu ứng visual.
    * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
+   * **Tối Ưu Hóa Hiệu Năng Ngôi Làng (NpcPatrol.cs & LandSceneOptimizerEditor.cs):**
+     - **Distance LOD Culling & Hibernation cho 61+ NPCs:** Tự động đưa NPC ở xa (> 48m) vào chế độ ngủ đông (dừng NavMeshAgent, tắt né tránh, ngắt tính toán Animator qua CullCompletely), giải phóng 100% CPU. Khi người chơi lại gần (< 40m), NPC tự động thức tỉnh tuần tra mượt mà. Quét cự ly Time-sliced 0.35s rải đều các frame.
+     - **Animator Culling (CullUpdateTransforms):** Dừng tính toán biến dạng xương khi NPC khuất tầm nhìn camera.
+     - **Hạ cấp Tránh va chạm (LowQualityObstacleAvoidance):** Cắt giảm 70% chi phí CPU tính toán RVO cho dân làng đi tuần.
+     - **Bộ nhớ đệm tĩnh Waypoints:** Dùng chung mảng sharedWaypoints loại bỏ 61 lần quét GameObject.Find trùng lặp.
+     - **Gộp Mesh Sỏi Đá (Gravel Combine):** Gộp 94 viên sỏi thành 1 Draw Call duy nhất bằng CombineMeshes 32-bit.
+     - **Static Batching & Lọc Bóng Đổ:** Đánh dấu Static cho 214 đối tượng kiến trúc; tắt đổ bóng cho tiểu cảnh nhỏ (sỏi, bụi hoa, hàng rào, chum vại) và chỉ giữ bóng đổ cho công trình lớn.
+     - **Terrain GPU Instancing:** Bật drawInstanced = true, khống chế 	reeDistance = 200m đồng bộ camera far clip 150m.
 
 ---
 
@@ -394,6 +406,27 @@ flowchart TD
   * **Phần Trăm & Ấn Ký Spinner:** Hiển thị số `%` ở góc phải thanh loading và ấn ký vòng tròn xoay tròn liên tục theo `Time.unscaledDeltaTime`.
 * **Sinh Hầm Ngục Theo Chặng (Time-Sliced PCG - `DungeonManager.cs`, `DungeonRenderer.cs`):**
   * Chia nhỏ việc dựng lưới 3D, gác lửng tầng 2, props và bake NavMesh thành các giai đoạn qua nhiều khung hình (`yield return null`), triệt tiêu 100% hiện tượng khựng đơ khung hình khi tạo lập hầm ngục quy mô lớn.
+
+---
+
+### F. Bảng Điều Khiển Quản Trị & Thử Nghiệm (Developer Admin Cheat Console)
+* **Dịch Vụ Quản Trị Trung Tâm (AdminCheatManager.cs - Self-Healing Singleton & DontDestroyOnLoad):**
+  * Tự động khởi tạo và phục hồi (EnsureInstance()) khi kéo Prefab AdminCheatCanvas.prefab vào bất kỳ Scene nào (LandScene, DungeonScene...) mà không cần kéo Manager thủ công.
+  * Hỗ trợ 3 phím nóng mở Console: Phím **~** (Backquote), **F1** hoặc **F2** (chống xung đột bộ gõ tiếng Việt Unikey/EVKey), và phím **Esc** để đóng nhanh.
+  * Tích hợp cơ chế khóa con trỏ chuột (CursorLockMode.None / Locked) và tạm dừng hành động nhân vật khi mở bảng điều khiển. Chống bấm đúp frame (lastToggleFrame).
+  * **Ma Trận Dịch Chuyển Linh Hoạt (Safe Teleport Matrix):**
+    * Trong DungeonScene: Dịch chuyển đến Start Entrance, Cổng Đại Lộ Boss, Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng Tầng 2 (cao độ 8m).
+    * Trong LandScene: Tự động fallback sang các địa danh làng: Chuông Làng (Village Bell), Cổng Dịch Chuyển (Portal), Tiệm Rèn (Smithy), Cửa Hàng Vũ Khí (Weapons Shop), Cối Xay Gió (Windmill Lookout).
+  * **Bộ Công Cụ Thử Nghiệm Toàn Diện:**
+    * Tạo lại hầm ngục thời gian thực (RegenerateDungeon).
+    * Diệt quái bán kính 25m hoặc toàn bản đồ (KillRadius / KillAll).
+    * Đóng băng AI quái vật (FreezeEnemies) thành bia tập đánh tĩnh.
+    * God Mode, Vô hạn Thể lực (Stamina), Vô hạn Năng lượng (Spirit Stars), Siêu tốc độ (1.0x - 3.5x).
+    * Bơm Vàng, EXP, Điểm Tiềm Năng, Bình Máu, Vũ khí Huyền thoại Dragonic Sword.
+* **Giao Diện Điều Khiển (AdminCheatUI.cs & AdminCheatCanvas.prefab):**
+  * 5 Tab chức năng: Teleport, Dungeon, Player, Combat, RPG & Loot.
+  * Mini Debug Overlay góc trên-phải: Hiển thị FPS thời gian thực, tọa độ Player (X, Y, Z), phòng hiện tại / vị trí làng, và huy hiệu trạng thái Cheat ([GOD], [INF STAM], [INF SPIRIT], [FROZEN AI], [SPD]).
+  * Hệ thống Toast Notification mượt mà phản hồi tức thì mỗi khi thực thi lệnh.
 
 ---
 

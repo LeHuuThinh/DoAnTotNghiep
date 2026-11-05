@@ -20,6 +20,30 @@ public class AdminCheatManager : MonoBehaviour
   public static AdminCheatManager Instance { get; private set; }
 
   /// <summary>
+  /// Ensures an active instance of AdminCheatManager exists in the scene.
+  /// Self-healing fallback if the canvas is dropped into any scene without the manager.
+  /// </summary>
+  public static AdminCheatManager EnsureInstance()
+  {
+    if (Instance != null) return Instance;
+
+    var existing = FindFirstObjectByType<AdminCheatManager>();
+    if (existing != null)
+    {
+      Instance = existing;
+      return Instance;
+    }
+
+    GameObject obj = new GameObject("AdminCheatManager");
+    Instance = obj.AddComponent<AdminCheatManager>();
+    if (Application.isPlaying && obj.transform.parent == null)
+    {
+      DontDestroyOnLoad(obj);
+    }
+    return Instance;
+  }
+
+  /// <summary>
   /// Static flag indicating whether the Cheat Console is open.
   /// Used by ThirdPersonCamera and PlayerController to release cursor and lock movement.
   /// </summary>
@@ -86,6 +110,10 @@ public class AdminCheatManager : MonoBehaviour
       return;
     }
     Instance = this;
+    if (Application.isPlaying && transform.parent == null)
+    {
+      DontDestroyOnLoad(gameObject);
+    }
     EnsurePlayerReferences();
     EnsureItemAndEnemyPrefabs();
   }
@@ -112,8 +140,10 @@ public class AdminCheatManager : MonoBehaviour
 
     if (Keyboard.current != null)
     {
-      // 1. Hotkey ~ (Backquote) or F1 to toggle Console
-      if (Keyboard.current.backquoteKey.wasPressedThisFrame || Keyboard.current.f1Key.wasPressedThisFrame)
+      // 1. Hotkey ~ (Backquote), F1, or F2 to toggle Console
+      if (Keyboard.current.backquoteKey.wasPressedThisFrame ||
+          Keyboard.current.f1Key.wasPressedThisFrame ||
+          Keyboard.current.f2Key.wasPressedThisFrame)
       {
         ToggleMenu();
       }
@@ -127,8 +157,13 @@ public class AdminCheatManager : MonoBehaviour
 
   #region Menu Toggle & Cursor Management
 
+  private static int lastToggleFrame = -1;
+
   public void ToggleMenu()
   {
+    if (Time.frameCount == lastToggleFrame) return;
+    lastToggleFrame = Time.frameCount;
+
     if (IsOpen) CloseMenu();
     else OpenMenu();
   }
@@ -275,12 +310,19 @@ public class AdminCheatManager : MonoBehaviour
 
   /// <summary>
   /// Teleports player slightly behind the Start Doorway (inside the entrance lobby, facing through the door into the dungeon).
+  /// In LandScene / Village Hub, teleports to the Village Bell (Central Respawn point).
   /// </summary>
   public bool TeleportToStartRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      NotifyWarning("Dungeon data not initialized!");
+      // Fallback for LandScene: Village Bell
+      GameObject bellObj = GameObject.Find("bell");
+      if (bellObj != null)
+      {
+        return TeleportPlayer(bellObj.transform.position + Vector3.back * 2.5f, "Village Bell (Central Hub)");
+      }
+      NotifyWarning("Start Room location not found (Dungeon data not initialized)!");
       return false;
     }
 
@@ -311,12 +353,19 @@ public class AdminCheatManager : MonoBehaviour
 
   /// <summary>
   /// Teleports player slightly behind the Boss Gate (5.5m South on the Avenue, facing North towards the Grand Gate).
+  /// In LandScene / Village Hub, teleports to the Village Portal.
   /// </summary>
   public bool TeleportToBossRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      NotifyWarning("Dungeon data not initialized!");
+      // Fallback for LandScene: Village Portal
+      GameObject portalObj = GameObject.Find("Portal");
+      if (portalObj != null)
+      {
+        return TeleportPlayer(portalObj.transform.position + Vector3.back * 3.5f, "Village Portal");
+      }
+      NotifyWarning("Boss Room not found (Dungeon data not initialized)!");
       return false;
     }
 
@@ -343,12 +392,19 @@ public class AdminCheatManager : MonoBehaviour
 
   /// <summary>
   /// Teleports player right in front of the Key Shrine in the dead-end shrine room.
+  /// In LandScene / Village Hub, teleports to the Weapons Shop.
   /// </summary>
   public bool TeleportToKeyRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      NotifyWarning("Dungeon data not initialized!");
+      // Fallback for LandScene: Weapons Shop
+      GameObject shopObj = GameObject.Find("weapons_shop");
+      if (shopObj != null)
+      {
+        return TeleportPlayer(shopObj.transform.position + Vector3.back * 3.5f, "Weapons Shop");
+      }
+      NotifyWarning("Key Shrine Room not found in dungeon!");
       return false;
     }
 
@@ -377,12 +433,19 @@ public class AdminCheatManager : MonoBehaviour
 
   /// <summary>
   /// Cycles teleportation through each procedural Treasure Room.
+  /// In LandScene / Village Hub, teleports to the Village Smithy (Blacksmith).
   /// </summary>
   public bool TeleportToTreasureRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      NotifyWarning("Dungeon data not initialized!");
+      // Fallback for LandScene: Village Smithy (Blacksmith)
+      GameObject smithyObj = GameObject.Find("smithy");
+      if (smithyObj != null)
+      {
+        return TeleportPlayer(smithyObj.transform.position + Vector3.forward * 4.5f, "Village Smithy (Blacksmith)");
+      }
+      NotifyWarning("Treasure Room not found in current dungeon!");
       return false;
     }
 
@@ -415,12 +478,19 @@ public class AdminCheatManager : MonoBehaviour
 
   /// <summary>
   /// Cycles teleportation onto the 2nd Floor Mezzanines (height 8m).
+  /// In LandScene / Village Hub, teleports to the Windmill Lookout.
   /// </summary>
   public bool TeleportToMezzanine()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      NotifyWarning("Dungeon data not initialized!");
+      // Fallback for LandScene: Windmill Lookout
+      GameObject windmillObj = GameObject.Find("windmill");
+      if (windmillObj != null)
+      {
+        return TeleportPlayer(windmillObj.transform.position + Vector3.up * 7.5f + Vector3.forward * 3.5f, "Windmill Lookout (Elevated)");
+      }
+      NotifyWarning("Mezzanine not found in current dungeon!");
       return false;
     }
 
