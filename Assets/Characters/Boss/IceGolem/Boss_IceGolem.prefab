@@ -246,13 +246,13 @@ MonoBehaviour:
   bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
   bodyAuraRange: 16
   bodyAuraIntensity: 3
-  attack1Cooldown: 1.5
-  gumoGumoCooldown: 6
-  flameBreathCooldown: 8
-  jumpAttackCooldown: 7
-  runAttackCooldown: 6
-  attackLTCooldown: 5
-  iceBallCooldown: 7
+  attack1Cooldown: 15
+  gumoGumoCooldown: 15
+  flameBreathCooldown: 15
+  jumpAttackCooldown: 15
+  runAttackCooldown: 15
+  attackLTCooldown: 15
+  iceBallCooldown: 15
   specialSkillGlobalCooldown: 3
   runAttackSpeed: 12
   runAttackDuration: 1.25
@@ -462,7 +462,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 74c1b82a110d42a4d9972051f4f30a96, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: 00fb66ea57057c34aae5e9287d552a77, type: 3}
   m_InferenceDevice: 0
   m_BehaviorType: 0
   m_BehaviorName: IceGolemSoulsAI
@@ -509,11 +509,11 @@ MonoBehaviour:
   whiffAttackPenalty: -0.4
   takeDamagePenalty: -0.8
   deathPenalty: -3
-  respawnBossOnDeath: 0
+  respawnBossOnDeath: 1
   lockNormalSpeed: 1
-  movePersistenceTime: 0.5
-  minStrafeDistance: 2.5
-  minStrafeDuration: 1.2
+  movePersistenceTime: 1
+  minStrafeDistance: 6
+  minStrafeDuration: 3
 --- !u!114 &7629390967331010991
 MonoBehaviour:
   m_ObjectHideFlags: 0

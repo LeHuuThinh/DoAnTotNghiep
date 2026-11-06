@@ -537,7 +537,7 @@ public class IceGolemAgent : Agent
 
                 // Bảo hiểm: Kiểm tra nếu phía trước hướng đi ngang bị cản bởi tường thì mở khóa sớm
                 Vector3 strafeWorldDir = (activeStrafeDirection == 3) ? -transform.right : transform.right;
-                bool wallAhead = Physics.Raycast(transform.position + Vector3.up * 1.5f, strafeWorldDir, 1.2f, obstacleMask);
+                bool wallAhead = Physics.Raycast(transform.position + Vector3.up * 1.5f, strafeWorldDir, 2.0f, obstacleMask);
 
                 if ((distTraveled >= minStrafeDistance && strafeTimer <= 0f) || wallAhead)
                 {

@@ -55,12 +55,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1672586996193284809}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.30621836, y: -0.33024502, z: 0.5933961, w: 0.6671204}
-  m_LocalPosition: {x: 0.175, y: 0.094, z: -0.074}
+  m_LocalRotation: {x: -0.30621827, y: -0.33024517, z: 0.5933962, w: 0.6671203}
+  m_LocalPosition: {x: 0.193, y: 0.019, z: -0.122}
   m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7732759031230733074}
+  - {fileID: 6919764849268380130}
   m_Father: {fileID: 3284113099889343442}
   m_LocalEulerAnglesHint: {x: -0.953, y: -53.529, z: 83.786}
 --- !u!1 &3806274301772261096
@@ -204,9 +205,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bossMaxHealth: 1200
-  maxPoise: 400
-  currentPoise: 400
-  weakenDuration: 2.5
+  maxPoise: 500
+  currentPoise: 500
+  weakenFrontDuration: 4.27
+  weakenBackDuration: 4.27
   onPoiseChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -222,30 +224,38 @@ MonoBehaviour:
   moveDeceleration: 12
   locomotionDampTime: 0.1
   alwaysFacePlayer: 1
-  facePlayerSpeed: 280
+  facePlayerSpeed: 200
   gravity: -20
   groundedGravity: -5
   playerTarget: {fileID: 0}
   autoFindPlayer: 1
   weaponSocket: {fileID: 766709305620523826}
   slashSpawnPoint: {fileID: 7491440902550185309}
-  attackSlashSwingVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  weaponFlame: {fileID: 8418303177157379218}
+  weaponTrail: {fileID: 4058089287532325494}
+  autoIgniteSwordOnAttack: 0
+  previewFlameAlwaysOn: 0
+  swordCastingHealthThreshold: 0.5
+  swordEnrageBonusDamage: 10
+  swordCastingIgniteDelay: 0.85
+  swordCastingTotalDuration: 2
+  attackSlashSwingVfxPrefab: {fileID: 0}
   verticalSlashPrefab: {fileID: 6882116249847192011, guid: 961e8d8af5a54582affa38e44bd17694, type: 3}
   attackSlashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
   slashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
   attackSlashDamage: 65
   attackSlashCooldown: 3
-  attackSlashDelay: 0.42
+  attackSlashDelay: 1.4
   attackSlashProjectileSpeed: 22
   attackSlashTiltAngle: 90
-  attackSlashHeightOffset: 0
+  attackSlashHeightOffset: 1.5
   attackSlashTotalDuration: 1.5
-  horizontalSlashSwingVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  horizontalSlashSwingVfxPrefab: {fileID: 0}
   horizontalSlashPrefab: {fileID: 6882116249847192011, guid: 568e826b7f774d91902e6ac634684310, type: 3}
   horizontalSlashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
   horizontalSlashDamage: 50
   horizontalSlashCooldown: 3.5
-  horizontalSlashDelay: 0.4
+  horizontalSlashDelay: 1.2
   horizontalSlashProjectileSpeed: 20
   horizontalSlashTiltAngle: 0
   horizontalSlashHeightOffset: 0
@@ -260,7 +270,7 @@ MonoBehaviour:
   jumpAttackRadius: 4
   jumpImpactHeightOffset: 0
   jumpAttackRecoveryDuration: 0.85
-  comboSlashVfxPrefab: {fileID: 5313456068782518071, guid: 70e4569400984377845abcaa25c1e67c, type: 3}
+  comboSlashVfxPrefab: {fileID: 0}
   comboHitDamage: 35
   comboAttackCooldown: 6
   comboHitTimers:
@@ -268,7 +278,7 @@ MonoBehaviour:
   - 0.95
   - 1.55
   - 2.2
-  comboLungeDistance: 0.75
+  comboLungeDistance: 0
   comboHitRadius: 3.2
   comboVfxHeightOffset: 0
   comboRecoveryDuration: 0.9
@@ -446,6 +456,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.999964
+      objectReference: {fileID: 0}
+    - target: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.007314318
+      objectReference: {fileID: 0}
+    - target: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.00017032333
+      objectReference: {fileID: 0}
+    - target: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.0043094545
+      objectReference: {fileID: 0}
     - target: {fileID: -5671910290767253545, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -474,9 +500,41 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.x
       value: 90
       objectReference: {fileID: 0}
+    - target: {fileID: -5567499957886489658, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8403295
+      objectReference: {fileID: 0}
+    - target: {fileID: -5567499957886489658, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.3413864
+      objectReference: {fileID: 0}
+    - target: {fileID: -5567499957886489658, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.009822123
+      objectReference: {fileID: 0}
+    - target: {fileID: -5567499957886489658, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.42095733
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       propertyPath: m_Name
       value: RedIgnis
+      objectReference: {fileID: 0}
+    - target: {fileID: 2408001348110326286, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8448493
+      objectReference: {fileID: 0}
+    - target: {fileID: 2408001348110326286, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.34892836
+      objectReference: {fileID: 0}
+    - target: {fileID: 2408001348110326286, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.020593524
+      objectReference: {fileID: 0}
+    - target: {fileID: 2408001348110326286, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.40503645
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       propertyPath: m_Controller
@@ -485,6 +543,38 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110471695799780156, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.94404376
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110471695799780156, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.32977852
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110471695799780156, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.005167812
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110471695799780156, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.00088895846
+      objectReference: {fileID: 0}
+    - target: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.994393
+      objectReference: {fileID: 0}
+    - target: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.02333231
+      objectReference: {fileID: 0}
+    - target: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.102101505
+      objectReference: {fileID: 0}
+    - target: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.014611546
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1063,3 +1153,95 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: eb8691f645989ad4aa9f5e34ce0870d0, type: 3}
   m_PrefabInstance: {fileID: 7843861127440039161}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8186151588351846285
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 766709305620523826}
+    m_Modifications:
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5397303981678571245, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5397303981678571245, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_Intensity
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7777536363135684100, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+      propertyPath: m_Name
+      value: Ignis_Sword_Flame
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+--- !u!114 &4058089287532325494 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5317123657482931707, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+  m_PrefabInstance: {fileID: 8186151588351846285}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a7f9b1c3d5e4f2a90123456789abcde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IgnisSwordTrail
+--- !u!4 &6919764849268380130 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1269166308798658159, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+  m_PrefabInstance: {fileID: 8186151588351846285}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8418303177157379218 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 380799756541371167, guid: c47c6b327803f8f4fa109d0f2e986db7, type: 3}
+  m_PrefabInstance: {fileID: 8186151588351846285}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85667d30ec4549b1a1402cbffb0ec750, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IgnisSwordFlame

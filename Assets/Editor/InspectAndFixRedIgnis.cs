@@ -1,19 +1,8 @@
 using UnityEngine;
 using UnityEditor;
 
-[InitializeOnLoad]
 public static class InspectAndFixRedIgnis
 {
-    [InitializeOnLoadMethod]
-    public static void Init()
-    {
-        EditorApplication.delayCall += RunInspectionAndFix;
-    }
-
-    static InspectAndFixRedIgnis()
-    {
-        EditorApplication.delayCall += RunInspectionAndFix;
-    }
 
     [MenuItem("Boss/Inspect & Fix Red Ignis Hierarchy")]
     public static void RunInspectionAndFix()

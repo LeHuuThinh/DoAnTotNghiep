@@ -1429,6 +1429,8 @@ MonoBehaviour:
   progressLerpSpeed: 3.5
   spinnerTransform: {fileID: 2363772375203150344}
   spinnerRotateSpeed: -200
+  editorPreviewMode: 0
+  previewProgress: 0.65
 --- !u!1 &7227273644463050104
 GameObject:
   m_ObjectHideFlags: 0
