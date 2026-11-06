@@ -20,10 +20,12 @@ public class AoeSpell : MonoBehaviour
   [SerializeField] private float totalLifeTime = 3.0f;
 
   private Transform attacker;
+  private float bonusDamage = 0f;
 
-  public void Initialize(Transform attackerRoot)
+  public void Initialize(Transform attackerRoot, float additionalBonusDamage = 0f)
   {
     attacker = attackerRoot;
+    bonusDamage = additionalBonusDamage;
 
     // Kích hoạt tất cả Particle System con của cụm AOE
     ParticleSystem[] particles = GetComponentsInChildren<ParticleSystem>();
@@ -56,7 +58,8 @@ public class AoeSpell : MonoBehaviour
         Vector3 knockbackDir = (col.transform.position - transform.position).normalized;
         knockbackDir.y = 0.25f; // Hất quái hơi văng bổng lên
 
-        damageable.TakeDamage(damage, hitPoint, knockbackDir, knockback);
+        float finalDamage = Mathf.Max(1f, damage + bonusDamage);
+        damageable.TakeDamage(finalDamage, hitPoint, knockbackDir, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillQ);
       }
     }
 

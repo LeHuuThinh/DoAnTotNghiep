@@ -37,6 +37,7 @@ public class ProjectileSlash : MonoBehaviour
     private BoxCollider boxCollider;
     private bool hasHit = false;
     private float aliveTimer = 0f;
+    private float bonusDamage = 0f;
 
     private void Awake()
     {
@@ -63,9 +64,10 @@ public class ProjectileSlash : MonoBehaviour
         Destroy(gameObject, lifeTime);
     }
 
-    public void Launch(Transform attackerRoot, Vector3 launchDirection)
+    public void Launch(Transform attackerRoot, Vector3 launchDirection, float additionalBonusDamage = 0f)
     {
         attacker = attackerRoot;
+        bonusDamage = additionalBonusDamage;
 
         Collider[] attackerColliders = attackerRoot.GetComponentsInChildren<Collider>();
         foreach (Collider col in attackerColliders)
@@ -132,7 +134,8 @@ public class ProjectileSlash : MonoBehaviour
             {
                 hasHit = true;
                 Vector3 hitPoint = GetSafeHitPoint(other);
-                damageable.TakeDamage(damage, hitPoint, transform.forward, knockback);
+                float finalDamage = Mathf.Max(1f, damage + bonusDamage);
+                damageable.TakeDamage(finalDamage, hitPoint, transform.forward, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillE);
                 TriggerPlayerHitlag();
 
                 SpawnHitVfx(hitPoint, -transform.forward);

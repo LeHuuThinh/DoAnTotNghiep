@@ -164,6 +164,7 @@ MonoBehaviour:
   maxHealth: 1500
   currentHealth: 1500
   isInvulnerable: 0
+  baseDefense: 35
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -279,6 +280,7 @@ MonoBehaviour:
   iceBallLifeTime: 4
   iceBallExplodeVfxPrefab: {fileID: 0}
   bossMaxHealth: 1500
+  bossDefense: 35
   maxPoise: 500
   currentPoise: 500
   weakenFreezeAfterDuration: 0

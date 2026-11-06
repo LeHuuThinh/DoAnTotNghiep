@@ -11,7 +11,8 @@ namespace InfiniteLabyrinth.UI
   /// <summary>
   /// Quản lý hiển thị và tương tác của 1 ô trong lưới túi đồ 30 ô
   /// </summary>
-  public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+  public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+                                 IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
   {
     [Header("=== THÀNH PHẦN UI ===")]
     [Tooltip("Icon hiển thị ảnh đại diện của vật phẩm")]
@@ -20,6 +21,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Ảnh nền trắng RarityBG dùng để tô màu theo phẩm cấp (Common, Rare, Epic, Legendary)")]
     [FormerlySerializedAs("rarityBorder")]
     [SerializeField] private Image rarityBg;
+
+    [Tooltip("Thanh bar dưới icon đổi màu theo phẩm cấp của vật phẩm")]
+    [SerializeField] private Image rarityBar;
 
     [Tooltip("Viền góc trang trí hiển thị khi ô này được chọn")]
     [SerializeField] private Image selectHighlight;
@@ -34,6 +38,10 @@ namespace InfiniteLabyrinth.UI
     public ItemData CurrentItem { get; private set; }
     public int CurrentQuantity { get; private set; }
     public bool IsEmpty => CurrentItem == null;
+
+    public Sprite RarityBgSprite => rarityBg != null ? rarityBg.sprite : null;
+    public Sprite RarityBarSprite => rarityBar != null ? rarityBar.sprite : null;
+    public Sprite BorderSprite => transform.Find("Border")?.GetComponent<Image>()?.sprite;
 
     public event Action<InventorySlotUI> OnClicked;
 
@@ -62,10 +70,15 @@ namespace InfiniteLabyrinth.UI
         }
       }
 
-      // Đảm bảo RarityBG tắt mặc định khi chưa có item
+      // Đảm bảo RarityBG & RarityBar tắt mặc định khi chưa có item
       if (rarityBg != null && CurrentItem == null)
       {
         rarityBg.gameObject.SetActive(false);
+      }
+
+      if (rarityBar != null && CurrentItem == null)
+      {
+        rarityBar.gameObject.SetActive(false);
       }
 
       if (selectHighlight != null)
@@ -79,6 +92,7 @@ namespace InfiniteLabyrinth.UI
       if (slotButton == null) slotButton = GetComponent<Button>();
       if (itemIcon == null) itemIcon = transform.Find("ItemIcon")?.GetComponent<Image>();
       if (rarityBg == null) rarityBg = transform.Find("RarityBG")?.GetComponent<Image>();
+      if (rarityBar == null) rarityBar = transform.Find("RarityBar")?.GetComponent<Image>();
       if (selectHighlight == null) selectHighlight = transform.Find("SelectHighlight")?.GetComponent<Image>();
       if (stackCountText == null) stackCountText = transform.Find("StackCountText")?.GetComponent<TextMeshProUGUI>();
     }
@@ -105,6 +119,7 @@ namespace InfiniteLabyrinth.UI
         if (item.Icon != null)
         {
           itemIcon.gameObject.SetActive(true);
+          itemIcon.enabled = true;
           itemIcon.sprite = item.Icon;
           itemIcon.color = Color.white;
         }
@@ -114,11 +129,19 @@ namespace InfiniteLabyrinth.UI
         }
       }
 
-      // 2. Nền màu theo độ hiếm (RarityBG)
+      Color rarityColor = item.Rarity.GetRarityColor();
+
+      // 2. Nền glow mờ (RarityBG) và thanh bar dưới icon (RarityBar)
       if (rarityBg != null)
       {
         rarityBg.gameObject.SetActive(true);
-        rarityBg.color = item.Rarity.GetRarityColor();
+        rarityBg.color = rarityColor;
+      }
+
+      if (rarityBar != null)
+      {
+        rarityBar.gameObject.SetActive(true);
+        rarityBar.color = rarityColor;
       }
 
       // 3. Số lượng dồn
@@ -157,6 +180,11 @@ namespace InfiniteLabyrinth.UI
         rarityBg.gameObject.SetActive(false);
       }
 
+      if (rarityBar != null)
+      {
+        rarityBar.gameObject.SetActive(false);
+      }
+
       if (stackCountText != null)
       {
         stackCountText.gameObject.SetActive(false);
@@ -188,6 +216,40 @@ namespace InfiniteLabyrinth.UI
 
     public void OnPointerExit(PointerEventData eventData)
     {
+    }
+
+    /// <summary>
+    /// Làm mờ icon khi đang bị nhấc kéo đi
+    /// </summary>
+    public void SetGhostFade(bool faded)
+    {
+      if (itemIcon != null)
+      {
+        Color c = itemIcon.color;
+        c.a = faded ? 0.35f : 1.0f;
+        itemIcon.color = c;
+      }
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+      if (IsEmpty) return;
+      InventoryDragDropController.Instance?.StartDrag(this, eventData);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+      InventoryDragDropController.Instance?.OnDrag(eventData);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+      InventoryDragDropController.Instance?.EndDrag(eventData);
+    }
+
+    public void OnDrop(PointerEventData eventData)
+    {
+      InventoryDragDropController.Instance?.DropOnBagSlot(this);
     }
   }
 }

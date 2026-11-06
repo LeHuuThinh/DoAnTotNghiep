@@ -1,0 +1,29 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Armor_Bone_Carapace
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: armor_bone_carapace
+  itemName: Bone Carapace Plate
+  description: "Carapace armor assembled from elite Skeleton bones, endowing the wearer with remarkable resilience (+22 DEF, +110 HP, +20 Stamina)."
+  icon: {fileID: 21300000, guid: e5905f669446215449e6248807309806, type: 3}
+  itemType: 1
+  rarity: 2
+  maxStack: 1
+  goldValue: 420
+  bonusAttack: 0
+  bonusDefense: 22
+  bonusHealth: 110
+  bonusStamina: 20
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 0}

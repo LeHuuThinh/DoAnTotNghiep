@@ -56,6 +56,7 @@ namespace InfiniteLabyrinth.Inventory
     public int MaxStack => Mathf.Max(1, maxStack);
     public bool IsStackable => maxStack > 1;
     public int GoldValue => goldValue;
+    public int SellPrice => Mathf.Max(1, Mathf.RoundToInt(goldValue * 0.4f));
 
     public float BonusAttack => bonusAttack;
     public float BonusDefense => bonusDefense;

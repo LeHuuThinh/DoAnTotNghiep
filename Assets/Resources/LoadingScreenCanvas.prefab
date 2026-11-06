@@ -391,7 +391,7 @@ MonoBehaviour:
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 0
-  m_FillAmount: 1
+  m_FillAmount: 0.65
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
@@ -1387,7 +1387,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -6}
-  m_SizeDelta: {x: 1.9999952, y: 48}
+  m_SizeDelta: {x: -520.4258, y: 48}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8688715374005936820
 CanvasRenderer:
@@ -1417,8 +1417,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Keep an eye on your Stamina bar. Running out of breath leaves you defenseless
-    against lethal counterattacks.
+  m_text: Time your Parry with [Right Mouse Button] right before an attack connects
+    to stagger foes and recover Spirit.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 017f7dd8cd62b05458a34dcaa1317672, type: 2}
   m_sharedMaterial: {fileID: 4176118715356050561, guid: 017f7dd8cd62b05458a34dcaa1317672, type: 2}

@@ -19,7 +19,7 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private float attack1Damage = 15f;
   [SerializeField] private float attack2Damage = 20f;
   [SerializeField] private float attack3Damage = 35f;
-  [SerializeField] private float chargeAttackDamage = 50f;
+  [SerializeField] private float chargeAttackDamage = 70f;
   [SerializeField] private float counterAttackDamage = 65f;   // Sát thương phản đòn cực lớn!
 
   [Header("Skill Settings")]
@@ -34,6 +34,12 @@ public class PlayerCombat : MonoBehaviour
   [SerializeField] private GameObject swordAuraOrangeVfx;
   [Tooltip("Aura kiếm màu đỏ / vàng kim cho Tuyệt kỹ Ult R")]
   [SerializeField] private GameObject swordAuraUltVfx;
+
+  [Header("Skill Scaling Multipliers")]
+  [Tooltip("Hệ số scale sát thương của Kỹ năng E (Moon Slash) theo TotalAttackBonus")]
+  [SerializeField] private float skillEScalingMultiplier = 1.4f;
+  [Tooltip("Hệ số scale sát thương của Kỹ năng Q (Ground AOE) theo TotalAttackBonus")]
+  [SerializeField] private float skillQScalingMultiplier = 2.0f;
 
   [Header("Ultimate Skill (R) Settings")]
   [Tooltip("Sát thương cơ bản của Tuyệt kỹ Ult R")]
@@ -817,7 +823,8 @@ public class PlayerCombat : MonoBehaviour
     ProjectileSlash slash = proj.GetComponent<ProjectileSlash>();
     if (slash != null)
     {
-      slash.Launch(transform.root, launchDir);
+      float bonus = TotalAttackBonus * skillEScalingMultiplier;
+      slash.Launch(transform.root, launchDir, bonus);
     }
   }
 
@@ -833,7 +840,8 @@ public class PlayerCombat : MonoBehaviour
     AoeSpell spell = aoe.GetComponent<AoeSpell>();
     if (spell != null)
     {
-      spell.Initialize(transform.root);
+      float bonus = TotalAttackBonus * skillQScalingMultiplier;
+      spell.Initialize(transform.root, bonus);
     }
   }
 
@@ -1094,7 +1102,7 @@ public class PlayerCombat : MonoBehaviour
         }
 
         // 3. Gây sát thương và đẩy văng (Knockback mạnh)
-        damageable.TakeDamage(totalDamage, hitPoint, hitDirection, ultKnockback, root);
+        damageable.TakeDamage(totalDamage, hitPoint, hitDirection, ultKnockback, root, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillR);
       }
     }
 
@@ -1163,42 +1171,42 @@ public class PlayerCombat : MonoBehaviour
   // Đòn 1: Nhanh, mượt
   public void EnableAttack1Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage);
+    weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack1);
   }
 
   // Đòn 2: Nhanh, dứt khoát
   public void EnableAttack2Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage);
+    weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack2);
   }
 
   // Đòn 3: Đòn kết đầm tay
   public void EnableAttack3Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage);
+    weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack3);
   }
 
   // Charge Attack - Hit 1: Chém mở màn
   public void EnableChargeHit1Hitbox()
   {
-    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage);
+    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
   }
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm
   public void EnableChargeHit2Hitbox()
   {
-    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage);
+    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
   }
 
   // Counter Attack: Nhát chém trừng phạt cực nặng
   public void EnableCounterAttackHitbox()
   {
-    weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage);
+    weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Counter);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
   }
 

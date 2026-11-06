@@ -1588,6 +1588,7 @@ GameObject:
   - component: {fileID: 4698226416880465567}
   - component: {fileID: 6398846446710257264}
   - component: {fileID: 5368507876461529506}
+  - component: {fileID: 8192837465918273645}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1718,9 +1719,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba56f90bd0b315947a05c2df791af57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 400
+  maxHealth: 200
   currentHealth: 0
   isInvulnerable: 0
+  baseDefense: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1778,7 +1780,7 @@ MonoBehaviour:
   autoSwitchOnTargetDeath: 1
   switchTargetRange: 16
   enableMouseFlickSwitch: 1
-  mouseFlickThreshold: 20
+  mouseFlickThreshold: 25
   switchCooldown: 0.25
   flickDecayRate: 120
   minViewportSeparation: 0.03
@@ -1973,6 +1975,20 @@ MonoBehaviour:
   gizmoColor: {r: 1, g: 0.9, b: 0.4, a: 0.75}
   gameSpeed: 1
   enableSlowMoHotkeys: 1
+--- !u!114 &8192837465918273645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452323325029716220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 126921afad8628248990196f49ec3ae3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponVisualSync
+  visualHolder: {fileID: 2153185421476325604}
+  defaultWeaponPrefab: {fileID: 2832456341018965481, guid: 4fcbb3850394fe342a948f136e066446, type: 3}
 --- !u!1 &5454798165073531583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2905,7 +2921,7 @@ MonoBehaviour:
   attack1Damage: 22
   attack2Damage: 22
   attack3Damage: 28
-  chargeAttackDamage: 25
+  chargeAttackDamage: 70
   counterAttackDamage: 80
   slashProjectilePrefab: {fileID: 1574271572835420843, guid: 855685a51bd1d6c41b21c09c0becf7f3, type: 3}
   projectileSpawnPoint: {fileID: 3075534017654103088}
@@ -2914,6 +2930,8 @@ MonoBehaviour:
   swordAuraBlueVfx: {fileID: 4914798154512801455}
   swordAuraOrangeVfx: {fileID: 4760956275858655070}
   swordAuraUltVfx: {fileID: 7273193878856629958}
+  skillEScalingMultiplier: 1.4
+  skillQScalingMultiplier: 2
   ultDamage: 250
   ultKnockback: 3.5
   ultPoiseDamage: 200

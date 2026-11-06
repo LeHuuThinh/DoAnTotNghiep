@@ -403,6 +403,7 @@ namespace InfiniteLabyrinth.UI
         if (currentItem.Icon != null)
         {
           itemIcon.gameObject.SetActive(true);
+          itemIcon.enabled = true;
           itemIcon.sprite = currentItem.Icon;
           itemIcon.color = Color.white;
         }

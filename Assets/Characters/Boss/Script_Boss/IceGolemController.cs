@@ -125,6 +125,9 @@ public class IceGolemController : MonoBehaviour
     [Header("=== BANG THONG SO BOSS (CHINH TRUC TIEP TRONG UNITY INSPECTOR) ===")]
     [Tooltip("Mau toi da cua Boss (Tu dong dong bo vao Health component khi chay game va trong Editor)")]
     [SerializeField] private float bossMaxHealth = 1500f;
+    [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của Boss (Giảm sát thương % theo chuẩn ARPG: Damage * 100 / (100 + Def))")]
+    [SerializeField] private float bossDefense = 35f;
+    public float BossDefense => bossDefense;
     [Tooltip("Thanh chiu don Poise toi da cua Boss (500) - Tieu hao khi bi danh theo do uy luc don danh, ve 0 se gay suy yeu WeakenIG")]
     [SerializeField] private float maxPoise = 500f;
     [Tooltip("Diem Poise chiu don hien tai cua Boss")]
@@ -582,6 +585,7 @@ public class IceGolemController : MonoBehaviour
                 baseHpField.SetValue(health, bossMaxHealth);
             }
 
+            health.SetBaseDefense(bossDefense);
             health.onHealthChanged?.Invoke(bossMaxHealth, bossMaxHealth);
         }
     }

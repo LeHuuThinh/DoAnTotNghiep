@@ -18,6 +18,12 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Số vàng ban đầu")]
     [SerializeField] private int initialGold = 50;
 
+    [Header("=== TRANG BỊ MẶC ĐỊNH CHO TÂN BINH ===")]
+    [Tooltip("Vũ khí mặc định ban đầu (Kiếm gỗ tập sự)")]
+    [SerializeField] private ItemData starterWeapon;
+    [Tooltip("Giáp mặc định ban đầu (Áo vải tân binh)")]
+    [SerializeField] private ItemData starterArmor;
+
     [Header("=== DỮ LIỆU THỜI GIAN THỰC (READ-ONLY INSPECTOR) ===")]
     [SerializeField] private int currentGold = 0;
     [SerializeField] private ItemData equippedWeapon;
@@ -57,6 +63,14 @@ namespace InfiniteLabyrinth.Inventory
     private void Start()
     {
       CachePlayerReferences();
+      if (equippedWeapon != null)
+      {
+        OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+      }
+      if (equippedArmor != null)
+      {
+        OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+      }
     }
 
     private void InitializeInventory()
@@ -69,6 +83,15 @@ namespace InfiniteLabyrinth.Inventory
         {
           slots.Add(new InventorySlot());
         }
+      }
+
+      if (equippedWeapon == null && starterWeapon != null)
+      {
+        equippedWeapon = starterWeapon;
+      }
+      if (equippedArmor == null && starterArmor != null)
+      {
+        equippedArmor = starterArmor;
       }
     }
 
@@ -300,6 +323,157 @@ namespace InfiniteLabyrinth.Inventory
     // =========================================================================
     // 2. TRANG BỊ & THÁO ĐỒ (EQUIPMENT)
     // =========================================================================
+
+    /// <summary>
+    /// Hoán đổi vị trí hoặc gộp stack giữa 2 ô trong túi đồ (hỗ trợ kéo thả)
+    /// </summary>
+    public bool SwapOrMergeSlots(int fromIndex, int toIndex)
+    {
+      if (fromIndex < 0 || fromIndex >= slots.Count) return false;
+      if (toIndex < 0 || toIndex >= slots.Count) return false;
+      if (fromIndex == toIndex) return false;
+
+      var slotA = slots[fromIndex];
+      var slotB = slots[toIndex];
+
+      if (slotA.IsEmpty) return false;
+
+      // 1. Nếu ô B đang trống -> Chuyển toàn bộ sang B
+      if (slotB.IsEmpty)
+      {
+        slotB.SetItem(slotA.ItemData, slotA.Quantity);
+        slotA.Clear();
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+
+      // 2. Nếu ô B có cùng loại vật phẩm và cho phép xếp chồng -> Gộp stack
+      if (slotA.ItemData.Id == slotB.ItemData.Id && slotA.ItemData.IsStackable)
+      {
+        int remainder = slotB.AddQuantity(slotA.Quantity);
+        if (remainder > 0)
+        {
+          slotA.SetItem(slotA.ItemData, remainder);
+        }
+        else
+        {
+          slotA.Clear();
+        }
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+
+      // 3. Nếu là 2 vật phẩm khác nhau (hoặc ô B đã đầy stack) -> Hoán đổi (Swap)
+      ItemData tempItem = slotB.ItemData;
+      int tempQty = slotB.Quantity;
+
+      slotB.SetItem(slotA.ItemData, slotA.Quantity);
+      slotA.SetItem(tempItem, tempQty);
+
+      OnInventoryChanged?.Invoke();
+      return true;
+    }
+
+    /// <summary>
+    /// Trang bị một món đồ từ ô cụ thể trong túi đồ (nếu đã có trang bị cũ thì hoán đổi về đúng ô đó)
+    /// </summary>
+    public bool EquipFromSlot(int slotIndex)
+    {
+      if (slotIndex < 0 || slotIndex >= slots.Count) return false;
+      var slot = slots[slotIndex];
+      if (slot.IsEmpty) return false;
+
+      ItemData item = slot.ItemData;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return false;
+
+      if (item.ItemType == ItemType.Weapon)
+      {
+        ItemData oldWeapon = equippedWeapon;
+        equippedWeapon = item;
+        slot.Clear();
+
+        if (oldWeapon != null)
+        {
+          slot.SetItem(oldWeapon, 1);
+        }
+
+        OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+      }
+      else if (item.ItemType == ItemType.Armor)
+      {
+        ItemData oldArmor = equippedArmor;
+        equippedArmor = item;
+        slot.Clear();
+
+        if (oldArmor != null)
+        {
+          slot.SetItem(oldArmor, 1);
+        }
+
+        OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+      }
+
+      OnInventoryChanged?.Invoke();
+      return true;
+    }
+
+    /// <summary>
+    /// Tháo trang bị (Vũ khí / Giáp) và đặt vào một ô cụ thể trong túi đồ.
+    /// Nếu ô đích có trang bị cùng loại -> Hoán đổi (trang bị món trong ô đó và đưa món cũ vào ô đó).
+    /// </summary>
+    public bool UnequipToSlot(ItemType type, int targetSlotIndex)
+    {
+      if (targetSlotIndex < 0 || targetSlotIndex >= slots.Count) return false;
+      ItemData toUnequip = (type == ItemType.Weapon) ? equippedWeapon : equippedArmor;
+      if (toUnequip == null) return false;
+
+      var targetSlot = slots[targetSlotIndex];
+
+      // 1. Ô đích đang trống -> Đặt đồ tháo vào ô đó
+      if (targetSlot.IsEmpty)
+      {
+        targetSlot.SetItem(toUnequip, 1);
+
+        if (type == ItemType.Weapon)
+        {
+          equippedWeapon = null;
+          OnEquipmentChanged?.Invoke(ItemType.Weapon, null);
+        }
+        else
+        {
+          equippedArmor = null;
+          OnEquipmentChanged?.Invoke(ItemType.Armor, null);
+        }
+
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+
+      // 2. Ô đích có một trang bị cùng loại -> Hoán đổi trang bị!
+      if (targetSlot.ItemData != null && targetSlot.ItemData.ItemType == type)
+      {
+        ItemData newEquip = targetSlot.ItemData;
+        targetSlot.SetItem(toUnequip, 1);
+
+        if (type == ItemType.Weapon)
+        {
+          equippedWeapon = newEquip;
+          OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+        }
+        else
+        {
+          equippedArmor = newEquip;
+          OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+        }
+
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+
+      // 3. Ô đích chứa vật phẩm không phù hợp (Potion, Material...) -> Báo không thể hoán đổi vào ô đó
+      Debug.LogWarning($"[Inventory] Không thể tháo {type} vào ô chứa {targetSlot.ItemData?.ItemName}!");
+      return false;
+    }
 
     /// <summary>
     /// Trang bị một món đồ từ túi đồ

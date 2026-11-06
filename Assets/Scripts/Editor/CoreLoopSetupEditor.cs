@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using InfiniteLabyrinth.UI;
 
 namespace InfiniteLabyrinth.Editor
 {
@@ -29,16 +30,10 @@ namespace InfiniteLabyrinth.Editor
 
             Debug.Log("<color=green><b>[Core Loop Setup]</b></color> 🎉 ĐÃ HOÀN TẤT CẤU HÌNH 100% VÒNG LẶP GAME (GM-01, GM-02, GM-03)!");
             EditorUtility.DisplayDialog("Thành Công Rực Rỡ", 
-                "Đã cấu hình tự động toàn diện toàn bộ Vòng Lặp Trò Chơi (Task GM-01 -> GM-03) thành công!
-
-" +
-                "1. GM-01: TopCornerInfo (Day/Floor) & MidScreenInfo (Area Banner)
-" +
-                "2. GM-02: DeadScreenUI & Chuỗi Hồi Sinh tại Chuông Làng (Respawn Loop)
-" +
-                "3. GM-03: VictoryPortalUI kết nối GameManager (Về Làng qua Day mới / Xuống Tầng Kế)
-
-" +
+                "Đã cấu hình tự động toàn diện toàn bộ Vòng Lặp Trò Chơi (Task GM-01 -> GM-03) thành công!\n\n" +
+                "1. GM-01: TopCornerInfo (Day/Floor) & MidScreenInfo (Area Banner)\n" +
+                "2. GM-02: DeadScreenUI & Chuỗi Hồi Sinh tại Chuông Làng (Respawn Loop)\n" +
+                "3. GM-03: VictoryPortalUI kết nối GameManager (Về Làng qua Day mới / Xuống Tầng Kế)\n\n" +
                 "Mọi tham chiếu đã được liên kết và sẵn sàng trải nghiệm!", 
                 "Bắt Đầu Chơi Ngay");
         }

@@ -193,22 +193,15 @@ MonoBehaviour:
   worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
   lootTable:
-  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+  - item: {fileID: 11400000, guid: b09c634f9d2eec04692a983380c66236, type: 2}
+    randomItemPool: []
     dropChance: 0.3
     minQuantity: 1
     maxQuantity: 1
-  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
-    dropChance: 0.25
-    minQuantity: 1
-    maxQuantity: 2
-  - item: {fileID: 11400000, guid: 8448360df3f399940bd0799e9232720b, type: 2}
-    dropChance: 0.08
-    minQuantity: 1
-    maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
-  goldDropChance: 0.75
-  minGold: 5
-  maxGold: 25
+  goldDropChance: 1
+  minGold: 3
+  maxGold: 8
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3

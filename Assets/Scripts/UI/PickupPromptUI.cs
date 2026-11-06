@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 using InfiniteLabyrinth.Inventory;
 
@@ -19,8 +20,12 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private GameObject promptRoot;
     [Tooltip("Icon 2D của vật phẩm")]
     [SerializeField] private Image itemIcon;
-    [Tooltip("Viền màu hiển thị độ hiếm")]
-    [SerializeField] private Image rarityBorder;
+    [Tooltip("Nền glow mờ theo phẩm cấp")]
+    [SerializeField] private Image rarityBg;
+    [Tooltip("Thanh bar dưới icon theo phẩm cấp")]
+    [SerializeField] private Image rarityBar;
+    [FormerlySerializedAs("rarityBorder")]
+    [SerializeField] private Image legacyRarityBorder;
     [Tooltip("Tên vật phẩm")]
     [SerializeField] private TextMeshProUGUI itemNameText;
     [Tooltip("Gợi ý phím bấm và số lượng (ví dụ: [F] Nhặt x5)")]
@@ -83,16 +88,21 @@ namespace InfiniteLabyrinth.UI
     {
       if (itemIcon == null)
       {
-        itemIcon = transform.Find("Icon")?.GetComponent<Image>() 
-                ?? transform.Find("IconGroup/Icon")?.GetComponent<Image>()
+        itemIcon = transform.Find("IconGroup/Icon")?.GetComponent<Image>()
+                ?? transform.Find("Icon")?.GetComponent<Image>()
                 ?? GetComponentInChildren<Image>();
       }
 
-      if (rarityBorder == null)
+      if (rarityBg == null)
       {
-        rarityBorder = transform.Find("Icon/Border")?.GetComponent<Image>()
-                    ?? transform.Find("IconGroup/Border")?.GetComponent<Image>()
-                    ?? transform.Find("Border")?.GetComponent<Image>();
+        rarityBg = transform.Find("IconGroup/RarityBG")?.GetComponent<Image>()
+                ?? transform.Find("RarityBG")?.GetComponent<Image>();
+      }
+
+      if (rarityBar == null)
+      {
+        rarityBar = transform.Find("IconGroup/RarityBar")?.GetComponent<Image>()
+                 ?? transform.Find("RarityBar")?.GetComponent<Image>();
       }
 
       if (itemNameText == null)
@@ -105,7 +115,8 @@ namespace InfiniteLabyrinth.UI
       {
         promptKeyText = transform.Find("KeyPrompt")?.GetComponent<TextMeshProUGUI>()
                      ?? transform.Find("Key")?.GetComponent<TextMeshProUGUI>()
-                     ?? transform.Find("Prompt")?.GetComponent<TextMeshProUGUI>();
+                     ?? transform.Find("Prompt")?.GetComponent<TextMeshProUGUI>()
+                     ?? transform.Find("PickupText")?.GetComponent<TextMeshProUGUI>();
       }
     }
 
@@ -405,13 +416,40 @@ namespace InfiniteLabyrinth.UI
 
       if (itemIcon != null)
       {
-        itemIcon.sprite = item.Icon;
-        itemIcon.enabled = (item.Icon != null);
+        bool hasIcon = (item != null && item.Icon != null);
+        itemIcon.gameObject.SetActive(hasIcon);
+        itemIcon.enabled = hasIcon;
+        if (hasIcon)
+        {
+          itemIcon.sprite = item.Icon;
+          itemIcon.color = Color.white;
+        }
       }
 
-      if (rarityBorder != null)
+      // Đổi màu nền glow mờ và thanh bar dưới icon theo phẩm cấp
+      if (rarityBg != null)
       {
-        rarityBorder.color = rarityColor;
+        rarityBg.gameObject.SetActive(true);
+        rarityBg.color = rarityColor;
+      }
+
+      if (rarityBar != null)
+      {
+        rarityBar.gameObject.SetActive(true);
+        rarityBar.color = rarityColor;
+      }
+
+      // Nếu có hệ thống hiển thị mới (rarityBg / rarityBar) thì trả legacyRarityBorder về màu chuẩn
+      if (legacyRarityBorder != null)
+      {
+        if (rarityBg != null || rarityBar != null)
+        {
+          legacyRarityBorder.color = Color.white;
+        }
+        else
+        {
+          legacyRarityBorder.color = rarityColor;
+        }
       }
 
       if (itemNameText != null)

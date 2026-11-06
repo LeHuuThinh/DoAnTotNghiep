@@ -34,6 +34,7 @@ public class WeaponHitbox : MonoBehaviour
   private float currentHitlag = 0f; // Biến lưu thời gian hitlag của nhát chém
   private float currentLethalHitlag = 0.18f; // Biến lưu thời gian hitlag khi kết liễu
   private float currentPoiseDamage = -1f; // Biến lưu sát thương Poise (làm mất thăng bằng) của nhát chém
+  private InfiniteLabyrinth.UI.Combat.DamageNumberType currentDamageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal;
   private Transform attacker;
 
   // Danh sách lưu các mục tiêu đã trúng đòn trong 1 lần vung kiếm (chống lặp dame)
@@ -64,12 +65,13 @@ public class WeaponHitbox : MonoBehaviour
   /// lethalHitlag = -1f để tự động kế thừa hoặc dùng defaultLethalHitlag.
   /// poiseDamage = -1f để dùng mặc định nếu không truyền từ đòn đánh.
   /// </summary>
-  public void EnableHitbox(float damage, float knockback, float hitlag = 0f, float lethalHitlag = -1f, float poiseDamage = -1f)
+  public void EnableHitbox(float damage, float knockback, float hitlag = 0f, float lethalHitlag = -1f, float poiseDamage = -1f, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal)
   {
     currentDamage = damage;
     currentKnockback = knockback;
     currentHitlag = hitlag;
     currentPoiseDamage = poiseDamage;
+    currentDamageType = damageType;
     if (lethalHitlag >= 0f)
     {
       currentLethalHitlag = lethalHitlag;
@@ -124,7 +126,7 @@ public class WeaponHitbox : MonoBehaviour
       }
 
       // Gây sát thương (kèm tham chiếu attacker để hệ thống Parry nhận diện chính xác kẻ tấn công)
-      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback, attacker);
+      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback, attacker, currentDamageType);
       OnHitTarget?.Invoke(damageable, currentDamage);
 
       // Nhận diện đòn đánh có phải là đòn kết liễu hạ gục mục tiêu không

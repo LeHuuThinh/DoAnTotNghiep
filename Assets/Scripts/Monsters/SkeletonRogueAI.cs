@@ -26,6 +26,7 @@ public class SkeletonRogueAI : EnemyAIBase
 
   protected override void Awake()
   {
+    if (enemyDefense <= 0f) enemyDefense = 10f;
     base.Awake();
 
     // Thiết lập mặc định cự ly phù hợp với xạ thủ nếu chưa chỉnh trong Inspector

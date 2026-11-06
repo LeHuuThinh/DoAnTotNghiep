@@ -1,0 +1,29 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Sword_Broad_Iron
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: weapon_sword_broad_iron
+  itemName: Broad Iron Blade
+  description: "A heavy broadsword designed for sweeping cleaves and subtle knockback force (+18 Attack)."
+  icon: {fileID: 21300000, guid: 9a03f2580efc16f46b4e5313e77383a2, type: 3}
+  itemType: 0
+  rarity: 1
+  maxStack: 1
+  goldValue: 175
+  bonusAttack: 18
+  bonusDefense: 0
+  bonusHealth: 0
+  bonusStamina: 0
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 100291191792019390, guid: ef7ac298bf6cedf429facfa4c22702b6, type: 3}

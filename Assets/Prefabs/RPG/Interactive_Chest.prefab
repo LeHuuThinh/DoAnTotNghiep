@@ -10011,7 +10011,6 @@ MonoBehaviour:
   openVfxObject: {fileID: 3373104728743347158}
   openVfxPrefab: {fileID: 0}
   vfxDelay: 0
-  loopVfx: 1
   vfxDuration: 5
 --- !u!114 &6369870605657154932
 MonoBehaviour:
@@ -10029,25 +10028,28 @@ MonoBehaviour:
   goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
   lootTable:
   - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
-    dropChance: 0.75
+    randomItemPool: []
+    dropChance: 1
     minQuantity: 1
     maxQuantity: 2
   - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    randomItemPool: []
     dropChance: 0.4
     minQuantity: 1
-    maxQuantity: 3
-  - item: {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
-    dropChance: 0.35
-    minQuantity: 1
     maxQuantity: 1
-  - item: {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+  - item: {fileID: 11400000, guid: 0a5275c8def1647489bd98f46bc3a2d2, type: 2}
+    randomItemPool:
+    - {fileID: 11400000, guid: 0a5275c8def1647489bd98f46bc3a2d2, type: 2}
+    - {fileID: 11400000, guid: 1fa95291773753f4b9021b52e49ec4c2, type: 2}
+    - {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+    - {fileID: 11400000, guid: 497c38e457a3ced41aaad0c647b95eda, type: 2}
     dropChance: 0.25
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 1
-  minGold: 25
-  maxGold: 60
+  minGold: 30
+  maxGold: 75
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3

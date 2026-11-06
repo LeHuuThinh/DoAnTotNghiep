@@ -55,6 +55,12 @@ public abstract class EnemyAIBase : MonoBehaviour
 
   public int ExpReward => expReward;
 
+  [Header("Defense Settings")]
+  [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của quái (giảm sát thương nhận vào theo công thức % chuẩn ARPG: Damage * 100 / (100 + Def))")]
+  [SerializeField] protected float enemyDefense = 10f;
+
+  public float EnemyDefense => enemyDefense;
+
   // Runtime State
   protected NavMeshAgent agent;
   protected Health health;
@@ -101,6 +107,11 @@ public abstract class EnemyAIBase : MonoBehaviour
     agent = GetComponent<NavMeshAgent>();
     health = GetComponent<Health>();
     if (animator == null) animator = GetComponentInChildren<Animator>();
+
+    if (health != null && health.BaseDefense <= 0f && enemyDefense > 0f)
+    {
+      health.SetBaseDefense(enemyDefense);
+    }
 
     // Cache components phục vụ tối ưu hóa LOD / Hibernation
     cachedRenderers = GetComponentsInChildren<Renderer>(true);

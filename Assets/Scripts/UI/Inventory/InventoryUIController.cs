@@ -14,6 +14,7 @@ namespace InfiniteLabyrinth.UI
   /// </summary>
   public class InventoryUIController : MonoBehaviour
   {
+    public static InventoryUIController Instance { get; private set; }
     public static bool IsOpen { get; private set; } = false;
 
     public enum InventoryTab
@@ -104,6 +105,13 @@ namespace InfiniteLabyrinth.UI
 
     private void Awake()
     {
+      Instance = this;
+
+      if (GetComponent<InventoryDragDropController>() == null)
+      {
+        gameObject.AddComponent<InventoryDragDropController>();
+      }
+
       EnsureEventSystem();
 
       if (rootCanvasGroup == null)
@@ -201,6 +209,11 @@ namespace InfiniteLabyrinth.UI
 
     private void OnDestroy()
     {
+      if (Instance == this)
+      {
+        Instance = null;
+      }
+
       if (InventoryManager.HasInstance)
       {
         InventoryManager.Instance.OnInventoryChanged -= HandleInventoryDataChanged;
@@ -209,6 +222,17 @@ namespace InfiniteLabyrinth.UI
       }
 
       IsOpen = false;
+    }
+
+    /// <summary>
+    /// Đóng popup xem chi tiết vật phẩm nếu đang mở
+    /// </summary>
+    public void CloseDetailPopup()
+    {
+      if (itemDetailPopup != null && itemDetailPopup.gameObject.activeSelf)
+      {
+        itemDetailPopup.Hide();
+      }
     }
 
     private void Update()
@@ -313,6 +337,12 @@ namespace InfiniteLabyrinth.UI
           esObj.AddComponent<InputSystemUIInputModule>();
           Debug.LogWarning("[Inventory] Scene thiếu EventSystem! Đã tự động tạo EventSystem + InputSystemUIInputModule.");
         }
+      }
+
+      if (EventSystem.current != null)
+      {
+        // Đặt ngưỡng phân biệt giữa Click và Drag (8px) giúp mở popup click rất nhạy và kéo thả mượt mà
+        EventSystem.current.pixelDragThreshold = 8;
       }
     }
 
