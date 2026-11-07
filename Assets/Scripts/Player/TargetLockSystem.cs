@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class TargetLockSystem : MonoBehaviour
@@ -54,6 +54,7 @@ public class TargetLockSystem : MonoBehaviour
   private Health targetHealth;
   private Health playerHealth;
   private Camera mainCamera;
+  [SerializeField] private PlayerCombat playerCombat;
 
   // Quản lý chuyển mục tiêu thủ công bằng chuột
   private float accumulatedFlickX = 0f;
@@ -90,6 +91,51 @@ public class TargetLockSystem : MonoBehaviour
 
     playerHealth = GetComponent<Health>();
     if (playerHealth == null) playerHealth = GetComponentInParent<Health>();
+
+    if (playerCombat == null) playerCombat = GetComponent<PlayerCombat>();
+    if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
+    if (playerCombat == null) playerCombat = GetComponentInParent<PlayerCombat>();
+  }
+
+  private void Start()
+  {
+    StartCoroutine(WaitForInventoryLockSyncRoutine());
+  }
+
+  private System.Collections.IEnumerator WaitForInventoryLockSyncRoutine()
+  {
+    while (!InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      yield return null;
+    }
+
+    InfiniteLabyrinth.Inventory.InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChangedForLock;
+  }
+
+  private void OnDestroy()
+  {
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      InfiniteLabyrinth.Inventory.InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChangedForLock;
+    }
+  }
+
+  private void HandleEquipmentChangedForLock(InfiniteLabyrinth.Inventory.ItemType type, InfiniteLabyrinth.Inventory.ItemData item)
+  {
+    if (type == InfiniteLabyrinth.Inventory.ItemType.Weapon && item == null)
+    {
+      if (IsLockedOn)
+      {
+        UnlockTarget();
+      }
+    }
+  }
+
+  private bool CanLockOn()
+  {
+    if (playerCombat != null && !playerCombat.HasWeapon) return false;
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance && InfiniteLabyrinth.Inventory.InventoryManager.Instance.EquippedWeapon == null) return false;
+    return true;
   }
 
   private void OnEnable()
@@ -138,6 +184,7 @@ public class TargetLockSystem : MonoBehaviour
       }
       else
       {
+        if (!CanLockOn()) return;
         LockClosestTarget();
       }
     }

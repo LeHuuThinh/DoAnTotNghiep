@@ -1,7 +1,10 @@
 using System;
 using System.Text;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using TMPro;
 using InfiniteLabyrinth.Inventory;
 
@@ -63,6 +66,8 @@ namespace InfiniteLabyrinth.UI
 
     private CanvasGroup popupCanvasGroup;
     private Coroutine activeTransitionRoutine;
+    private RectTransform popupRectTransform;
+    private int lastOpenedFrame = -1;
 
     public InventorySlotUI CurrentBagSlot => currentBagSlot;
     public EquipmentSlotUI CurrentEquipSlot => currentEquipSlot;
@@ -121,6 +126,10 @@ namespace InfiniteLabyrinth.UI
       {
         popupCanvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
       }
+      if (popupRectTransform == null)
+      {
+        popupRectTransform = transform as RectTransform;
+      }
     }
 
     private void OnDisable()
@@ -130,6 +139,78 @@ namespace InfiniteLabyrinth.UI
         StopCoroutine(activeTransitionRoutine);
         activeTransitionRoutine = null;
       }
+    }
+
+    private void Update()
+    {
+      if (btnUse != null && btnUse.gameObject.activeSelf && InventoryManager.HasInstance)
+      {
+        btnUse.interactable = !InventoryManager.Instance.IsConsumableOnCooldown;
+      }
+
+      CheckClickOutside();
+    }
+
+    /// <summary>
+    /// Đóng popup khi click chuột ra bên ngoài khung chi tiết (trừ trường hợp click vào ô đồ khác)
+    /// </summary>
+    private void CheckClickOutside()
+    {
+      if (!gameObject.activeSelf) return;
+
+      // Đang mờ dần hoặc chưa hiển thị
+      if (popupCanvasGroup != null && popupCanvasGroup.alpha < 0.05f) return;
+
+      // Bỏ qua nếu không có phím chuột trái vừa nhấn trong frame này
+      if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
+
+      // Bỏ qua frame vừa mở popup để tránh đóng ngay lập tức
+      if (Time.frameCount == lastOpenedFrame) return;
+
+      // Bỏ qua nếu đang kéo thả vật phẩm trong kho đồ
+      if (InventoryDragDropController.Instance != null && InventoryDragDropController.Instance.IsDragging) return;
+
+      Vector2 mousePos = Mouse.current.position.ReadValue();
+
+      // 1. Kiểm tra xem chuột có nằm trong khung của ItemDetailPopup hay không
+      if (popupRectTransform == null) popupRectTransform = transform as RectTransform;
+
+      Canvas rootCanvas = GetComponentInParent<Canvas>();
+      Camera uiCam = (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay) ? rootCanvas.worldCamera : null;
+
+      if (popupRectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(popupRectTransform, mousePos, uiCam))
+      {
+        // Chuột nằm trong khung chi tiết -> Cho phép thao tác các nút bên trong bình thường
+        return;
+      }
+
+      // 2. Chuột nằm ngoài khung popup: Kiểm tra xem có click trúng ô đồ nào không
+      if (EventSystem.current != null)
+      {
+        PointerEventData pointerData = new PointerEventData(EventSystem.current)
+        {
+          position = mousePos
+        };
+
+        List<RaycastResult> raycastResults = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, raycastResults);
+
+        for (int i = 0; i < raycastResults.Count; i++)
+        {
+          GameObject hitObj = raycastResults[i].gameObject;
+          if (hitObj == null) continue;
+
+          // Nếu click trúng bất kỳ ô đồ nào (túi đồ hoặc trang bị) -> Để sự kiện Click của ô đó tự xử lý (chuyển item hoặc toggle)
+          if (hitObj.GetComponentInParent<InventorySlotUI>() != null ||
+              hitObj.GetComponentInParent<EquipmentSlotUI>() != null)
+          {
+            return;
+          }
+        }
+      }
+
+      // 3. Chuột bấm ra ngoài khung popup và không bấm vào ô đồ nào -> Tự động đóng popup
+      Hide();
     }
 
     /// <summary>
@@ -156,6 +237,7 @@ namespace InfiniteLabyrinth.UI
 
       currentBagSlot.SetSelected(true);
       UpdateUIContent();
+      lastOpenedFrame = Time.frameCount;
       ShowNearSlotAnimated(slot.transform as RectTransform);
     }
 
@@ -183,6 +265,7 @@ namespace InfiniteLabyrinth.UI
 
       currentEquipSlot.SetSelected(true);
       UpdateUIContent();
+      lastOpenedFrame = Time.frameCount;
       ShowNearSlotAnimated(eqSlot.transform as RectTransform);
     }
 
@@ -433,10 +516,10 @@ namespace InfiniteLabyrinth.UI
     {
       if (isEquippedTarget)
       {
-        // Đang xem đồ trên người (từ WeaponSlot hoặc ArmorSlot)
+        // Đang xem đồ trên người (từ WeaponSlot, ArmorSlot hoặc UsableSlot)
         if (btnEquip != null) btnEquip.gameObject.SetActive(false);
         if (btnUnequip != null) btnUnequip.gameObject.SetActive(true); // Nút Tháo ra hiện lên
-        if (btnUse != null) btnUse.gameObject.SetActive(false);
+        if (btnUse != null) btnUse.gameObject.SetActive(currentItem != null && currentItem.ItemType == ItemType.Consumable);
         if (btnDrop != null) btnDrop.gameObject.SetActive(false); // Không thể vứt đồ đang mặc
       }
       else
@@ -456,7 +539,7 @@ namespace InfiniteLabyrinth.UI
             break;
 
           case ItemType.Consumable:
-            if (btnEquip != null) btnEquip.gameObject.SetActive(false);
+            if (btnEquip != null) btnEquip.gameObject.SetActive(true);
             if (btnUse != null) btnUse.gameObject.SetActive(true);
             break;
 
@@ -524,7 +607,16 @@ namespace InfiniteLabyrinth.UI
     {
       if (currentItem == null || currentBagSlot == null || !InventoryManager.HasInstance) return;
 
-      bool success = InventoryManager.Instance.Equip(currentItem);
+      bool success = false;
+      if (currentBagSlot.ActualBagIndex >= 0)
+      {
+        success = InventoryManager.Instance.EquipFromSlot(currentBagSlot.ActualBagIndex);
+      }
+      else
+      {
+        success = InventoryManager.Instance.Equip(currentItem);
+      }
+
       if (success)
       {
         Hide();
@@ -546,20 +638,40 @@ namespace InfiniteLabyrinth.UI
 
     private void HandleUse()
     {
-      if (currentItem == null || currentBagSlot == null || !InventoryManager.HasInstance) return;
+      if (currentItem == null || !InventoryManager.HasInstance) return;
 
-      bool success = InventoryManager.Instance.UseItem(currentItem);
-      if (success)
+      if (isEquippedTarget)
       {
-        if (currentBagSlot.CurrentQuantity <= 1)
+        bool success = InventoryManager.Instance.UseEquippedUsable();
+        if (success)
         {
-          Hide();
+          if (InventoryManager.Instance.EquippedUsable == null)
+          {
+            Hide();
+          }
+          else
+          {
+            UpdateUIContent();
+          }
+          OnActionCompleted?.Invoke();
         }
-        else
+      }
+      else
+      {
+        if (currentBagSlot == null) return;
+        bool success = InventoryManager.Instance.UseItem(currentItem);
+        if (success)
         {
-          UpdateUIContent();
+          if (currentBagSlot.CurrentQuantity <= 1)
+          {
+            Hide();
+          }
+          else
+          {
+            UpdateUIContent();
+          }
+          OnActionCompleted?.Invoke();
         }
-        OnActionCompleted?.Invoke();
       }
     }
 

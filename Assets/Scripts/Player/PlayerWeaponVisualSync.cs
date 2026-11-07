@@ -41,7 +41,11 @@ public class PlayerWeaponVisualSync : MonoBehaviour
 
   private void EnsureVisualHolder()
   {
-    if (visualHolder != null) return;
+    if (visualHolder != null)
+    {
+      SetLayerRecursively(visualHolder.gameObject, visualHolder.gameObject.layer);
+      return;
+    }
 
     // 1. Tìm qua WeaponHitbox trên tay phải
     var hitbox = GetComponentInChildren<WeaponHitbox>(true);
@@ -51,10 +55,12 @@ public class PlayerWeaponVisualSync : MonoBehaviour
       if (vh != null)
       {
         visualHolder = vh;
+        SetLayerRecursively(visualHolder.gameObject, visualHolder.gameObject.layer);
         return;
       }
       // Nếu Sword chưa có VisualHolder con, dùng chính Transform của hitbox
       visualHolder = hitbox.transform;
+      SetLayerRecursively(visualHolder.gameObject, visualHolder.gameObject.layer);
       return;
     }
 
@@ -64,6 +70,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
       if (tr.name == "VisualHolder")
       {
         visualHolder = tr;
+        SetLayerRecursively(visualHolder.gameObject, visualHolder.gameObject.layer);
         return;
       }
     }
@@ -74,6 +81,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
       if (tr.name == "Sword")
       {
         visualHolder = tr;
+        SetLayerRecursively(visualHolder.gameObject, visualHolder.gameObject.layer);
         return;
       }
     }
@@ -91,10 +99,8 @@ public class PlayerWeaponVisualSync : MonoBehaviour
 
     RegisterInventoryEvents();
 
-    if (InventoryManager.Instance.EquippedWeapon != null)
-    {
-      UpdateWeaponVisual(InventoryManager.Instance.EquippedWeapon);
-    }
+    // Luôn luôn đồng bộ hiển thị ngay cả khi ô vũ khí đang trống (để dọn sạch model mặc định)
+    UpdateWeaponVisual(InventoryManager.Instance.EquippedWeapon);
   }
 
   private void RegisterInventoryEvents()
@@ -129,8 +135,35 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     EnsureVisualHolder();
     if (visualHolder == null) return;
 
+    // Xóa model kiếm cũ bên trong visualHolder
+    ClearCurrentVisual();
+
+    var hitbox = GetComponentInChildren<WeaponHitbox>(true);
+
+    if (weaponItem == null)
+    {
+      // 1. KHI THÁO VŨ KHÍ (Ô KIẾM TRỐNG):
+      visualHolder.gameObject.SetActive(false);
+
+      if (hitbox != null)
+      {
+        hitbox.DisableHitbox();
+        hitbox.enabled = false;
+      }
+
+      Debug.Log("[PlayerWeaponVisualSync] Đã gỡ vũ khí: Ô kiếm trống, tắt mô hình trên tay.");
+      return;
+    }
+
+    // 2. KHI CÓ VŨ KHÍ TRANG BỊ:
+    visualHolder.gameObject.SetActive(true);
+    if (hitbox != null)
+    {
+      hitbox.enabled = true;
+    }
+
     GameObject prefabToSpawn = null;
-    if (weaponItem != null && weaponItem.WeaponVisualPrefab != null)
+    if (weaponItem.WeaponVisualPrefab != null)
     {
       prefabToSpawn = weaponItem.WeaponVisualPrefab;
     }
@@ -138,9 +171,6 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     {
       prefabToSpawn = defaultWeaponPrefab;
     }
-
-    // Xóa model kiếm cũ bên trong visualHolder
-    ClearCurrentVisual();
 
     if (prefabToSpawn != null)
     {
@@ -156,7 +186,24 @@ public class PlayerWeaponVisualSync : MonoBehaviour
         col.enabled = false;
       }
 
+      // Đảm bảo model kiếm kế thừa Layer của visualHolder (Layer 3: Player)
+      // để Camera xem trước (CharacterPreviewCamera) và ánh sáng có thể soi thấy
+      SetLayerRecursively(currentVisualInstance, visualHolder.gameObject.layer);
+
       Debug.Log($"[PlayerWeaponVisualSync] Đã trang bị thành công mô hình: {prefabToSpawn.name}");
+    }
+  }
+
+  /// <summary>
+  /// Gán layer đệ quy cho GameObject và tất cả các đối tượng con
+  /// </summary>
+  private void SetLayerRecursively(GameObject obj, int newLayer)
+  {
+    if (obj == null) return;
+    obj.layer = newLayer;
+    for (int i = 0; i < obj.transform.childCount; i++)
+    {
+      SetLayerRecursively(obj.transform.GetChild(i).gameObject, newLayer);
     }
   }
 

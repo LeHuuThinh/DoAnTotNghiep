@@ -39,14 +39,16 @@ namespace InfiniteLabyrinth.Interaction
     [SerializeField] private float flankDistance = 13.0f;
     [Tooltip("Độ cao Camera khi ở góc 3/4 nhìn lên bục")]
     [SerializeField] private float flankHeight = 5.2f;
-    [Tooltip("Thời gian camera ngắm Boss trên bục chuẩn bị nhảy (giây)")]
-    [SerializeField] private float bossJumpAnticipation = 0.5f;
+    [Tooltip("Thời gian camera ngắm Boss trên bục chuẩn bị nhảy (giây, giảm xuống 0.05s để Boss nhảy sớm hơn ~0.5s theo yêu cầu)")]
+    [SerializeField] private float bossJumpAnticipation = 0.05f;
     [Tooltip("Tốc độ Camera tiếp tục zoom/trôi chậm lại gần Boss trên bục trong lúc chờ nhảy (m/s)")]
     [SerializeField] private float anticipationDriftSpeed = 0.6f;
 
     [Header("=== PHA 3: BOSS NHẢY XUỐNG & RUNG MÀN HÌNH ===")]
-    [Tooltip("Thời gian tối đa camera lia hạ góc chúc bám theo nhịp rơi của Boss (giây, hoạt ảnh nhún đà + rơi ~2.0s)")]
-    [SerializeField] private float jumpCamFollowDuration = 2.5f;
+    [Tooltip("Thời gian tối đa camera lia hạ góc chúc bám theo nhịp rơi của Boss (giây, timeout an toàn; camera tự động kết thúc bám theo ngay khi Boss tiếp đất hasLanded)")]
+    [SerializeField] private float jumpCamFollowDuration = 5.0f;
+    [Tooltip("Tốc độ Camera lia mượt bám sát thân hình Boss khi đang lao xuống (lớn hơn = bám sát không bị trễ)")]
+    [SerializeField] private float jumpCamTrackingSpeed = 24.0f;
     [Tooltip("Cường độ rung màn hình khi Boss tiếp đất")]
     [SerializeField] private float landingShakeIntensity = 0.45f;
     [Tooltip("Thời gian rung màn hình khi tiếp đất")]
@@ -282,19 +284,29 @@ namespace InfiniteLabyrinth.Interaction
       }
 
       float jumpTimer = 0f;
-      while (jumpTimer < jumpCamFollowDuration && !hasLanded)
+      float maxSafetyTimeout = Mathf.Max(jumpCamFollowDuration, 5.0f);
+      while (!hasLanded && jumpTimer < maxSafetyTimeout)
       {
         jumpTimer += Time.deltaTime;
         if (boss != null)
         {
-          // Camera hạ góc chúc bám theo thân hình Boss đang rơi xuống
-          Vector3 bossCurrentCenter = boss.transform.position + Vector3.up * 2.5f;
-          camTrans.rotation = Quaternion.Slerp(camTrans.rotation, Quaternion.LookRotation((bossCurrentCenter - camTrans.position).normalized), Time.deltaTime * 12f);
+          // Camera lia hạ góc chúc bám chuẩn xác theo tâm ngực Boss đang rơi xuống theo thời gian thực
+          Vector3 bossCurrentCenter = boss.transform.position + Vector3.up * 2.2f;
+          Quaternion targetRot = Quaternion.LookRotation((bossCurrentCenter - camTrans.position).normalized);
+          camTrans.rotation = Quaternion.Slerp(camTrans.rotation, targetRot, Time.deltaTime * jumpCamTrackingSpeed);
         }
         yield return null;
       }
 
+      // Khóa thẳng góc nhìn vào tâm ngực Boss ngay khi tiếp đất chuẩn xác
+      if (boss != null)
+      {
+        Vector3 finalCenter = boss.transform.position + Vector3.up * 2.2f;
+        camTrans.rotation = Quaternion.LookRotation((finalCenter - camTrans.position).normalized);
+      }
+
       // CHẤN ĐỘNG TIẾP ĐẤT: RUNG MÀN HÌNH CỰC MẠNH (CAMERA SHAKE)
+      // CHỈ RUNG ĐÚNG KHI BOSS ĐÃ ĐÁP ĐẤT (hasLanded == true), loại bỏ hoàn toàn rung thừa giữa đường!
       yield return StartCoroutine(CameraShakeRoutine(camTrans, landingShakeDuration, landingShakeIntensity));
 
       // DELAY CHỜ BOSS TIẾP ĐẤT ĐỨNG DẬY HỒI VỊ XONG XUÔI (MẶC ĐỊNH 1.0S THEO YÊU CẦU)

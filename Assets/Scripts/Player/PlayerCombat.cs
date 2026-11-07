@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -157,7 +157,16 @@ public class PlayerCombat : MonoBehaviour
   private bool canCombo = false;
   private bool comboBuffered = false;
   private float attackTimer = 0f;
-  private float targetLayerWeight = 1f;
+  private float targetLayerWeight = 0f;
+
+  [Header("Weapon Stance State")]
+  private bool hasWeapon = false;
+  public bool HasWeapon => hasWeapon;
+
+  // Events thông báo khi thi triển kỹ năng cho UI (SkillIconUI)
+  public event System.Action OnSkillECasted;
+  public event System.Action OnSkillQCasted;
+  public event System.Action OnSkillRCasted;
 
   // Biến CD SKill
   private float skillETimer = 0f;
@@ -227,13 +236,65 @@ public class PlayerCombat : MonoBehaviour
     health = GetComponent<Health>();
     if (health == null) health = GetComponentInParent<Health>();
 
-    targetLayerWeight = 1f;
+    targetLayerWeight = 0f;
 
     if (weaponHitbox != null)
     {
       weaponHitbox.Initialize(transform.root);
       weaponHitbox.OnHitTarget += HandleWeaponHitTarget;
       if (swordTransform == null) swordTransform = weaponHitbox.transform;
+    }
+  }
+
+  private void Start()
+  {
+    StartCoroutine(WaitForInventoryAndSyncWeaponRoutine());
+  }
+
+  private System.Collections.IEnumerator WaitForInventoryAndSyncWeaponRoutine()
+  {
+    while (!InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      yield return null;
+    }
+
+    var inv = InfiniteLabyrinth.Inventory.InventoryManager.Instance;
+    inv.OnEquipmentChanged += HandleEquipmentChanged;
+    SetWeaponEquipped(inv.EquippedWeapon != null);
+  }
+
+  private void HandleEquipmentChanged(InfiniteLabyrinth.Inventory.ItemType type, InfiniteLabyrinth.Inventory.ItemData item)
+  {
+    if (type == InfiniteLabyrinth.Inventory.ItemType.Weapon)
+    {
+      SetWeaponEquipped(item != null);
+    }
+  }
+
+  /// <summary>
+  /// Cập nhật trạng thái trang bị vũ khí cho PlayerCombat
+  /// </summary>
+  public void SetWeaponEquipped(bool equipped)
+  {
+    hasWeapon = equipped;
+    targetLayerWeight = equipped ? 1f : 0f;
+
+    if (!equipped)
+    {
+      if (isAttacking || isParryActive)
+      {
+        ForceResetCombat();
+        if (isParryActive) OnParryAnimationEnd();
+      }
+
+      isHoldingMouse = false;
+      canCounterAttack = false;
+      weaponHitbox?.DisableHitbox();
+
+      if (swordAuraVfx != null) swordAuraVfx.SetActive(false);
+      if (swordAuraBlueVfx != null) swordAuraBlueVfx.SetActive(false);
+      if (swordAuraOrangeVfx != null) swordAuraOrangeVfx.SetActive(false);
+      if (swordAuraUltVfx != null) swordAuraUltVfx.SetActive(false);
     }
   }
 
@@ -260,6 +321,11 @@ public class PlayerCombat : MonoBehaviour
     if (weaponHitbox != null)
     {
       weaponHitbox.OnHitTarget -= HandleWeaponHitTarget;
+    }
+
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      InfiniteLabyrinth.Inventory.InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChanged;
     }
   }
 
@@ -361,6 +427,9 @@ public class PlayerCombat : MonoBehaviour
 
   private void HandleCombatInput()
   {
+    // Khóa toàn bộ tấn công, kỹ năng và đỡ đòn nếu không cầm vũ khí
+    if (!hasWeapon) return;
+
     if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
 
     // Chặn input nếu đang lăn, đang bị quái đánh choáng (stagger), hoặc đã chết
@@ -436,59 +505,22 @@ public class PlayerCombat : MonoBehaviour
     // =====================================================================
     if (!isAttacking && !isParryActive)
     {
-      // Phím E: Phóng dải năng lượng tầm xa (Tiêu hao 50 Spirit)
-      if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && skillETimer <= 0f)
+      // Phím E: Tung sóng kiếm tầm xa (Tiêu hao 50 Spirit)
+      if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
       {
-        if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillECost))
-        {
-          Debug.Log("<color=cyan>[Skill E]</color> Không đủ Spirit! Cần: " + playerStats.SkillECost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
-          return;
-        }
-
-        if (playerStats != null)
-        {
-          playerStats.ConsumeSpirit(playerStats.SkillECost);
-        }
-
-        ExecuteSkillE();
-        return;
+        if (TryCastSkillE()) return;
       }
 
       // Phím Q: Gồng nổ AOE xung quanh (Tiêu hao 100 Spirit)
-      if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame && skillQTimer <= 0f)
+      if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame)
       {
-        if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillQCost))
-        {
-          Debug.Log("<color=cyan>[Skill Q]</color> Không đủ Spirit! Cần: " + playerStats.SkillQCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
-          return;
-        }
-
-        if (playerStats != null)
-        {
-          playerStats.ConsumeSpirit(playerStats.SkillQCost);
-        }
-
-        ExecuteSkillQ();
-        return;
+        if (TryCastSkillQ()) return;
       }
 
       // Phím R: Tuyệt kỹ Tối thượng Ultimate - Chém Ngang Càn Quét (Tiêu hao 200 Spirit - Max Thanh)
-      if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && skillRTimer <= 0f)
+      if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
       {
-        float rCost = playerStats != null ? playerStats.SkillRCost : 200f;
-        if (playerStats != null && !playerStats.HasSpirit(rCost))
-        {
-          Debug.Log("<color=red>[Skill Ult]</color> Chưa đủ Spirit để tung Tuyệt Kỹ! Cần: " + rCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
-          return;
-        }
-
-        if (playerStats != null)
-        {
-          playerStats.ConsumeSpirit(rCost);
-        }
-
-        ExecuteSkillR();
-        return;
+        if (TryCastSkillR()) return;
       }
     }
   }
@@ -670,7 +702,7 @@ public class PlayerCombat : MonoBehaviour
   {
     isParryActive = false;
     if (playerFeedback != null) playerFeedback.IsParrying = false;
-    targetLayerWeight = 1f;
+    targetLayerWeight = hasWeapon ? 1f : 0f;
 
     // Nếu không tung Counter thì mở khóa chân di chuyển lại bình thường
     if (!isAttacking && playerController != null)
@@ -696,7 +728,7 @@ public class PlayerCombat : MonoBehaviour
     isHoldingMouse = false;
     holdTimer = 0f;
     attackTimer = 0f;
-    targetLayerWeight = 1f;
+    targetLayerWeight = hasWeapon ? 1f : 0f;
 
     isChargeAttackActive = false;
     SetCounterAttackActive(false);
@@ -739,6 +771,7 @@ public class PlayerCombat : MonoBehaviour
 
     if (playerController != null) playerController.LockMovement();
     animator.SetTrigger(SkillETriggerHash);
+    OnSkillECasted?.Invoke();
   }
 
   private void ExecuteSkillQ()
@@ -754,6 +787,7 @@ public class PlayerCombat : MonoBehaviour
     if (playerFeedback != null) playerFeedback.EnableHyperArmor();
 
     animator.SetTrigger(SkillQTriggerHash);
+    OnSkillQCasted?.Invoke();
   }
 
   private void ExecuteSkillR()
@@ -772,6 +806,65 @@ public class PlayerCombat : MonoBehaviour
     EnableSwordAura();
 
     animator.SetTrigger(SkillRTriggerHash);
+    OnSkillRCasted?.Invoke();
+  }
+
+  public bool TryCastSkillE()
+  {
+    if (!hasWeapon) return false;
+    if (skillETimer > 0f) return false;
+    if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillECost))
+    {
+      Debug.Log("<color=cyan>[Skill E]</color> Không đủ Spirit! Cần: " + playerStats.SkillECost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+      return false;
+    }
+
+    if (playerStats != null)
+    {
+      playerStats.ConsumeSpirit(playerStats.SkillECost);
+    }
+
+    ExecuteSkillE();
+    return true;
+  }
+
+  public bool TryCastSkillQ()
+  {
+    if (!hasWeapon) return false;
+    if (skillQTimer > 0f) return false;
+    if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillQCost))
+    {
+      Debug.Log("<color=cyan>[Skill Q]</color> Không đủ Spirit! Cần: " + playerStats.SkillQCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+      return false;
+    }
+
+    if (playerStats != null)
+    {
+      playerStats.ConsumeSpirit(playerStats.SkillQCost);
+    }
+
+    ExecuteSkillQ();
+    return true;
+  }
+
+  public bool TryCastSkillR()
+  {
+    if (!hasWeapon) return false;
+    float rCost = playerStats != null ? playerStats.SkillRCost : 200f;
+    if (skillRTimer > 0f) return false;
+    if (playerStats != null && !playerStats.HasSpirit(rCost))
+    {
+      Debug.Log("<color=red>[Skill Ult]</color> Chưa đủ Spirit để tung Tuyệt Kỹ! Cần: " + rCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
+      return false;
+    }
+
+    if (playerStats != null)
+    {
+      playerStats.ConsumeSpirit(rCost);
+    }
+
+    ExecuteSkillR();
+    return true;
   }
 
   // =========================================================================

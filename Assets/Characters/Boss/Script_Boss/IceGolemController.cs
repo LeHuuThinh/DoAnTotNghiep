@@ -4232,7 +4232,12 @@ public class IceGolemController : MonoBehaviour
             AudioSource.PlayClipAtPoint(jumpDownImpactSfx, landingPos);
         }
 
-        StartCoroutine(TriggerCameraShake(0.35f, 0.25f));
+        // Khi Cutscene Director đang điều khiển CameraShakeRoutine thì nhường quyền rung cho Director
+        bool isDirectorCutscenePlaying = BossIntroDirector.Instance != null && BossIntroDirector.Instance.IsPlayingCutscene;
+        if (!isDirectorCutscenePlaying)
+        {
+            StartCoroutine(TriggerCameraShake(0.35f, 0.25f));
+        }
 
         SpawnClockwiseShockwave(
             landingPos,
@@ -4657,7 +4662,7 @@ public class IceGolemController : MonoBehaviour
             }
         }
 
-        // Dừng nhẹ 0.25s để tạo nhịp nhận diện kẻ xâm nhập trước khi phóng mình xuống
+        // Dừng nhẹ 0.25s để tạo nhịp nhận diện kẻ xâm nhập và lấy đà trước khi phóng mình xuống
         yield return new WaitForSeconds(0.25f);
 
         // 2. Xác định điểm xuất phát trên bục và điểm tiếp đất sàn đấu trường

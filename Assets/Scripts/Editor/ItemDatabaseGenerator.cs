@@ -64,7 +64,7 @@ namespace InfiniteLabyrinth.Editor
 
       CreateOrUpdateItem("Item_Key_Dungeon", "dungeon_key", "Dungeon Boss Key",
         "An ancient golden key resonating with sacred magic. Required to unlock the Grand Gate leading into the Boss Arena.",
-        LoadItemIcon("DungeonKey.png"), ItemType.Key, ItemRarity.Rare, maxStack: 1, goldValue: 0,
+        LoadItemIcon("DungeonKey.png"), ItemType.Key, ItemRarity.Legendary, maxStack: 1, goldValue: 0,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 

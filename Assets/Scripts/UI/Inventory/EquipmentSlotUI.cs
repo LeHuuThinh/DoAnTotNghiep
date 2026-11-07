@@ -37,6 +37,14 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Button để click mở popup chi tiết hoặc tháo đồ")]
     [SerializeField] private Button slotButton;
 
+    [Tooltip("Ảnh hiển thị tiến trình hồi chiêu CDFill")]
+    [SerializeField] private Image cdFillImage;
+
+    [Tooltip("Text hiển thị số lượng vật phẩm (cho ô tiêu hao UsableSlot)")]
+    [SerializeField] private TMPro.TextMeshProUGUI stackCountText;
+
+    public int EquippedQuantity { get; private set; } = 1;
+
     public ItemType SlotType => slotType;
     public ItemData EquippedItem { get; private set; }
     public bool IsEmpty => EquippedItem == null;
@@ -97,6 +105,14 @@ namespace InfiniteLabyrinth.UI
       if (rarityBg == null) rarityBg = transform.Find("RarityBG")?.GetComponent<Image>();
       if (rarityBar == null) rarityBar = transform.Find("RarityBar")?.GetComponent<Image>();
       if (selectHighlight == null) selectHighlight = transform.Find("SelectHighlight")?.GetComponent<Image>();
+      if (cdFillImage == null) cdFillImage = transform.Find("CDFill")?.GetComponent<Image>();
+      if (cdFillImage != null) cdFillImage.raycastTarget = false;
+      if (stackCountText == null) stackCountText = transform.Find("StackCountText")?.GetComponent<TMPro.TextMeshProUGUI>();
+
+      if (gameObject.name.IndexOf("usable", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        slotType = ItemType.Consumable;
+      }
     }
 
     /// <summary>
@@ -104,10 +120,16 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void SetEquippedItem(ItemData item)
     {
+      SetEquippedItem(item, 1);
+    }
+
+    public void SetEquippedItem(ItemData item, int quantity)
+    {
       EnsureInitialized();
       EquippedItem = item;
+      EquippedQuantity = quantity;
 
-      if (item == null)
+      if (item == null || quantity <= 0)
       {
         ClearSlot();
         return;
@@ -149,6 +171,33 @@ namespace InfiniteLabyrinth.UI
         rarityBar.gameObject.SetActive(true);
         rarityBar.color = rarityColor;
       }
+
+      // 4. Số lượng dồn (cho UsableSlot)
+      if (stackCountText != null)
+      {
+        if (quantity > 1)
+        {
+          stackCountText.gameObject.SetActive(true);
+          stackCountText.text = quantity.ToString();
+        }
+        else
+        {
+          stackCountText.gameObject.SetActive(false);
+        }
+      }
+    }
+
+    public void SetCooldownNormalized(float normalized)
+    {
+      if (cdFillImage != null)
+      {
+        bool show = slotType == ItemType.Consumable && EquippedItem != null && normalized > 0.001f;
+        cdFillImage.gameObject.SetActive(show);
+        if (show)
+        {
+          cdFillImage.fillAmount = normalized;
+        }
+      }
     }
 
     /// <summary>
@@ -158,6 +207,17 @@ namespace InfiniteLabyrinth.UI
     {
       EnsureInitialized();
       EquippedItem = null;
+      EquippedQuantity = 0;
+
+      if (stackCountText != null)
+      {
+        stackCountText.gameObject.SetActive(false);
+      }
+
+      if (cdFillImage != null)
+      {
+        cdFillImage.gameObject.SetActive(false);
+      }
 
       if (itemIcon != null)
       {

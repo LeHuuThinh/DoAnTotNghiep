@@ -86,6 +86,31 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Tỉ lệ thắp nến trên mặt bàn")]
   public float candleDensity = 0.75f;
 
+  [Header("2.1. Cấu Hình Bóng Đổ Đuốc (Torch Shadows)")]
+  [Tooltip("Bật/Tắt bóng đổ cho đuốc đứng sàn (Floor Torches)")]
+  public bool enableFloorTorchShadows = true;
+
+  [Tooltip("Bật/Tắt bóng đổ cho đuốc gắn tường trong phòng (Wall Torches)")]
+  public bool enableWallTorchShadows = true;
+
+  [Tooltip("Bật/Tắt bóng đổ cho đuốc hành lang (Corridor Torches - khuyên dùng false để tối ưu GPU)")]
+  public bool enableCorridorTorchShadows = false;
+
+  [Tooltip("Loại bóng đổ của đuốc (Soft: Mềm mại chuẩn Souls-like, Hard: Sắc cạnh)")]
+  public LightShadows torchShadowType = LightShadows.Soft;
+
+  [Range(0.1f, 1f)]
+  [Tooltip("Độ đậm của bóng đổ")]
+  public float torchShadowStrength = 0.85f;
+
+  [Range(0.01f, 0.2f)]
+  [Tooltip("Độ lệch Shadow Bias chống sọc răng cưa bóng trên tường đá")]
+  public float torchShadowBias = 0.05f;
+
+  [Range(0.1f, 1f)]
+  [Tooltip("Normal Bias của bóng")]
+  public float torchShadowNormalBias = 0.4f;
+
   [Header("3. Đồ Treo Tường & Độ Cao Cờ (Wall Decor & Banners)")]
   [Tooltip("Bật/Tắt cờ hiệu treo tường")]
   public bool enableBanners = true;
@@ -191,6 +216,21 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Range(10f, 150f)]
   [Tooltip("Tầm kích hoạt ánh sáng (mét): Các ngọn đuốc/nến trong bán kính này tính từ Player sẽ bật sáng và phát khói/lửa, ở xa hơn sẽ tự tắt để tối ưu triệt để FPS. Với map 300m, khuyên dùng 70 - 90m để các phòng lân cận luôn sáng sẵn.")]
   public float lightCullingDistance = 80f;
+
+  [Range(10f, 60f)]
+  [Tooltip("Tầm kích hoạt đổ bóng của đuốc (mét): Đuốc trong cự ly này tính từ Player mới được phép đổ bóng (Soft Shadows). Ở xa hơn sẽ tắt bóng (vẫn sáng bình thường) để GPU đạt 100-110+ FPS.")]
+  public float shadowCullingDistance = 36f;
+
+  [Range(1, 8)]
+  [Tooltip("Số lượng đuốc tối đa đổ bóng đồng thời (ưu tiên các ngọn đuốc gần Player nhất để triệt tiêu cảnh báo Shadow Atlas)")]
+  public int maxActiveShadowLights = 4;
+
+  [Tooltip("Bật/Tắt bóng đổ cho đồ vật tĩnh đã gộp mesh (bàn, ghế, tủ, cột, tượng...) khi ở gần Player")]
+  public bool enableStaticPropsShadows = true;
+
+  [Range(15f, 80f)]
+  [Tooltip("Tầm kích hoạt đổ bóng của đồ vật tĩnh (mét): Các cụm bàn, ghế, tủ, cột trong cự ly này sẽ đổ bóng")]
+  public float staticPropsShadowDistance = 38f;
 
   [Range(50f, 500f)]
   [Tooltip("Tự động đồng bộ tầm nhìn xa Camera Far Clip Plane (mét) cho hầm ngục. Với map 300m, 200m là lý tưởng để không thấy khoảng không.")]
@@ -551,11 +591,19 @@ public partial class DungeonPropDecorator : MonoBehaviour
       yield return null;
     }
 
-    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG VÀ HIỆU ỨNG HẠT (LIGHT & PARTICLE CULLER)
+    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG, BÓNG ĐỔ VÀ HIỆU ỨNG HẠT (LIGHT, SHADOW & PARTICLE CULLER)
     if (enableLightCulling)
     {
       activeLightOptimizer = propsRoot.AddComponent<DungeonLightOptimizer>();
       activeLightOptimizer.maxLightDistance = lightCullingDistance;
+      activeLightOptimizer.maxShadowDistance = shadowCullingDistance;
+      activeLightOptimizer.maxActiveShadowLights = maxActiveShadowLights;
+      activeLightOptimizer.enableShadowCulling = true;
+      activeLightOptimizer.autoEnableTorchShadows = (enableFloorTorchShadows || enableWallTorchShadows);
+      activeLightOptimizer.defaultShadowType = torchShadowType;
+      activeLightOptimizer.defaultShadowStrength = torchShadowStrength;
+      activeLightOptimizer.enableStaticPropsShadowCulling = enableStaticPropsShadows;
+      activeLightOptimizer.maxPropShadowDistance = staticPropsShadowDistance;
       activeLightOptimizer.cullParticles = true;
       activeLightOptimizer.RefreshLights();
     }
@@ -607,11 +655,19 @@ public partial class DungeonPropDecorator : MonoBehaviour
       DecorateCorridors(data, propsRoot.transform, tileSize);
     }
 
-    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG VÀ HIỆU ỨNG HẠT (LIGHT & PARTICLE CULLER)
+    // 3. GẮN BỘ TỐI ƯU HÓA ÁNH SÁNG, BÓNG ĐỔ VÀ HIỆU ỨNG HẠT (LIGHT, SHADOW & PARTICLE CULLER)
     if (enableLightCulling)
     {
       activeLightOptimizer = propsRoot.AddComponent<DungeonLightOptimizer>();
       activeLightOptimizer.maxLightDistance = lightCullingDistance;
+      activeLightOptimizer.maxShadowDistance = shadowCullingDistance;
+      activeLightOptimizer.maxActiveShadowLights = maxActiveShadowLights;
+      activeLightOptimizer.enableShadowCulling = true;
+      activeLightOptimizer.autoEnableTorchShadows = (enableFloorTorchShadows || enableWallTorchShadows);
+      activeLightOptimizer.defaultShadowType = torchShadowType;
+      activeLightOptimizer.defaultShadowStrength = torchShadowStrength;
+      activeLightOptimizer.enableStaticPropsShadowCulling = enableStaticPropsShadows;
+      activeLightOptimizer.maxPropShadowDistance = staticPropsShadowDistance;
       activeLightOptimizer.cullParticles = true;
       activeLightOptimizer.RefreshLights();
     }
@@ -922,12 +978,14 @@ public partial class DungeonPropDecorator : MonoBehaviour
         Vector3 leftPos = new Vector3(leftX, 2.5f, worldZ);
         GameObject leftTorch = Instantiate(wallTorchPrefab, leftPos, Quaternion.Euler(0f, 90f, 0f), lightsGroup);
         leftTorch.name = "BossAvenue_Torch_West";
+        ConfigureTorchLight(leftTorch, enableWallTorchShadows);
 
         // Vách Đông: x = avenue.x + avenue.width - 1
         float rightX = (avenue.x + avenue.width) * tileSize - 0.1f;
         Vector3 rightPos = new Vector3(rightX, 2.5f, worldZ);
         GameObject rightTorch = Instantiate(wallTorchPrefab, rightPos, Quaternion.Euler(0f, 270f, 0f), lightsGroup);
         rightTorch.name = "BossAvenue_Torch_East";
+        ConfigureTorchLight(rightTorch, enableWallTorchShadows);
       }
     }
     else
@@ -945,12 +1003,14 @@ public partial class DungeonPropDecorator : MonoBehaviour
         Vector3 botPos = new Vector3(worldX, 2.5f, bottomZ);
         GameObject botTorch = Instantiate(wallTorchPrefab, botPos, Quaternion.Euler(0f, 0f, 0f), lightsGroup);
         botTorch.name = "BossAvenue_Torch_South";
+        ConfigureTorchLight(botTorch, enableWallTorchShadows);
 
         // Vách Bắc
         float topZ = (avenue.y + avenue.height) * tileSize - 0.1f;
         Vector3 topPos = new Vector3(worldX, 2.5f, topZ);
         GameObject topTorch = Instantiate(wallTorchPrefab, topPos, Quaternion.Euler(0f, 180f, 0f), lightsGroup);
         topTorch.name = "BossAvenue_Torch_North";
+        ConfigureTorchLight(topTorch, enableWallTorchShadows);
       }
     }
   }

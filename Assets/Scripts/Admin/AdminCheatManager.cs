@@ -235,7 +235,7 @@ public class AdminCheatManager : MonoBehaviour
   public void EnsureItemAndEnemyPrefabs()
   {
 #if UNITY_EDITOR
-    if (dungeonKeyItem == null)
+    if (dungeonKeyItem == null || dungeonKeyItem.Icon == null || dungeonKeyItem.Icon.name == "Spirit_Filled")
       dungeonKeyItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Key_Dungeon.asset");
     if (healthPotionItem == null)
       healthPotionItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Potion_Health.asset");

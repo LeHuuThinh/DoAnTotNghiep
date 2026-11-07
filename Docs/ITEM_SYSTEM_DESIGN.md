@@ -37,9 +37,9 @@ Toàn bộ 20 vũ khí đều sở hữu model 3D cầm tay trực quan, gắn v
 | STT | ID Vật Phẩm | Tên Hiển Thị (Display Name) | Phẩm Cấp | Model Asset | Nguồn Gốc (Source) | Chỉ Số Cơ Bản (+0) | Cốt Truyện / Đặc Tính |
 | :---: | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
 | **01** | `weapon_sword_wooden` | **Apprentice Wooden Sword** *(Kiếm Gỗ Tập Sự)* | Common | `WoodenSword.prefab` | **Khởi đầu game (Free)** | ATK: +6 | Kiếm gỗ luyện tập được phát cho mọi tân binh trước khi bước qua cánh cổng ma thuật. |
-| **02** | `weapon_sword_rusty_iron` | **Rusty Iron Blade** *(Thiết Kiếm Rỉ Sét)* | Common | `iron_sword.prefab` | Mua Shop Làng (50 Vàng) / Thùng gỗ | ATK: +9 | Thanh đoản kiếm sắt đã hoen rỉ do bị bỏ lại nhiều năm trong hầm ngục ẩm ướt. |
+| **02** | `weapon_sword_rusty_iron` | **Rusty Iron Blade** *(Thiết Kiếm Rỉ Sét)* | Common | `RustyIronSword.prefab` | Mua Shop Làng (50 Vàng) / Thùng gỗ | ATK: +9 | Thanh đoản kiếm sắt đã hoen rỉ do bị bỏ lại nhiều năm trong hầm ngục ẩm ướt. |
 | **03** | `weapon_sword_novice` | **Novice Knight Sword** *(Tân Binh Đoản Kiếm)* | Uncommon | `NoviceSword.prefab` | Mua Shop Làng (110 Vàng) / Rương Thường | ATK: +14 | Kiếm chuẩn hiệp sĩ xứ Haven, chuôi bọc da chắc chắn, lưỡi kiếm sáng bóng. |
-| **04** | `weapon_sword_broad_iron` | **Broad Iron Blade** *(Thiết Kiếm Bản Rộng)* | Uncommon | `iron_sword_2.prefab` | Mua Shop Làng (175 Vàng) / Rương Thường | ATK: +18 | Thiết kiếm lưỡi dày bản to, nhát chém đầm tay và tạo lực đẩy lùi nhẹ. |
+| **04** | `weapon_sword_broad_iron` | **Broad Iron Blade** *(Thiết Kiếm Bản Rộng)* | Uncommon | `IronBoardSword.prefab` | Mua Shop Làng (175 Vàng) / Rương Thường | ATK: +18 | Thiết kiếm lưỡi dày bản to, nhát chém đầm tay và tạo lực đẩy lùi nhẹ. |
 | **05** | `weapon_sword_darkiron` | **Dark Iron Sword** *(Hắc Thiết Kiếm)* | Uncommon | `DarkIronSword.prefab` | Mua Shop (240 Vàng) / Rèn từ Quặng | ATK: +22 | Đúc từ quặng sắt đen khai thác ở tầng ngầm, độ cứng vượt trội so với sắt thường. |
 
 ---
@@ -47,10 +47,10 @@ Toàn bộ 20 vũ khí đều sở hữu model 3D cầm tay trực quan, gắn v
 ### Nhóm 2: Kiếm Phiêu Lưu & Tinh Nhuệ (Tier 2 - Rare)
 | STT | ID Vật Phẩm | Tên Hiển Thị (Display Name) | Phẩm Cấp | Model Asset | Nguồn Gốc (Source) | Chỉ Số Cơ Bản (+0) | Cốt Truyện / Đặc Tính |
 | :---: | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
-| **06** | `weapon_sword_vanguard` | **Vanguard Broadsword** *(Tiên Phong Đại Kiếm)* | Rare | `iron_sword_3.prefab` | Rèn Lò Rèn / Rương Hiếm | ATK: +27, Max HP: +20 | Vũ khí của đội quân tiên phong, ban phát thêm sinh mệnh cho người cầm lái. |
+| **06** | `weapon_sword_vanguard` | **Vanguard Broadsword** *(Tiên Phong Đại Kiếm)* | Rare | `VanguardSword.prefab` | Rèn Lò Rèn / Rương Hiếm | ATK: +27, Max HP: +20 | Vũ khí của đội quân tiên phong, ban phát thêm sinh mệnh cho người cầm lái. |
 | **07** | `weapon_sword_punk` | **Barbed Punk Blade** *(Gai Thép Cuồng Đao)* | Rare | `PunkSword.prefab` | Mua Shop (380 Vàng) / Rương Hiếm | ATK: +31, Stamina: +10 | Thanh kiếm hầm hố với sống kiếm gắn gai sắc nhọn, tối ưu tốc độ chém lướt. |
 | **08** | `weapon_sword_bone` | **Bonecleaver Blade** *(Cốt Ma Đoản Đao)* | Rare | `BoneSword.prefab` | **Rèn Lò Rèn** (Cần Xương Skeleton) / Rương Hiếm | ATK: +34, **+40% Poise Damage** | Đẽo gọt từ xương quái Skeleton tinh nhuệ, khiến quái vật cực kỳ nhanh bị vỡ thế (Stagger). |
-| **09** | `weapon_sword_equilibrium` | **Equilibrium Blade** *(Kiếm Âm Dương / Cân Bằng)* | Rare | `bw_sword.prefab` | Rương Hiếm phòng ngách cụt | ATK: +37, Max HP: +25 | Lưỡi kiếm nửa sáng nửa tối, cân bằng hoàn hảo giữa sức tấn công và phòng thủ. |
+| **09** | `weapon_sword_equilibrium` | **Equilibrium Blade** *(Kiếm Âm Dương / Cân Bằng)* | Rare | `EquilibriumSword.prefab` | Rương Hiếm phòng ngách cụt | ATK: +37, Max HP: +25 | Lưỡi kiếm nửa sáng nửa tối, cân bằng hoàn hảo giữa sức tấn công và phòng thủ. |
 | **10** | `weapon_sword_dead` | **Deathbringer Sword** *(Tử Thần Kiếm)* | Rare | `DeadSword.prefab` | Rơi từ Rương Hiếm Tầng 1 & 2 | ATK: +40, **Hồi +5 HP khi diệt địch** | Thanh kiếm thấm nhuần tử khí, hút lấy sinh lực tàn dư của kẻ thù vừa ngã xuống. |
 
 ---
@@ -58,20 +58,20 @@ Toàn bộ 20 vũ khí đều sở hữu model 3D cầm tay trực quan, gắn v
 ### Nhóm 3: Kiếm Ma Pháp & Tinh Hoa (Tier 3 - Epic)
 | STT | ID Vật Phẩm | Tên Hiển Thị (Display Name) | Phẩm Cấp | Model Asset | Nguồn Gốc (Source) | Chỉ Số Cơ Bản (+0) | Cốt Truyện / Đặc Tính |
 | :---: | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
-| **11** | `weapon_sword_emerald` | **Emerald Jade Edge** *(Bích Ngọc Kiếm)* | Epic | `emerald_sword.prefab` | Mua Thương Nhân Bí Ẩn / Rương Hiếm Tầng 2 | ATK: +45, DEF: +6 | Chế tác từ khối ngọc bích nguyên khối ngàn năm, tỏa ánh sáng xanh bảo hộ chủ nhân. |
-| **12** | `weapon_sword_rose` | **Crimson Rose Rapier** *(Huyết Hồng Kiếm)* | Epic | `rose_sword.prefab` | Rèn Lò Rèn / Rương Boss Tầng 1 | ATK: +49, Stamina: +20 | Lưỡi kiếm đỏ thắm hình dáng nụ hồng gai góc, ra đòn chớp nhoáng tiêu hao ít thể lực. |
+| **11** | `weapon_sword_emerald` | **Emerald Jade Edge** *(Bích Ngọc Kiếm)* | Epic | `EmeraldSword.prefab` | Mua Thương Nhân Bí Ẩn / Rương Hiếm Tầng 2 | ATK: +45, DEF: +6 | Chế tác từ khối ngọc bích nguyên khối ngàn năm, tỏa ánh sáng xanh bảo hộ chủ nhân. |
+| **12** | `weapon_sword_rose` | **Crimson Rose Rapier** *(Huyết Hồng Kiếm)* | Epic | `RoseSword.prefab` | Rèn Lò Rèn / Rương Boss Tầng 1 | ATK: +49, Stamina: +20 | Lưỡi kiếm đỏ thắm hình dáng nụ hồng gai góc, ra đòn chớp nhoáng tiêu hao ít thể lực. |
 | **13** | `weapon_sword_katsunesi` | **Kitsune Spirit Katana** *(Hồ Ly Ma Kiếm)* | Epic | `KatsunesiSword.prefab` | **Rèn Lò Rèn** (Cần Tinh Hoa Ma Pháp Mage) | ATK: +53, **Tăng 30% Sát thương Chiêu E & Q** | Thanh kiếm Katana mang linh hồn cửu vĩ hồ, cường hóa mạnh mẽ kiếm khí và phép nổ. |
-| **14** | `weapon_sword_titan` | **Titan Heavy Cleaver** *(Titan Trọng Đại Kiếm)* | Epic | `big_sword.prefab` | Rương Boss Ice Golem / Rèn | ATK: +58, Max HP: +45 | Đại kiếm đồ sộ chỉ những chiến binh sở hữu sức mạnh phi thường mới có thể vung nhát chém. |
+| **14** | `weapon_sword_titan` | **Titan Heavy Cleaver** *(Titan Trọng Đại Kiếm)* | Epic | `TitanSword.prefab` | Rương Boss Ice Golem / Rèn | ATK: +58, Max HP: +45 | Đại kiếm đồ sộ chỉ những chiến binh sở hữu sức mạnh phi thường mới có thể vung nhát chém. |
 | **15** | `weapon_sword_demonic` | **Nether Demonic Blade** *(Minh Phủ Hắc Kiếm)* | Epic | `DemonicSword.prefab` | **Rương Boss Ice Golem (Tầng 1)** | ATK: +63, Max HP: +30 | Rèn từ hắc kim loại dưới đáy địa ngục, tỏa ra luồng sát khí đen ngòm đáng sợ. |
-| **16** | `weapon_sword_ice` | **Frostfang Glacial Sword** *(Băng Nha Cực Kiếm)* | Epic | `ice_sword.prefab` | **Rèn Lò Rèn** (Cần Lõi Băng Ice Golem) | ATK: +68, **Hiệu ứng làm chậm tốc độ quái** | Lưỡi kiếm băng tinh giá lạnh không bao giờ tan chảy, làm tê cóng cơ bắp kẻ dính đòn. |
+| **16** | `weapon_sword_ice` | **Frostfang Glacial Sword** *(Băng Nha Cực Kiếm)* | Epic | `IceSword.prefab` | **Rèn Lò Rèn** (Cần Lõi Băng Ice Golem) | ATK: +68, **Hiệu ứng làm chậm tốc độ quái** | Lưỡi kiếm băng tinh giá lạnh không bao giờ tan chảy, làm tê cóng cơ bắp kẻ dính đòn. |
 
 ---
 
 ### Nhóm 4: Thần Binh Tối Thượng (Tier 4 - Legendary)
 | STT | ID Vật Phẩm | Tên Hiển Thị (Display Name) | Phẩm Cấp | Model Asset | Nguồn Gốc (Source) | Chỉ Số Cơ Bản (+0) | Cốt Truyện / Đặc Tính |
 | :---: | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
-| **17** | `weapon_sword_sunblade` | **Radiant Sunblade** *(Thái Dương Thánh Kiếm)* | Legendary | `gold_sword.prefab` | Rương Boss Red Ignis / Mở khóa Day 10 | ATK: +75, Stamina: +30 | Thanh hoàng kim kiếm mang ánh sáng mặt trời rực rỡ, xua tan bóng tối hầm ngục. |
-| **18** | `weapon_sword_excalibur` | **Excalibur Sovereign** *(Vương Quyền Thánh Kiếm)* | Legendary | `gold_sword_2.prefab` | Rương Boss Purple Ignis (Tầng 3) | ATK: +84, DEF: +12, Max HP: +60 | Thánh kiếm của các bậc đế vương cổ đại, sở hữu uy lực điều khiển cả vận mệnh. |
+| **17** | `weapon_sword_sunblade` | **Radiant Sunblade** *(Thái Dương Thánh Kiếm)* | Legendary | `RadiantSword.prefab` | Rương Boss Red Ignis / Mở khóa Day 10 | ATK: +75, Stamina: +30 | Thanh hoàng kim kiếm mang ánh sáng mặt trời rực rỡ, xua tan bóng tối hầm ngục. |
+| **18** | `weapon_sword_excalibur` | **Excalibur Sovereign** *(Vương Quyền Thánh Kiếm)* | Legendary | `ExcaliburSword.prefab` | Rương Boss Purple Ignis (Tầng 3) | ATK: +84, DEF: +12, Max HP: +60 | Thánh kiếm của các bậc đế vương cổ đại, sở hữu uy lực điều khiển cả vận mệnh. |
 | **19** | `weapon_sword_artifact` | **Ancient Artifact Blade** *(Cổ Kiếm Thất Truyền)* | Legendary | `ArtifactSword.prefab` | Rương Hiếm Tầng Sâu / Đền Thờ Cổ | ATK: +92, Max HP: +70, Stamina: +35 | Cổ vật bí ẩn được khai quật từ kỷ nguyên trước, mang sức mạnh vượt ngoài hiểu biết. |
 | **20** | `weapon_sword_dragonic` | **Dragonfire Apocalypse** *(Hỏa Long Diệt Thế Kiếm)* | Legendary | `DragonicSword.prefab` | **Tuyệt phẩm Rèn Lò Rèn** (Cần Lõi Lửa Ignis) | ATK: +105, **Hiệu ứng Thiêu Đốt DOT (Burn)** | Thanh kiếm tối thượng của trò chơi, mang linh hồn Hỏa Long đốt cháy mọi sinh linh cản bước. |
 
@@ -83,7 +83,7 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 
 | STT | ID Vật Phẩm | Tên Giáp (Armor Name) | Phẩm Cấp | Nguồn Gốc | Chỉ Số Buff (Stats) |
 | :---: | :--- | :--- | :---: | :--- | :--- |
-| **1** | `armor_cloth_novice` | **Novice Cloth Tunic** *(Áo Vải Tân Binh)* | Common | **Khởi đầu game (Free)** | DEF: +2, Max HP: +10 |
+| **1** | `armor_cloth_novice` | **Novice Cloth Tunic** *(Áo Vải Tân Binh)* | Common | Mua Shop Làng (25 Vàng) / Rương Thường / Thùng gỗ | DEF: +2, Max HP: +10 |
 | **2** | `armor_leather_scout` | **Scout Leather Armor** *(Giáp Da Trinh Sát)* | Common | Mua Shop Làng (80 Vàng) / Thùng gỗ | DEF: +5, Max HP: +25, Stamina: +10 |
 | **3** | `armor_leather_explorer` | **Explorer Leather Vest** *(Giáp Da Thám Hiểm)* | Uncommon | Mua Shop Làng (160 Vàng) / Rương Thường | DEF: +9, Max HP: +45, Stamina: +15 |
 | **4** | `armor_iron_cuirass` | **Reinforced Iron Cuirass** *(Thiết Giáp Cường Hóa)* | Uncommon | Mua Shop (280 Vàng) / Rương Thường | DEF: +15, Max HP: +70 |

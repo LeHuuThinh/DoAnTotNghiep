@@ -1,11 +1,15 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 
 namespace InfiniteLabyrinth.UI
 {
   /// <summary>
-  /// Điều khiển camera 3D xem trước nhân vật và cho phép xoay 360 độ bằng cách kéo chuột trên RawImage
+  /// Điều khiển camera 3D xem trước nhân vật và cho phép xoay 360 độ bằng cách kéo chuột trên RawImage.
+  /// Tích hợp hệ thống Smart Adaptive Studio Lighting (tự điều chỉnh theo Dungeon / LandScene)
+  /// và Camera-Isolated Lighting Pass để tuyệt đối không làm ảnh hưởng tới ánh sáng ngoài thế giới game.
   /// </summary>
   public class CharacterPreviewController : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerDownHandler
   {
@@ -51,7 +55,7 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Loại đèn chiếu phụ (Spot hoặc Point để TUYỆT ĐỐI KHÔNG làm sáng phòng hầm ngục)")]
     [SerializeField] private LightType previewLightType = LightType.Spot;
 
-    [Tooltip("Cường độ sáng đèn phụ")]
+    [Tooltip("Cường độ sáng mặc định của đèn phụ")]
     [Range(0f, 4f)]
     [SerializeField] private float previewLightIntensity = 1.2f;
 
@@ -61,6 +65,24 @@ namespace InfiniteLabyrinth.UI
 
     [Tooltip("Màu ánh sáng phụ")]
     [SerializeField] private Color previewLightColor = new Color(1.0f, 0.96f, 0.90f);
+
+    [Header("=== ÁNH SÁNG THÍCH ỨNG (SMART ADAPTIVE LIGHTING) ===")]
+    [Tooltip("Tự động nhận diện ánh sáng môi trường để điều chỉnh đèn (Dungeon vs Land)")]
+    [SerializeField] private bool autoAdaptiveIntensity = true;
+
+    [Tooltip("Cường độ sáng khi ở trong Hầm ngục (DungeonScene hoặc môi trường tối không có mặt trời)")]
+    [Range(0f, 4f)]
+    [SerializeField] private float dungeonLightIntensity = 1.3f;
+
+    [Tooltip("Cường độ sáng khi ở Ngoài Làng (LandScene hoặc môi trường sáng ban ngày đã có mặt trời)")]
+    [Range(0f, 2f)]
+    [SerializeField] private float landLightIntensity = 0.25f;
+
+    [Tooltip("Độ lệch vị trí đèn phụ để tạo góc chiếu Key Light nghệ thuật 3/4 (thay vì chiếu thẳng tâm)")]
+    [SerializeField] private Vector3 lightLocalOffset = new Vector3(0.55f, 0.40f, 0.15f);
+
+    [Tooltip("Góc xoay của đèn phụ hướng nhẹ vào nhân vật")]
+    [SerializeField] private Vector3 lightLocalEuler = new Vector3(6f, -12f, 0f);
 
     private Transform cachedPlayerTransform;
     private Light previewLight;
@@ -100,6 +122,24 @@ namespace InfiniteLabyrinth.UI
       EnablePreview(false);
     }
 
+    private void OnEnable()
+    {
+      // Đăng ký hook URP để cô lập ánh sáng preview: CHỈ bật khi previewCamera render
+      RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
+      RenderPipelineManager.endCameraRendering += HandleEndCameraRendering;
+    }
+
+    private void OnDisable()
+    {
+      RenderPipelineManager.beginCameraRendering -= HandleBeginCameraRendering;
+      RenderPipelineManager.endCameraRendering -= HandleEndCameraRendering;
+
+      if (previewLight != null)
+      {
+        previewLight.enabled = false;
+      }
+    }
+
     private void LateUpdate()
     {
       if (!isPreviewActive || cachedPlayerTransform == null || previewCamera == null) return;
@@ -116,21 +156,63 @@ namespace InfiniteLabyrinth.UI
 
       if (previewLight != null)
       {
-        previewLight.enabled = usePreviewLight;
         previewLight.type = previewLightType;
-        previewLight.intensity = previewLightIntensity;
         previewLight.range = previewLightRange;
         previewLight.color = previewLightColor;
+        previewLight.transform.localPosition = lightLocalOffset;
+        previewLight.transform.localRotation = Quaternion.Euler(lightLocalEuler);
+
         if (previewLightType == LightType.Spot)
         {
-          previewLight.spotAngle = 65f;
-          previewLight.innerSpotAngle = 40f;
+          previewLight.spotAngle = 70f;
+          previewLight.innerSpotAngle = 45f;
         }
+
+        UpdateAdaptiveLighting();
       }
 
       if (isPreviewActive && cachedPlayerTransform != null && previewCamera != null)
       {
         UpdateCameraPosition();
+      }
+    }
+
+    /// <summary>
+    /// URP Hook: Khi một Camera bắt đầu quá trình Culling và Render
+    /// </summary>
+    private void HandleBeginCameraRendering(ScriptableRenderContext context, Camera cam)
+    {
+      if (cam == previewCamera)
+      {
+        // CHỈ khi chính previewCamera vẽ thì mới kích hoạt đèn xem trước
+        if (previewLight != null && isPreviewActive && usePreviewLight)
+        {
+          UpdateAdaptiveLighting();
+          previewLight.enabled = true;
+        }
+      }
+      else
+      {
+        // Khi MainCamera hoặc bất kỳ camera thế giới nào vẽ: TẮT HOÀN TOÀN đèn preview
+        // để thế giới game ngoài đời tuyệt đối không bị tia sáng rọi vào người Player!
+        if (previewLight != null && previewLight.enabled)
+        {
+          previewLight.enabled = false;
+        }
+      }
+    }
+
+    /// <summary>
+    /// URP Hook: Sau khi Camera hoàn tất vẽ
+    /// </summary>
+    private void HandleEndCameraRendering(ScriptableRenderContext context, Camera cam)
+    {
+      if (cam == previewCamera)
+      {
+        if (previewLight != null)
+        {
+          previewLight.enabled = false;
+        }
       }
     }
 
@@ -209,8 +291,12 @@ namespace InfiniteLabyrinth.UI
       if (previewCamera != null)
       {
         previewCamera.fieldOfView = fieldOfView;
-        // Chỉ soi Layer 3 (Player) -> Dungeon và tường hầm ngục sẽ hoàn toàn tàng hình
-        previewCamera.cullingMask = 1 << 3;
+
+        int playerLayer = cachedPlayerTransform != null ? cachedPlayerTransform.gameObject.layer : LayerMask.NameToLayer("Player");
+        if (playerLayer < 0) playerLayer = 3;
+
+        // Chỉ soi Layer Player -> Dungeon và tường hầm ngục sẽ hoàn toàn tàng hình
+        previewCamera.cullingMask = 1 << playerLayer;
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
         previewCamera.backgroundColor = backgroundColor;
         previewCamera.targetTexture = previewRenderTexture;
@@ -242,18 +328,98 @@ namespace InfiniteLabyrinth.UI
 
       if (previewLight != null)
       {
-        previewLight.enabled = usePreviewLight;
-        // QUAN TRỌNG: TUYỆT ĐỐI không dùng Directional Light vì sẽ làm sáng rực cả hầm ngục
+        // Mặc định giữ đèn ở trạng thái tắt, chỉ bật khi previewCamera render
+        previewLight.enabled = false;
         previewLight.type = previewLightType;
-        previewLight.cullingMask = 1 << 3; // Chỉ rọi sáng nhân vật (Layer 3)
-        previewLight.intensity = previewLightIntensity;
+
+        int playerLayer = cachedPlayerTransform != null ? cachedPlayerTransform.gameObject.layer : LayerMask.NameToLayer("Player");
+        if (playerLayer < 0) playerLayer = 3;
+        previewLight.cullingMask = 1 << playerLayer; // Chỉ rọi sáng nhân vật (Layer Player)
+
         previewLight.range = previewLightRange;
         previewLight.color = previewLightColor;
+
+        // Vị trí và góc chiếu Studio Key Light chếch 3/4
+        previewLight.transform.localPosition = lightLocalOffset;
+        previewLight.transform.localRotation = Quaternion.Euler(lightLocalEuler);
+
         if (previewLightType == LightType.Spot)
         {
-          previewLight.spotAngle = 65f;
-          previewLight.innerSpotAngle = 40f;
+          previewLight.spotAngle = 70f;
+          previewLight.innerSpotAngle = 45f;
         }
+
+        UpdateAdaptiveLighting();
+      }
+    }
+
+    /// <summary>
+    /// Tự động tính toán cường độ ánh sáng thích ứng theo môi trường (DungeonScene vs LandScene)
+    /// </summary>
+    private void UpdateAdaptiveLighting()
+    {
+      if (previewLight == null) return;
+
+      float targetIntensity = previewLightIntensity;
+
+      if (autoAdaptiveIntensity)
+      {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        bool isBrightScene = sceneName.IndexOf("Land", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        // Nếu scene hiện tại không chứa tên Land, kiểm tra xem có Directional Light nào sáng mạnh không
+        if (!isBrightScene)
+        {
+          var sun = RenderSettings.sun;
+          if (sun != null && sun.enabled && sun.intensity > 1.0f)
+          {
+            isBrightScene = true;
+          }
+        }
+
+        targetIntensity = isBrightScene ? landLightIntensity : dungeonLightIntensity;
+      }
+
+      previewLight.intensity = targetIntensity;
+    }
+
+    /// <summary>
+    /// Đảm bảo tất cả các Renderer của Player và Vũ khí (VisualHolder/Sword) đều thuộc Layer Player
+    /// để Camera xem trước không bao giờ bị tình trạng thiếu kiếm hay thiếu phụ kiện
+    /// </summary>
+    private void EnsurePlayerAndWeaponLayers()
+    {
+      if (cachedPlayerTransform == null) return;
+
+      int playerLayer = cachedPlayerTransform.gameObject.layer;
+      if (playerLayer < 0) playerLayer = 3;
+
+      if (previewCamera != null)
+      {
+        previewCamera.cullingMask = 1 << playerLayer;
+      }
+      if (previewLight != null)
+      {
+        previewLight.cullingMask = 1 << playerLayer;
+      }
+
+      // Quét các đối tượng con liên quan tới VisualHolder hoặc Sword để đồng bộ Layer
+      foreach (var tr in cachedPlayerTransform.GetComponentsInChildren<Transform>(true))
+      {
+        if (tr.name == "VisualHolder" || tr.name == "Sword")
+        {
+          SetLayerRecursively(tr.gameObject, playerLayer);
+        }
+      }
+    }
+
+    private void SetLayerRecursively(GameObject obj, int newLayer)
+    {
+      if (obj == null) return;
+      obj.layer = newLayer;
+      for (int i = 0; i < obj.transform.childCount; i++)
+      {
+        SetLayerRecursively(obj.transform.GetChild(i).gameObject, newLayer);
       }
     }
 
@@ -272,9 +438,18 @@ namespace InfiniteLabyrinth.UI
       if (enable)
       {
         CachePlayer();
+        EnsurePlayerAndWeaponLayers();
         DisableObstructingBackgroundRaycast();
         currentYawOffset = 0f; // Reset về hướng nhìn đối diện mặt người chơi
+        UpdateAdaptiveLighting();
         UpdateCameraPosition();
+      }
+      else
+      {
+        if (previewLight != null)
+        {
+          previewLight.enabled = false;
+        }
       }
     }
 
@@ -315,6 +490,9 @@ namespace InfiniteLabyrinth.UI
 
     private void OnDestroy()
     {
+      RenderPipelineManager.beginCameraRendering -= HandleBeginCameraRendering;
+      RenderPipelineManager.endCameraRendering -= HandleEndCameraRendering;
+
       if (previewCamera != null && previewCamera.gameObject != null)
       {
         // Dọn dẹp camera động nếu được tạo trong runtime

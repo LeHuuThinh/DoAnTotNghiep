@@ -31,6 +31,8 @@ namespace InfiniteLabyrinth.Inventory
     [SerializeField] private float bobAmplitude = 0.05f;
     [Tooltip("Tần số nhấp nhô")]
     [SerializeField] private float bobFrequency = 2.5f;
+    [Tooltip("Tỉ lệ scale mô hình vũ khí khi rơi ra đất")]
+    [SerializeField] private float weaponDropScale = 0.6f;
 
     [Header("=== TƯƠNG TÁC NHẶT ĐỒ ===")]
     [Tooltip("Bán kính người chơi có thể bấm F để nhặt")]
@@ -89,7 +91,23 @@ namespace InfiniteLabyrinth.Inventory
 
       if (rarityLight == null)
       {
-        rarityLight = GetComponentInChildren<Light>();
+        rarityLight = GetComponentInChildren<Light>(true);
+      }
+
+      // Đảm bảo có trigger collider ở root nếu chưa có
+      var rootCol = GetComponent<SphereCollider>();
+      if (rootCol == null)
+      {
+        rootCol = gameObject.AddComponent<SphereCollider>();
+        rootCol.isTrigger = true;
+        rootCol.radius = pickupRadius;
+      }
+
+      // Vô hiệu hóa vật lý Rigidbody để chuyển động Parabol kinematically mượt mà 100%
+      var rb = GetComponent<Rigidbody>();
+      if (rb != null)
+      {
+        rb.isKinematic = true;
       }
     }
 
@@ -150,12 +168,110 @@ namespace InfiniteLabyrinth.Inventory
 
       Color rarityColor = itemData.Rarity.GetRarityColor();
 
-      // Cập nhật màu và kích thước đèn hào quang theo phẩm cấp (thu nhỏ gọn gàng, không lóa mắt)
+      // Cập nhật màu và kích thước đèn hào quang theo phẩm cấp
+      if (rarityLight == null)
+      {
+        rarityLight = GetComponentInChildren<Light>(true);
+      }
+      if (rarityLight == null)
+      {
+        GameObject glowObj = new GameObject("RarityGlow");
+        glowObj.transform.SetParent(transform, false);
+        glowObj.transform.localPosition = new Vector3(0f, 0.2f, 0f);
+        rarityLight = glowObj.AddComponent<Light>();
+        rarityLight.type = LightType.Point;
+        rarityLight.shadows = LightShadows.None;
+      }
+
       if (rarityLight != null)
       {
         rarityLight.color = rarityColor;
-        rarityLight.range = lightRange;
-        rarityLight.intensity = (itemData.Rarity == ItemRarity.Legendary) ? legendaryLightIntensity : lightIntensity;
+        rarityLight.range = (itemData.Rarity >= ItemRarity.Epic) ? 1.8f : lightRange;
+        float intensity = lightIntensity;
+        switch (itemData.Rarity)
+        {
+          case ItemRarity.Common: intensity = 1.5f; break;
+          case ItemRarity.Uncommon: intensity = 1.8f; break;
+          case ItemRarity.Rare: intensity = 2.4f; break;
+          case ItemRarity.Epic: intensity = 3.0f; break;
+          case ItemRarity.Legendary: intensity = 3.8f; break;
+        }
+        rarityLight.intensity = intensity;
+        rarityLight.enabled = true;
+        if (!rarityLight.gameObject.activeSelf)
+        {
+          rarityLight.gameObject.SetActive(true);
+        }
+      }
+
+      // Thiết lập mô hình 3D trực quan (hiển thị model kiếm nếu là vũ khí)
+      SetupVisualModel();
+    }
+
+    private void SetupVisualModel()
+    {
+      if (itemData == null) return;
+
+      if (visualTransform == null)
+      {
+        visualTransform = transform.Find("Model") ?? transform;
+      }
+
+      // 1. Nếu là Vũ khí và có WeaponVisualPrefab -> hiển thị chính model thanh kiếm 3D!
+      if (itemData.WeaponVisualPrefab != null)
+      {
+        // Ẩn model rương mặc định (trunk_small_A)
+        for (int i = 0; i < visualTransform.childCount; i++)
+        {
+          Transform child = visualTransform.GetChild(i);
+          if (child.name != "SpawnedWeaponVisual")
+          {
+            child.gameObject.SetActive(false);
+          }
+        }
+
+        // Tạo mô hình vũ khí nếu chưa có
+        Transform existingWeapon = visualTransform.Find("SpawnedWeaponVisual");
+        if (existingWeapon == null)
+        {
+          GameObject weaponObj = Instantiate(itemData.WeaponVisualPrefab, visualTransform);
+          weaponObj.name = "SpawnedWeaponVisual";
+          weaponObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+          // Xoay kiếm cắm nghiêng 40 độ tạo tư thế kiếm cắm đất xoay tròn
+          weaponObj.transform.localRotation = Quaternion.Euler(0f, 0f, -40f);
+          weaponObj.transform.localScale = Vector3.one * weaponDropScale;
+
+          // Vô hiệu hóa Collider và Script trên vũ khí để không gây cản trở
+          Collider[] cols = weaponObj.GetComponentsInChildren<Collider>(true);
+          foreach (var c in cols) c.enabled = false;
+
+          MonoBehaviour[] scripts = weaponObj.GetComponentsInChildren<MonoBehaviour>(true);
+          foreach (var s in scripts) s.enabled = false;
+
+          int itemLayer = LayerMask.NameToLayer("Item");
+          if (itemLayer >= 0) SetLayerRecursively(weaponObj, itemLayer);
+        }
+        else
+        {
+          existingWeapon.gameObject.SetActive(true);
+          existingWeapon.localScale = Vector3.one * weaponDropScale;
+        }
+      }
+      else
+      {
+        // 2. Nếu là các vật phẩm khác (Bình máu, Giáp, Chìa khóa, Nguyên liệu...) -> hiển thị rương mini
+        for (int i = 0; i < visualTransform.childCount; i++)
+        {
+          Transform child = visualTransform.GetChild(i);
+          if (child.name == "SpawnedWeaponVisual")
+          {
+            child.gameObject.SetActive(false);
+          }
+          else
+          {
+            child.gameObject.SetActive(true);
+          }
+        }
       }
     }
 
@@ -224,6 +340,9 @@ namespace InfiniteLabyrinth.Inventory
     {
       if (itemData == null) return;
 
+      // Không cho phép tương tác nhặt đồ khi chưa tiếp đất xong
+      if (!isLanded) return;
+
       // 1. Hiệu ứng xoay tròn và nhấp nhô lơ lửng khi đã tiếp đất
       if (visualTransform != null && isLanded && !isBeingMagnetized)
       {
@@ -274,7 +393,11 @@ namespace InfiniteLabyrinth.Inventory
         var keyboard = Keyboard.current;
         if (keyboard != null && keyboard.fKey.wasPressedThisFrame)
         {
-          CollectItem();
+          // Đảm bảo không nhặt khi đang mở bảng Inventory UI
+          if (!InfiniteLabyrinth.UI.InventoryUIController.IsOpen)
+          {
+            CollectItem();
+          }
         }
       }
       else

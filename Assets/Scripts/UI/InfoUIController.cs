@@ -123,7 +123,7 @@ namespace InfiniteLabyrinth.UI
                 GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
             }
 
-            if (LoadingScreenManager.Instance != null)
+            if (LoadingScreenManager.HasInstance)
             {
                 LoadingScreenManager.Instance.OnLoadCompleted -= HandleLoadingCompleted;
             }
@@ -136,7 +136,7 @@ namespace InfiniteLabyrinth.UI
             // Nếu không có màn hình loading đang che, phát intro banner sau một nhịp chờ ngắn
             if (playIntroOnSceneEnter)
             {
-                if (LoadingScreenManager.Instance == null || !LoadingScreenManager.Instance.IsLoading)
+                if (!LoadingScreenManager.HasInstance || !LoadingScreenManager.Instance.IsLoading)
                 {
                     StartCoroutine(DelayedSceneStartIntro(0.45f));
                 }

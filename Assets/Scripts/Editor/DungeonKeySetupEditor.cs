@@ -5,19 +5,13 @@ using InfiniteLabyrinth.Inventory;
 
 namespace InfiniteLabyrinth.Editor
 {
-  [InitializeOnLoad]
   public static class DungeonKeySetupEditor
   {
     private const string ItemFolder = "Assets/ScriptableObjects/Items";
     private const string KeyItemPath = "Assets/ScriptableObjects/Items/Item_Key_Dungeon.asset";
     private const string KeyPrefabPath = "Assets/Prefabs/Dungeon/Interactable/DungeonKeyPickup.prefab";
     private const string SourceKeyModelPath = "Assets/Prefabs/Dungeon/Interactable/key.prefab";
-    private const string IconPath = "Assets/UI RPG/PlayerHUD 2/Spirit_Filled.png";
-
-    static DungeonKeySetupEditor()
-    {
-      EditorApplication.delayCall += EnsureDungeonKeyAssets;
-    }
+    private const string IconPath = "Assets/UI RPG/Icon/Items/DungeonKey.png";
 
     [MenuItem("Infinite Labyrinth/RPG/Tạo Chìa Khóa Hầm Ngục (Dungeon Key Setup)", false, 15)]
     public static void EnsureDungeonKeyAssets()
@@ -46,10 +40,14 @@ namespace InfiniteLabyrinth.Editor
       soItem.FindProperty("itemName").stringValue = "Dungeon Boss Key";
       soItem.FindProperty("description").stringValue = "An ancient golden key resonating with sacred magic. Required to unlock the Grand Gate leading into the Boss Arena.";
       
-      Sprite keyIcon = AssetDatabase.LoadAssetAtPath<Sprite>(IconPath);
-      if (keyIcon != null)
+      SerializedProperty iconProp = soItem.FindProperty("icon");
+      if (iconProp.objectReferenceValue == null || isNewItem || iconProp.objectReferenceValue.name == "Spirit_Filled")
       {
-        soItem.FindProperty("icon").objectReferenceValue = keyIcon;
+        Sprite keyIcon = AssetDatabase.LoadAssetAtPath<Sprite>(IconPath);
+        if (keyIcon != null)
+        {
+          iconProp.objectReferenceValue = keyIcon;
+        }
       }
 
       soItem.FindProperty("itemType").enumValueIndex = (int)ItemType.Key;

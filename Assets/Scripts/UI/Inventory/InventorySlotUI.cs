@@ -34,6 +34,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Button của ô này để nhận sự kiện Click chuột")]
     [SerializeField] private Button slotButton;
 
+    [Tooltip("Ảnh hiển thị tiến trình hồi chiêu CDFill")]
+    [SerializeField] private Image cdFillImage;
+
     public int ActualBagIndex { get; private set; } = -1;
     public ItemData CurrentItem { get; private set; }
     public int CurrentQuantity { get; private set; }
@@ -95,6 +98,8 @@ namespace InfiniteLabyrinth.UI
       if (rarityBar == null) rarityBar = transform.Find("RarityBar")?.GetComponent<Image>();
       if (selectHighlight == null) selectHighlight = transform.Find("SelectHighlight")?.GetComponent<Image>();
       if (stackCountText == null) stackCountText = transform.Find("StackCountText")?.GetComponent<TextMeshProUGUI>();
+      if (cdFillImage == null) cdFillImage = transform.Find("CDFill")?.GetComponent<Image>();
+      if (cdFillImage != null) cdFillImage.raycastTarget = false;
     }
 
     /// <summary>
@@ -190,6 +195,11 @@ namespace InfiniteLabyrinth.UI
         stackCountText.gameObject.SetActive(false);
       }
 
+      if (cdFillImage != null)
+      {
+        cdFillImage.gameObject.SetActive(false);
+      }
+
       SetSelected(false);
     }
 
@@ -221,6 +231,19 @@ namespace InfiniteLabyrinth.UI
     /// <summary>
     /// Làm mờ icon khi đang bị nhấc kéo đi
     /// </summary>
+    public void SetCooldownNormalized(float normalized)
+    {
+      if (cdFillImage != null)
+      {
+        bool show = CurrentItem != null && CurrentItem.ItemType == ItemType.Consumable && normalized > 0.001f;
+        cdFillImage.gameObject.SetActive(show);
+        if (show)
+        {
+          cdFillImage.fillAmount = normalized;
+        }
+      }
+    }
+
     public void SetGhostFade(bool faded)
     {
       if (itemIcon != null)

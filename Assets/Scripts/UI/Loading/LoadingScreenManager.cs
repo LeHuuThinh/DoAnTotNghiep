@@ -17,6 +17,29 @@ namespace InfiniteLabyrinth.UI
     private const string DefaultDataPath = "LoadingScreenData";
 
     private static LoadingScreenManager instance;
+    private static bool isApplicationQuitting = false;
+
+    public static bool IsApplicationQuitting => isApplicationQuitting;
+    public static bool HasInstance => !isApplicationQuitting && instance != null;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticState()
+    {
+      isApplicationQuitting = false;
+      instance = null;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterApplicationQuit()
+    {
+      Application.quitting -= HandleApplicationQuitting;
+      Application.quitting += HandleApplicationQuitting;
+    }
+
+    private static void HandleApplicationQuitting()
+    {
+      isApplicationQuitting = true;
+    }
 
     [Header("=== CONFIGURATION ===")]
     [Tooltip("Reference to the LoadingScreenData ScriptableObject")]
@@ -41,6 +64,7 @@ namespace InfiniteLabyrinth.UI
     {
       get
       {
+        if (isApplicationQuitting) return null;
         if (instance == null)
         {
           EnsureInstance();
@@ -54,6 +78,8 @@ namespace InfiniteLabyrinth.UI
 
     private void Awake()
     {
+      if (isApplicationQuitting) return;
+
       if (instance != null && instance != this)
       {
         Destroy(gameObject);
@@ -66,12 +92,26 @@ namespace InfiniteLabyrinth.UI
       EnsureDependencies();
     }
 
+    private void OnApplicationQuit()
+    {
+      isApplicationQuitting = true;
+    }
+
+    private void OnDestroy()
+    {
+      if (instance == this)
+      {
+        instance = null;
+      }
+    }
+
     /// <summary>
     /// Guarantees that an instance of LoadingScreenManager and its UI Canvas exist in the runtime.
     /// Auto-creates them from Resources if not already present.
     /// </summary>
     public static void EnsureInstance()
     {
+      if (isApplicationQuitting) return;
       if (instance != null) return;
 
       instance = FindAnyObjectByType<LoadingScreenManager>();
@@ -91,6 +131,8 @@ namespace InfiniteLabyrinth.UI
 
     private void EnsureDependencies()
     {
+      if (isApplicationQuitting) return;
+
       // 1. Ensure Data
       if (screenData == null)
       {
