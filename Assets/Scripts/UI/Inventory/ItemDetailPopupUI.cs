@@ -28,6 +28,15 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Icon lớn xem trước")]
     [SerializeField] private Image itemIcon;
 
+    [Tooltip("Ảnh nền trắng RarityBG dùng để tô màu theo phẩm cấp (Common, Rare, Epic, Legendary)")]
+    [SerializeField] private Image rarityBg;
+
+    [Tooltip("Thanh bar dưới icon đổi màu theo phẩm cấp của vật phẩm")]
+    [SerializeField] private Image rarityBar;
+
+    [Tooltip("GameObject container Icon chứa ItemIcon, RarityBG, RarityBar")]
+    [SerializeField] private GameObject iconContainer;
+
     [Tooltip("Mô tả / Cốt truyện vật phẩm")]
     [SerializeField] private TextMeshProUGUI itemDescriptionText;
 
@@ -46,6 +55,12 @@ namespace InfiniteLabyrinth.UI
 
     [Tooltip("Nút Vứt bỏ vật phẩm ra sàn")]
     [SerializeField] private Button btnDrop;
+
+    [Tooltip("Nút Bán vật phẩm trong Cửa Hàng")]
+    [SerializeField] private Button btnSell;
+
+    [Tooltip("Nút Bỏ vào rèn/cường hóa trong Lò Rèn (Blacksmith)")]
+    [SerializeField] private Button btnPutIn;
 
     [Header("=== HIỆU ỨNG HOẠT ẢNH POPUP (SOULS-LIKE) ===")]
     [Tooltip("Thời lượng mở popup (giây)")]
@@ -72,8 +87,20 @@ namespace InfiniteLabyrinth.UI
     public InventorySlotUI CurrentBagSlot => currentBagSlot;
     public EquipmentSlotUI CurrentEquipSlot => currentEquipSlot;
 
+    // Chế độ Cửa Hàng (Shop Sell Mode)
+    private bool isShopSellMode = false;
+    public bool IsShopSellMode => isShopSellMode;
+    public void SetShopSellMode(bool enable) { isShopSellMode = enable; isBlacksmithMode = false; }
+
+    // Chế độ Lò Rèn (Blacksmith Mode)
+    private bool isBlacksmithMode = false;
+    public bool IsBlacksmithMode => isBlacksmithMode;
+    public void SetBlacksmithMode(bool enable) { isBlacksmithMode = enable; isShopSellMode = false; }
+
     // Callback thông báo lại cho InventoryUIController
     public event Action OnActionCompleted;
+    public event Action<InventorySlotUI, ItemData> OnSellClicked;
+    public event Action<InventorySlotUI, ItemData> OnPutInClicked;
 
     private void Awake()
     {
@@ -86,25 +113,47 @@ namespace InfiniteLabyrinth.UI
       isInitialized = true;
 
       AutoFindReferences();
+      if (itemIcon != null) itemIcon.gameObject.SetActive(false);
+      if (rarityBg != null) rarityBg.gameObject.SetActive(false);
+      if (rarityBar != null) rarityBar.gameObject.SetActive(false);
+      if (iconContainer != null) iconContainer.SetActive(false);
 
       if (btnEquip != null)
       {
+        btnEquip.onClick.RemoveListener(HandleEquip);
         btnEquip.onClick.AddListener(HandleEquip);
       }
 
       if (btnUnequip != null)
       {
+        btnUnequip.onClick.RemoveListener(HandleUnequip);
         btnUnequip.onClick.AddListener(HandleUnequip);
       }
 
       if (btnUse != null)
       {
+        btnUse.onClick.RemoveListener(HandleUse);
         btnUse.onClick.AddListener(HandleUse);
       }
 
       if (btnDrop != null)
       {
+        btnDrop.onClick.RemoveListener(HandleDrop);
         btnDrop.onClick.AddListener(HandleDrop);
+      }
+
+      if (btnSell != null)
+      {
+        // Loại bỏ triệt để HandleDrop nếu nút bị duplicate từ BtnDrop trong Unity Inspector
+        btnSell.onClick.RemoveListener(HandleDrop);
+        btnSell.onClick.RemoveListener(HandleSell);
+        btnSell.onClick.AddListener(HandleSell);
+      }
+
+      if (btnPutIn != null)
+      {
+        btnPutIn.onClick.RemoveListener(HandlePutIn);
+        btnPutIn.onClick.AddListener(HandlePutIn);
       }
     }
 
@@ -113,14 +162,61 @@ namespace InfiniteLabyrinth.UI
       if (itemNameText == null) itemNameText = transform.Find("ItemNameText")?.GetComponent<TextMeshProUGUI>();
       if (itemRarityText == null) itemRarityText = transform.Find("ItemTypeRow/ItemRarity")?.GetComponent<TextMeshProUGUI>();
       if (itemTypeText == null) itemTypeText = transform.Find("ItemTypeRow/ItemType")?.GetComponent<TextMeshProUGUI>();
-      if (itemIcon == null) itemIcon = transform.Find("ItemIcon")?.GetComponent<Image>();
+      if (iconContainer == null) iconContainer = transform.Find("Icon")?.gameObject;
+      if (itemIcon == null)
+      {
+        itemIcon = transform.Find("Icon/ItemIcon")?.GetComponent<Image>() ?? transform.Find("ItemIcon")?.GetComponent<Image>();
+        if (itemIcon == null)
+        {
+          foreach (var img in GetComponentsInChildren<Image>(true))
+          {
+            if (img.gameObject.name == "ItemIcon") { itemIcon = img; break; }
+          }
+        }
+      }
+      if (rarityBg == null)
+      {
+        rarityBg = transform.Find("Icon/RarityBG")?.GetComponent<Image>() ?? transform.Find("RarityBG")?.GetComponent<Image>();
+        if (rarityBg == null)
+        {
+          foreach (var img in GetComponentsInChildren<Image>(true))
+          {
+            if (img.gameObject.name == "RarityBG") { rarityBg = img; break; }
+          }
+        }
+      }
+      if (rarityBar == null)
+      {
+        rarityBar = transform.Find("Icon/RarityBar")?.GetComponent<Image>() ?? transform.Find("RarityBar")?.GetComponent<Image>();
+        if (rarityBar == null)
+        {
+          foreach (var img in GetComponentsInChildren<Image>(true))
+          {
+            if (img.gameObject.name == "RarityBar") { rarityBar = img; break; }
+          }
+        }
+      }
       if (itemStatsText == null) itemStatsText = transform.Find("ItemStatsText")?.GetComponent<TextMeshProUGUI>();
       if (itemDescriptionText == null) itemDescriptionText = transform.Find("ItemDescriptionText")?.GetComponent<TextMeshProUGUI>();
+
+      // Sửa lỗi gán nhầm reference khi người chơi nhân bản/đổi tên nút trong Editor
+      if (btnDrop != null && btnDrop.gameObject.name == "BtnSell")
+      {
+        if (btnSell == null) btnSell = btnDrop;
+        btnDrop = null;
+      }
+      if (btnSell != null && btnSell.gameObject.name == "BtnDrop")
+      {
+        if (btnDrop == null) btnDrop = btnSell;
+        btnSell = null;
+      }
 
       if (btnEquip == null) btnEquip = transform.Find("ActionButton/BtnEquip")?.GetComponent<Button>();
       if (btnUnequip == null) btnUnequip = transform.Find("ActionButton/BtnUnequip")?.GetComponent<Button>();
       if (btnUse == null) btnUse = transform.Find("ActionButton/BtnUse")?.GetComponent<Button>();
       if (btnDrop == null) btnDrop = transform.Find("ActionButton/BtnDrop")?.GetComponent<Button>();
+      if (btnSell == null) btnSell = transform.Find("ActionButton/BtnSell")?.GetComponent<Button>() ?? transform.Find("BtnSell")?.GetComponent<Button>();
+      if (btnPutIn == null) btnPutIn = transform.Find("ActionButton/BtnPutIn")?.GetComponent<Button>() ?? transform.Find("BtnPutIn")?.GetComponent<Button>();
 
       if (popupCanvasGroup == null)
       {
@@ -446,6 +542,10 @@ namespace InfiniteLabyrinth.UI
 
       if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
       if (popupRect != null) popupRect.localScale = Vector3.one;
+      if (itemIcon != null) itemIcon.gameObject.SetActive(false);
+      if (rarityBg != null) rarityBg.gameObject.SetActive(false);
+      if (rarityBar != null) rarityBar.gameObject.SetActive(false);
+      if (iconContainer != null) iconContainer.SetActive(false);
       gameObject.SetActive(false);
       activeTransitionRoutine = null;
     }
@@ -480,7 +580,12 @@ namespace InfiniteLabyrinth.UI
         itemTypeText.text = GetItemTypeName(currentItem.ItemType);
       }
 
-      // 4. Icon
+      // 4. Icon & Rarity Visuals
+      if (iconContainer != null)
+      {
+        iconContainer.SetActive(true);
+      }
+
       if (itemIcon != null)
       {
         if (currentItem.Icon != null)
@@ -494,6 +599,18 @@ namespace InfiniteLabyrinth.UI
         {
           itemIcon.gameObject.SetActive(false);
         }
+      }
+
+      if (rarityBg != null)
+      {
+        rarityBg.gameObject.SetActive(true);
+        rarityBg.color = rarityColor;
+      }
+
+      if (rarityBar != null)
+      {
+        rarityBar.gameObject.SetActive(true);
+        rarityBar.color = rarityColor;
       }
 
       // 5. Mô tả
@@ -514,6 +631,58 @@ namespace InfiniteLabyrinth.UI
 
     private void ConfigureActionButtons()
     {
+      if (isShopSellMode)
+      {
+        // Chế độ Bán trong Cửa Hàng: Ẩn toàn bộ nút Equip/Unequip/Use/Drop, chỉ hiện duy nhất nút Bán
+        if (btnEquip != null) btnEquip.gameObject.SetActive(false);
+        if (btnUnequip != null) btnUnequip.gameObject.SetActive(false);
+        if (btnUse != null) btnUse.gameObject.SetActive(false);
+        if (btnDrop != null) btnDrop.gameObject.SetActive(false);
+        if (btnPutIn != null) btnPutIn.gameObject.SetActive(false);
+
+        if (btnSell != null)
+        {
+          btnSell.gameObject.SetActive(true);
+          // Không thể bán vật phẩm nhiệm vụ (như Chìa Khóa Boss)
+          bool canSell = currentItem != null && currentItem.Id != "item_key_dungeon";
+          btnSell.interactable = canSell;
+
+          var labelText = btnSell.GetComponentInChildren<TextMeshProUGUI>();
+          if (labelText != null)
+          {
+            labelText.text = "Sell";
+          }
+        }
+        return;
+      }
+
+      if (isBlacksmithMode)
+      {
+        // Chế độ Lò Rèn: Chỉ hiện duy nhất nút Bỏ vào rèn (Put in)
+        if (btnEquip != null) btnEquip.gameObject.SetActive(false);
+        if (btnUnequip != null) btnUnequip.gameObject.SetActive(false);
+        if (btnUse != null) btnUse.gameObject.SetActive(false);
+        if (btnDrop != null) btnDrop.gameObject.SetActive(false);
+        if (btnSell != null) btnSell.gameObject.SetActive(false);
+
+        if (btnPutIn != null)
+        {
+          btnPutIn.gameObject.SetActive(true);
+          bool canUpgrade = currentItem != null && (currentItem.ItemType == ItemType.Weapon || currentItem.ItemType == ItemType.Armor);
+          btnPutIn.interactable = canUpgrade;
+
+          var labelText = btnPutIn.GetComponentInChildren<TextMeshProUGUI>();
+          if (labelText != null)
+          {
+            labelText.text = canUpgrade ? "Put in" : "Cannot Upgrade";
+          }
+        }
+        return;
+      }
+
+      if (btnSell != null) btnSell.gameObject.SetActive(false);
+      if (btnPutIn != null) btnPutIn.gameObject.SetActive(false);
+
       if (isEquippedTarget)
       {
         // Đang xem đồ trên người (từ WeaponSlot, ArmorSlot hoặc UsableSlot)
@@ -662,7 +831,7 @@ namespace InfiniteLabyrinth.UI
         bool success = InventoryManager.Instance.UseItem(currentItem);
         if (success)
         {
-          if (currentBagSlot.CurrentQuantity <= 1)
+          if (currentBagSlot == null || currentBagSlot.IsEmpty || currentBagSlot.CurrentQuantity <= 0)
           {
             Hide();
           }
@@ -682,7 +851,7 @@ namespace InfiniteLabyrinth.UI
       bool success = InventoryManager.Instance.DropItem(currentBagSlot.ActualBagIndex, 1);
       if (success)
       {
-        if (currentBagSlot.CurrentQuantity <= 1)
+        if (currentBagSlot == null || currentBagSlot.IsEmpty || currentBagSlot.CurrentQuantity <= 0)
         {
           Hide();
         }
@@ -692,6 +861,19 @@ namespace InfiniteLabyrinth.UI
         }
         OnActionCompleted?.Invoke();
       }
+    }
+
+    private void HandleSell()
+    {
+      if (currentItem == null || currentBagSlot == null) return;
+      OnSellClicked?.Invoke(currentBagSlot, currentItem);
+    }
+
+    private void HandlePutIn()
+    {
+      if (currentItem == null || currentBagSlot == null) return;
+      OnPutInClicked?.Invoke(currentBagSlot, currentItem);
+      Hide();
     }
 
     /// <summary>
@@ -766,6 +948,11 @@ namespace InfiniteLabyrinth.UI
       {
         popupRect.localScale = Vector3.one;
       }
+
+      if (itemIcon != null) itemIcon.gameObject.SetActive(false);
+      if (rarityBg != null) rarityBg.gameObject.SetActive(false);
+      if (rarityBar != null) rarityBar.gameObject.SetActive(false);
+      if (iconContainer != null) iconContainer.SetActive(false);
 
       gameObject.SetActive(false);
     }

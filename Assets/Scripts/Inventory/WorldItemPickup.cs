@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -42,6 +43,10 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Tốc độ bay hút về phía người chơi")]
     [SerializeField] private float magneticSpeed = 9f;
 
+    // Sổ bộ các vật phẩm đang rơi hoạt động trong Scene (hỗ trợ PlayerInteraction quét danh sách tương tác dọc)
+    private static readonly List<WorldItemPickup> activePickups = new List<WorldItemPickup>();
+    public static IReadOnlyList<WorldItemPickup> ActivePickups => activePickups;
+
     // Static Events cho hệ thống HUD Pickup Prompt (Task RPG-03)
     public static event Action<WorldItemPickup> OnFocusPickup;
     public static event Action<WorldItemPickup> OnUnfocusPickup;
@@ -50,6 +55,8 @@ namespace InfiniteLabyrinth.Inventory
     public ItemData ItemData => itemData;
     public int Quantity => quantity;
     public bool IsPlayerInRange => isPlayerInRange;
+    public float PickupRadius => pickupRadius;
+    public bool IsLanded => isLanded;
 
     private Transform playerTransform;
     private bool isPlayerInRange = false;
@@ -57,6 +64,24 @@ namespace InfiniteLabyrinth.Inventory
     private bool isLanded = false;
     private Vector3 baseVisualLocalPos;
     private float bobTimer = 0f;
+
+    private void OnEnable()
+    {
+      if (!activePickups.Contains(this))
+      {
+        activePickups.Add(this);
+      }
+    }
+
+    private void OnDisable()
+    {
+      activePickups.Remove(this);
+      if (isPlayerInRange)
+      {
+        isPlayerInRange = false;
+        OnUnfocusPickup?.Invoke(this);
+      }
+    }
 
     private void Awake()
     {
@@ -380,37 +405,19 @@ namespace InfiniteLabyrinth.Inventory
         }
       }
 
-      // 3. Tương tác nhặt bằng phím [F] cho trang bị / vật phẩm thường
-      if (distToPlayer <= pickupRadius)
-      {
-        if (!isPlayerInRange)
-        {
-          isPlayerInRange = true;
-          OnFocusPickup?.Invoke(this);
-        }
-
-        // Bấm phím F để nhặt
-        var keyboard = Keyboard.current;
-        if (keyboard != null && keyboard.fKey.wasPressedThisFrame)
-        {
-          // Đảm bảo không nhặt khi đang mở bảng Inventory UI
-          if (!InfiniteLabyrinth.UI.InventoryUIController.IsOpen)
-          {
-            CollectItem();
-          }
-        }
-      }
-      else
-      {
-        if (isPlayerInRange)
-        {
-          isPlayerInRange = false;
-          OnUnfocusPickup?.Invoke(this);
-        }
-      }
+      // Lưu ý: Việc bắt phím F và lựa chọn nhặt đơn lẻ được chuyển giao hoàn toàn
+      // cho PlayerInteraction điều phối qua danh sách tương tác dọc cuộn chuột (Vertical Interaction List).
     }
 
-    private void CollectItem()
+    /// <summary>
+    /// Kích hoạt nhặt vật phẩm vào kho đồ (được gọi từ PlayerInteraction khi đối tượng này đang được Focus/Selected)
+    /// </summary>
+    public bool Collect(GameObject player)
+    {
+      return CollectItem();
+    }
+
+    public bool CollectItem()
     {
       if (InventoryManager.HasInstance)
       {
@@ -419,32 +426,39 @@ namespace InfiniteLabyrinth.Inventory
         {
           if (remainder <= 0)
           {
+            activePickups.Remove(this);
             if (isPlayerInRange)
             {
+              isPlayerInRange = false;
               OnUnfocusPickup?.Invoke(this);
             }
             Destroy(gameObject);
+            return true;
           }
           else
           {
             // Nếu túi đồ chỉ nhặt được một phần vì sắp đầy
             quantity = remainder;
             Debug.Log($"[Pickup] Túi đồ đã đầy, còn lại {remainder} {itemData.ItemName} chưa thể nhặt!");
+            return true;
           }
         }
         else
         {
           Debug.LogWarning("[Pickup] Túi đồ đã đầy hoàn toàn, không thể nhặt thêm!");
+          return false;
         }
       }
       else
       {
         Debug.LogWarning("[Pickup] Không tìm thấy InventoryManager trong Scene!");
+        return false;
       }
     }
 
     private void OnDestroy()
     {
+      activePickups.Remove(this);
       if (isPlayerInRange)
       {
         OnUnfocusPickup?.Invoke(this);

@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using InfiniteLabyrinth.UI;
@@ -62,8 +62,6 @@ namespace InfiniteLabyrinth.Editor
         }
 
         [MenuItem("Infinite Labyrinth/Core Loop & UI/2. Cấu Hình DeadScreenUI (GM-02)", false, 2)]
-        [MenuItem("Infinite Labyrinth/UI/8. Cấu Hình DeadScreenUI & Respawn Loop (Task GM-02)", false, 8)]
-        [MenuItem("Tools/Infinite Labyrinth/Core Loop/2. Setup DeadScreenUI (GM-02)", false, 2)]
         public static void SetupDeadScreenUIInScene()
         {
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();
@@ -98,3 +96,4 @@ namespace InfiniteLabyrinth.Editor
     }
 }
 #endif
+

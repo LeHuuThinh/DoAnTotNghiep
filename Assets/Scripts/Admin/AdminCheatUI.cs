@@ -21,6 +21,7 @@ public class AdminCheatUI : MonoBehaviour
   public enum CheatTab { Teleport, Dungeon, Player, Combat, RPG }
 
   [Header("Root Canvas Structure")]
+  [SerializeField] private CanvasGroup rootCanvasGroup;
   [SerializeField] private CanvasGroup mainPanelCanvasGroup;
   [SerializeField] private GameObject mainPanelRoot;
   [SerializeField] private Button btnClose;
@@ -101,6 +102,10 @@ public class AdminCheatUI : MonoBehaviour
   private void Awake()
   {
     Instance = this;
+    if (rootCanvasGroup == null)
+    {
+      rootCanvasGroup = GetComponent<CanvasGroup>();
+    }
     AdminCheatManager.EnsureInstance();
   }
 
@@ -338,14 +343,27 @@ public class AdminCheatUI : MonoBehaviour
   /// </summary>
   private void SetPanelVisible(bool visible)
   {
+    // 0. Root CanvasGroup (nếu có gắn trên AdminCheatCanvas để ẩn/hiện toàn bộ canvas)
+    if (rootCanvasGroup == null)
+    {
+      rootCanvasGroup = GetComponent<CanvasGroup>();
+    }
+
+    if (rootCanvasGroup != null)
+    {
+      rootCanvasGroup.alpha = visible ? 1f : 0f;
+      rootCanvasGroup.interactable = visible;
+      rootCanvasGroup.blocksRaycasts = visible;
+    }
+
     // 1. Main Admin Panel
-    if (mainPanelCanvasGroup != null)
+    if (mainPanelCanvasGroup != null && mainPanelCanvasGroup != rootCanvasGroup)
     {
       mainPanelCanvasGroup.alpha = visible ? 1f : 0f;
       mainPanelCanvasGroup.interactable = visible;
       mainPanelCanvasGroup.blocksRaycasts = visible;
     }
-    else if (mainPanelRoot != null)
+    else if (mainPanelRoot != null && mainPanelCanvasGroup == null)
     {
       mainPanelRoot.SetActive(visible);
     }

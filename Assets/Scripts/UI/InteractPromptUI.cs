@@ -9,8 +9,8 @@ namespace InfiniteLabyrinth.UI
 {
   /// <summary>
   /// Bảng hiển thị thông báo tương tác phím [F] cho Portal, Rương, NPC...
-  /// Hỗ trợ thanh Fill dọc (Vertical Fill), hiệu ứng trượt nhẹ từ dưới lên (Souls-like Micro-Slide)
-  /// và phản hồi phím có lực khi đè giữ.
+  /// Hỗ trợ thanh Fill dọc (Vertical Fill), hiệu ứng trượt nhẹ từ dưới lên (Souls-like Micro-Slide),
+  /// phản hồi phím có lực khi đè giữ, và bật/tắt 2 Corner khi được chọn trong danh sách tương tác dọc.
   /// </summary>
   public class InteractPromptUI : MonoBehaviour
   {
@@ -30,6 +30,13 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Khung icon phím F để tạo hiệu ứng lún phím có lực")]
     [SerializeField] private RectTransform keyIconRect;
 
+    [Header("=== TRANG TRÍ CORNERS (BẬT KHI ĐƯỢC CHỌN) ===")]
+    [Tooltip("Góc trang trí (Corner) của khung nền Background")]
+    [SerializeField] private GameObject bgCorner;
+
+    [Tooltip("Góc trang trí (Corner) của khung KeyIcon phím F")]
+    [SerializeField] private GameObject iconCorner;
+
     [Header("=== HOẠT ẢNH TRANSITION (SOULS-LIKE) ===")]
     [Tooltip("Thời lượng xuất hiện (giây)")]
     [SerializeField] private float showDuration = 0.14f;
@@ -46,6 +53,8 @@ namespace InfiniteLabyrinth.UI
     private Coroutine activeTransitionRoutine;
     private Coroutine keyIconRoutine;
     private IInteractable currentTarget;
+
+    public bool IsSelected { get; private set; } = false;
 
     private void Awake()
     {
@@ -100,12 +109,87 @@ namespace InfiniteLabyrinth.UI
                   ?? transform.Find("Text")?.GetComponent<TextMeshProUGUI>()
                   ?? GetComponentInChildren<TextMeshProUGUI>();
       }
+
+      if (bgCorner == null)
+      {
+        Transform t = transform.Find("Corner");
+        if (t != null) bgCorner = t.gameObject;
+      }
+
+      if (iconCorner == null)
+      {
+        Transform t = transform.Find("KeyIcon/Corner");
+        if (t != null) iconCorner = t.gameObject;
+      }
+    }
+
+    /// <summary>
+    /// Gán dữ liệu IInteractable cho slot này trong danh sách tương tác
+    /// </summary>
+    public void Bind(IInteractable interactable, bool isSelected)
+    {
+      AutoFindReferences();
+      currentTarget = interactable;
+
+      if (promptText != null && interactable != null)
+      {
+        promptText.text = interactable.InteractionPrompt;
+      }
+
+      SetSelected(isSelected);
+      SetHoldProgress(0f);
+    }
+
+    /// <summary>
+    /// Bật 2 Corner khi được chọn, tắt 2 Corner khi không được chọn, điều chỉnh độ mờ
+    /// </summary>
+    public void SetSelected(bool isSelected)
+    {
+      IsSelected = isSelected;
+      AutoFindReferences();
+
+      if (bgCorner != null) bgCorner.SetActive(isSelected);
+      if (iconCorner != null) iconCorner.SetActive(isSelected);
+      if (canvasGroup != null) canvasGroup.alpha = isSelected ? 1.0f : 0.6f;
+      if (keyIconRect != null) keyIconRect.localScale = isSelected ? Vector3.one : Vector3.one * 0.92f;
+    }
+
+    /// <summary>
+    /// Cập nhật tiến độ đè giữ phím F (0.0 đến 1.0)
+    /// </summary>
+    public void SetHoldProgress(float progress)
+    {
+      if (holdFillImage != null)
+      {
+        holdFillImage.fillAmount = progress;
+      }
+
+      if (keyIconRect != null)
+      {
+        if (progress > 0.02f && progress < 1f)
+        {
+          keyIconRect.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 0.92f, progress * 2f);
+        }
+        else if (progress >= 1f)
+        {
+          if (keyIconRoutine != null) StopCoroutine(keyIconRoutine);
+          keyIconRoutine = StartCoroutine(PunchKeyIconRoutine(1.20f, 0.12f));
+        }
+        else
+        {
+          keyIconRect.localScale = IsSelected ? Vector3.one : Vector3.one * 0.92f;
+        }
+      }
     }
 
     private void OnEnable()
     {
-      PlayerInteraction.OnInteractFocusChanged += HandleFocusChanged;
-      PlayerInteraction.OnInteractProgressChanged += HandleProgressChanged;
+      // Nếu là template độc lập (không có parent InteractionListUI quản lý) thì lắng nghe static events
+      if (transform.parent == null || transform.parent.GetComponent<InteractionListUI>() == null)
+      {
+        PlayerInteraction.OnInteractFocusChanged += HandleFocusChanged;
+        PlayerInteraction.OnInteractProgressChanged += HandleProgressChanged;
+      }
     }
 
     private void OnDisable()
@@ -136,20 +220,7 @@ namespace InfiniteLabyrinth.UI
 
       if (interactable != null)
       {
-        if (promptText != null)
-        {
-          promptText.text = interactable.InteractionPrompt;
-        }
-
-        if (holdFillImage != null)
-        {
-          holdFillImage.fillAmount = 0f;
-        }
-
-        if (keyIconRect != null)
-        {
-          keyIconRect.localScale = Vector3.one;
-        }
+        Bind(interactable, true);
 
         if (promptRoot != null && promptRoot != gameObject && !promptRoot.activeSelf)
         {
@@ -187,29 +258,7 @@ namespace InfiniteLabyrinth.UI
 
     private void HandleProgressChanged(IInteractable interactable, float progress)
     {
-      if (holdFillImage != null)
-      {
-        holdFillImage.fillAmount = progress;
-      }
-
-      if (keyIconRect != null)
-      {
-        if (progress > 0.02f && progress < 1f)
-        {
-          // Phím [F] lún nhẹ khi đè giữ
-          keyIconRect.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 0.92f, progress * 2f);
-        }
-        else if (progress >= 1f)
-        {
-          // Hoàn thành tương tác: Nảy nhẹ
-          if (keyIconRoutine != null) StopCoroutine(keyIconRoutine);
-          keyIconRoutine = StartCoroutine(PunchKeyIconRoutine(1.20f, 0.12f));
-        }
-        else
-        {
-          keyIconRect.localScale = Vector3.one;
-        }
-      }
+      SetHoldProgress(progress);
     }
 
     private IEnumerator AnimateShowRoutine()
@@ -293,7 +342,7 @@ namespace InfiniteLabyrinth.UI
       activeTransitionRoutine = null;
     }
 
-    private void HideImmediate()
+    public void HideImmediate()
     {
       if (canvasGroup != null) canvasGroup.alpha = 0f;
       if (rectTransform != null && hasCachedPosition)

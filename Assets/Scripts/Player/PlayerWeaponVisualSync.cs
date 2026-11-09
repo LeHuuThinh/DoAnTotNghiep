@@ -17,6 +17,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
   [SerializeField] private GameObject defaultWeaponPrefab;
 
   private GameObject currentVisualInstance;
+  private GameObject currentAuraInstance;
   private bool isRegistered = false;
 
   private void Awake()
@@ -108,6 +109,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     if (isRegistered || !InventoryManager.HasInstance) return;
 
     InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChanged;
+    InventoryManager.Instance.OnEquipmentUpgradeChanged += HandleEquipmentUpgradeChanged;
     isRegistered = true;
   }
 
@@ -116,6 +118,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     if (!isRegistered || !InventoryManager.HasInstance) return;
 
     InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChanged;
+    InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
     isRegistered = false;
   }
 
@@ -124,6 +127,39 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     if (type == ItemType.Weapon)
     {
       UpdateWeaponVisual(item);
+      UpdateMaxUpgradeAura();
+    }
+  }
+
+  private void HandleEquipmentUpgradeChanged(ItemType type, int level)
+  {
+    if (type == ItemType.Weapon)
+    {
+      UpdateMaxUpgradeAura();
+    }
+  }
+
+  private void UpdateMaxUpgradeAura()
+  {
+    bool isMax = InventoryManager.HasInstance && InventoryManager.Instance.EquippedWeapon != null && InventoryManager.Instance.EquippedWeaponUpgradeLevel >= 5;
+    if (currentAuraInstance != null)
+    {
+      currentAuraInstance.SetActive(isMax);
+    }
+    else if (isMax && visualHolder != null)
+    {
+      GameObject auraObj = new GameObject("[+5_MaxTier_BladeAura]");
+      auraObj.transform.SetParent(visualHolder, false);
+      auraObj.transform.localPosition = new Vector3(0, 0.45f, 0);
+
+      var light = auraObj.AddComponent<Light>();
+      light.type = LightType.Point;
+      light.color = new Color(1f, 0.85f, 0.4f, 1f); // Vàng kim ấm áp
+      light.range = 1.8f;
+      light.intensity = 1.5f;
+      light.shadows = LightShadows.None;
+
+      currentAuraInstance = auraObj;
     }
   }
 
@@ -215,8 +251,8 @@ public class PlayerWeaponVisualSync : MonoBehaviour
     for (int i = visualHolder.childCount - 1; i >= 0; i--)
     {
       Transform child = visualHolder.GetChild(i);
-      // Bỏ qua nếu có thành phần quan trọng (VFX, Hitbox...) vô tình nằm dưới
-      if (child.GetComponent<WeaponHitbox>() != null || child.GetComponent<ParticleSystem>() != null)
+      // Bỏ qua nếu có thành phần quan trọng (VFX, Hitbox, Aura...) vô tình nằm dưới
+      if (child.GetComponent<WeaponHitbox>() != null || child.GetComponent<ParticleSystem>() != null || child.name == "[+5_MaxTier_BladeAura]")
       {
         continue;
       }

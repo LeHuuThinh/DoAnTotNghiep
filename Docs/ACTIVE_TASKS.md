@@ -12,16 +12,15 @@
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **Giai đoạn 1** | Hoàn Thiện Trải Nghiệm Hầm Ngục (PCG & Combat) | 18 / 18 | ✅ Hoàn thành | **100%** | PCG, Đồ họa, Combat Souls-like, Boss Arena D-02, ARPG Damage & Floating Numbers |
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
-| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 7 / 10 | 🟡 **ĐANG THỰC HIỆN** | **70%** | **Vừa xong Database 49 Items; Chuẩn bị làm Shop & Blacksmith** |
+| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 9 / 10 | 🟡 **ĐANG THỰC HIỆN** | **90%** | **Xong Lò Rèn Haven RPG-08; Chuẩn bị làm Ma Trận Rơi Đồ RPG-09** |
 | **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 5 / 7 | 🟡 Đang hoàn thiện | **71%** | Xong Ice Golem, Red Ignis, ML Ice Golem; Chờ ML Red Ignis |
 | **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 1 / 3 | ⚪ Chờ thực hiện | **33%** | Xong Bản đồ hầm ngục Fullscreen; Chờ Menu & Audio |
-| **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 4 / 4 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Teleport, God Mode, Cheats RPG |
+| **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
 | **Giai đoạn 7** | Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng | 3 / 3 | ✅ Hoàn thành | **100%** | UsableSlot, Drag & Drop, Punch scale, Sửa lỗi Scene Cleanup |
 
 > **🔥 TRỌNG TÂM HIỆN TẠI (CURRENT FOCUS):**  
-> 1. **`Task RPG-07`:** Hệ thống Cửa hàng Làng Haven (Shop NPC - Mua & Bán vật phẩm).  
-> 2. **`Task RPG-08`:** Lò rèn Haven & Hệ thống Cường hóa / Chế tạo Thần binh (Blacksmith NPC).  
-> 3. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện (Drop Tables từ Quái, Rương, Thùng).
+> 1. **`Task RPG-08`:** Lò rèn Haven & Hệ thống Cường hóa / Chế tạo Thần binh (Blacksmith NPC) - ✅ **Hoàn thành**.  
+> 2. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện (Drop Tables từ Quái, Rương, Thùng).
 
 ---
 
@@ -228,6 +227,14 @@
   - `InteractPromptUI`: Thanh `HoldFill` dâng dọc từ dưới lên khi đè giữ phím F. Tái cấu trúc `PortalController` (Hold 2.0s) và `ChestInteractable` (Hold 0.8s).
   - Component `GenericInteractable.cs`: Có sẵn `UnityEvent<GameObject>` sẵn sàng gắn vào bất kỳ NPC Shop, Thợ Rèn, Chuông Làng mà không cần viết lại mã tương tác.
 
+- [x] **SYS-02: Hệ Thống Danh Sách Tương Tác Dọc & Cuộn Chuột Tập Trung (Vertical Interaction List & Mouse Scroll Selection)**
+  - Hợp nhất toàn bộ `IInteractable` (Cổng, Rương, Cửa, NPC) và `WorldItemPickup` (Vật phẩm rơi) vào kiến trúc quản lý tập trung qua [`InteractionTarget.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Interaction/InteractionTarget.cs).
+  - Gỡ bỏ logic tự bắt phím F riêng lẻ trong từng [`WorldItemPickup.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Inventory/WorldItemPickup.cs) (chống triệt để hiện tượng bấm 1 lần nhặt hết toàn bộ đồ trong tầm).
+  - [`PlayerInteraction.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerInteraction.cs) điều hướng danh sách bằng con lăn chuột (`Mouse Scroll Wheel`) hoặc phím Mũi Tên, hỗ trợ cửa sổ trượt (Sliding Window tối đa 5 dòng) mượt mà.
+  - Phản hồi Corner kép: Mục đang chọn (Selected) tự động bật 2 Corner (Background Corner & KeyIcon Corner) và sáng rực (`alpha = 1.0f`); các mục còn lại tắt 2 Corner và làm mờ nhẹ (`alpha = 0.6f`).
+  - Phím F (Tap hoặc Hold) chỉ tác động duy nhất lên mục đang được chọn. Nhặt xong món đó danh sách tự động co lại và chuyển sang món kế tiếp.
+  - Bộ công cụ 1-Click Unity Editor ([`InteractionListSetupEditor.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/InteractionListSetupEditor.cs)) và cơ chế tự phục hồi Runtime (`InteractionListUI.EnsureInstance()`).
+
 - [x] **RPG-06: Cơ Sở Dữ Liệu 49 Vật Phẩm & Đồng Bộ Mô Hình Vũ Khí Nhân Vật (49 Items Database & Visual Sync)**
   - Khởi tạo trọn bộ 49 ScriptableObjects Items chuẩn hóa tiếng Anh:
     + 20 Vũ Khí chiến đấu (Kiếm Gỗ, Thiết Kiếm, Tân Binh, Bản Rộng, Hắc Thiết, Tiên Phong, Gai Thép, Cốt Ma Kiếm, Âm Dương, Tử Thần, Bích Ngọc, Huyết Hồng, Hồ Ly Katana, Titan Cleaver, Minh Phủ Hắc Kiếm, Băng Nha Cực Kiếm, Thái Dương Thánh Kiếm, Excalibur Sovereign, Cổ Kiếm Thất Truyền, Hỏa Long Diệt Thế Kiếm).
@@ -238,14 +245,14 @@
   - Đồng bộ hóa mô hình kiếm cầm tay (`PlayerWeaponVisualSync.cs`): Gắn trên Player, tự động tìm socket `WeaponSocket`, thay đổi model 3D mượt mà khi đổi kiếm trong túi đồ, vô hiệu hóa collider con tránh lỗi hitbox/VFX chém.
   - Công cụ 1-Click tạo bộ dữ liệu 49 items và gắn visual sync cho Player.
 
-- [ ] **RPG-07: Hệ Thống Cửa Hàng Làng Haven (Shop NPCs - Tách 2 Cửa Hàng: Trang Bị & Nhu Yếu Phẩm)** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
-  - [ ] **RPG-07A: Kiến trúc Dữ liệu Cửa hàng Đa Năng (`ShopData.cs`, `ShopManager.cs`):**
+- [x] **RPG-07: Hệ Thống Cửa Hàng Làng Haven (Shop NPCs - Tách 2 Cửa Hàng: Trang Bị & Nhu Yếu Phẩm)** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
+  - [x] **RPG-07A: Kiến trúc Dữ liệu Cửa hàng Đa Năng (`ShopData.cs`, `ShopManager.cs`):**
     - ScriptableObject `ShopData.cs`: Danh sách mặt hàng niêm yết bán (`ItemData`, `buyPrice`, `stockQuantity` hoặc vô hạn `-1`).
     - Khởi tạo 2 Data Asset chuyên biệt:
       * `EquipmentShopData.asset`: Vũ khí tân binh, giáp da, thiết giáp, khiên cơ bản.
       * `SuppliesShopData.asset`: Bình máu nhỏ/lớn, tiên dược thể lực, mật năng lượng, đá cường hóa cơ bản.
     - Singleton / Service `ShopManager.cs` (liên kết `InventoryManager`): Xử lý giao dịch Mua (kiểm tra tiền vàng, kiểm tra slot trống túi đồ, trừ vàng, thêm đồ) và Bán (thu hồi item từ túi, cộng vàng = **40% `GoldValue`** theo `ItemData.SellPrice`).
-  - [ ] **RPG-07B: Giao Diện Người Dùng Shop UI 2 Panel Đồng Bộ (`ShopUIController.cs`, `ShopSlotUI.cs`):**
+  - [x] **RPG-07B: Giao Diện Người Dùng Shop UI 2 Panel Đồng Bộ (`ShopUIController.cs`, `ShopSlotUI.cs`):**
     - Dựng Canvas UI phong cách Dark RPG Souls-like gồm 2 Panel lớn:
       * **Panel Trái (Hàng của Shop - Chia làm 2 nửa):**
         + Nửa trái: Danh sách mặt hàng đang bày bán (ScrollView danh sách kèm Icon, Tên, Rarity, Giá niêm yết).
@@ -256,19 +263,19 @@
         + Player tự tay chọn bán từng món/nguyên liệu (không dùng nút bán tự động để tránh bán nhầm).
         + Khóa bảo vệ an toàn (Sell Protection): Trang bị đang mặc trên người hoặc vật phẩm nhiệm vụ (`Dungeon Boss Key`) tuyệt đối không cho phép bán (làm mờ hoặc ẩn).
     - Quản lý đóng/mở mượt mà qua CanvasGroup, phím `Esc` để thoát, tự động khóa camera và di chuyển nhân vật khi đang mở Shop.
-  - [ ] **RPG-07C: Thiết Lập 2 NPC Thương Nhân Tại Làng Haven (`LandScene`):**
+  - [x] **RPG-07C: Thiết Lập 2 NPC Thương Nhân Tại Làng Haven (`LandScene`):**
     - Gắn `GenericInteractable.cs` vào 2 NPC tại cụm `EquipmentShop` và `SuppliesShop`:
       * `EquipmentShop`: Gợi ý `"[F] Mua Trang Bị"`, truyền `EquipmentShopData` mở UI Shop tiêu đề *"TIỆM TRANG BỊ & RÈN BINH"*.
       * `SuppliesShop`: Gợi ý `"[F] Mua Nhu Yếu Phẩm"`, truyền `SuppliesShopData` mở UI Shop tiêu đề *"TIỆM DƯỢC LIỆU & TẠP HÓA"*.
     - Góc máy camera trò chuyện (Dialogue Framing) lia nhẹ tạo chiều sâu điện ảnh.
-  - [ ] **RPG-07D: Công Cụ Tự Động Hóa 1-Click Unity Editor & Kiểm Thử Toàn Diện:**
+  - [x] **RPG-07D: Công Cụ Tự Động Hóa 1-Click Unity Editor & Kiểm Thử Toàn Diện:**
     - Tool `ShopSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 6. Thiết Lập Shop Làng Haven (1-Click)` tự động liên kết Prefab UI, ShopData và 2 NPC Shop.
 
-- [ ] **RPG-08: Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (Blacksmith NPC - Upgrade & Crafting)** *(ƯU TIÊN SỐ 2 HIỆN TẠI)*
-  - [ ] **RPG-08A: Kiến trúc Dữ liệu Cường Hóa (+1 đến +5) & Công Thức Chế Tạo (`InventorySlot.cs`, `CraftingRecipe.cs`):**
+- [x] **RPG-08: Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (Blacksmith NPC - Upgrade & Crafting)**
+  - [x] **RPG-08A: Kiến trúc Dữ liệu Cường Hóa (+1 đến +5) & Công Thức Chế Tạo (`InventorySlot.cs`, `CraftingRecipe.cs`):**
     - Mở rộng `InventorySlot.cs` và `InventoryManager.cs` lưu trữ `upgradeLevel` (0 đến 5) độc lập cho từng instance trang bị (không ghi đè ScriptableObject gốc).
-    - Cường hóa Vũ khí (+1 đến +5): Mỗi cấp tăng **+15% Sát thương cơ bản (ATK)** của vũ khí.
-    - Hiển thị Badge cấp độ `+1`..`+5` màu vàng kim ở góc icon ô đồ trong kho đồ.
+    - Cường hóa Vũ khí (+1 đến +5): Mỗi cấp tăng **+15% Sát thương cơ bản (ATK)** của vũ khí; Giáp tăng +15% DEF.
+    - Hiển thị Badge cấp độ `+1`..`+5` màu vàng kim ở góc icon ô đồ trong kho đồ (`InventorySlotUI.cs`).
     - Công thức nâng cấp:
       * `+1`: 1 Đá Cường Hóa (`mat_upgrade_stone`) + 50 Vàng.
       * `+2`: 2 Đá Cường Hóa + 100 Vàng.
@@ -276,7 +283,7 @@
       * `+4`: 1 Tinh Thể Hoàn Mỹ (`mat_upgrade_crystal`) + 4 Đá Cường Hóa + 400 Vàng.
       * `+5 (MAX)`: 2 Tinh Thể Hoàn Mỹ + 6 Đá Cường Hóa + 700 Vàng.
     - ScriptableObject `CraftingRecipe.cs` cho hệ thống Chế tạo Thần Binh từ Lõi Boss & Nguyên Liệu Quái (Cốt Ma Kiếm, Hồ Ly Katana, Băng Nha Cực Kiếm, Hỏa Long Diệt Thế Kiếm, Giáp Xương Quái, Băng Giáp Cực Bắc).
-  - [ ] **RPG-08B: Giao Diện Lò Rèn UI 2 Panel [NÂNG CẤP | RÈN] (`BlacksmithUIController.cs`):**
+  - [x] **RPG-08B: Giao Diện Lò Rèn UI 2 Panel [NÂNG CẤP | RÈN] (`BlacksmithUIController.cs`):**
     - Dựng Canvas UI phong cách Lò Rèn Dark Fantasy gồm 2 Panel lớn:
       * **Panel Trái (Lò Rèn Haven):**
         + 2 Tab chuyển đổi trên đầu: **[ NÂNG CẤP (UPGRADE) | RÈN (CRAFT) ]**.
@@ -289,16 +296,15 @@
           * Danh sách các công thức rèn trang bị thần binh từ Lõi Boss (Ice Golem Core, Flame Core).
           * Bảng chi tiết: Nguyên liệu thành phần cần thiết (`Đang có / Cần`) + Chi phí Vàng + Nút **"RÈN (FORGE)"**.
       * **Panel Phải (Túi đồ Player & Chọn Trang Bị):**
-        + Hiển thị túi đồ người chơi.
-        + Bộ lọc thông minh (Smart Filter): Khi ở Tab Nâng cấp, tự động làm sáng các trang bị (Weapon/Armor) và làm mờ các item không thể nâng cấp.
-        + Khi click vào 1 trang bị: `ItemDetailPopupUI` chỉ hiện duy nhất nút **"Bỏ Vào Nâng Cấp" (Select for Upgrade)** (hoặc kéo thả Drag & Drop thẳng vào slot nâng cấp).
-  - [ ] **RPG-08C: Thiết Lập NPC Thợ Rèn Tại Lò Rèn Làng Haven (`LandScene`):**
-    - Gắn `GenericInteractable.cs` vào NPC tại cụm `BlackSmith`: Gợi ý `"[F] Rèn & Nâng Cấp Thần Binh"`, mở giao diện Lò Rèn.
-    - Góc máy camera thợ rèn hướng về đe búa.
-  - [ ] **RPG-08D: Game Feel Hoành Tráng, Hào Quang +5 & Tool 1-Click Unity Editor:**
-    - Âm thanh búa nện đe "KENG!", hiệu ứng tia lửa rèn nổ bung trên UI (UI Sparks VFX) và nháy sáng phồng nhẹ (Punch Scale) khi nâng cấp/rèn thành công.
-    - Khi trang bị đạt cấp `+5`, kích hoạt hiệu ứng hào quang phát sáng nhẹ quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
-    - Tool `BlacksmithSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)`.
+        + Hiển thị túi đồ người chơi (Tabs All, Weapon, Armor, Item; 30 ô đồ; Vàng thời gian thực).
+        + Khi click vào 1 trang bị: `ItemDetailPopupUI` chỉ hiện duy nhất nút **"Bỏ Vào Nâng Cấp" (Put in)** đưa thẳng vào slot nâng cấp.
+  - [x] **RPG-08C: Thiết Lập NPC Thợ Rèn Tại Lò Rèn Làng Haven (`LandScene`):**
+    - Gắn `BlacksmithInteractable.cs` vào NPC tại cụm `BlackSmith`: Gợi ý `"[F] Forge & Upgrade Armaments"`, mở giao diện Lò Rèn.
+    - Tự động khóa di chuyển, mở chuột và đóng bằng ESC/Tab mượt mà qua CanvasGroup.
+  - [x] **RPG-08D: Game Feel Hoành Tráng, Hào Quang +5 & Tool 1-Click Unity Editor:**
+    - Hiệu ứng nháy sáng phồng nhẹ (Punch Scale) khi nâng cấp và rèn thành công.
+    - Khi trang bị đạt cấp `+5`, kích hoạt hiệu ứng hào quang vàng kim phát sáng quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
+    - Tool `BlacksmithSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp vào Master Dashboard (Ctrl+Alt+D).
 
 - [ ] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables)**
   - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `ChestInteractable.cs`, `BreakableProp.cs`, và `EnemyAIBase.cs`:
@@ -396,6 +402,13 @@
   - MenuItem: `Infinite Labyrinth -> Admin -> 1. Setup Admin Cheat Console (Hotkey ~)`.
   - Tự động dựng toàn bộ Canvas UI, cài đặt EventSystem, nối dây 100% nút bấm và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
 
+- [x] **DEV-01: Tái Cấu Trúc Toàn Diện Hệ Thống Editor & Master Control Center (`ProjectDashboardEditor.cs`)**
+  - Gom toàn bộ công cụ phát triển, setup 1-click vào một cửa sổ trung tâm duy nhất: `ProjectDashboardEditor` (phím tắt `Ctrl + Alt + D` hoặc menu `Infinite Labyrinth -> 🚀 Master Control Center (Dashboard)`).
+  - Phân chia 5 Tab trực quan: Combat & VFX, Boss Encounters (Ice Golem & Red Ignis), RPG & Haven Hub, Game Loop & UI, và Optimization & Admin.
+  - Tích hợp thanh Scene Quick Switch chuyển đổi nhanh giữa `LandScene` và `DungeonScene`.
+  - Triệt tiêu 100% menu rác, trùng lặp trên thanh công cụ Unity: Xóa bỏ menu tách rời `Boss/`, xóa bỏ menu `Tools/Infinite Labyrinth` và `Tools/RedIgnis`.
+  - Hợp nhất cấu trúc thư mục: Xóa bỏ `Assets/Editor/` cũ, chuyển các script Red Ignis về `Assets/Scripts/Editor/`, chuyển các script sửa lỗi một lần (one-off) đã hoàn thành vào `Assets/Scripts/Editor/Archive/`.
+
 ---
 
 ## 🚩 GIAI ĐOẠN 7: Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng (Lifecycle & Cleanup)
@@ -417,3 +430,7 @@
   - Thêm thuộc tính kiểm tra an toàn `HasInstance => !isApplicationQuitting && instance != null`.
   - Trong `LoadingScreenManager.Instance`, `EnsureInstance()` và `EnsureDependencies()`: chặn lập tức việc sinh GameObject nếu `isApplicationQuitting == true`.
   - Trong `InfoUIController.cs`: Thay thế lệnh gọi `.Instance != null` bằng `.HasInstance` trong `OnDisable()` và `Start()`, triệt tiêu hoàn toàn việc sinh GameObject ma khi dừng Play Mode.
+
+- [x] **UI-07: Đồng bộ CanvasGroup cho AdminCheatCanvas & Rarity Visuals cho ItemDetailPopupUI**
+  - **AdminCheatUI CanvasGroup Control:** Tự động phát hiện và đồng bộ điều khiển thuộc tính alpha, interactable, blocksRaycasts của rootCanvasGroup khi mở/đóng bằng phím ~ hoặc nút [✕]. Khắc phục triệt để hiện tượng gán CanvasGroup(alpha = 0) lên AdminCheatCanvas khiến menu bị tàng hình khi bật.
+  - **ItemDetailPopup Rarity Visuals:** Tự động kết nối RarityBG, RarityBar và container Icon trong ItemDetailPopupUI.cs. Đồng bộ hiển thị dải màu phẩm cấp thời gian thực theo Rarity của vật phẩm đang xem; tự động vô hiệu hóa (SetActive(false)) icon và rarity khi chưa có vật phẩm hoặc khi đóng popup, tránh hiển thị ô vuông trắng rỗng trong Scene.

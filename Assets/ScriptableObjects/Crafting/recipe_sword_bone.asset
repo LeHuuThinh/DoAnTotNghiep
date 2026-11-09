@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c3ea9d20b64deca9d361c8fe551ac9, type: 3}
+  m_Name: recipe_sword_bone
+  m_EditorClassIdentifier: InfiniteLabyrinth.Blacksmith::InfiniteLabyrinth.Blacksmith.CraftingRecipe
+  recipeId: recipe_sword_bone
+  recipeName: Bone Greatsword
+  description: Forged from dense monster skeletal fragments. Brutal heavy cleaving
+    edge.
+  resultItem: {fileID: 11400000, guid: d3d64b16a9d03e749abe5fc57238dfc6, type: 2}
+  resultQuantity: 1
+  goldCost: 150
+  requiredMaterials:
+  - materialItem: {fileID: 11400000, guid: b09c634f9d2eec04692a983380c66236, type: 2}
+    quantity: 5
+  - materialItem: {fileID: 11400000, guid: ca88d807d8a52ec40be7bcaefac4f132, type: 2}
+    quantity: 1

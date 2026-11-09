@@ -182,6 +182,17 @@ namespace InfiniteLabyrinth.UI
     {
       if (bagSlot == null || bagSlot.IsEmpty) return;
 
+      // Đảm bảo Ghost luôn nằm trên đúng Canvas của ô đang được kéo (ShopCanvas hoặc Main Canvas)
+      Canvas slotCanvas = bagSlot.GetComponentInParent<Canvas>();
+      if (slotCanvas != null)
+      {
+        rootCanvas = slotCanvas.rootCanvas;
+        if (ghostRoot != null && ghostRoot.transform.parent != rootCanvas.transform)
+        {
+          ghostRoot.transform.SetParent(rootCanvas.transform, false);
+        }
+      }
+
       IsDragging = true;
       SourceBagSlot = bagSlot;
       SourceEquipSlot = null;
@@ -192,6 +203,10 @@ namespace InfiniteLabyrinth.UI
       if (InventoryUIController.Instance != null)
       {
         InventoryUIController.Instance.CloseDetailPopup();
+      }
+      if (ShopUIController.Instance != null && ShopUIController.IsOpen)
+      {
+        ShopUIController.Instance.CloseDetailPopup();
       }
 
       // Làm mờ icon ô gốc
@@ -215,6 +230,16 @@ namespace InfiniteLabyrinth.UI
     {
       if (equipSlot == null || equipSlot.IsEmpty) return;
 
+      Canvas slotCanvas = equipSlot.GetComponentInParent<Canvas>();
+      if (slotCanvas != null)
+      {
+        rootCanvas = slotCanvas.rootCanvas;
+        if (ghostRoot != null && ghostRoot.transform.parent != rootCanvas.transform)
+        {
+          ghostRoot.transform.SetParent(rootCanvas.transform, false);
+        }
+      }
+
       IsDragging = true;
       SourceBagSlot = null;
       SourceEquipSlot = equipSlot;
@@ -224,6 +249,10 @@ namespace InfiniteLabyrinth.UI
       if (InventoryUIController.Instance != null)
       {
         InventoryUIController.Instance.CloseDetailPopup();
+      }
+      if (ShopUIController.Instance != null && ShopUIController.IsOpen)
+      {
+        ShopUIController.Instance.CloseDetailPopup();
       }
 
       equipSlot.SetGhostFade(true);

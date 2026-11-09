@@ -55,7 +55,7 @@
 
 ## 2. Các Tính Năng Đang Thiếu / Cần Thực Hiện Tiếp Theo (Theo Thứ Tự Ưu Tiên)
 
-1. **[ƯU TIÊN SỐ 1 HIỆN TẠI - Task RPG-07] Cửa Hàng Làng Haven (Tách 2 Shop: Trang Bị & Nhu Yếu Phẩm):**
+1. **[ĐÃ HOÀN THÀNH - Task RPG-07] Cửa Hàng Làng Haven (Tách 2 Shop: Trang Bị & Nhu Yếu Phẩm):**
    - Tương tác với 2 NPC Thương Nhân tại `LandScene` (bấm phím F mở UI Shop tương ứng: `EquipmentShop` & `SuppliesShop`).
    - Dùng chung 1 Prefab Canvas UI và `ShopUIController.cs` nạp dữ liệu động từ `ShopData.cs` (`EquipmentShopData` & `SuppliesShopData`).
    - Giao diện 2 Panel: Trái (Hàng bán Shop: List + Detail + Mua kèm bộ chọn số lượng, đổi màu đỏ chữ giá tiền & disable nút Mua khi thiếu vàng); Phải (Túi đồ Player + Bán từng món 40% giá trị gốc, khóa bán đồ đang mặc/chìa khóa boss).

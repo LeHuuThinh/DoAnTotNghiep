@@ -1,4 +1,4 @@
-﻿# Kiến Trúc Hệ Thống (System Architecture) - Infinite Labyrinth
+# Kiến Trúc Hệ Thống (System Architecture) - Infinite Labyrinth
 
 > **Dự án:** Infinite Labyrinth (Game 3D Action RPG Roguelite - Đồ Án Tốt Nghiệp)  
 > **Phong cách nghệ thuật:** Faceted Low-poly  
@@ -354,7 +354,12 @@ flowchart TD
      * **Cơ chế tia sáng đa tầng (`OpenVFX`):** Gồm `Point Light` (Flash Flare bùng nổ khi hé nắp qua `FlashLightRoutine`), `Rays` (luồng tia sáng nón vươn cao), `Stars` (hạt sao lấp lánh) và `Circles` (vòng hào quang). Tự động kích hoạt đồng bộ khi nắp rương hé mở (`vfxDelay = 0.05s`) qua `ChestInteractable.cs`.
    * **Hiệu ứng vật lý văng đồ (Arc Pop Physics):** Vật phẩm búng nảy theo hình vòng cung parabol nhẹ khi xuất hiện (`LootDropper.cs`), tránh đè dính chùm.
    * **Vật phẩm thế giới (`WorldItemPickup.cs`):** Model 3D thu nhỏ, xoay lơ lửng, tia sáng hào quang nhẹ (Loot Beam/Glow) tương ứng theo độ hiếm.
-   * **Tương tác nhặt đồ:** Player lại gần trong bán kính 2m hiển thị Pickup Prompt UI (Icon + Tên + Phím `[F]`). Tiền Vàng hỗ trợ cơ chế tự động bay hút (Magnetic Auto-pickup) khi lại gần.
+    * **Hệ Thống Danh Sách Tương Tác Dọc & Cuộn Chuột Tập Trung (PlayerInteraction.cs, InteractionListUI.cs, InteractionTarget.cs):**
+      * Hợp nhất toàn bộ đối tượng tương tác IInteractable (Cổng dịch chuyển, Rương báu, Cửa, NPC) và vật phẩm rơi WorldItemPickup thành 1 danh sách dọc duy nhất bên phải tâm màn hình (x: 247, y: 0), triệt tiêu 100% lỗi chồng đè 2 UI.
+      * **Điều hướng cuộn chuột (Mouse Scroll Wheel) & Phím Mũi Tên:** Người chơi lăn con lăn chuột để chọn đối tượng cần tương tác/nhặt; danh sách hỗ trợ cửa sổ trượt (Sliding Window) hiển thị tối đa 5 dòng mượt mà.
+      * **Phản hồi Corner Kép (Dual Corner Active State):** Mục đang được chọn (Selected) tự động bật sáng 2 Corner (Góc viền nền Background & Góc viền KeyIcon phím F) và hiển thị sáng rõ (lpha = 1.0f); các mục còn lại tắt 2 Corner và làm mờ nhẹ (lpha = 0.6f).
+      * **Nhặt đồ có chủ đích (Single Target Action):** Gỡ bỏ hoàn toàn việc bắt phím F riêng lẻ trong từng instance rơi đất, loại bỏ triệt để lỗi "bấm 1 lần nhặt hết toàn bộ đồ trong tầm". Bấm phím F chỉ nhặt hoặc tương tác đúng mục đang chọn; nhặt xong danh sách tự co lại và chọn tiếp mục kế tiếp.
+      * **Tiền Vàng:** Duy trì cơ chế tự động hút nam châm (Magnetic Auto-pickup 3.8m), không làm rác danh sách phím F.
    * **Thông báo nhặt đồ (`PickupNotificationFeed.cs`):** Xếp chồng mép trái màn hình, trượt mượt lên từ dưới (smooth slide up), mờ dần sau 2.5s.
 2. **Hệ Thống Túi Đồ 2 Cửa Sổ (Dual-Pane Inventory Screen - Phím Tab):**
    * **Kiến trúc điều phối chính (`InventoryUIController.cs`):** Quản lý đóng/mở mượt mà bằng CanvasGroup (phím `Tab` hoặc `Esc`), tự động giải phóng con trỏ chuột (`Cursor.lockState = None`), khóa di chuyển người chơi và đóng băng xoay camera / combat. Tự động kiểm tra và khởi tạo `EventSystem` + `InputSystemUIInputModule` tại runtime nếu scene bị thiếu.
@@ -384,7 +389,24 @@ flowchart TD
    * **Tẩy Điểm Tiềm Năng (Reset Stats):** Nút Reset tiêu tốn X Vàng (tùy biến Inspector, mặc định 100 Vàng) qua `InventoryManager.cs`. Hoàn lại 100% điểm tiềm năng và xóa bỏ toàn bộ bonus đã cộng. Kiểm tra chặt chẽ số dư Vàng và khóa nút nếu không đủ.
 4. **Hub Ngôi Làng & Thợ Rèn (`LandScene`):**
    * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
-   * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu (Đá cường hóa kiếm) và Vàng để nâng cấp vũ khí (+1, +2...), tăng sát thương chém và hiệu ứng visual.
+   * **Thợ rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (`BlacksmithUIController.cs`, `CraftingRecipe.cs`, `BlacksmithUpgradeConfig.cs` - Task RPG-08):**
+     * **Kiến trúc Cường hóa (+1 đến +5):** Mỗi cấp cường hóa gia tăng **+15% Sát thương cơ bản (ATK)** của vũ khí hoặc **+15% Phòng thủ (DEF)** của giáp, lưu trữ độc lập theo từng instance trong `InventorySlot.UpgradeLevel` mà không can thiệp ScriptableObject gốc. Cập nhật trực tiếp vào `InventoryManager.GetTotalAttackBonus()` và `GetTotalDefenseBonus()`.
+     * **Badge Cấp Độ & Hào Quang Thần Binh:** Tự động hiển thị Badge `+1`..`+5` màu vàng kim `#FFD700` ở góc trên ô đồ (`InventorySlotUI.cs`). Khi vũ khí đạt cấp tối đa `+5`, kích hoạt hào quang phát sáng vàng kim quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
+     * **Công thức nâng cấp theo bậc:**
+       + Cấp `+1`: 1 Đá Cường Hóa (`mat_upgrade_stone`) + 50 Vàng.
+       + Cấp `+2`: 2 Đá Cường Hóa + 100 Vàng.
+       + Cấp `+3`: 3 Đá Cường Hóa + 200 Vàng.
+       + Cấp `+4`: 1 Tinh Thể Hoàn Mỹ (`mat_upgrade_crystal`) + 4 Đá Cường Hóa + 400 Vàng.
+       + Cấp `+5 (MAX)`: 2 Tinh Thể Hoàn Mỹ + 6 Đá Cường Hóa + 700 Vàng.
+     * **Hệ thống Chế tạo Thần Binh (Crafting Recipes):** 6 công thức rèn trang bị cực phẩm từ Lõi Boss & Nguyên liệu quái:
+       + *Cốt Ma Kiếm:* 5 Mảnh Xương Quái + 1 Huy Hiệu Chiến Binh + 150 Vàng.
+       + *Hồ Ly Katana:* 3 Mảnh Xương Quái + 2 Bụi Ma Pháp + 1 Giấy Da Cổ + 250 Vàng.
+       + *Băng Nha Cực Kiếm:* 1 Trái Tim Băng Ice Core + 2 Mảnh Cổ Tự Băng + 4 Đá Cường Hóa + 500 Vàng.
+       + *Hỏa Long Diệt Thế Kiếm:* 1 Lõi Lửa Flame Core + 2 Huy Hiệu Liệt Hỏa + 2 Tinh Thể Hoàn Mỹ + 800 Vàng.
+       + *Giáp Xương Quái:* 6 Mảnh Xương Quái + 2 Huy Hiệu Chiến Binh + 200 Vàng.
+       + *Băng Giáp Cực Bắc:* 1 Trái Tim Băng Ice Core + 2 Mảnh Cổ Tự Băng + 1 Tinh Thể Hoàn Mỹ + 600 Vàng.
+     * **Giao Diện 2 Panel Đồng Bộ:** Panel Trái gồm 2 Tab chuyển đổi [ NÂNG CẤP | RÈN ] (cửa sổ so sánh Before/After, container nguyên liệu, hiển thị giá vàng thời gian thực). Panel Phải đồng bộ 30 ô túi đồ và Popup thao tác với nút `[Put in]` độc quyền.
+     * **NPC Thợ Rèn & Công Cụ 1-Click:** `BlacksmithInteractable.cs` gắn trên `BlackSmithNPC` (bán kính 3.2m, phím F); Tool `BlacksmithSetupEditor.cs` với MenuItem `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp Master Dashboard.
    * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
    * **Tối Ưu Hóa Hiệu Năng Ngôi Làng (NpcPatrol.cs & LandSceneOptimizerEditor.cs):**
      - **Distance LOD Culling & Hibernation cho 61+ NPCs:** Tự động đưa NPC ở xa (> 48m) vào chế độ ngủ đông (dừng NavMeshAgent, tắt né tránh, ngắt tính toán Animator qua CullCompletely), giải phóng 100% CPU. Khi người chơi lại gần (< 40m), NPC tự động thức tỉnh tuần tra mượt mà. Quét cự ly Time-sliced 0.35s rải đều các frame.

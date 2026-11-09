@@ -31,7 +31,9 @@ namespace InfiniteLabyrinth.Inventory
     [Header("=== DỮ LIỆU THỜI GIAN THỰC (READ-ONLY INSPECTOR) ===")]
     [SerializeField] private int currentGold = 0;
     [SerializeField] private ItemData equippedWeapon;
+    [SerializeField] private int equippedWeaponUpgradeLevel = 0;
     [SerializeField] private ItemData equippedArmor;
+    [SerializeField] private int equippedArmorUpgradeLevel = 0;
     [SerializeField] private ItemData equippedUsable;
     [SerializeField] private int equippedUsableCount = 0;
 
@@ -45,6 +47,7 @@ namespace InfiniteLabyrinth.Inventory
     public event Action OnInventoryChanged;
     public event Action<int> OnGoldChanged;
     public event Action<ItemType, ItemData> OnEquipmentChanged;
+    public event Action<ItemType, int> OnEquipmentUpgradeChanged;
     public event Action<ItemData, int> OnItemAdded; // Phục vụ Notification Feed bên trái màn hình
     public event Action<ItemData, int> OnUsableChanged;
     public event Action<float, float> OnConsumableCooldownUpdated; // (currentTimer, maxCooldown)
@@ -55,7 +58,9 @@ namespace InfiniteLabyrinth.Inventory
     public int MaxCapacity => maxCapacity;
     public IReadOnlyList<InventorySlot> Slots => slots;
     public ItemData EquippedWeapon => equippedWeapon;
+    public int EquippedWeaponUpgradeLevel => equippedWeaponUpgradeLevel;
     public ItemData EquippedArmor => equippedArmor;
+    public int EquippedArmorUpgradeLevel => equippedArmorUpgradeLevel;
     public ItemData EquippedUsable => equippedUsable;
     public int EquippedUsableCount => equippedUsableCount;
     public float ConsumableGlobalCooldown => consumableGlobalCooldown;
@@ -188,7 +193,7 @@ namespace InfiniteLabyrinth.Inventory
     /// <param name="quantity">Số lượng cần thêm</param>
     /// <param name="remainder">Số lượng còn dư chưa nhặt được nếu túi đầy</param>
     /// <returns>True nếu nhặt được ít nhất 1 cái, False nếu hoàn toàn không chứa được</returns>
-    public bool AddItem(ItemData item, int quantity, out int remainder, bool notifyPickup = true, bool allowRefillEquippedUsable = true)
+    public bool AddItem(ItemData item, int quantity, out int remainder, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0)
     {
       remainder = quantity;
       if (item == null || quantity <= 0) return false;
@@ -244,7 +249,7 @@ namespace InfiniteLabyrinth.Inventory
           if (slots[i].IsEmpty)
           {
             int toPut = Mathf.Min(remainder, item.MaxStack);
-            slots[i].SetItem(item, toPut);
+            slots[i].SetItem(item, toPut, upgradeLevel);
             remainder -= toPut;
             if (remainder <= 0) break;
           }
@@ -265,9 +270,9 @@ namespace InfiniteLabyrinth.Inventory
       return false; // Túi đầy hoàn toàn
     }
 
-    public bool AddItem(ItemData item, int quantity = 1, bool notifyPickup = true, bool allowRefillEquippedUsable = true)
+    public bool AddItem(ItemData item, int quantity = 1, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0)
     {
-      return AddItem(item, quantity, out _, notifyPickup, allowRefillEquippedUsable);
+      return AddItem(item, quantity, out _, notifyPickup, allowRefillEquippedUsable, upgradeLevel);
     }
 
     /// <summary>
@@ -425,7 +430,7 @@ namespace InfiniteLabyrinth.Inventory
       // 1. Nếu ô B đang trống -> Chuyển toàn bộ sang B
       if (slotB.IsEmpty)
       {
-        slotB.SetItem(slotA.ItemData, slotA.Quantity);
+        slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel);
         slotA.Clear();
         OnInventoryChanged?.Invoke();
         return true;
@@ -437,7 +442,7 @@ namespace InfiniteLabyrinth.Inventory
         int remainder = slotB.AddQuantity(slotA.Quantity);
         if (remainder > 0)
         {
-          slotA.SetItem(slotA.ItemData, remainder);
+          slotA.SetItem(slotA.ItemData, remainder, slotA.UpgradeLevel);
         }
         else
         {
@@ -450,9 +455,10 @@ namespace InfiniteLabyrinth.Inventory
       // 3. Nếu là 2 vật phẩm khác nhau (hoặc ô B đã đầy stack) -> Hoán đổi (Swap)
       ItemData tempItem = slotB.ItemData;
       int tempQty = slotB.Quantity;
+      int tempUpgrade = slotB.UpgradeLevel;
 
-      slotB.SetItem(slotA.ItemData, slotA.Quantity);
-      slotA.SetItem(tempItem, tempQty);
+      slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel);
+      slotA.SetItem(tempItem, tempQty, tempUpgrade);
 
       OnInventoryChanged?.Invoke();
       return true;
@@ -473,28 +479,36 @@ namespace InfiniteLabyrinth.Inventory
       if (item.ItemType == ItemType.Weapon)
       {
         ItemData oldWeapon = equippedWeapon;
+        int oldUpgrade = equippedWeaponUpgradeLevel;
+
         equippedWeapon = item;
+        equippedWeaponUpgradeLevel = slot.UpgradeLevel;
         slot.Clear();
 
         if (oldWeapon != null)
         {
-          slot.SetItem(oldWeapon, 1);
+          slot.SetItem(oldWeapon, 1, oldUpgrade);
         }
 
         OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+        OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, equippedWeaponUpgradeLevel);
       }
       else if (item.ItemType == ItemType.Armor)
       {
         ItemData oldArmor = equippedArmor;
+        int oldUpgrade = equippedArmorUpgradeLevel;
+
         equippedArmor = item;
+        equippedArmorUpgradeLevel = slot.UpgradeLevel;
         slot.Clear();
 
         if (oldArmor != null)
         {
-          slot.SetItem(oldArmor, 1);
+          slot.SetItem(oldArmor, 1, oldUpgrade);
         }
 
         OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+        OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, equippedArmorUpgradeLevel);
       }
       else if (item.ItemType == ItemType.Consumable)
       {
@@ -545,21 +559,26 @@ namespace InfiniteLabyrinth.Inventory
       if (toUnequip == null || toUnequipCount <= 0) return false;
 
       var targetSlot = slots[targetSlotIndex];
+      int unequipUpgrade = (type == ItemType.Weapon) ? equippedWeaponUpgradeLevel : (type == ItemType.Armor ? equippedArmorUpgradeLevel : 0);
 
       // 1. Ô đích đang trống -> Đặt đồ tháo vào ô đó
       if (targetSlot.IsEmpty)
       {
-        targetSlot.SetItem(toUnequip, toUnequipCount);
+        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade);
 
         if (type == ItemType.Weapon)
         {
           equippedWeapon = null;
+          equippedWeaponUpgradeLevel = 0;
           OnEquipmentChanged?.Invoke(ItemType.Weapon, null);
+          OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, 0);
         }
         else if (type == ItemType.Armor)
         {
           equippedArmor = null;
+          equippedArmorUpgradeLevel = 0;
           OnEquipmentChanged?.Invoke(ItemType.Armor, null);
+          OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, 0);
         }
         else if (type == ItemType.Consumable)
         {
@@ -598,17 +617,22 @@ namespace InfiniteLabyrinth.Inventory
       {
         ItemData newEquip = targetSlot.ItemData;
         int newQty = targetSlot.Quantity;
-        targetSlot.SetItem(toUnequip, toUnequipCount);
+        int newUpgrade = targetSlot.UpgradeLevel;
+        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade);
 
         if (type == ItemType.Weapon)
         {
           equippedWeapon = newEquip;
+          equippedWeaponUpgradeLevel = newUpgrade;
           OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+          OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, equippedWeaponUpgradeLevel);
         }
         else if (type == ItemType.Armor)
         {
           equippedArmor = newEquip;
+          equippedArmorUpgradeLevel = newUpgrade;
           OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+          OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, equippedArmorUpgradeLevel);
         }
         else if (type == ItemType.Consumable)
         {
@@ -675,20 +699,26 @@ namespace InfiniteLabyrinth.Inventory
 
       if (toUnequip == null || toUnequipCount <= 0) return false;
 
+      int unequipUpgrade = (type == ItemType.Weapon) ? equippedWeaponUpgradeLevel : (type == ItemType.Armor ? equippedArmorUpgradeLevel : 0);
+
       // Thử thêm vào túi đồ (tự động gộp stack nếu là consumable stackable hoặc tìm ô trống)
-      if (AddItem(toUnequip, toUnequipCount, out int remainder, notifyPickup: false, allowRefillEquippedUsable: false))
+      if (AddItem(toUnequip, toUnequipCount, out int remainder, notifyPickup: false, allowRefillEquippedUsable: false, upgradeLevel: unequipUpgrade))
       {
         if (remainder <= 0)
         {
           if (type == ItemType.Weapon)
           {
             equippedWeapon = null;
+            equippedWeaponUpgradeLevel = 0;
             OnEquipmentChanged?.Invoke(ItemType.Weapon, null);
+            OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, 0);
           }
           else if (type == ItemType.Armor)
           {
             equippedArmor = null;
+            equippedArmorUpgradeLevel = 0;
             OnEquipmentChanged?.Invoke(ItemType.Armor, null);
+            OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, 0);
           }
           else if (type == ItemType.Consumable)
           {
@@ -981,16 +1011,30 @@ namespace InfiniteLabyrinth.Inventory
     public float GetTotalAttackBonus()
     {
       float bonus = 0f;
-      if (equippedWeapon != null) bonus += equippedWeapon.BonusAttack;
-      if (equippedArmor != null) bonus += equippedArmor.BonusAttack;
+      if (equippedWeapon != null)
+      {
+        float weaponAtk = equippedWeapon.BonusAttack * (1f + 0.15f * equippedWeaponUpgradeLevel);
+        bonus += weaponAtk;
+      }
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.BonusAttack;
+      }
       return bonus;
     }
 
     public float GetTotalDefenseBonus()
     {
       float bonus = 0f;
-      if (equippedArmor != null) bonus += equippedArmor.BonusDefense;
-      if (equippedWeapon != null) bonus += equippedWeapon.BonusDefense;
+      if (equippedArmor != null)
+      {
+        float armorDef = equippedArmor.BonusDefense * (1f + 0.15f * equippedArmorUpgradeLevel);
+        bonus += armorDef;
+      }
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.BonusDefense;
+      }
       return bonus;
     }
 
@@ -1021,6 +1065,49 @@ namespace InfiniteLabyrinth.Inventory
         }
       }
       return result;
+    }
+
+    // =========================================================================
+    // 7. HỆ THỐNG CƯỜNG HÓA LÒ RÈN (BLACKSMITH UPGRADE)
+    // =========================================================================
+
+    /// <summary>
+    /// Nâng cấp 1 ô trong túi đồ thêm 1 bậc (+1 đến +5)
+    /// </summary>
+    public bool UpgradeSlot(int slotIndex)
+    {
+      if (slotIndex < 0 || slotIndex >= slots.Count) return false;
+      var slot = slots[slotIndex];
+      if (slot.IsEmpty || slot.UpgradeLevel >= 5) return false;
+      if (slot.ItemData.ItemType != ItemType.Weapon && slot.ItemData.ItemType != ItemType.Armor) return false;
+
+      slot.SetUpgradeLevel(slot.UpgradeLevel + 1);
+      OnInventoryChanged?.Invoke();
+      return true;
+    }
+
+    /// <summary>
+    /// Nâng cấp trang bị đang mặc trên người (Weapon/Armor) thêm 1 bậc (+1 đến +5)
+    /// </summary>
+    public bool UpgradeEquipped(ItemType type)
+    {
+      if (type == ItemType.Weapon && equippedWeapon != null && equippedWeaponUpgradeLevel < 5)
+      {
+        equippedWeaponUpgradeLevel++;
+        OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
+        OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, equippedWeaponUpgradeLevel);
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+      if (type == ItemType.Armor && equippedArmor != null && equippedArmorUpgradeLevel < 5)
+      {
+        equippedArmorUpgradeLevel++;
+        OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
+        OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, equippedArmorUpgradeLevel);
+        OnInventoryChanged?.Invoke();
+        return true;
+      }
+      return false;
     }
   }
 }

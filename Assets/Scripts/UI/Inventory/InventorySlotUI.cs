@@ -31,6 +31,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Text hiển thị số lượng (chỉ hiện khi Stack > 1)")]
     [SerializeField] private TextMeshProUGUI stackCountText;
 
+    [Tooltip("Badge hiển thị cấp cường hóa (+1 đến +5) màu vàng kim")]
+    [SerializeField] private TextMeshProUGUI upgradeBadgeText;
+
     [Tooltip("Button của ô này để nhận sự kiện Click chuột")]
     [SerializeField] private Button slotButton;
 
@@ -40,6 +43,7 @@ namespace InfiniteLabyrinth.UI
     public int ActualBagIndex { get; private set; } = -1;
     public ItemData CurrentItem { get; private set; }
     public int CurrentQuantity { get; private set; }
+    public int UpgradeLevel { get; private set; } = 0;
     public bool IsEmpty => CurrentItem == null;
 
     public Sprite RarityBgSprite => rarityBg != null ? rarityBg.sprite : null;
@@ -98,19 +102,41 @@ namespace InfiniteLabyrinth.UI
       if (rarityBar == null) rarityBar = transform.Find("RarityBar")?.GetComponent<Image>();
       if (selectHighlight == null) selectHighlight = transform.Find("SelectHighlight")?.GetComponent<Image>();
       if (stackCountText == null) stackCountText = transform.Find("StackCountText")?.GetComponent<TextMeshProUGUI>();
+      if (upgradeBadgeText == null) upgradeBadgeText = transform.Find("UpgradeBadgeText")?.GetComponent<TextMeshProUGUI>();
+      if (upgradeBadgeText == null)
+      {
+        // Tự động khởi tạo badge cấp độ ở góc trên-phải ô nếu chưa có sẵn
+        GameObject badgeObj = new GameObject("UpgradeBadgeText");
+        badgeObj.transform.SetParent(transform, false);
+        var rt = badgeObj.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(0f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(6f, -4f);
+        rt.sizeDelta = new Vector2(40f, 22f);
+
+        upgradeBadgeText = badgeObj.AddComponent<TextMeshProUGUI>();
+        upgradeBadgeText.fontSize = 17f;
+        upgradeBadgeText.fontStyle = FontStyles.Bold;
+        upgradeBadgeText.alignment = TextAlignmentOptions.TopLeft;
+        upgradeBadgeText.color = new Color(1f, 0.84f, 0f, 1f); // #FFD700 Gold
+        upgradeBadgeText.raycastTarget = false;
+        badgeObj.SetActive(false);
+      }
       if (cdFillImage == null) cdFillImage = transform.Find("CDFill")?.GetComponent<Image>();
       if (cdFillImage != null) cdFillImage.raycastTarget = false;
     }
 
     /// <summary>
-    /// Gán vật phẩm và cập nhật hiển thị lên ô UI
+    /// Gán vật phẩm và cập nhật hiển thị lên ô UI (kèm cấp cường hóa)
     /// </summary>
-    public void SetItem(ItemData item, int quantity, int bagIndex)
+    public void SetItem(ItemData item, int quantity, int bagIndex, int upgradeLevel = 0)
     {
       EnsureInitialized();
       CurrentItem = item;
       CurrentQuantity = quantity;
       ActualBagIndex = bagIndex;
+      UpgradeLevel = Mathf.Clamp(upgradeLevel, 0, 5);
 
       if (item == null || quantity <= 0)
       {
@@ -162,6 +188,34 @@ namespace InfiniteLabyrinth.UI
           stackCountText.gameObject.SetActive(false);
         }
       }
+
+      // 4. Badge cấp cường hóa (+1 đến +5)
+      if (upgradeBadgeText != null)
+      {
+        if (UpgradeLevel > 0 && (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor))
+        {
+          upgradeBadgeText.gameObject.SetActive(true);
+          upgradeBadgeText.text = $"+{UpgradeLevel}";
+          upgradeBadgeText.color = new Color(1f, 0.84f, 0f, 1f); // Vàng kim #FFD700
+        }
+        else
+        {
+          upgradeBadgeText.gameObject.SetActive(false);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gán vật phẩm tương thích ngược (không truyền upgradeLevel)
+    /// </summary>
+    public void SetItem(ItemData item, int quantity, int bagIndex)
+    {
+      int currentUpgrade = 0;
+      if (InventoryManager.HasInstance && bagIndex >= 0 && bagIndex < InventoryManager.Instance.Slots.Count)
+      {
+        currentUpgrade = InventoryManager.Instance.Slots[bagIndex].UpgradeLevel;
+      }
+      SetItem(item, quantity, bagIndex, currentUpgrade);
     }
 
     /// <summary>
@@ -172,7 +226,13 @@ namespace InfiniteLabyrinth.UI
       EnsureInitialized();
       CurrentItem = null;
       CurrentQuantity = 0;
+      UpgradeLevel = 0;
       ActualBagIndex = bagIndex;
+
+      if (upgradeBadgeText != null)
+      {
+        upgradeBadgeText.gameObject.SetActive(false);
+      }
 
       if (itemIcon != null)
       {

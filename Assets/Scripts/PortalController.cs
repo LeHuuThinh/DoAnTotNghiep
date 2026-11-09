@@ -62,8 +62,8 @@ public class PortalController : MonoBehaviour, IInteractable
     openVictoryChoiceUI = isVictoryPortal;
     if (isVictoryPortal)
     {
-      interactionPrompt = "Vào Cổng Thắng Trận (Giữ F)";
-      targetName = "Cổng Chiến Thắng";
+      interactionPrompt = "Enter the Portal";
+      targetName = "VictoryPortal";
       requiresHold = true;
       requiredHoldTime = 2.0f;
     }

@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using InfiniteLabyrinth.UI;
@@ -14,7 +14,6 @@ namespace InfiniteLabyrinth.Editor
     public static class CoreLoopSetupEditor
     {
         [MenuItem("Infinite Labyrinth/Core Loop & UI/⚡ Cấu Hình Toàn Bộ Vòng Lặp (GM-01 -> GM-03) (1-Click)", false, 0)]
-        [MenuItem("Tools/Infinite Labyrinth/Core Loop/⚡ Cấu Hình Toàn Bộ Vòng Lặp (GM-01 -> GM-03) (1-Click)", false, 0)]
         public static void SetupAllCoreLoop()
         {
             Debug.Log("<color=cyan>=== BẮT ĐẦU CẤU HÌNH TOÀN BỘ VÒNG LẶP TRÒ CHƠI (GM-01 -> GM-03) ===</color>");
@@ -40,3 +39,4 @@ namespace InfiniteLabyrinth.Editor
     }
 }
 #endif
+

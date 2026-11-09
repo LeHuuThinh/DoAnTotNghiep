@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 347b07964517b0046ad4f4bd42602197, type: 3}
+  m_Name: SuppliesShopData
+  m_EditorClassIdentifier: InfiniteLabyrinth.Shop::InfiniteLabyrinth.Shop.ShopData
+  shopId: supplies_shop
+  shopTitle: ALCHEMIST & SUPPLIES
+  shopDescription: Healing draughts, stamina elixirs, and raw crafting materials.
+  items:
+  - itemData: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    buyPrice: 20
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 420a4cbe66f95064192363210dfc9861, type: 2}
+    buyPrice: 60
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 228e6ea92fe786946a05a3e4d94ab8d7, type: 2}
+    buyPrice: 35
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 35fb540df63871148a3c056092261912, type: 2}
+    buyPrice: 45
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 498fa9ecd49cf114a869eff04139fd60, type: 2}
+    buyPrice: 50
+    stockQuantity: 10
+  - itemData: {fileID: 11400000, guid: e5f7f012263c6e34e9f1ca901693962e, type: 2}
+    buyPrice: 60
+    stockQuantity: 10
+  - itemData: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    buyPrice: 50
+    stockQuantity: 15

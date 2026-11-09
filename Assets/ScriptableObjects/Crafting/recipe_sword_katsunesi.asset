@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c3ea9d20b64deca9d361c8fe551ac9, type: 3}
+  m_Name: recipe_sword_katsunesi
+  m_EditorClassIdentifier: InfiniteLabyrinth.Blacksmith::InfiniteLabyrinth.Blacksmith.CraftingRecipe
+  recipeId: recipe_sword_katsunesi
+  recipeName: Kitsune Katana
+  description: Elegantly folded spiritual steel enchanted with arcane dust and ancient
+    parchment.
+  resultItem: {fileID: 11400000, guid: 95b2be8327f6bf64aa639c6b234d3ed4, type: 2}
+  resultQuantity: 1
+  goldCost: 250
+  requiredMaterials:
+  - materialItem: {fileID: 11400000, guid: b09c634f9d2eec04692a983380c66236, type: 2}
+    quantity: 3
+  - materialItem: {fileID: 11400000, guid: 98bf2e694ac553b489c2d1a1eac5d66c, type: 2}
+    quantity: 2
+  - materialItem: {fileID: 11400000, guid: 24f9777be1690c145a977f86f47b8278, type: 2}
+    quantity: 1

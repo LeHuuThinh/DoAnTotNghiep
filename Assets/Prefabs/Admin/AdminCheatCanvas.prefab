@@ -8088,6 +8088,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1936982322880261792}
   - component: {fileID: 2292985868268444841}
+  - component: {fileID: 6730481323632734492}
   - component: {fileID: 1121392384258984721}
   - component: {fileID: 1214058156545028368}
   - component: {fileID: 8436598091002036659}
@@ -8140,8 +8141,20 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 150
+  m_SortingOrder: 40
   m_TargetDisplay: 0
+--- !u!225 &6730481323632734492
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4578867901371844612}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &1121392384258984721
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8194,6 +8207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab129ff795b25924cb16493008fa837b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AdminCheatUI
+  rootCanvasGroup: {fileID: 6730481323632734492}
   mainPanelCanvasGroup: {fileID: 7218298345584312951}
   mainPanelRoot: {fileID: 4807836006458725973}
   btnClose: {fileID: 3317843552649425907}

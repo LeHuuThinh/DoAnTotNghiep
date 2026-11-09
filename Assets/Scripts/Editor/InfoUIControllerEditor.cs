@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using InfiniteLabyrinth.UI;
@@ -55,8 +55,6 @@ namespace InfiniteLabyrinth.Editor
         }
 
         [MenuItem("Infinite Labyrinth/Core Loop & UI/1. Cấu Hình InfoUI (GM-01)", false, 1)]
-        [MenuItem("Infinite Labyrinth/UI/7. Cấu Hình InfoUI & Area Intro Banner (Task GM-01)", false, 7)]
-        [MenuItem("Tools/Infinite Labyrinth/Core Loop/1. Setup InfoUI (GM-01)", false, 1)]
         public static void SetupInfoUIInScene()
         {
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();
@@ -91,3 +89,4 @@ namespace InfiniteLabyrinth.Editor
     }
 }
 #endif
+

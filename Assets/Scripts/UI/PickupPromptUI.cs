@@ -10,8 +10,8 @@ namespace InfiniteLabyrinth.UI
 {
   /// <summary>
   /// Bảng hiển thị thông báo tương tác phím [F] khi lại gần vật phẩm rơi trong thế giới 3D.
-  /// Hiển thị Icon 2D, Tên món đồ đổi màu theo phẩm cấp (Rarity), và phím bấm tương tác.
-  /// Tích hợp hoạt ảnh trượt nhẹ từ dưới lên (Souls-like Micro-Slide) và phản hồi đổi item mượt mà.
+  /// Hiển thị Icon 2D, Tên món đồ đổi màu theo phẩm cấp (Rarity), phím bấm tương tác,
+  /// và bật/tắt 2 Corner khi được chọn trong danh sách tương tác dọc.
   /// </summary>
   public class PickupPromptUI : MonoBehaviour
   {
@@ -33,6 +33,13 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("CanvasGroup điều khiển độ mờ")]
     [SerializeField] private CanvasGroup canvasGroup;
 
+    [Header("=== TRANG TRÍ CORNERS (BẬT KHI ĐƯỢC CHỌN) ===")]
+    [Tooltip("Góc trang trí (Corner) của khung nền Background")]
+    [SerializeField] private GameObject bgCorner;
+
+    [Tooltip("Góc trang trí (Corner) của khung KeyIcon phím F")]
+    [SerializeField] private GameObject iconCorner;
+
     [Header("=== HOẠT ẢNH TRANSITION (SOULS-LIKE) ===")]
     [Tooltip("Thời lượng xuất hiện (giây)")]
     [SerializeField] private float showDuration = 0.14f;
@@ -52,6 +59,8 @@ namespace InfiniteLabyrinth.UI
     private bool hasCachedPosition = false;
     private Coroutine activeTransitionRoutine;
     private Coroutine itemSwitchRoutine;
+
+    public bool IsSelected { get; private set; } = false;
 
     private void Awake()
     {
@@ -118,12 +127,57 @@ namespace InfiniteLabyrinth.UI
                      ?? transform.Find("Prompt")?.GetComponent<TextMeshProUGUI>()
                      ?? transform.Find("PickupText")?.GetComponent<TextMeshProUGUI>();
       }
+
+      if (bgCorner == null)
+      {
+        Transform t = transform.Find("Corner");
+        if (t != null) bgCorner = t.gameObject;
+      }
+
+      if (iconCorner == null)
+      {
+        Transform t = transform.Find("KeyIcon/Corner");
+        if (t != null) iconCorner = t.gameObject;
+      }
+    }
+
+    /// <summary>
+    /// Gán dữ liệu WorldItemPickup cho slot này trong danh sách tương tác
+    /// </summary>
+    public void Bind(WorldItemPickup pickup, bool isSelected)
+    {
+      AutoFindReferences();
+      currentTarget = pickup;
+
+      if (pickup != null && pickup.ItemData != null)
+      {
+        DisplayPickupInfo(pickup.ItemData, pickup.Quantity);
+      }
+
+      SetSelected(isSelected);
+    }
+
+    /// <summary>
+    /// Bật 2 Corner khi được chọn, tắt 2 Corner khi không được chọn, điều chỉnh độ mờ
+    /// </summary>
+    public void SetSelected(bool isSelected)
+    {
+      IsSelected = isSelected;
+      AutoFindReferences();
+
+      if (bgCorner != null) bgCorner.SetActive(isSelected);
+      if (iconCorner != null) iconCorner.SetActive(isSelected);
+      if (canvasGroup != null) canvasGroup.alpha = isSelected ? 1.0f : 0.6f;
     }
 
     private void OnEnable()
     {
-      WorldItemPickup.OnFocusPickup += HandlePickupFocused;
-      WorldItemPickup.OnUnfocusPickup += HandlePickupUnfocused;
+      // Nếu là template độc lập (không có parent InteractionListUI quản lý) thì lắng nghe static events
+      if (transform.parent == null || transform.parent.GetComponent<InteractionListUI>() == null)
+      {
+        WorldItemPickup.OnFocusPickup += HandlePickupFocused;
+        WorldItemPickup.OnUnfocusPickup += HandlePickupUnfocused;
+      }
     }
 
     private void OnDisable()
@@ -165,6 +219,9 @@ namespace InfiniteLabyrinth.UI
 
     private void Update()
     {
+      // Nếu có InteractionListUI quản lý thì không tự chạy Update độc lập
+      if (transform.parent != null && transform.parent.GetComponent<InteractionListUI>() != null) return;
+
       // Dọn dẹp danh sách các pickup đã bị nhặt hoặc destroy
       for (int i = activePickups.Count - 1; i >= 0; i--)
       {
@@ -367,7 +424,7 @@ namespace InfiniteLabyrinth.UI
       activeTransitionRoutine = null;
     }
 
-    private void HideImmediate()
+    public void HideImmediate()
     {
       if (canvasGroup != null) canvasGroup.alpha = 0f;
       if (rectTransform != null && hasCachedPosition)

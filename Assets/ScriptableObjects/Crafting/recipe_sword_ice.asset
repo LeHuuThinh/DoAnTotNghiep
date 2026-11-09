@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c3ea9d20b64deca9d361c8fe551ac9, type: 3}
+  m_Name: recipe_sword_ice
+  m_EditorClassIdentifier: InfiniteLabyrinth.Blacksmith::InfiniteLabyrinth.Blacksmith.CraftingRecipe
+  recipeId: recipe_sword_ice
+  recipeName: Frostfang Claymore
+  description: Legendary blade infused with the glacial core of the Ice Golem. Chills
+    targets to the bone.
+  resultItem: {fileID: 11400000, guid: 3721843f2fc6e4047a32332e3c1f758e, type: 2}
+  resultQuantity: 1
+  goldCost: 500
+  requiredMaterials:
+  - materialItem: {fileID: 11400000, guid: d607f6844e69096449d100f1442f234d, type: 2}
+    quantity: 1
+  - materialItem: {fileID: 11400000, guid: 0600cc650835ff64f9d30e08d9b7b7e1, type: 2}
+    quantity: 2
+  - materialItem: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    quantity: 4
