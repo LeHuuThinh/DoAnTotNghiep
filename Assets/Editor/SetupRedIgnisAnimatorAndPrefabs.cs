@@ -217,8 +217,8 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         stateWeakenBack.motion = clipWeakenBack;
 
         AddAnyStateTrigger(rootStateMachine, stateWeakenFront, "Weaken", 0.08f);
-        AddExitTransition(stateWeakenFront, stateWeakenBack, 1.0f, 0.05f);
-        AddExitTransition(stateWeakenBack, stateIdle, 0.98f, 0.2f);
+        AddExitTransition(stateWeakenFront, stateWeakenBack, 0.96f, 0.15f);
+        AddExitTransition(stateWeakenBack, stateIdle, 0.95f, 0.2f);
 
         EditorUtility.SetDirty(controller);
         Debug.Log("<color=cyan>[Red Ignis Setup] Đã cấu hình xong Animator Controller với Entry = IdleRI và đầy đủ transitions!</color>");
@@ -302,7 +302,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         }
         if (clipBack != null) stateBack.motion = clipBack;
 
-        // Đảm bảo transition: WeakenFrontRI -> WeakenBackRI (Exit Time = 1.0, Duration = 0.05s)
+        // Đảm bảo transition: WeakenFrontRI -> WeakenBackRI (Exit Time = 0.96, Duration = 0.15s)
         bool hasFrontToBack = false;
         foreach (var t in stateFront.transitions)
         {
@@ -310,17 +310,17 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
             {
                 hasFrontToBack = true;
                 t.hasExitTime = true;
-                t.exitTime = 1.0f;
-                t.duration = 0.05f;
+                t.exitTime = 0.96f;
+                t.duration = 0.15f;
                 break;
             }
         }
         if (!hasFrontToBack)
         {
-            AddExitTransition(stateFront, stateBack, 1.0f, 0.05f);
+            AddExitTransition(stateFront, stateBack, 0.96f, 0.15f);
         }
 
-        // Đảm bảo transition: WeakenBackRI -> IdleRI (Exit Time = 0.98, Duration = 0.2s)
+        // Đảm bảo transition: WeakenBackRI -> IdleRI (Exit Time = 0.95, Duration = 0.2s)
         if (idleState != null)
         {
             bool hasBackToIdle = false;
@@ -330,14 +330,14 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
                 {
                     hasBackToIdle = true;
                     t.hasExitTime = true;
-                    t.exitTime = 0.98f;
+                    t.exitTime = 0.95f;
                     t.duration = 0.2f;
                     break;
                 }
             }
             if (!hasBackToIdle)
             {
-                AddExitTransition(stateBack, idleState, 0.98f, 0.2f);
+                AddExitTransition(stateBack, idleState, 0.95f, 0.2f);
             }
         }
 

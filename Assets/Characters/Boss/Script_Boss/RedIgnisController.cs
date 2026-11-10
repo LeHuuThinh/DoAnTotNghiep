@@ -39,7 +39,7 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Luôn tự động xoay mặt hướng về phía Player khi rảnh rỗi hoặc di chuyển")]
     [SerializeField] private bool alwaysFacePlayer = true;
     [Tooltip("Tốc độ xoay mặt theo Player (độ/giây)")]
-    [SerializeField] private float facePlayerSpeed = 280f;
+    [SerializeField] private float facePlayerSpeed = 110f;
     [Tooltip("Gia tốc trọng lực rơi (m/s²). Mặc định: -20")]
     [SerializeField] private float gravity = -20f;
     [Tooltip("Vận tốc ép bám sàn khi tiếp đất (m/s). Mặc định: -5")]
@@ -143,12 +143,12 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float jumpAttackWindupDelay = 0.25f;
     [Tooltip("Thời gian bay trên không lướt tới điểm rơi (giây). Mặc định: 0.55s")]
     [SerializeField] private float jumpAttackLeapDuration = 0.55f;
-    [Tooltip("Cự ly nhảy tới tối đa (m). Đã cân chỉnh cho boss scale 2.0")]
-    [SerializeField] private float jumpLeapDistance = 7.5f;
+    [Tooltip("Cự ly nhảy tới tối đa (m).")]
+    [SerializeField] private float jumpLeapDistance = 20.0f;
     [Tooltip("Độ cao nhấc bổng nhảy parabol (m). Đã cân chỉnh cho boss scale 2.0")]
     [SerializeField] private float jumpAttackApexHeight = 1.8f;
     [Tooltip("Bán kính nổ sát thương AoE khi dậm đất (m)")]
-    [SerializeField] private float jumpAttackRadius = 4.0f;
+    [SerializeField] private float jumpAttackRadius = 4.5f;
     [Tooltip("Bù độ cao điểm nổ dậm đất (mét: + nâng cao hơn mặt sàn)")]
     [SerializeField] private float jumpImpactHeightOffset = 0f;
     [Tooltip("Thời gian hồi phục sau khi tiếp đất trước khi hành động tiếp (giây)")]
@@ -164,8 +164,8 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float comboAttackCooldown = 6.0f;
     [Tooltip("Mốc thời gian (giây) của từng nhát chém 1, 2, 3, 4 trong clip animation")]
     [SerializeField] private float[] comboHitTimers = new float[] { 0.40f, 0.95f, 1.55f, 2.20f };
-    [Tooltip("Khoảng cách nhích lướt tới ở mỗi nhát chém (m). Mặc định 0m để đứng yên đánh tại chỗ không bị bước chân")]
-    [SerializeField] private float comboLungeDistance = 0f;
+    [Tooltip("Khoảng cách nhích lướt tới ở mỗi nhát chém (m).")]
+    [SerializeField] private float comboLungeDistance = 0.55f;
     [Tooltip("Bán kính chém trúng quét hình nón trước mặt (m)")]
     [SerializeField] private float comboHitRadius = 3.2f;
     [Tooltip("Bù độ cao vệt chém combo (mét: + nâng cao lên, - hạ thấp xuống)")]
@@ -930,28 +930,39 @@ public class RedIgnisController : MonoBehaviour
         // 1. NGAY TỪ ĐẦU CHIÊU NHẢY: BẬT VỆT KIẾM TỨC THÌ
         SetSwordTrailActive(true);
 
-        Transform target = GetPlayerTarget();
+        // Giai đoạn nhún người lấy đà (Windup): Boss liên tục xoay mặt theo sát hướng Player
+        float windupTimer = 0f;
+        while (windupTimer < jumpAttackWindupDelay)
+        {
+            windupTimer += Time.deltaTime;
+            Transform p = GetPlayerTarget();
+            if (p != null) SmoothFaceTarget(p, 500f);
+            yield return null;
+        }
+
+        // 2. KHOẢNH KHẮC BẬT NHẢY RỜI SÀN:
+        // Đo lường chính xác vị trí thời gian thực của Player để phóng thẳng tới mục tiêu
         Vector3 startPos = transform.position;
         Vector3 targetLandingPos = startPos + transform.forward * jumpLeapDistance;
 
-        if (target != null)
+        Transform liveTarget = GetPlayerTarget();
+        if (liveTarget != null)
         {
-            Vector3 toTarget = (target.position - startPos);
+            Vector3 toTarget = (liveTarget.position - startPos);
             toTarget.y = 0f;
             float dist = toTarget.magnitude;
-            // Dừng trước Player một cự ly an toàn (1.5m) để quét chém đại kiếm, tuyệt đối không nhảy cắm vào tâm hoặc dẫm lên đầu Player!
-            float stopOffset = 1.5f;
-            float leapDist = (dist > stopOffset) ? Mathf.Min(dist - stopOffset, jumpLeapDistance) : 0f;
+
+            // Dừng trước Player 1.3m để đại kiếm bổ sập ngay trước mặt, không cắm vào tâm hoặc dẫm lên đầu
+            float stopOffset = 1.3f;
+            float maxLeap = Mathf.Max(jumpLeapDistance, 25.0f);
+            float leapDist = (dist > stopOffset) ? Mathf.Min(dist - stopOffset, maxLeap) : 0f;
             targetLandingPos = startPos + toTarget.normalized * leapDist;
-            SmoothFaceTarget(target, 500f);
+            SmoothFaceTarget(liveTarget, 1000f);
         }
 
         // Lấy cao độ mặt sàn thực tế tại điểm rơi và điểm xuất phát
         targetLandingPos = GetGroundPosition(targetLandingPos);
         startPos = GetGroundPosition(startPos);
-
-        // Giai đoạn nhún người chuẩn bị nhảy
-        yield return new WaitForSeconds(jumpAttackWindupDelay);
 
         // Tạm thời tắt CharacterController để chuyển động parabol bay mượt mà, không va cấn Player trên không
         if (characterController != null) characterController.enabled = false;
@@ -982,16 +993,18 @@ public class RedIgnisController : MonoBehaviour
         }
         verticalVelocity = groundedGravity;
 
+        // Điểm nổ dậm kiếm nằm ở phía trước mặt Boss 1.3m (ngay vị trí lưỡi kiếm cắm xuống đất)
+        Vector3 slamPoint = transform.position + transform.forward * 1.3f + Vector3.up * jumpImpactHeightOffset;
+
         // Spawn VFX dậm đất nổ lan
         if (jumpImpactVfxPrefab != null)
         {
-            Vector3 slamPoint = transform.position + transform.forward * 1.2f + Vector3.up * jumpImpactHeightOffset;
             Instantiate(jumpImpactVfxPrefab, slamPoint, Quaternion.identity);
         }
 
-        // Gây sát thương AoE diện rộng (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu)
+        // Gây sát thương AoE diện rộng (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu) và đẩy lùi (Knockback 4.0m)
         float finalJumpDmg = jumpAttackDamage + (isSwordBuffActive ? swordEnrageBonusDamage : 0f);
-        DealAreaDamage(transform.position + transform.forward * 1.0f, jumpAttackRadius, finalJumpDmg, 2.5f);
+        DealAreaDamage(slamPoint, jumpAttackRadius, finalJumpDmg, 4.0f);
 
         // Sau khi hoàn thành cú dậm chém đất: Tắt vệt kiếm (vệt tự động fade tan mượt)
         SetSwordTrailActive(false);
@@ -1034,6 +1047,8 @@ public class RedIgnisController : MonoBehaviour
             comboHitTimers = new float[] { 0.40f, 0.95f, 1.55f, 2.20f };
         }
 
+        float lungePerHit = (comboLungeDistance > 0.01f) ? comboLungeDistance : 0.55f;
+
         float lastTime = 0f;
         for (int hit = 0; hit < comboHitTimers.Length; hit++)
         {
@@ -1041,32 +1056,43 @@ public class RedIgnisController : MonoBehaviour
             float waitDelta = Mathf.Max(0.01f, targetTime - lastTime);
             lastTime = targetTime;
 
-            // Xoay nhẹ bám theo Player trong lúc chuẩn bị vung đòn
+            // Vừa xoay mặt bám theo Player vừa bước lướt tới trước mượt mà theo từng nhát chém
             float elapsed = 0f;
+            float lungeSpeed = lungePerHit / waitDelta;
             while (elapsed < waitDelta)
             {
-                elapsed += Time.deltaTime;
+                float dt = Time.deltaTime;
+                elapsed += dt;
+
                 Transform p = GetPlayerTarget();
                 if (p != null) SmoothFaceTarget(p, 180f);
+
+                // Di chuyển vị trí thật của Boss tới trước bằng CharacterController (không xuyên tường/người)
+                Vector3 moveVelocity = transform.forward * lungeSpeed;
+                moveVelocity.y = groundedGravity;
+                if (characterController != null && characterController.enabled)
+                {
+                    characterController.Move(moveVelocity * dt);
+                }
+                else
+                {
+                    transform.position = GetGroundPosition(transform.position + moveVelocity * dt);
+                }
+
                 yield return null;
             }
 
-            // Chỉ nhích tới trước nếu có cài đặt comboLungeDistance > 0 (mặc định = 0 để đứng yên đánh tại chỗ không bị bước chân)
-            if (comboLungeDistance > 0.01f)
-            {
-                Vector3 lungePos = transform.position + transform.forward * comboLungeDistance;
-                transform.position = GetGroundPosition(lungePos);
-            }
-
-            // Gây sát thương nhát chém hình nón trước mặt (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu)
+            // Gây sát thương nhát chém quét trước mặt (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu)
             float finalComboDmg = comboHitDamage + (isSwordBuffActive ? swordEnrageBonusDamage : 0f);
-            DealAreaDamage(transform.position + transform.forward * 1.2f + Vector3.up * 1.0f, comboHitRadius, finalComboDmg, 1.2f);
+            DealAreaDamage(transform.position + transform.forward * 1.5f + Vector3.up * 1.0f, comboHitRadius, finalComboDmg, 1.2f);
         }
 
         // Dứt toàn bộ 4 nhát chém combo: Tắt vệt kiếm
         SetSwordTrailActive(false);
 
-        yield return new WaitForSeconds(comboRecoveryDuration);
+        // Chờ hoàn tất trọn vẹn clip ComboAttackRI (3.63s) để chuyển tiếp mượt mà vào IdleRI mà không bị giật
+        float remainingDuration = Mathf.Max(comboRecoveryDuration, 3.633f - lastTime);
+        yield return new WaitForSeconds(remainingDuration);
 
         isAttacking = false;
         if (!isSwordBuffActive && !previewFlameAlwaysOn && weaponFlame != null) weaponFlame.Extinguish();
@@ -1084,14 +1110,24 @@ public class RedIgnisController : MonoBehaviour
             Transform root = hit.transform.root;
             if (hitRoots.Contains(root)) continue;
 
-            if (hit.CompareTag("Player") || hit.gameObject.layer == LayerMask.NameToLayer("Player"))
+            bool isPlayer = hit.CompareTag("Player") ||
+                            (root != null && root.CompareTag("Player")) ||
+                            hit.GetComponentInParent<PlayerController>() != null ||
+                            (LayerMask.NameToLayer("Player") != -1 && (hit.gameObject.layer == LayerMask.NameToLayer("Player") || (root != null && root.gameObject.layer == LayerMask.NameToLayer("Player"))));
+
+            if (isPlayer)
             {
                 hitRoots.Add(root);
                 Health h = hit.GetComponentInParent<Health>();
+                if (h == null && root != null) h = root.GetComponentInChildren<Health>();
+
                 if (h != null)
                 {
-                    Vector3 knockDir = (hit.transform.position - transform.position).normalized;
-                    knockDir.y = 0.2f;
+                    Vector3 knockDir = (hit.transform.position - transform.position);
+                    knockDir.y = 0f;
+                    if (knockDir.sqrMagnitude < 0.001f) knockDir = transform.forward;
+                    knockDir.Normalize();
+
                     h.TakeDamage(dmg, hit.ClosestPoint(center), knockDir, knock, transform);
                     Debug.Log($"<color=orange>[Red Ignis Damage]</color> Trúng đòn gây {dmg} sát thương{(isSwordBuffActive ? " (+10 Buff Lửa)" : "")}!");
                 }
@@ -1202,8 +1238,19 @@ public class RedIgnisController : MonoBehaviour
 
                 if (info.shortNameHash == backHash || info.IsName("WeakenBackRI"))
                 {
-                    // Khi WeakenBackRI chạy gần hết (normalizedTime >= 0.95f)
-                    if (info.normalizedTime >= 0.95f)
+                    // Khi Boss đã đứng thẳng lên (normalizedTime >= 0.70f), bắt đầu xoay mặt mượt mà về phía Player
+                    // để khi kết thúc động tác và vào IdleRI hoàn toàn không bị giật xoay đột ngột
+                    if (info.normalizedTime >= 0.70f && alwaysFacePlayer)
+                    {
+                        Transform target = GetPlayerTarget();
+                        if (target != null)
+                        {
+                            SmoothFaceTarget(target, facePlayerSpeed * 0.75f);
+                        }
+                    }
+
+                    // Khi WeakenBackRI đã hoàn tất 100% động tác đứng dậy
+                    if (info.normalizedTime >= 1.0f)
                     {
                         break;
                     }

@@ -243,6 +243,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss_RedIgnis
       objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: hitFlashColor.b
+      value: 0.8584906
+      objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: hitFlashColor.g
+      value: 0.8584906
+      objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: hitFlashColor.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4345900317041521329, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
       propertyPath: m_LocalPosition.x
       value: 232.13673

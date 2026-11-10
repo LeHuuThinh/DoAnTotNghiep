@@ -224,7 +224,7 @@ MonoBehaviour:
   moveDeceleration: 12
   locomotionDampTime: 0.1
   alwaysFacePlayer: 1
-  facePlayerSpeed: 200
+  facePlayerSpeed: 110
   gravity: -20
   groundedGravity: -5
   playerTarget: {fileID: 0}
@@ -265,9 +265,9 @@ MonoBehaviour:
   jumpAttackCooldown: 5
   jumpAttackWindupDelay: 0.25
   jumpAttackLeapDuration: 0.55
-  jumpLeapDistance: 7.5
+  jumpLeapDistance: 20
   jumpAttackApexHeight: 1.8
-  jumpAttackRadius: 4
+  jumpAttackRadius: 4.5
   jumpImpactHeightOffset: 0
   jumpAttackRecoveryDuration: 0.85
   comboSlashVfxPrefab: {fileID: 0}
@@ -278,12 +278,12 @@ MonoBehaviour:
   - 0.95
   - 1.55
   - 2.2
-  comboLungeDistance: 0
+  comboLungeDistance: 0.55
   comboHitRadius: 3.2
   comboVfxHeightOffset: 0
   comboRecoveryDuration: 0.9
   hitFlashDuration: 0.12
-  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  hitFlashColor: {r: 1, g: 0.8584906, b: 0.8584906, a: 1}
 --- !u!1 &5183950090897731107
 GameObject:
   m_ObjectHideFlags: 0
