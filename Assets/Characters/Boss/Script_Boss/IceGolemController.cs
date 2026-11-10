@@ -717,6 +717,29 @@ public class IceGolemController : MonoBehaviour
             EnsureBodyAuraLight();
         }
 
+        // TỰ ĐỘNG PHÂN BIỆT MÔI TRƯỜNG HUẤN LUYỆN / TEST ĐỘC LẬP:
+        // Nếu trong Scene KHÔNG có DungeonManager hoặc BossArenaTrigger (nghĩa là không phải màn chơi Dungeon có Cutscene bục đá),
+        // tự động tắt Standby và đánh dấu đã xong mở màn để Boss sẵn sàng chiến đấu / train AI ngay khi Play!
+        if (isCinematicStandby)
+        {
+#if UNITY_2023_1_OR_NEWER
+            bool hasDungeonCampaign = FindAnyObjectByType<DungeonManager>() != null || FindAnyObjectByType<BossArenaTrigger>() != null;
+#else
+            bool hasDungeonCampaign = FindObjectOfType<DungeonManager>() != null || FindObjectOfType<BossArenaTrigger>() != null;
+#endif
+            if (!hasDungeonCampaign)
+            {
+                isCinematicStandby = false;
+                hasTriggeredJumpDown = true;
+                if (rb != null)
+                {
+                    rb.isKinematic = false;
+                    rb.useGravity = true;
+                }
+                Debug.Log("<color=green>[IceGolemController]</color> 🎯 Phát hiện Scene Test / Huấn luyện ML-Agents: Tự động tắt Standby để Boss chiến đấu ngay lập tức!");
+            }
+        }
+
         if (isCinematicStandby)
         {
             if (rb != null)
@@ -2193,6 +2216,7 @@ public class IceGolemController : MonoBehaviour
         isPhase2 = false;
         ApplyBossStats();
         isWeakened = false;
+        isCinematicStandby = false;
         if (weakenCoroutine != null)
         {
             StopCoroutine(weakenCoroutine);

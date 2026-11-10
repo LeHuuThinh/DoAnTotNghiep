@@ -7,9 +7,12 @@ using UnityEngine.InputSystem;
 /// Bot AI tự động điều khiển Player chiến đấu với Boss (Sparring Partner cho ML-Agents).
 /// - Có công tắc phím nóng B (Toggle Bot Mode) để bật/tắt tức thì.
 /// - TUYỆT ĐỐI KHÔNG SỬA CODE GỐC CỦA PLAYER: Sử dụng Reflection an toàn để kích hoạt
-///   các kỹ năng chém (Combo 1-2-3), Parry, và Skill E/Q của Player.
-/// - Tự xử lý Lăn né (Roll) với I-Frames 0.35s chuẩn Souls-like, đảm bảo tắt bất tử đúng hạn
-///   để Boss có thể đánh trúng và Roll-Catch trừng phạt.
+///   các kỹ năng chém (Combo 1-2-3), Charge Attack, Parry, Counter Attack, và Skill E/Q của Player.
+/// - Đồng bộ hóa isRolling với PlayerController qua Reflection để IceGolemAgent (ML-Agents)
+///   nhận diện chính xác I-Frames và cửa sổ Roll-Catching (0.4s), phục vụ train thưởng/phạt.
+/// - Tự động phát hiện cả Boss Ice Golem và Boss Red Ignis.
+/// - Tích hợp cửa sổ sơ hở hồi máu (Heal-Punish window 1.2s) để Boss học cách trừng phạt khi Player uống máu.
+/// - Tận dụng tối đa trạng thái Boss Suy Yếu (Weaken / Poise Break) để dồn sát thương trừng phạt.
 /// - Khi tắt (botEnabled = false), Bot hoàn toàn ngủ đông, trả lại 100% quyền điều khiển
 ///   bàn phím/chuột cho người chơi.
 /// </summary>
@@ -23,7 +26,9 @@ public class PlayerBotAI : MonoBehaviour
         Attacking,      // Tấn công cận chiến (Combo 1-2-3) hoặc Skill
         Retreating,     // Lùi lại giữ cự ly an toàn & hồi phục Stamina
         Dodging,        // Lăn né (Roll) khi Boss vung đòn
-        Healing         // Lùi xa hồi phục máu (kích hoạt thử thách Heal-Punish cho Boss)
+        Healing,        // Lùi xa hồi phục máu (kích hoạt thử thách Heal-Punish cho Boss)
+        Staggered,      // Bị trúng đòn khựng người
+        PunishingWeaken // Boss bị vỡ thế / Weaken -> Lao vào xả chiêu dồn sát thương
     }
 
     [Header("=== TRẠNG THÁI BOT ===")]
@@ -45,10 +50,13 @@ public class PlayerBotAI : MonoBehaviour
     [Header("=== THAM CHIẾU ===")]
     [SerializeField] private Transform bossTransform;
     [SerializeField] private IceGolemController bossController;
+    [SerializeField] private RedIgnisController ignisController;
+    [SerializeField] private Health bossHealth;
     [SerializeField] private Health playerHealth;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerStats playerStats;
+    [SerializeField] private PlayerFeedback playerFeedback;
     [SerializeField] private CharacterController characterController;
     [SerializeField] private Animator animator;
 
@@ -57,13 +65,19 @@ public class PlayerBotAI : MonoBehaviour
     private MethodInfo advanceComboMethod;
     private MethodInfo chargeAttackMethod;
     private MethodInfo parryMethod;
+    private MethodInfo counterAttackMethod;
     private MethodInfo skillEMethod;
     private MethodInfo skillQMethod;
 
+    // Reflection Field Infos (đồng bộ trạng thái nội bộ an toàn)
+    private FieldInfo comboStepField;
+    private FieldInfo canCounterAttackField;
+    private FieldInfo isRollingField;
+    private FieldInfo skillETimerField;
+    private FieldInfo skillQTimerField;
+
     // Animator Parameter Hashes
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
-    private static readonly int StrafeXHash = Animator.StringToHash("StrafeX");
-    private static readonly int StrafeZHash = Animator.StringToHash("StrafeZ");
     private static readonly int RollHash = Animator.StringToHash("Roll");
 
     // Timers & Trạng thái nội bộ
@@ -77,7 +91,10 @@ public class PlayerBotAI : MonoBehaviour
     private float healCooldown = 0f;
     private bool wasBossBusy = false;
     private bool isBotRolling = false;
+    private bool isDrinkingPotion = false;
     private Coroutine rollRoutine = null;
+    private Coroutine attackRoutine = null;
+    private Coroutine healRoutine = null;
     private GUIStyle cachedBoxStyle = null;
 
     public bool IsBotEnabled => botEnabled;
@@ -91,9 +108,11 @@ public class PlayerBotAI : MonoBehaviour
         if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
         playerStats = GetComponent<PlayerStats>();
         if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
+        playerFeedback = GetComponent<PlayerFeedback>();
+        if (playerFeedback == null) playerFeedback = GetComponentInChildren<PlayerFeedback>();
         animator = GetComponentInChildren<Animator>();
 
-        // Cache Reflection Methods an toàn
+        // Cache Reflection Methods & Fields trên PlayerCombat an toàn
         var flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
         if (playerCombat != null)
         {
@@ -102,8 +121,20 @@ public class PlayerBotAI : MonoBehaviour
             advanceComboMethod = combatType.GetMethod("AdvanceCombo", flags);
             chargeAttackMethod = combatType.GetMethod("ExecuteChargeAttack", flags);
             parryMethod = combatType.GetMethod("ExecuteParry", flags);
+            counterAttackMethod = combatType.GetMethod("ExecuteCounterAttack", flags);
             skillEMethod = combatType.GetMethod("ExecuteSkillE", flags);
             skillQMethod = combatType.GetMethod("ExecuteSkillQ", flags);
+
+            comboStepField = combatType.GetField("comboStep", flags);
+            canCounterAttackField = combatType.GetField("canCounterAttack", flags);
+            skillETimerField = combatType.GetField("skillETimer", flags);
+            skillQTimerField = combatType.GetField("skillQTimer", flags);
+        }
+
+        // Cache Reflection Field isRolling trên PlayerController để đồng bộ với ML-Agents (IceGolemAgent)
+        if (playerController != null)
+        {
+            isRollingField = typeof(PlayerController).GetField("isRolling", flags);
         }
 
         // Đảm bảo không bị kẹt bất tử
@@ -121,24 +152,81 @@ public class PlayerBotAI : MonoBehaviour
 
     private void FindBossReferences()
     {
-        if (bossTransform == null)
+        if (bossTransform == null || !bossTransform.gameObject.activeInHierarchy)
         {
+            // 1. Tìm Ice Golem
             var golem = FindFirstObjectByType<IceGolemController>();
             if (golem != null)
             {
                 bossController = golem;
                 bossTransform = golem.transform;
+                bossHealth = golem.GetComponent<Health>();
+                return;
             }
-            else
+
+            // 2. Tìm Red Ignis
+            var ignis = FindFirstObjectByType<RedIgnisController>();
+            if (ignis != null)
             {
-                GameObject bossObj = GameObject.Find("Boss_IceGolem");
-                if (bossObj != null)
+                ignisController = ignis;
+                bossTransform = ignis.transform;
+                bossHealth = ignis.GetComponent<Health>();
+                return;
+            }
+
+            // 3. Fallback tìm theo Tag Enemy (Quái và Boss đều dùng chung Tag "Enemy")
+            GameObject enemyObj = null;
+            GameObject[] allEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+            float minDistance = float.MaxValue;
+            foreach (var e in allEnemies)
+            {
+                if (e == null || !e.activeInHierarchy) continue;
+                Health h = e.GetComponent<Health>();
+                if (h != null && h.IsDead) continue;
+
+                float dist = Vector3.Distance(transform.position, e.transform.position);
+                if (dist < minDistance)
                 {
-                    bossTransform = bossObj.transform;
-                    bossController = bossObj.GetComponent<IceGolemController>();
+                    minDistance = dist;
+                    enemyObj = e;
                 }
             }
+
+            // 4. Fallback tìm theo Tên GameObject nếu chưa kịp gán Tag Enemy
+            if (enemyObj == null) enemyObj = GameObject.Find("Boss_DarkNight");
+            if (enemyObj == null) enemyObj = GameObject.Find("Boss_RedIgnis");
+            if (enemyObj == null) enemyObj = GameObject.Find("Boss_IceGolem");
+
+            if (enemyObj != null)
+            {
+                bossTransform = enemyObj.transform;
+                bossController = enemyObj.GetComponent<IceGolemController>();
+                ignisController = enemyObj.GetComponent<RedIgnisController>();
+                bossHealth = enemyObj.GetComponent<Health>();
+            }
         }
+    }
+
+    private bool IsBossBusy()
+    {
+        if (bossController != null) return bossController.IsBusy();
+        if (ignisController != null) return ignisController.IsBusy();
+        return false;
+    }
+
+    private bool IsBossDead()
+    {
+        if (bossController != null && bossController.IsDead) return true;
+        if (ignisController != null && ignisController.IsDead) return true;
+        if (bossHealth != null && bossHealth.IsDead) return true;
+        return false;
+    }
+
+    private bool IsBossWeakened()
+    {
+        if (bossController != null && bossController.IsWeakened) return true;
+        if (ignisController != null && ignisController.IsWeakened) return true;
+        return false;
     }
 
     private void Update()
@@ -147,6 +235,15 @@ public class PlayerBotAI : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame)
         {
             ToggleBot(!botEnabled);
+        }
+
+        // Điều khiển tốc độ game bằng phím T (1x -> 2x -> 5x)
+        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
+        {
+            if (Time.timeScale <= 1.05f) Time.timeScale = 2.0f;
+            else if (Time.timeScale <= 2.05f) Time.timeScale = 5.0f;
+            else Time.timeScale = 1.0f;
+            Debug.Log($"<color=yellow>[Player Bot AI]</color> ⏩ Tốc độ game Time.timeScale = {Time.timeScale:0.#}x (Phím T)");
         }
 
         // Nếu Bot đang tắt -> Ngủ đông hoàn toàn, nhường 100% quyền cho người chơi
@@ -162,7 +259,7 @@ public class PlayerBotAI : MonoBehaviour
         if (playerHealth != null && playerHealth.IsDead) return;
 
         // Nếu Boss đã chết -> Dừng chém để chuẩn bị hiệp mới
-        if ((bossController != null && bossController.IsDead) || (bossTransform.GetComponent<Health>() != null && bossTransform.GetComponent<Health>().IsDead))
+        if (IsBossDead())
         {
             SetSpeedAnimation(0f);
             return;
@@ -174,15 +271,40 @@ public class PlayerBotAI : MonoBehaviour
         if (nextActionDelay > 0f) nextActionDelay -= Time.deltaTime;
         stateTimer += Time.deltaTime;
 
-        // Nếu đang trong hoạt ảnh lăn né BotRollRoutine -> Không can thiệp di chuyển đè lên
+        // 2. Nếu Player đang bị Choáng / Vỡ thế (Staggered) bởi đòn đánh Boss -> Nhường quyền vật lý cho PlayerFeedback
+        if (playerFeedback != null && playerFeedback.IsStaggered)
+        {
+            if (attackRoutine != null)
+            {
+                StopCoroutine(attackRoutine);
+                attackRoutine = null;
+            }
+            isComboing = false;
+            currentState = BotState.Staggered;
+            return;
+        }
+        else if (currentState == BotState.Staggered)
+        {
+            currentState = BotState.Circling;
+            stateTimer = 0f;
+        }
+
+        // 3. Nếu đang trong hoạt ảnh lăn né BotRollRoutine -> Không can thiệp di chuyển đè lên
         if (isBotRolling)
         {
             return;
         }
 
+        // 3.5. Kiểm tra nếu vừa Parry thành công và có cơ hội Counter Attack -> Phản kích ngay!
+        if (canCounterAttackField != null && playerCombat != null && (bool)canCounterAttackField.GetValue(playerCombat))
+        {
+            TriggerBotCounter();
+            return;
+        }
+
         float distToBoss = Vector3.Distance(transform.position, bossTransform.position);
 
-        // 2. Tự động xoay mặt nhìn thẳng vào Boss
+        // 4. Tự động xoay mặt nhìn thẳng vào Boss
         Vector3 dirToBoss = (bossTransform.position - transform.position);
         dirToBoss.y = 0f;
         if (dirToBoss.sqrMagnitude > 0.01f)
@@ -191,13 +313,26 @@ public class PlayerBotAI : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 12f * Time.deltaTime);
         }
 
-        // 3. Phản xạ Né đòn (Roll / Parry) khi Boss bắt đầu vung chiêu
+        // 5. Phản xạ Né đòn (Roll / Parry) khi Boss bắt đầu vung chiêu
         CheckBossAttackAndDodge(distToBoss);
 
-        // 4. Máy trạng thái chiến đấu (FSM)
+        // 6. Kiểm tra trạng thái Suy yếu (Weaken / Poise Break) của Boss để dồn sát thương
+        if (IsBossWeakened() && currentState != BotState.PunishingWeaken && !isDrinkingPotion)
+        {
+            if (attackRoutine != null)
+            {
+                StopCoroutine(attackRoutine);
+                attackRoutine = null;
+            }
+            isComboing = false;
+            currentState = BotState.PunishingWeaken;
+            stateTimer = 0f;
+        }
+
+        // 7. Máy trạng thái chiến đấu (FSM)
         UpdateFSM(distToBoss);
 
-        // 5. Áp dụng trọng lực giữ chân Player bám sàn
+        // 8. Áp dụng trọng lực giữ chân Player bám sàn
         ApplyGravity();
     }
 
@@ -225,13 +360,35 @@ public class PlayerBotAI : MonoBehaviour
             StopCoroutine(rollRoutine);
             rollRoutine = null;
         }
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
+        if (healRoutine != null)
+        {
+            StopCoroutine(healRoutine);
+            healRoutine = null;
+        }
+
         isBotRolling = false;
         isComboing = false;
+        isDrinkingPotion = false;
         rollCooldown = 0f;
         healCooldown = 0f;
         nextActionDelay = 0f;
         stateTimer = 0f;
         currentState = BotState.Approaching;
+
+        if (playerCombat != null)
+        {
+            playerCombat.ForceResetCombat();
+        }
+
+        if (isRollingField != null && playerController != null)
+        {
+            isRollingField.SetValue(playerController, false);
+        }
 
         if (playerHealth != null)
         {
@@ -245,7 +402,11 @@ public class PlayerBotAI : MonoBehaviour
         if (playerController != null)
         {
             playerController.enabled = !isBotOn;
-            if (!isBotOn) playerController.UnlockMovement();
+            if (!isBotOn)
+            {
+                playerController.UnlockMovement();
+                if (isRollingField != null) isRollingField.SetValue(playerController, false);
+            }
         }
 
         // Đảm bảo không bị kẹt bất tử
@@ -253,13 +414,18 @@ public class PlayerBotAI : MonoBehaviour
         {
             playerHealth.SetInvulnerable(false);
         }
+
+        if (!isBotOn && playerCombat != null)
+        {
+            playerCombat.ForceResetCombat();
+        }
     }
 
     private void CheckBossAttackAndDodge(float distToBoss)
     {
-        if (bossController == null || isBotRolling) return;
+        if (isBotRolling || isDrinkingPotion) return;
 
-        bool bossIsBusy = bossController.IsBusy();
+        bool bossIsBusy = IsBossBusy();
         bool bossJustAttacked = !wasBossBusy && bossIsBusy;
         wasBossBusy = bossIsBusy;
 
@@ -278,24 +444,32 @@ public class PlayerBotAI : MonoBehaviour
                     rollCooldown = Random.Range(1.5f, 2.8f);
                     return;
                 }
-                // 15% Tỉ lệ: Giơ kiếm Parry nếu đứng gần (< 4m)
-                else if (rand < 0.85f && distToBoss < 4.0f)
+                // 15% Tỉ lệ: Giơ kiếm Parry nếu đứng gần (< 4.5m)
+                else if (rand < 0.85f && distToBoss < 4.5f)
                 {
                     TriggerBotParry();
                     rollCooldown = 2.0f;
                     return;
                 }
-                // 15% Tỉ lệ: Cố tình không né hoặc lăn chậm (tạo cơ hội cho Boss bắt bài Roll-Catch)
+                // 15% Tỉ lệ: Cố tình không né hoặc lăn chậm (tạo cơ hội cho Boss bắt bài Roll-Catch / trúng đòn)
             }
         }
     }
 
     private void UpdateFSM(float distToBoss)
     {
-        // Kiểm tra cơ hội hồi máu (Heal-Punish test)
-        if (playerHealth != null && playerHealth.CurrentHealth < playerHealth.MaxHealth * 0.45f && healCooldown <= 0f)
+        // Kiểm tra cơ hội hồi máu (Heal-Punish test khi máu thấp)
+        if (playerHealth != null && playerHealth.CurrentHealth < playerHealth.MaxHealth * 0.45f 
+            && healCooldown <= 0f && currentState != BotState.Healing && !isDrinkingPotion && !isBotRolling)
         {
+            if (attackRoutine != null)
+            {
+                StopCoroutine(attackRoutine);
+                attackRoutine = null;
+            }
+            isComboing = false;
             currentState = BotState.Healing;
+            stateTimer = 0f;
         }
 
         switch (currentState)
@@ -325,7 +499,7 @@ public class PlayerBotAI : MonoBehaviour
                     SetSpeedAnimation(animSpeed);
 
                     // Thỉnh thoảng bắn Kiếm khí Skill E tầm xa
-                    if (distToBoss > 4.5f && distToBoss < 9f && Random.value < 0.02f)
+                    if (distToBoss > 4.5f && distToBoss < 10f && Random.value < 0.03f)
                     {
                         TriggerBotSkillE();
                     }
@@ -335,9 +509,9 @@ public class PlayerBotAI : MonoBehaviour
             case BotState.Circling:
                 // Vờn quanh Boss (Strafing / Spacing)
                 Vector3 strafeVec = (transform.right * strafeDirection).normalized;
-                // Giữ cự ly 3.2m - 5.0m
-                if (distToBoss < preferredMinDist) strafeVec += -transform.forward * 0.5f;
-                else if (distToBoss > preferredMaxDist) strafeVec += transform.forward * 0.5f;
+                // Giữ cự ly 3.2m - 5.5m
+                if (distToBoss < preferredMinDist) strafeVec += -transform.forward * 0.6f;
+                else if (distToBoss > preferredMaxDist) strafeVec += transform.forward * 0.6f;
 
                 MoveInDirection(strafeVec.normalized, 2.8f);
                 SetSpeedAnimation(0.5f);
@@ -355,9 +529,9 @@ public class PlayerBotAI : MonoBehaviour
 
             case BotState.Attacking:
                 SetSpeedAnimation(0f);
-                if (!isComboing && nextActionDelay <= 0f)
+                if (!isComboing && attackRoutine == null && nextActionDelay <= 0f)
                 {
-                    StartCoroutine(AttackComboRoutine());
+                    attackRoutine = StartCoroutine(AttackComboRoutine());
                 }
                 break;
 
@@ -366,7 +540,7 @@ public class PlayerBotAI : MonoBehaviour
                 MoveInDirection(-transform.forward, 3.4f);
                 SetSpeedAnimation(0.5f);
 
-                if (distToBoss >= retreatDistance || stateTimer > 1.0f)
+                if (distToBoss >= retreatDistance || stateTimer > 1.2f)
                 {
                     currentState = BotState.Circling;
                     stateTimer = 0f;
@@ -375,7 +549,7 @@ public class PlayerBotAI : MonoBehaviour
 
             case BotState.Healing:
                 // Lùi xa để uống máu
-                if (distToBoss < 8.0f)
+                if (distToBoss < 8.0f && !isDrinkingPotion)
                 {
                     MoveInDirection(-transform.forward, 4.5f);
                     SetSpeedAnimation(0.8f);
@@ -383,19 +557,39 @@ public class PlayerBotAI : MonoBehaviour
                 else
                 {
                     SetSpeedAnimation(0f);
-                    if (stateTimer > 0.6f)
+                    if (!isDrinkingPotion && healRoutine == null)
                     {
-                        // Hồi 35 HP (Kích thích Boss tung chiêu Heal-Punish)
-                        if (playerHealth != null)
-                        {
-                            playerHealth.Heal(35f);
-                            Debug.Log("<color=cyan>[Player Bot]</color> 🧪 Player vừa uống máu! (Thử thách Heal-Punish cho Boss)");
-                        }
-                        healCooldown = 15f; // Không spam hồi máu liên tục
-                        currentState = BotState.Circling;
-                        stateTimer = 0f;
+                        healRoutine = StartCoroutine(DrinkPotionRoutine());
                     }
                 }
+                break;
+
+            case BotState.PunishingWeaken:
+                // Boss bị Suy Yếu (Weaken / Poise Break): Lao thẳng vào dồn sát thương cực đại!
+                if (distToBoss > attackRange)
+                {
+                    MoveInDirection(transform.forward, 5.2f);
+                    SetSpeedAnimation(1.0f);
+                }
+                else
+                {
+                    SetSpeedAnimation(0f);
+                    if (!isComboing && attackRoutine == null)
+                    {
+                        attackRoutine = StartCoroutine(PunishWeakenRoutine());
+                    }
+                }
+
+                if (!IsBossWeakened())
+                {
+                    currentState = BotState.Circling;
+                    stateTimer = 0f;
+                }
+                break;
+
+            case BotState.Staggered:
+                // Đang bị Stagger: Đứng yên, đợi PlayerFeedback hoàn tất
+                SetSpeedAnimation(0f);
                 break;
         }
     }
@@ -405,29 +599,106 @@ public class PlayerBotAI : MonoBehaviour
         isComboing = true;
         currentComboStep = 1;
 
-        // Đòn 1
+        // Đòn 1 (bắt buộc set comboStep = 1 trên PlayerCombat để Animator nhận diện)
         TriggerBotAttack();
         yield return new WaitForSeconds(0.45f);
 
         // Đòn 2 (85% tỉ lệ nối tiếp)
-        if (Random.value < 0.85f && playerStats != null && playerStats.HasStamina(15f))
+        if (Random.value < 0.85f && playerStats != null && playerStats.HasStamina(playerStats.LightAttackCost))
         {
             currentComboStep = 2;
             TriggerBotAdvanceCombo();
             yield return new WaitForSeconds(0.45f);
 
             // Đòn 3 kết thúc (70% tỉ lệ)
-            if (Random.value < 0.70f && playerStats.HasStamina(15f))
+            if (Random.value < 0.70f && playerStats.HasStamina(playerStats.LightAttackCost))
             {
                 currentComboStep = 3;
                 TriggerBotAdvanceCombo();
-                yield return new WaitForSeconds(0.55f);
+                yield return new WaitForSeconds(0.65f);
+            }
+        }
+
+        // Đôi khi kết thúc combo bằng Skill Q nếu nhiều Spirit
+        if (playerStats != null && playerStats.HasSpirit(playerStats.SkillQCost) && Random.value < 0.35f)
+        {
+            TriggerBotSkillQ();
+            yield return new WaitForSeconds(0.85f);
+        }
+
+        isComboing = false;
+        attackRoutine = null;
+        nextActionDelay = Random.Range(0.25f, 0.5f);
+        currentState = BotState.Retreating; // Đánh xong lùi lại hồi thể lực
+        stateTimer = 0f;
+    }
+
+    private IEnumerator PunishWeakenRoutine()
+    {
+        isComboing = true;
+
+        // 1. Nếu có đủ 100 Spirit: Kích nổ Skill Q sát thương khổng lồ vào Boss đang suy yếu!
+        if (playerStats != null && playerStats.HasSpirit(playerStats.SkillQCost))
+        {
+            TriggerBotSkillQ();
+            yield return new WaitForSeconds(0.9f);
+        }
+        else
+        {
+            // 2. Chém trọn combo 3 đòn liên hoàn
+            TriggerBotAttack();
+            yield return new WaitForSeconds(0.45f);
+
+            if (playerStats != null && playerStats.HasStamina(playerStats.LightAttackCost))
+            {
+                TriggerBotAdvanceCombo();
+                yield return new WaitForSeconds(0.45f);
+
+                if (playerStats.HasStamina(playerStats.LightAttackCost))
+                {
+                    TriggerBotAdvanceCombo();
+                    yield return new WaitForSeconds(0.65f);
+                }
             }
         }
 
         isComboing = false;
-        nextActionDelay = Random.Range(0.25f, 0.5f);
-        currentState = BotState.Retreating; // Đánh xong lùi lại hồi thể lực
+        attackRoutine = null;
+        currentState = BotState.Circling;
+        stateTimer = 0f;
+    }
+
+    private IEnumerator DrinkPotionRoutine()
+    {
+        isDrinkingPotion = true;
+        SetSpeedAnimation(0f);
+
+        // Hồi 35 HP (Kích thích Boss tung chiêu Heal-Punish)
+        if (playerHealth != null)
+        {
+            playerHealth.Heal(35f);
+            Debug.Log("<color=cyan>[Player Bot AI]</color> 🧪 Player vừa uống máu! (Kích hoạt cửa sổ Heal-Punish cho Boss)");
+        }
+
+        // Cửa sổ sơ hở (Heal Vulnerability Window - 1.2s):
+        // Trong thời gian này, Player Bot đứng yên và KHÔNG ĐƯỢC PHÉP né đòn hay chạy trốn,
+        // cho phép Boss AI (IceGolemAgent) tung chiêu JumpAttack/RunAttack trừng phạt và nhận điểm thưởng +2.0!
+        float timer = 0f;
+        while (timer < 1.2f)
+        {
+            timer += Time.deltaTime;
+            // Nếu bị trúng đòn ngắt quãng (stagger) hoặc chết thì kết thúc sớm
+            if ((playerFeedback != null && playerFeedback.IsStaggered) || (playerHealth != null && playerHealth.IsDead))
+            {
+                break;
+            }
+            yield return null;
+        }
+
+        healCooldown = 15f; // Không spam hồi máu liên tục
+        isDrinkingPotion = false;
+        healRoutine = null;
+        currentState = BotState.Circling;
         stateTimer = 0f;
     }
 
@@ -470,6 +741,11 @@ public class PlayerBotAI : MonoBehaviour
     {
         if (playerCombat != null && normalAttackMethod != null)
         {
+            // BẮT BUỘC đặt comboStep = 1 trước khi gọi ExecuteNormalAttack để Animator chuyển sang Attack 1!
+            if (comboStepField != null)
+            {
+                comboStepField.SetValue(playerCombat, 1);
+            }
             normalAttackMethod.Invoke(playerCombat, null);
         }
     }
@@ -490,17 +766,66 @@ public class PlayerBotAI : MonoBehaviour
         }
     }
 
+    private void TriggerBotCounter()
+    {
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
+        isComboing = false;
+
+        if (counterAttackMethod != null && playerCombat != null)
+        {
+            counterAttackMethod.Invoke(playerCombat, null);
+            Debug.Log("<color=yellow>[Player Bot AI]</color> ⚡ COUNTER ATTACK phản kích thành công sau Parry!");
+        }
+
+        currentState = BotState.Retreating;
+        stateTimer = 0f;
+        nextActionDelay = 0.6f;
+    }
+
     private void TriggerBotSkillE()
     {
-        if (playerCombat != null && skillEMethod != null && playerStats != null && playerStats.HasSpirit(50f))
+        if (playerCombat != null && skillEMethod != null && playerStats != null && playerStats.HasSpirit(playerStats.SkillECost))
         {
+            // Kiểm tra Cooldown
+            if (skillETimerField != null && (float)skillETimerField.GetValue(playerCombat) > 0f) return;
+
+            // Tiêu hao Spirit đúng chuẩn
+            playerStats.ConsumeSpirit(playerStats.SkillECost);
             skillEMethod.Invoke(playerCombat, null);
+            Debug.Log("<color=cyan>[Player Bot AI]</color> 🌀 Phóng kiếm khí tầm xa (Skill E)!");
+        }
+    }
+
+    private void TriggerBotSkillQ()
+    {
+        if (playerCombat != null && skillQMethod != null && playerStats != null && playerStats.HasSpirit(playerStats.SkillQCost))
+        {
+            // Kiểm tra Cooldown
+            if (skillQTimerField != null && (float)skillQTimerField.GetValue(playerCombat) > 0f) return;
+
+            // Tiêu hao Spirit đúng chuẩn
+            playerStats.ConsumeSpirit(playerStats.SkillQCost);
+            skillQMethod.Invoke(playerCombat, null);
+            Debug.Log("<color=magenta>[Player Bot AI]</color> 💥 Đập nổ AOE giáng trần (Skill Q)!");
         }
     }
 
     private void TriggerBotRoll(Vector3 rollDir)
     {
         if (isBotRolling) return;
+
+        // Ngắt combo đang chạy nếu có
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
+        isComboing = false;
+
         if (rollRoutine != null) StopCoroutine(rollRoutine);
         rollRoutine = StartCoroutine(BotRollRoutine(rollDir));
     }
@@ -508,6 +833,12 @@ public class PlayerBotAI : MonoBehaviour
     private IEnumerator BotRollRoutine(Vector3 rollDir)
     {
         isBotRolling = true;
+
+        // Báo cho PlayerController biết đang Rolling để ML-Agents (IceGolemAgent) nhận diện chính xác
+        if (isRollingField != null && playerController != null)
+        {
+            isRollingField.SetValue(playerController, true);
+        }
 
         // 1. Tiêu hao thể lực Stamina né đòn
         if (playerStats != null)
@@ -545,9 +876,18 @@ public class PlayerBotAI : MonoBehaviour
                 }
             }
 
-            // Lướt nhân vật theo hướng né đòn
+            // Trọng lực khi lăn
             if (characterController != null && characterController.enabled)
             {
+                if (characterController.isGrounded)
+                {
+                    if (verticalVelocity < 0f) verticalVelocity = -2f;
+                }
+                else
+                {
+                    verticalVelocity += Physics.gravity.y * 2.5f * Time.deltaTime;
+                }
+
                 Vector3 move = moveDir * rollSpeed + new Vector3(0f, verticalVelocity, 0f);
                 characterController.Move(move * Time.deltaTime);
             }
@@ -561,8 +901,16 @@ public class PlayerBotAI : MonoBehaviour
             playerHealth.SetInvulnerable(false);
         }
 
+        // TẮT isRolling trên PlayerController để kích hoạt cửa sổ Roll-Catching (0.4s) trên IceGolemAgent!
+        if (isRollingField != null && playerController != null)
+        {
+            isRollingField.SetValue(playerController, false);
+        }
+
         isBotRolling = false;
         rollRoutine = null;
+        currentState = BotState.Circling;
+        stateTimer = 0f;
     }
 
     // ==========================================
@@ -585,7 +933,7 @@ public class PlayerBotAI : MonoBehaviour
         if (botEnabled)
         {
             GUI.color = new Color(0.2f, 1f, 0.4f, 0.95f);
-            GUI.Box(new Rect(20, 20, 420, 55), 
+            GUI.Box(new Rect(20, 20, 440, 55), 
                 $"🤖 [BOT PLAYER ĐANG TỰ ĐÁNH (SPARRING)]\n" +
                 $"Trạng thái: {currentState} | [B]: TẮT BOT | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
         }
@@ -601,6 +949,15 @@ public class PlayerBotAI : MonoBehaviour
 
     private void OnDisable()
     {
+        if (rollRoutine != null) { StopCoroutine(rollRoutine); rollRoutine = null; }
+        if (attackRoutine != null) { StopCoroutine(attackRoutine); attackRoutine = null; }
+        if (healRoutine != null) { StopCoroutine(healRoutine); healRoutine = null; }
+
+        if (isRollingField != null && playerController != null)
+        {
+            isRollingField.SetValue(playerController, false);
+        }
+
         if (playerHealth != null)
         {
             playerHealth.SetInvulnerable(false);
@@ -610,6 +967,11 @@ public class PlayerBotAI : MonoBehaviour
         {
             playerController.enabled = true;
             playerController.UnlockMovement();
+        }
+
+        if (playerCombat != null)
+        {
+            playerCombat.ForceResetCombat();
         }
     }
 }

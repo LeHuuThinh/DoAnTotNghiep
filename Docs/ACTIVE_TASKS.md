@@ -27,18 +27,18 @@
 ## 🚩 GIAI ĐOẠN 1: Hoàn Thiện Trải Nghiệm Chơi Hầm Ngục (Dungeon Playability)
 
 - [x] **CH-01: Commit Git Checkpoint hiện tại**
-  - Đã lưu các commit: `e6ec005` (feat: Add template for generation and Game optimization), `1dff1c6` (feat: Add random props and lighting), `929ce8b` (feat: Add second floor generation).
+  - Đã lưu các commit: e6ec005 (feat: Add template for generation and Game optimization), 1dff1c6 (feat: Add random props and lighting), 929ce8b (feat: Add second floor generation).
 
 - [x] **PCG-01: Hệ thống Templates kiến trúc tàn tích (8 Wall) & Tiểu cảnh đạo cụ (5 Props)**
-  - Tự động tính toán Bounding Box footprint của Prefabs template (`GetPrefabLocalBounds`).
+  - Tự động tính toán Bounding Box footprint của Prefabs template (GetPrefabLocalBounds).
   - Xoay 4 hướng (0, 90, 180, 270) và kiểm tra an toàn đường đi (tránh cửa, hành lang, chân cầu thang).
-  - Tự động đánh dấu diện tích chiếm dụng vào `forbiddenTiles` để props thường không bao giờ sinh đè lên.
-  - Tách toàn bộ `Light` và `ParticleSystem` (khói, lửa) sang nhóm `Lights` để không bị xóa khi gộp mesh.
+  - Tự động đánh dấu diện tích chiếm dụng vào forbiddenTiles để props thường không bao giờ sinh đè lên.
+  - Tách toàn bộ Light và ParticleSystem (khói, lửa) sang nhóm Lights để không bị xóa khi gộp mesh.
 
 - [x] **PCG-02: Trang trí Gác lửng Tầng 2 & Hệ thống Đuốc sàn tự do**
-  - Khớp chuẩn 100% cao độ tầng 2 (`mY = 8.0m`), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
-  - Cờ hiệu treo tường ngẫu nhiên cao thấp (`minBannerHeight = 2.2m`, `maxBannerHeight = 3.2m`).
-  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung `floorTorchYOffset = 0.5f` chống lún chân đế.
+  - Khớp chuẩn 100% cao độ tầng 2 (mY = 8.0m), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
+  - Cờ hiệu treo tường ngẫu nhiên cao thấp (minBannerHeight = 2.2m, maxBannerHeight = 3.2m).
+  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung floorTorchYOffset = 0.5f chống lún chân đế.
   - Gộp Mesh tĩnh (Mesh Combine) theo từng nhóm Material thành 1 Draw Call duy nhất, lọc bỏ MeshCollider thừa cho cờ vải/thủy tinh.
 
 - [x] **REF-01: Tái cấu trúc phân rã `DungeonPropDecorator.cs` (1.700 dòng -> Clean Sub-modules)**
@@ -78,9 +78,9 @@
 
 - [x] **OPT-01: Tối ưu hóa hiệu năng URP & Hệ thống Ánh sáng (Phục hồi 40 FPS -> 110+ FPS)**
   - Triệt tiêu Shadow Caster Pass của Directional Light cường độ 0 (giải phóng 4 cascades 2048x2048 vô ích, tiết kiệm 4-6ms GPU).
-  - Viết lại `DungeonLightOptimizer.cs`: Culling kép cả `Light` lẫn `ParticleSystem` (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
+  - Viết lại DungeonLightOptimizer.cs: Culling kép cả Light lẫn ParticleSystem (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
   - Bổ sung cơ chế **Hysteresis Buffer (đệm 6m)** chống nhấp nháy đèn ở ranh giới.
-  - Mở rộng thanh trượt `Light Culling Distance` (10m - 150m, mặc định 80m) và đồng bộ `Camera Far Clip Plane` (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
+  - Mở rộng thanh trượt Light Culling Distance (10m - 150m, mặc định 80m) và đồng bộ Camera Far Clip Plane (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
 
 - [x] **OPT-02: Tối ưu hóa hiệu năng LandScene (Ngôi Làng Haven Village Hub - Nâng FPS từ ~65 lên 110+ FPS)**
   - Tối ưu hóa Địa hình: Kích hoạt GPU Instancing cho bề mặt địa hình (`drawInstanced = true`), cắt giảm cự ly render cây cối xuống `treeDistance = 200m` và billboard xuống 120m, nâng `heightmapPixelError = 10`, tắt `shadowCastingMode = Off` cho Terrain.
@@ -342,6 +342,28 @@
   - Trọn bộ 4 kỹ năng chiến đấu (Phím 1-4): `AttackSlashRI` (chém dọc phóng đạn kiếm 90 độ), `HorizontalSlashRI` (chém ngang phóng đạn kiếm bay ngang), `JumpAttackRI` (nhảy tới dậm đất nổ lan AOE), `ComboAttackRI` (chém liên hoàn 4 nhát lướt kiếm).
   - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường, không can thiệp thư mục VFX gốc.
   - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Tool 1-Click cấu hình Prefab và Animator.
+
+- [x] **BOSS-04: Hệ Thống Vệt Kiếm IgnisSwordTrail.cs, Chuẩn Hóa Combo 4 Nhát & Cơ Chế Gồng Kiếm Lửa Phase 2** *(HOÀN THÀNH)*
+  - **Hệ Thống Vệt Kiếm Độc Quyền Trực Tiếp Trên Kiếm (IgnisSwordTrail.cs):**
+    + Loại bỏ cách spawn vệt particle tách rời ngoài không gian; thay vào đó gắn trực tiếp bộ tạo Mesh Trail động (Dynamic Ribbon Mesh) trên lưỡi kiếm (Ignis_Sword_Flame.prefab) với 2 điểm neo `tipTransform` (mũi kiếm) và `baseTransform` (gốc kiếm).
+    + Sử dụng thuật toán nội suy Catmull-Rom Spline (3 subdivisions), khử hiện tượng gãy khúc khi Boss vung kiếm ở tốc độ cao.
+    + Tích hợp bộ lọc khử giật rung lắc (`verticalJitterDamping` = 0.35f) và làm mượt chuyển động tay (motionSmoothing = 0.45f).
+    + Bảng màu Gradient đỏ thẫm/đen khói (Dark Crimson to Deep Red/Black), độ mờ dần và tan nhanh trong 0.16s (`trailDuration` = 0.16s), hòa trộn Alpha Blended chuẩn URP.
+    + Tự động kích hoạt vệt kiếm ngay từ đầu nhịp vung kiếm ở cả 4 kỹ năng (Skill 1..4), tự động thu hồi/tắt khi kết thúc chiêu hoặc khi Boss rơi vào trạng thái suy yếu (Weaken) / tử trận (Dead).
+  - **Chuẩn Hóa Hoạt Ảnh & Động Học Combo 4 Nhát (ComboAttackRI.anim & RedIgnisController.cs):**
+    + *Khắc phục lỗi lệch hướng Root Motion Yaw:* Sửa triệt để góc xoay ban đầu trong ComboAttackRI.anim bị lệch trái +57.3° đến +70.7°. Reset các keyframes góc quay về 0.0° ở đầu hoạt ảnh (t = 0.0s -> 0.40s) và cuối hoạt ảnh (t = 3.10s -> 3.63s).
+    + *Cơ chế Snap & Bám mục tiêu mượt mà:* Ngay khi kích hoạt đòn đánh, Boss lập tức hướng về phía Player qua Quaternion.LookRotation, đồng thời duy trì xoay bám theo Player mượt mà trong nhịp lấy đà.
+    + *Kiểm soát khoảng cách lướt (comboLungeDistance):* Bổ sung tham số tùy chỉnh khoảng cách lướt tới, mặc định comboLungeDistance = 0.0f để Boss đứng yên chém tại chỗ theo yêu cầu, loại bỏ hiện tượng bước chân trôi giật hoặc bị giật lùi vị trí sau khi chém.
+    + *Đồng bộ 4 nhịp gây sát thương:* Chuẩn hóa mảng comboHitTimers = { 0.40f, 0.95f, 1.55f, 2.20f } khớp tuyệt đối với 4 nhát chém kiếm trên khung hình hoạt ảnh, sát thương mỗi nhát 35 HP.
+  - **Cơ Chế Gồng Kiếm Lửa Thức Tỉnh Phase 2 (IgnisSwordFlame.cs & SwordCastingRI.anim):**
+    + Khi máu Boss tụt xuống dưới 50% (swordCastingHealthThreshold = 0.50f), Boss tạm ngưng di chuyển và kích hoạt hoạt ảnh gồng kiếm niệm hoả SwordCastingRI (2.0s).
+    + Kích hoạt hệ thống hiệu ứng ngọn lửa ma thuật IgnisSwordFlame.cs rực cháy dọc theo sống kiếm đến mũi kiếm (đã dọn sạch quầng lửa thô ở chuôi).
+    + Gia tăng vĩnh viễn +10 sát thương cuồng nộ (swordEnrageBonusDamage = 10.0f) cho toàn bộ các đòn đánh sau đó đến hết trận đấu.
+
+- [x] **BOSS-05: Tối Ưu Hóa Bộ Công Cụ Setup Editor & Bảo Toàn Thông Số Inspector Tùy Chỉnh (Non-Destructive Tooling)** *(HOÀN THÀNH)*
+  - **Triệt tiêu tự động chạy ngầm đè thông số ([InitializeOnLoadMethod]):** Gỡ bỏ thuộc tính [InitializeOnLoadMethod] khỏi SetupRedIgnisAnimatorAndPrefabs.cs và InspectAndFixRedIgnis.cs. Chỉ thực thi khi người dùng chủ động click menu trên thanh công cụ Unity.
+  - **Bảo toàn dữ liệu Inspector người dùng tùy chỉnh (SetDefaultFloatIfUnset):** Thay thế toàn bộ các lệnh gán cứng (như `attackSlashDelay` = 0.42f) bằng cơ chế kiểm tra giá trị hiện tại. Nếu người dùng đã điều chỉnh bất kỳ thông số nào (`attackSlashDelay`, comboLungeDistance, damage, cooldown...), script sẽ bảo toàn 100% giá trị tùy chỉnh, không bao giờ tự ý khôi phục về giá trị mặc định.
+  - **Khắc phục lỗi biên dịch CS0136:** Sửa triệt để lỗi khai báo biến cục bộ trùng tên clipSwordCasting và stateSwordCasting, bảo đảm dự án 100% sạch lỗi biên dịch và sẵn sàng vào Play Mode.
 
 - [x] **ML-01: Tích hợp Unity ML-Agents Package & Môi Trường Huấn Luyện**
   - Tích hợp gói chính thức `com.unity.ml-agents: 4.1.0` (khớp Unity 6 và Unity AI Inference 2.6.1).

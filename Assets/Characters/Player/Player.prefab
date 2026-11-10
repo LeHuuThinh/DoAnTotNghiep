@@ -1863,7 +1863,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5452323325029716220}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec3cd82e468d3fa44a17a9bf447fdab2, type: 3}
   m_Name: 
@@ -1879,10 +1879,13 @@ MonoBehaviour:
   rollSpeed: 8.5
   bossTransform: {fileID: 0}
   bossController: {fileID: 0}
+  ignisController: {fileID: 0}
+  bossHealth: {fileID: 0}
   playerHealth: {fileID: 0}
   playerController: {fileID: 0}
   playerCombat: {fileID: 0}
   playerStats: {fileID: 0}
+  playerFeedback: {fileID: 0}
   characterController: {fileID: 0}
   animator: {fileID: 0}
 --- !u!114 &5368507876461529506

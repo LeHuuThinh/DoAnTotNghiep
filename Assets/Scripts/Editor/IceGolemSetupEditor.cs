@@ -243,13 +243,13 @@ namespace InfiniteLabyrinth.EditorTools
                 soController.FindProperty("minFaceDistance").floatValue = 0.5f;
 
                 // Cooldowns
-                soController.FindProperty("attack1Cooldown").floatValue = 1.5f;
-                soController.FindProperty("gumoGumoCooldown").floatValue = 6.0f;
-                soController.FindProperty("flameBreathCooldown").floatValue = 8.0f;
-                soController.FindProperty("jumpAttackCooldown").floatValue = 7.0f;
-                soController.FindProperty("runAttackCooldown").floatValue = 6.0f;
-                soController.FindProperty("attackLTCooldown").floatValue = 5.0f;
-                soController.FindProperty("iceBallCooldown").floatValue = 7.0f;
+                soController.FindProperty("attack1Cooldown").floatValue = 15.0f;
+                soController.FindProperty("gumoGumoCooldown").floatValue = 15.0f;
+                soController.FindProperty("flameBreathCooldown").floatValue = 15.0f;
+                soController.FindProperty("jumpAttackCooldown").floatValue = 15.0f;
+                soController.FindProperty("runAttackCooldown").floatValue = 15.0f;
+                soController.FindProperty("attackLTCooldown").floatValue = 15.0f;
+                soController.FindProperty("iceBallCooldown").floatValue = 15.0f;
 
                 // Phản hồi chớp đỏ
                 soController.FindProperty("hitFlashDuration").floatValue = 0.12f;
