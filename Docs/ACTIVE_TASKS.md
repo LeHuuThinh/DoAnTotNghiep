@@ -2,7 +2,6 @@
 
 > [!TIP]
 > **Hướng dẫn gọi việc cho AI:** Mỗi khi mở một phiên chat mới, chỉ cần gõ đúng mã nhiệm vụ.  
-
 > _Ví dụ:_ `"Đọc Docs/SYSTEM_ARCHITECTURE.md và Docs/ACTIVE_TASKS.md. Hãy cùng tôi làm Task RPG-07: Hệ thống Cửa hàng Làng Haven (Shop NPC)."`
 
 ---
@@ -23,26 +22,24 @@
 > 1. **`Task RPG-08`:** Lò rèn Haven & Hệ thống Cường hóa / Chế tạo Thần binh (Blacksmith NPC) - ✅ **Hoàn thành**.  
 > 2. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện (Drop Tables từ Quái, Rương, Thùng).
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 1: Hoàn Thiện Trải Nghiệm Chơi Hầm Ngục (Dungeon Playability)
 
 - [x] **CH-01: Commit Git Checkpoint hiện tại**
-  - Đã lưu các commit: e6ec005 (feat: Add template for generation and Game optimization), 1dff1c6 (feat: Add random props and lighting), 929ce8b (feat: Add second floor generation).
+  - Đã lưu các commit: `e6ec005` (feat: Add template for generation and Game optimization), `1dff1c6` (feat: Add random props and lighting), `929ce8b` (feat: Add second floor generation).
 
 - [x] **PCG-01: Hệ thống Templates kiến trúc tàn tích (8 Wall) & Tiểu cảnh đạo cụ (5 Props)**
-  - Tự động tính toán Bounding Box footprint của Prefabs template (GetPrefabLocalBounds).
+  - Tự động tính toán Bounding Box footprint của Prefabs template (`GetPrefabLocalBounds`).
   - Xoay 4 hướng (0, 90, 180, 270) và kiểm tra an toàn đường đi (tránh cửa, hành lang, chân cầu thang).
-  - Tự động đánh dấu diện tích chiếm dụng vào forbiddenTiles để props thường không bao giờ sinh đè lên.
-  - Tách toàn bộ Light và ParticleSystem (khói, lửa) sang nhóm Lights để không bị xóa khi gộp mesh.
+  - Tự động đánh dấu diện tích chiếm dụng vào `forbiddenTiles` để props thường không bao giờ sinh đè lên.
+  - Tách toàn bộ `Light` và `ParticleSystem` (khói, lửa) sang nhóm `Lights` để không bị xóa khi gộp mesh.
 
 - [x] **PCG-02: Trang trí Gác lửng Tầng 2 & Hệ thống Đuốc sàn tự do**
-  - Khớp chuẩn 100% cao độ tầng 2 (mY = 8.0m), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
-  - Cờ hiệu treo tường ngẫu nhiên cao thấp (minBannerHeight = 2.2m, maxBannerHeight = 3.2m).
-  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung floorTorchYOffset = 0.5f chống lún chân đế.
+  - Khớp chuẩn 100% cao độ tầng 2 (`mY = 8.0m`), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
+  - Cờ hiệu treo tường ngẫu nhiên cao thấp (`minBannerHeight = 2.2m`, `maxBannerHeight = 3.2m`).
+  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung `floorTorchYOffset = 0.5f` chống lún chân đế.
   - Gộp Mesh tĩnh (Mesh Combine) theo từng nhóm Material thành 1 Draw Call duy nhất, lọc bỏ MeshCollider thừa cho cờ vải/thủy tinh.
-
 
 - [x] **REF-01: Tái cấu trúc phân rã `DungeonPropDecorator.cs` (1.700 dòng -> Clean Sub-modules)**
   - Tách God Class `DungeonPropDecorator.cs` theo mô hình **Facade Orchestrator & Partial Classes + Utility**:
@@ -71,7 +68,6 @@
   - Đồng bộ liên kết phòng: Lưu `data.startRoomBounds = closestRoom` trong `ConnectStartRoom` và cập nhật `DungeonRoomAnalyzer` ưu tiên gán `data.startRoom` theo `data.startRoomBounds`, đảm bảo phòng kết nối thực tế đồng bộ 100% với phòng bắt đầu của BFS đồ thị và Mini-map.
   - Hành lang dẫn lối an toàn: Tự động dẫn đoạn hành lang thẳng tối thiểu ra khỏi cửa (`minTurnY = gridDoorPos.y + corridorThickness + 1`) trước khi rẽ Z, loại bỏ hoàn toàn nguy cơ tường hành lang gãy góc đè lên ngàm nối cửa khởi đầu.
 
-
 - [x] **PCG-03: Hệ thống sinh Thùng Gỗ Đập Được & Rương Báu (Interactive Chests & Breakable Barrels)**
   - Tự động nạp các Prefabs từ `Assets/Prefabs/RPG/` (`Breakable_Barrel_Small/Medium/Large`, `Interactive_Chest`, `Interactive_Chest_Gold`).
   - Khai thác Template Sockets: Nhận diện toàn bộ các socket user gắn sẵn (`[Loot_Barrel_Socket]`, `[Loot_Chest_Socket]`), roll xúc xắc theo tỉ lệ Inspector và sinh thùng/rương chính xác tại tọa độ socket.
@@ -82,10 +78,9 @@
 
 - [x] **OPT-01: Tối ưu hóa hiệu năng URP & Hệ thống Ánh sáng (Phục hồi 40 FPS -> 110+ FPS)**
   - Triệt tiêu Shadow Caster Pass của Directional Light cường độ 0 (giải phóng 4 cascades 2048x2048 vô ích, tiết kiệm 4-6ms GPU).
-  - Viết lại DungeonLightOptimizer.cs: Culling kép cả Light lẫn ParticleSystem (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
+  - Viết lại `DungeonLightOptimizer.cs`: Culling kép cả `Light` lẫn `ParticleSystem` (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
   - Bổ sung cơ chế **Hysteresis Buffer (đệm 6m)** chống nhấp nháy đèn ở ranh giới.
-  - Mở rộng thanh trượt Light Culling Distance (10m - 150m, mặc định 80m) và đồng bộ Camera Far Clip Plane (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
-
+  - Mở rộng thanh trượt `Light Culling Distance` (10m - 150m, mặc định 80m) và đồng bộ `Camera Far Clip Plane` (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
 
 - [x] **OPT-02: Tối ưu hóa hiệu năng LandScene (Ngôi Làng Haven Village Hub - Nâng FPS từ ~65 lên 110+ FPS)**
   - Tối ưu hóa Địa hình: Kích hoạt GPU Instancing cho bề mặt địa hình (`drawInstanced = true`), cắt giảm cự ly render cây cối xuống `treeDistance = 200m` và billboard xuống 120m, nâng `heightmapPixelError = 10`, tắt `shadowCastingMode = Off` cho Terrain.
@@ -97,7 +92,6 @@
   - Thanh Máu (Health Bar): MainFill màu đỏ tươi kèm Ghost Bar màu vàng nhạt tụt đuổi từ từ sau thời gian trễ khi dính đòn.
   - Thanh Thể lực (Stamina Bar): Màu vàng/cam, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
   - Cụm Sao Năng lượng Chiêu thức (Spirit Stars): 4 ngôi sao nạp đầy khi chém trúng địch / parry, tiêu hao khi dùng kỹ năng E, Q, R.
-
 
 - [x] **UI-02: Hệ Thống Thanh Máu Quái Vật World Space Souls-like (`EnemyHealthBarUI.cs`)**
   - Billboard 3D Thông Minh: Tự động xoay mặt vuông góc 100% về phía Camera người chơi, phẳng phiu không méo lệch.
@@ -117,33 +111,6 @@
   - Giao diện Toggle Switch [ 3D | 2D ] với con trỏ trượt mượt mà `SlidingHandle` (SmoothStep 0.15s), đổi màu vàng kim/xám mờ, lưu `PlayerPrefs`.
   - Tối ưu hóa GPU: Chế độ 2D tắt hoàn toàn `previewCamera` và `previewLight` (0% chi phí render buồng soi 3D), kích hoạt `Character2DBox` chạy hoạt ảnh meme 190 frame. Chế độ 3D bật lại camera soi nhân vật.
   - Tích hợp 1-Click Editor `CharacterPreviewToggleEditor.cs`.
-
-- [x] **UI-03: Màn hình Loading Screen chuyển cảnh Async & Hầm ngục PCG (Task LD-01 - LD-05)**
-  - [x] **LD-01: Kiến trúc Dữ liệu LoadingScreenData.cs & Bộ Khởi Tạo Editor:**
-    - Tạo ScriptableObject [LoadingScreenData.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenData.cs) lưu trữ 21 mẹo tiếng Anh chia theo 5 nhóm chủ đề: COMBAT, EXPLORATION, BOSS TACTICS, VILLAGE HUB, ROGUELITE.
-    - Hỗ trợ mảng ảnh nền hầm ngục và ngôi làng (cả Texture2D lẫn Sprite).
-    - Tiêu đề phân vùng ngữ cảnh theo Scene (DungeonScene: *"INFINITE LABYRINTH - FLOOR {0}"*, LandScene: *"HAVEN VILLAGE"*).
-    - Công cụ tự động hóa [LoadingScreenSetupEditor.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenSetupEditor.cs) quét và nạp tự động 13 ảnh render hầm ngục từ Assets/Prefabs/Dungeon/Samples/.
-  - [x] **LD-02: Dựng Prefab LoadingScreenCanvas.prefab & LoadingScreenUI.cs:**
-    - Tạo controller [LoadingScreenUI.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenUI.cs) điều khiển: Full-screen RawImage hầm ngục, Vignette tối tương phản cao, Header địa danh (LocationTitle + LocationSubtitle + DecorativeLine), Khung hiển thị Tip tiếng Anh (TipCategory + TipContent), Thanh tiến trình Souls-like (Monster_Border + Monster_Fill), Text % góc phải, và Icon Exp_Circle Spinner xoay liên tục (dùng unscaledDeltaTime chống đóng băng UI).
-    - Tạo công cụ tự động hóa MenuItem: Infinite Labyrinth -> UI -> 2. Tạo Prefab Loading Screen Canvas (1-Click) trong [LoadingScreenSetupEditor.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenSetupEditor.cs) tạo sẵn Prefab chuẩn Canvas Overlay (Sort Order 999) tại cả Assets/Resources/LoadingScreenCanvas.prefab và Assets/Prefabs/RPG/LoadingScreenCanvas.prefab.
-    - Hỗ trợ API Show(...), SetProgress(...), Hide(...) kèm hiệu ứng Fade In/Out qua CanvasGroup.
-  - [x] **LD-03: Bộ điều phối LoadingScreenManager.cs (Singleton / DontDestroyOnLoad):**
-    - Tạo [LoadingScreenManager.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/UI/Loading/LoadingScreenManager.cs) hoạt động theo mô hình Singleton bền vững xuyên cảnh (DontDestroyOnLoad), hỗ trợ cơ chế tự phục hồi EnsureInstance() tự nạp Canvas và Data từ Resources/.
-    - Phân chia pha nạp bất đồng bộ: Pha 1 nạp Scene qua SceneManager.LoadSceneAsync (tiến trình ánh xạ 0% -> 40%), Pha 2 chờ tạo lập thế giới / PCG (tiến trình ánh xạ 40% -> 100%).
-    - Cấu hình thời gian hiển thị tối thiểu minLoadingTime = 1.6s chống chớp nháy UI trên SSD tốc độ cao, đảm bảo người chơi luôn đọc trọn vẹn 1 mẹo hữu ích.
-    - Cung cấp API LoadScene(...) và LoadSceneWithStagedCallback(...) sẵn sàng kết nối với DungeonManager và PortalController.
-  - [x] **LD-04: Nâng cấp DungeonManager.cs sinh PCG theo từng chặng (Time-Sliced Staged Generation):**
-    - Bổ sung BuildMeshRoutine trong [DungeonRenderer.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonRenderer.cs) chia nhỏ việc dựng hình sàn, tường, trần, gác lửng tầng 2, cột đấu trường, props và NavMesh qua nhiều khung hình (yield return null).
-    - Nâng cấp [DungeonManager.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs) với Coroutine GenerateWorldRoutine(Action<float> onProgress) báo cáo tiến trình theo 5 giai đoạn: Toán học BSP (12%) -> Dựng hình & Props & NavMesh (82%) -> Quái vật (92%) -> Tối ưu ngủ đông & Test quái (100%).
-    - Đồng bộ Start(): Tự động phát hiện nếu LoadingScreenManager.IsLoading đang chạy thì nhường quyền điều phối cho LoadingScreen, bảo toàn khả năng play test trực tiếp độc lập khi nhấn Play trong Scene.
-  - [x] **LD-05: Tích hợp vào PortalController.cs & các luồng chuyển cảnh:**
-    - Cập nhật [PortalController.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/PortalController.cs) chuyển đổi toàn bộ lệnh nạp scene đồng bộ sang LoadingScreenManager.Instance.LoadScene(targetSceneName, targetFloor) (hỗ trợ fallback an toàn).
-    - Kết nối cả 2 chiều di chuyển: Từ Làng (LandScene) vào Hầm ngục (DungeonScene) và từ Hầm ngục trở về Làng. Hiển thị chuẩn xác ảnh nền hầm ngục, các mẹo tiếng Anh, số phần trăm và thanh tiến trình thời gian thực.
-  - [x] **LD-06: Chạy Loading Screen trực tiếp trong DungeonScene & Admin Console & Tinh chỉnh Inspector:**
-    - **Chạy trực tiếp từ Scene Dungeon (Cold Start Play):** Cấu hình showLoadingScreenOnStart = true trong [DungeonManager.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/DungeonGeneration/DungeonManager.cs). Khi ấn Play ngay trong DungeonScene, hệ thống kích hoạt RunInSceneLoading với cờ instant: true để che màn hình ngay từ Frame 0, khóa input người chơi và hiển thị mẹo/background ngẫu nhiên trong lúc PCG kiến tạo hầm ngục.
-    - **Tích hợp Admin Console:** Nút "Regenerate Dungeon" (~ / F1) kích hoạt LoadingScreenManager.Instance.RunInSceneLoading(...) chạy trơn tru mượt mà ngay trong scene.
-    - **Tùy biến & Xem trước Inspector:** Cung cấp Custom Editor [LoadingScreenUIEditor.cs](file:///c:/2.tapcodedienloan/!%20Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/LoadingScreenUIEditor.cs) với các nút tiện ích: 👁️ Bật Xem Trước (Alpha = 1), 🙈 Ẩn Màn Hình (Alpha = 0), 🎲 Đổi Ngẫu Nhiên Mẹo & Ảnh Nền, và thanh trượt % Tiến Trình thời gian thực trên Scene & Game view.
 
 - [x] **D-01: Bộ sinh quái tự động cho hầm ngục theo Biệt Đội / Cụm (`ProceduralEnemySpawner.cs`)**
   - Tổ hợp Biệt Đội chuẩn RPG (Nhóm 4 quái, Nhóm 3 quái, Nhóm 2 quái, Nhóm 1 quái lẻ) kết hợp Spatial Clustering (Neo bán kính 3m, cách nhau >= 8.5m, bám sàn NavMesh).
@@ -205,11 +172,9 @@
   - [x] **D02-5C:** Sinh Rương Boss & Cổng Dịch Chuyển trên Bục Đá 12m sau khi hạ Boss; Lia cam tôn vinh lên đài cao 12m; Cột sáng thần thánh giáng thế; Cơn mưa chiến lợi phẩm quạt hình nón (150-300 Vàng, Đá, Trang bị); Vô hiệu hóa reset episode ML-Agents khi Boss chết; Khóa cứng `applyRootMotion = false` và khóa `localPosition.x/z = 0` chống trôi model so với Hitbox.
   - [x] **D02-5D:** Giao diện Lựa chọn Cổng Dịch Chuyển 2 Cửa Sổ (`VictoryPortalUI`): Bên trái về Làng Haven (Hold 2.0s), Bên phải xuống Tầng 2 (Hold 2.0s), Nút Stay / Phím ESC ở lại nhặt rương tự do.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 2: Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Game Loop & Day System)
-
 
 - [x] **GM-01: Quản lý vòng lặp ngày & tầng (`GameManager.cs`, `InfoUIController.cs`)**
   - Singleton `GameManager.cs` (`DontDestroyOnLoad`) quản lý `CurrentDay`, `CurrentFloor`, các events `OnDayChanged`, `OnFloorChanged`, `OnGameStateChanged`.
@@ -225,13 +190,11 @@
   - Lựa chọn 2 (Tiến vào Tầng kế): Tính `targetFloor = CurrentFloor + 1`, cập nhật tiến trình `SetFloor(targetFloor)`, tải `DungeonScene` với seed mới và độ sâu mới qua `LoadingScreenManager`.
   - Master 1-Click Menu cấu hình toàn bộ vòng lặp GM-01 đến GM-03.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 3: Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven (Inventory, Progression, Shop & Blacksmith)
 
 > **Trạng thái phân hệ:** Đã hoàn thiện toàn bộ nền tảng Kho đồ, Rơi đồ, Giao diện 2 cửa sổ, Cấp độ tiềm năng, Tương tác đa năng và Cơ sở dữ liệu 49 Items. Hiện tại đang triển khai cặp đôi trung tâm kinh tế Làng Haven: **Cửa Hàng (Shop)** và **Lò Rèn (Blacksmith)**.
-
 
 - [x] **RPG-01: Kiến trúc Dữ liệu Vật phẩm & Quản lý Kho đồ (`ItemData.cs`, `InventoryManager.cs`)**
   - ScriptableObject `ItemData`: ID, Tên, Mô tả, Icon, Phân loại, Độ hiếm, MaxStack, Chỉ số cộng thêm (ATK, DEF, HP, Stamina), Model 3D rớt đất, Model cầm tay.
@@ -350,11 +313,9 @@
     + 3 Cấp độ Rương: Rương thường (Vàng, Máu nhỏ, Đá cường hóa, Đồ Uncommon), Rương hiếm (Vàng nhiều, Máu lớn, Đá cường hóa, Vũ khí Rare, Giáp sắt), Rương Boss (180-350 Vàng, Lõi Boss 100%, Mảnh cổ tự, Đá & Tinh thể, Đồ Epic/Legendary cực phẩm).
   - Tích hợp công cụ 1-Click cập nhật toàn bộ Loot Tables trên scene và prefabs.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 4: Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & Trùm Học Máy (Boss ML-Agents)
-
 
 - [x] **BOSS-01: Hoàn thiện Bộ Kỹ Năng, VFX & Động Cơ Di Chuyển Trùm Ice Golem (`Boss_IceGolem.prefab`)**
   - **Thông số sinh tồn Inspector:** Máu `bossMaxHealth = 1500 HP`, Thanh chịu đòn `maxPoise = 500`, Suy yếu `WeakenIG` 1 lần duy nhất, Phase 2 Cuồng Nộ tại `<= 50% HP` (chao đảo, sóng đẩy văng 5m, gầm thét phun lửa, phóng liên tiếp 3 cầu tím ma thuật, rút ngắn nhịp thở giao tranh từ 6-7s xuống 4-5s).
@@ -382,31 +343,7 @@
   - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường, không can thiệp thư mục VFX gốc.
   - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Tool 1-Click cấu hình Prefab và Animator.
 
-
-- [x] **BOSS-04: Hệ Thống Vệt Kiếm IgnisSwordTrail.cs, Chuẩn Hóa Combo 4 Nhát & Cơ Chế Gồng Kiếm Lửa Phase 2** *(HOÀN THÀNH)*
-  - **Hệ Thống Vệt Kiếm Độc Quyền Trực Tiếp Trên Kiếm (IgnisSwordTrail.cs):**
-    + Loại bỏ cách spawn vệt particle tách rời ngoài không gian; thay vào đó gắn trực tiếp bộ tạo Mesh Trail động (Dynamic Ribbon Mesh) trên lưỡi kiếm (Ignis_Sword_Flame.prefab) với 2 điểm neo `tipTransform` (mũi kiếm) và `baseTransform` (gốc kiếm).
-    + Sử dụng thuật toán nội suy Catmull-Rom Spline (3 subdivisions), khử hiện tượng gãy khúc khi Boss vung kiếm ở tốc độ cao.
-    + Tích hợp bộ lọc khử giật rung lắc (`verticalJitterDamping` = 0.35f) và làm mượt chuyển động tay (motionSmoothing = 0.45f).
-    + Bảng màu Gradient đỏ thẫm/đen khói (Dark Crimson to Deep Red/Black), độ mờ dần và tan nhanh trong 0.16s (`trailDuration` = 0.16s), hòa trộn Alpha Blended chuẩn URP.
-    + Tự động kích hoạt vệt kiếm ngay từ đầu nhịp vung kiếm ở cả 4 kỹ năng (Skill 1..4), tự động thu hồi/tắt khi kết thúc chiêu hoặc khi Boss rơi vào trạng thái suy yếu (Weaken) / tử trận (Dead).
-  - **Chuẩn Hóa Hoạt Ảnh & Động Học Combo 4 Nhát (ComboAttackRI.anim & RedIgnisController.cs):**
-    + *Khắc phục lỗi lệch hướng Root Motion Yaw:* Sửa triệt để góc xoay ban đầu trong ComboAttackRI.anim bị lệch trái +57.3° đến +70.7°. Reset các keyframes góc quay về 0.0° ở đầu hoạt ảnh (t = 0.0s -> 0.40s) và cuối hoạt ảnh (t = 3.10s -> 3.63s).
-    + *Cơ chế Snap & Bám mục tiêu mượt mà:* Ngay khi kích hoạt đòn đánh, Boss lập tức hướng về phía Player qua Quaternion.LookRotation, đồng thời duy trì xoay bám theo Player mượt mà trong nhịp lấy đà.
-    + *Kiểm soát khoảng cách lướt (comboLungeDistance):* Bổ sung tham số tùy chỉnh khoảng cách lướt tới, mặc định comboLungeDistance = 0.0f để Boss đứng yên chém tại chỗ theo yêu cầu, loại bỏ hiện tượng bước chân trôi giật hoặc bị giật lùi vị trí sau khi chém.
-    + *Đồng bộ 4 nhịp gây sát thương:* Chuẩn hóa mảng comboHitTimers = { 0.40f, 0.95f, 1.55f, 2.20f } khớp tuyệt đối với 4 nhát chém kiếm trên khung hình hoạt ảnh, sát thương mỗi nhát 35 HP.
-  - **Cơ Chế Gồng Kiếm Lửa Thức Tỉnh Phase 2 (IgnisSwordFlame.cs & SwordCastingRI.anim):**
-    + Khi máu Boss tụt xuống dưới 50% (swordCastingHealthThreshold = 0.50f), Boss tạm ngưng di chuyển và kích hoạt hoạt ảnh gồng kiếm niệm hoả SwordCastingRI (2.0s).
-    + Kích hoạt hệ thống hiệu ứng ngọn lửa ma thuật IgnisSwordFlame.cs rực cháy dọc theo sống kiếm đến mũi kiếm (đã dọn sạch quầng lửa thô ở chuôi).
-    + Gia tăng vĩnh viễn +10 sát thương cuồng nộ (swordEnrageBonusDamage = 10.0f) cho toàn bộ các đòn đánh sau đó đến hết trận đấu.
-
-- [x] **BOSS-05: Tối Ưu Hóa Bộ Công Cụ Setup Editor & Bảo Toàn Thông Số Inspector Tùy Chỉnh (Non-Destructive Tooling)** *(HOÀN THÀNH)*
-  - **Triệt tiêu tự động chạy ngầm đè thông số ([InitializeOnLoadMethod]):** Gỡ bỏ thuộc tính [InitializeOnLoadMethod] khỏi SetupRedIgnisAnimatorAndPrefabs.cs và InspectAndFixRedIgnis.cs. Chỉ thực thi khi người dùng chủ động click menu trên thanh công cụ Unity.
-  - **Bảo toàn dữ liệu Inspector người dùng tùy chỉnh (SetDefaultFloatIfUnset):** Thay thế toàn bộ các lệnh gán cứng (như `attackSlashDelay` = 0.42f) bằng cơ chế kiểm tra giá trị hiện tại. Nếu người dùng đã điều chỉnh bất kỳ thông số nào (`attackSlashDelay`, comboLungeDistance, damage, cooldown...), script sẽ bảo toàn 100% giá trị tùy chỉnh, không bao giờ tự ý khôi phục về giá trị mặc định.
-  - **Khắc phục lỗi biên dịch CS0136:** Sửa triệt để lỗi khai báo biến cục bộ trùng tên clipSwordCasting và stateSwordCasting, bảo đảm dự án 100% sạch lỗi biên dịch và sẵn sàng vào Play Mode.
-
 - [x] **ML-01: Tích hợp Unity ML-Agents Package & Môi Trường Huấn Luyện**
-
   - Tích hợp gói chính thức `com.unity.ml-agents: 4.1.0` (khớp Unity 6 và Unity AI Inference 2.6.1).
   - Cấu hình môi trường Python 3.10 với `mlagents: 1.1.0`, `torch: 2.14.1`, và `setuptools: 69.5.1`.
   - File cấu hình huấn luyện PPO: `MLAgents/Config/IceGolem_PPO.yaml` (batch_size: 256, buffer_size: 2048, hidden_units: 256, num_layers: 3).
@@ -429,11 +366,9 @@
   - Huấn luyện PPO qua `mlagents-learn` với file cấu hình `IceGolem_PPO.yaml` và `RedIgnis_PPO.yaml`.
   - Đóng gói file `.onnx` xuất xưởng, nạp vào `Behavior Parameters` (chế độ `Inference Only`) chạy mượt mà 100% không phụ thuộc Python.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 5: Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish)
-
 
 - [ ] **POL-01: Hệ thống Menu** (MainMenu, Settings đồ họa & âm lượng, PauseMenu phím Esc).
 - [ ] **POL-02: Âm thanh (SFX & BGM)** (Nhạc nền Làng Haven yên bình, Nhạc hầm ngục u tối, Nhạc Boss rực lửa; Tiếng va chạm vũ khí, tiếng đe búa thợ rèn, tiếng bước chân, tiếng quái gầm).
@@ -444,11 +379,9 @@
   - Cơ chế Sương mù Fog of War: 3 trạng thái Chưa khám phá, Lân cận và Đã khám phá sáng rực vàng gold; Luôn hiển thị vị trí Icon Boss, Icon Key Tế đàn và Icon Phòng Kho Báu.
   - Cân bằng Phòng Kho Báu: 75% phòng ngách cụt thành kho báu (3-4 phòng/dungeon), luôn có ít nhất 4 quái tinh nhuệ canh giữ.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 6: Công Cụ Kiểm Thử & Quản Trị Viên (Admin & Debug Tooling)
-
 
 - [x] **ADM-01: Lập trình Bộ Não Điều Hành Cheat, Safe Teleport & ReGenerate Hầm Ngục (`AdminCheatManager.cs`)**
   - Singleton `AdminCheatManager.Instance` hỗ trợ toàn cục, tự phục hồi xuyên cảnh (`EnsureInstance()`).
@@ -476,7 +409,6 @@
   - Triệt tiêu 100% menu rác, trùng lặp trên thanh công cụ Unity: Xóa bỏ menu tách rời `Boss/`, xóa bỏ menu `Tools/Infinite Labyrinth` và `Tools/RedIgnis`.
   - Hợp nhất cấu trúc thư mục: Xóa bỏ `Assets/Editor/` cũ, chuyển các script Red Ignis về `Assets/Scripts/Editor/`, chuyển các script sửa lỗi một lần (one-off) đã hoàn thành vào `Assets/Scripts/Editor/Archive/`.
 
-
 ---
 
 ## 🚩 GIAI ĐOẠN 7: Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng (Lifecycle & Cleanup)
@@ -485,7 +417,6 @@
   - Hiệu ứng nảy phồng (Punch scale animation) khi chuyển tab đồ trong Inventory (TabBar).
   - Phím tắt C dùng bình máu trên màn hình có hoạt ảnh nảy phồng đồng bộ chuột và phím bấm.
   - Áp dụng hoạt ảnh nảy phồng cho 3 icon kỹ năng góc dưới phải (`SkillIconUI`).
-
 
 - [x] **INV-02: Ô trang bị dược phẩm UsableSlot & Tự động cộng dồn (Auto-Refill On Pickup)**
   - Thêm ô trang bị UsableSlot ở LeftPanel và slot ngoài màn hình (`UsableSlotUI`) có cooldown 2s chung (CDFill).
@@ -499,13 +430,6 @@
   - Thêm thuộc tính kiểm tra an toàn `HasInstance => !isApplicationQuitting && instance != null`.
   - Trong `LoadingScreenManager.Instance`, `EnsureInstance()` và `EnsureDependencies()`: chặn lập tức việc sinh GameObject nếu `isApplicationQuitting == true`.
   - Trong `InfoUIController.cs`: Thay thế lệnh gọi `.Instance != null` bằng `.HasInstance` trong `OnDisable()` và `Start()`, triệt tiêu hoàn toàn việc sinh GameObject ma khi dừng Play Mode.
-
-- [x] **REF-02: Bảo Toàn Kiến Trúc Thống Nhất Cho Boss Ice Golem (Monolithic Controller 4.692 dòng)**
-  - Duy trì toàn bộ 4.692 dòng code của [IceGolemController.cs](file:///c:/Users/Admin/Documents/DoAnTotNghiep/DoAnTotNghiep/Assets/Characters/Boss/Script_Boss/IceGolemController.cs) trong 1 file duy nhất để bảo đảm 100% Serialization trong Unity Inspector:
-    + Giữ nguyên liên kết tất cả VFX Prefabs (attack1ImpactVfxPrefab, handSlamImpactVfx, flameVfxPrefab, iceBallPrefab, jumpDownFootTrailPrefab, jumpDownImpactVfx, jumpAttackImpactVfx...).
-    + Bảo toàn toàn bộ các cấu hình thuộc tính, Animation Curves, LayerMasks và tham chiếu xương không bị gián đoạn hay reset về null.
-    + Xóa bỏ các file component con tách rời, giữ GameObject Boss_IceGolem và Inspector luôn sạch sẽ, ổn định.
-
 
 - [x] **UI-07: Đồng bộ CanvasGroup cho AdminCheatCanvas & Rarity Visuals cho ItemDetailPopupUI**
   - **AdminCheatUI CanvasGroup Control:** Tự động phát hiện và đồng bộ điều khiển thuộc tính alpha, interactable, blocksRaycasts của rootCanvasGroup khi mở/đóng bằng phím ~ hoặc nút [✕]. Khắc phục triệt để hiện tượng gán CanvasGroup(alpha = 0) lên AdminCheatCanvas khiến menu bị tàng hình khi bật.

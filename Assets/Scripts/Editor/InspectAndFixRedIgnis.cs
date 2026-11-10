@@ -4,7 +4,7 @@ using UnityEditor;
 public static class InspectAndFixRedIgnis
 {
 
-[MenuItem("Infinite Labyrinth/Boss/Red Ignis/Inspect & Fix Hierarchy", false, 30)]
+    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Inspect & Fix Hierarchy", false, 30)]
     public static void RunInspectionAndFix()
     {
         Debug.Log("<color=yellow>[Inspect RedIgnis]</color> === BẮT ĐẦU RÀ SOÁT RED IGNIS ===");
