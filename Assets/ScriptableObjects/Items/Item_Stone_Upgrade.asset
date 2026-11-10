@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Item_Stone_Upgrade
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: mat_upgrade_stone
-  itemName: Dungeon Enhancement Stone
-  description: An ancient mineral emitting magical energy. Used by the Blacksmith
-    to reinforce and enhance weapon damage.
-  icon: {fileID: 21300000, guid: 0812b073c9fb4f34abef407fbecfa972, type: 3}
+  itemName: Enhancement Stone
+  description: "Ancient ore infused with latent arcane energy. Used at the Forge to enhance weapons from +1 to +5."
+  icon: {fileID: 21300000, guid: 615f69fae13de5b42943955a7ca66bf1, type: 3}
   itemType: 3
   rarity: 2
   maxStack: 99
-  goldValue: 50
+  goldValue: 60
   bonusAttack: 0
   bonusDefense: 0
   bonusHealth: 0

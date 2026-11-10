@@ -112,17 +112,20 @@ public class DungeonManager : MonoBehaviour
       yield return null;
     }
 
-    // 3. Tự động sinh quái vật trong hầm ngục (Task D-01)
+    // 3. Tự động sinh quái vật trong hầm ngục (Task D-01) - Time-sliced qua từng phòng
     if (enemySpawner == null) enemySpawner = GetComponent<ProceduralEnemySpawner>();
     if (enemySpawner == null) enemySpawner = gameObject.AddComponent<ProceduralEnemySpawner>();
-    enemySpawner.SpawnEnemies(currentData, generator.tileSize);
-    onProgress?.Invoke(0.92f);
-    yield return null;
+    yield return StartCoroutine(enemySpawner.SpawnEnemiesRoutine(currentData, generator.tileSize, p =>
+    {
+      float combined = Mathf.Lerp(0.82f, 0.94f, p);
+      onProgress?.Invoke(combined);
+    }));
 
     // 4. Kích hoạt bộ tối ưu hóa ngủ đông quái vật (AI / Animation LOD & Sleep)
     if (enemyOptimizer == null) enemyOptimizer = GetComponent<DungeonEnemyOptimizer>();
     if (enemyOptimizer == null) enemyOptimizer = gameObject.AddComponent<DungeonEnemyOptimizer>();
     enemyOptimizer.RefreshEnemies(enemySpawner.activeEnemies);
+    yield return null;
 
     // 5. Sinh quái thử nghiệm kiểm tra tính năng AI leo cầu thang (nếu bật)
     SpawnTestEnemies();

@@ -4,6 +4,31 @@ using UnityEngine;
 public partial class DungeonPropDecorator
 {
   /// <summary>
+  /// Cấu hình các thông số ánh sáng và bóng đổ cho một ngọn đuốc được sinh ra
+  /// </summary>
+  private void ConfigureTorchLight(GameObject torch, bool enableShadows)
+  {
+    if (torch == null) return;
+    Light l = torch.GetComponentInChildren<Light>();
+    if (l != null)
+    {
+      l.range = torchRange;
+      l.intensity = torchIntensity;
+      if (enableShadows)
+      {
+        l.shadows = torchShadowType;
+        l.shadowStrength = torchShadowStrength;
+        l.shadowBias = torchShadowBias;
+        l.shadowNormalBias = torchShadowNormalBias;
+      }
+      else
+      {
+        l.shadows = LightShadows.None;
+      }
+    }
+  }
+
+  /// <summary>
   /// Khởi tạo đuốc đứng sàn kèm nâng offset trục Y để không bị lún 1/2 thân do pivot ở giữa
   /// </summary>
   private GameObject SpawnFloorTorch(Vector3 basePos, Quaternion rot, Transform parent)
@@ -11,12 +36,7 @@ public partial class DungeonPropDecorator
     if (floorTorchPrefab == null) return null;
     Vector3 spawnPos = new Vector3(basePos.x, basePos.y + floorTorchYOffset, basePos.z);
     GameObject torch = Instantiate(floorTorchPrefab, spawnPos, rot, parent);
-    Light l = torch.GetComponentInChildren<Light>();
-    if (l != null)
-    {
-      l.range = torchRange;
-      l.intensity = torchIntensity;
-    }
+    ConfigureTorchLight(torch, enableFloorTorchShadows);
     return torch;
   }
 
@@ -134,12 +154,7 @@ public partial class DungeonPropDecorator
     }
 
     GameObject torch = Instantiate(wallTorchPrefab, pos, rot, lightsGroup);
-    Light l = torch.GetComponentInChildren<Light>();
-    if (l != null)
-    {
-      l.range = torchRange;
-      l.intensity = torchIntensity;
-    }
+    ConfigureTorchLight(torch, enableWallTorchShadows);
 
     forbiddenTiles.Add(chosenTile);
   }
@@ -214,11 +229,6 @@ public partial class DungeonPropDecorator
   private void SpawnCorridorTorch(Vector3 pos, Quaternion rot, Transform parent)
   {
     GameObject torch = Instantiate(wallTorchPrefab, pos, rot, parent);
-    Light l = torch.GetComponentInChildren<Light>();
-    if (l != null)
-    {
-      l.range = torchRange;
-      l.intensity = torchIntensity;
-    }
+    ConfigureTorchLight(torch, enableCorridorTorchShadows);
   }
 }

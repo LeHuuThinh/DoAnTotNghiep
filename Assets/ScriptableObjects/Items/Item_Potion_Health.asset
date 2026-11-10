@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: potion_health_small
   itemName: Small Health Potion
-  description: Brewed from glowing dungeon herbs. Instantly restores 35 Health Points.
-  icon: {fileID: 21300000, guid: 6989cecc2cea8a74d9a7858baa63b2f6, type: 3}
+  description: "Extracted from luminescent dungeon herbs. Instantly restores 40 Health points."
+  icon: {fileID: 21300000, guid: 5a1ffcfce753c8b4ca9d1ef1f3c52231, type: 3}
   itemType: 2
   rarity: 0
   maxStack: 10
-  goldValue: 20
+  goldValue: 25
   bonusAttack: 0
   bonusDefense: 0
   bonusHealth: 0
   bonusStamina: 0
-  healAmount: 35
+  healAmount: 40
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 0}

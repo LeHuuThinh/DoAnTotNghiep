@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -197,7 +198,63 @@ public class ProceduralEnemySpawner : MonoBehaviour
   }
 
   /// <summary>
-  /// Điểm vào chính: Tự động phân bổ các cụm quái cho toàn bộ hầm ngục
+  /// Coroutine phân mảnh thời gian (Time-Sliced) sinh quái vật qua từng phòng,
+  /// nhường lượt mỗi frame để Main Thread vẽ UI Sprite Animation mượt mà 60 FPS không bị khựng.
+  /// </summary>
+  public IEnumerator SpawnEnemiesRoutine(DungeonData data, float tileSize, System.Action<float> onProgress = null)
+  {
+    if (!enableSpawning)
+    {
+      Debug.Log("<color=yellow>[Enemy Spawner]</color> Tính năng sinh quái tự động đang TẮT trong Inspector.");
+      onProgress?.Invoke(1.0f);
+      yield break;
+    }
+
+    if (data == null || data.roomDataList == null || data.roomDataList.Count == 0)
+    {
+      Debug.LogWarning("<color=red>[Enemy Spawner]</color> Không có dữ liệu RoomData để sinh quái!");
+      onProgress?.Invoke(1.0f);
+      yield break;
+    }
+
+    EnsurePrefabsAssigned();
+    ClearEnemies();
+
+    if (enemyParentContainer == null)
+    {
+      GameObject containerObj = GameObject.Find("DungeonEnemies");
+      if (containerObj == null)
+      {
+        containerObj = new GameObject("DungeonEnemies");
+      }
+      enemyParentContainer = containerObj.transform;
+    }
+
+    int totalMelee = 0;
+    int totalRanged = 0;
+    int totalSquads = 0;
+    int roomsPopulated = 0;
+    int totalRooms = data.roomDataList.Count;
+    int processed = 0;
+
+    foreach (var room in data.roomDataList)
+    {
+      SpawnSquadsInRoom(room, tileSize, data, ref totalMelee, ref totalRanged, ref totalSquads, ref roomsPopulated);
+      processed++;
+
+      onProgress?.Invoke((float)processed / Mathf.Max(1, totalRooms));
+
+      // Nhường lượt sang frame kế tiếp sau mỗi phòng để Main Thread vẽ hoạt ảnh UI mượt mà
+      yield return null;
+    }
+
+    Debug.Log($"<color=green>[Enemy Spawner - Biệt Đội (Time-Sliced)]</color> Hoàn tất sinh quái! Đã bố trí <b>{activeEnemies.Count}</b> quái vật (<b>{totalMelee}</b> Cận chiến, <b>{totalRanged}</b> Tầm xa) chia làm <b>{totalSquads}</b> cụm biệt đội trên <b>{roomsPopulated}</b> căn phòng.");
+    onProgress?.Invoke(1.0f);
+    yield return null;
+  }
+
+  /// <summary>
+  /// Điểm vào chính: Tự động phân bổ các cụm quái cho toàn bộ hầm ngục (Đồng bộ)
   /// </summary>
   public void SpawnEnemies(DungeonData data, float tileSize)
   {
@@ -233,88 +290,93 @@ public class ProceduralEnemySpawner : MonoBehaviour
 
     foreach (var room in data.roomDataList)
     {
-      // 1. Chỉ bỏ qua phòng Boss (dành riêng cho Boss Arena Ice Golem ở Task D-02)
-      // Phòng bắt đầu (data.startRoom / RoomType.Start) vẫn sinh quái bình thường để người chơi vừa bước vào hầm ngục là có quái giao chiến ngay!
-      if (room == data.bossRoom || room.type == RoomType.Boss) continue;
-
-      int roomSpawnedBefore = activeEnemies.Count;
-      int roomAreaTiles = room.bounds.width * room.bounds.height;
-      bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 13 && room.bounds.height >= 13);
-
-      // Danh sách vị trí các quái đã sinh trong phòng này (để kiểm tra khoảng cách)
-      List<Vector3> roomSpawnedPositions = new List<Vector3>();
-      List<Vector3> roomSquadAnchors = new List<Vector3>();
-
-      // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine):
-      if (room.type == RoomType.Treasure)
-      {
-        if (spawnGuardsInSpecialRooms)
-        {
-          // Phòng kho báu luôn có ít nhất 4 quái (SquadSize.Quad) để tăng tính thử thách canh giữ rương báu
-          int spawned = SpawnSquad(room, false, treasureGuardSquadSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureGuards");
-          if (spawned > 0) totalSquads++;
-
-          // Nếu phòng kho báu có gác lửng Tầng 2, bổ sung thêm lính bắn tỉa trên ban công
-          if (room.hasMezzanine)
-          {
-            SquadSize mezSize = (Random.value < 0.5f) ? SquadSize.Duo : SquadSize.Solo;
-            int mezSpawned = SpawnSquad(room, true, mezSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureMezzanineGuards");
-            if (mezSpawned > 0) totalSquads++;
-          }
-        }
-      }
-      else if (room.type == RoomType.Shrine)
-      {
-        if (spawnGuardsInSpecialRooms)
-        {
-          // Phòng tế đàn chìa khóa (Key Room): Nhóm 3-4 quái bảo vệ
-          SquadSize shrineSize = (Random.value < 0.65f) ? SquadSize.Quad : SquadSize.Trio;
-          int spawned = SpawnSquad(room, false, shrineSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "ShrineGuards");
-          if (spawned > 0) totalSquads++;
-        }
-      }
-      else
-      {
-        // 3. CÁC PHÒNG CHIẾN ĐẤU (Bao gồm phòng nối với phòng khởi đầu, phòng thường, phòng lớn, phòng gác lửng):
-        // 3A. Sàn trệt Tầng 1:
-        // - Phòng nhỏ & vừa: đúng 1 nhóm
-        // - Phòng lớn: 1 - 2 nhóm
-        int groundSquadCount = isLargeRoom 
-          ? Random.Range(minGroundSquadsLarge, maxGroundSquadsLarge + 1)
-          : Random.Range(minGroundSquadsStandard, maxGroundSquadsStandard + 1);
-
-        for (int s = 0; s < groundSquadCount; s++)
-        {
-          SquadSize size = RollSquadSize();
-          int spawned = SpawnSquad(room, false, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Ground_Squad_{s + 1}");
-          if (spawned > 0) totalSquads++;
-        }
-
-        // 3B. Tầng 2 Gác Lửng (Nếu phòng có gác lửng):
-        // - Phòng nhỏ & vừa: đúng 1 nhóm
-        // - Phòng lớn: 1 - 2 nhóm
-        if (room.hasMezzanine || room.type == RoomType.Mezzanine)
-        {
-          int mezzanineSquadCount = isLargeRoom
-            ? Random.Range(minMezzanineSquadsLarge, maxMezzanineSquadsLarge + 1)
-            : Random.Range(minMezzanineSquadsStandard, maxMezzanineSquadsStandard + 1);
-
-          for (int s = 0; s < mezzanineSquadCount; s++)
-          {
-            SquadSize size = RollSquadSize();
-            int spawned = SpawnSquad(room, true, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Mezzanine_Squad_{s + 1}");
-            if (spawned > 0) totalSquads++;
-          }
-        }
-      }
-
-      if (activeEnemies.Count > roomSpawnedBefore)
-      {
-        roomsPopulated++;
-      }
+      SpawnSquadsInRoom(room, tileSize, data, ref totalMelee, ref totalRanged, ref totalSquads, ref roomsPopulated);
     }
 
     Debug.Log($"<color=green>[Enemy Spawner - Biệt Đội]</color> Hoàn tất sinh quái! Đã bố trí <b>{activeEnemies.Count}</b> quái vật (<b>{totalMelee}</b> Cận chiến, <b>{totalRanged}</b> Tầm xa) chia làm <b>{totalSquads}</b> cụm biệt đội trên <b>{roomsPopulated}</b> căn phòng.");
+  }
+
+  private void SpawnSquadsInRoom(RoomData room, float tileSize, DungeonData data, ref int totalMelee, ref int totalRanged, ref int totalSquads, ref int roomsPopulated)
+  {
+    // 1. Chỉ bỏ qua phòng Boss (dành riêng cho Boss Arena Ice Golem ở Task D-02)
+    // Phòng bắt đầu (data.startRoom / RoomType.Start) vẫn sinh quái bình thường để người chơi vừa bước vào hầm ngục là có quái giao chiến ngay!
+    if (room == data.bossRoom || room.type == RoomType.Boss) return;
+
+    int roomSpawnedBefore = activeEnemies.Count;
+    int roomAreaTiles = room.bounds.width * room.bounds.height;
+    bool isLargeRoom = roomAreaTiles >= largeRoomTileThreshold || (room.bounds.width >= 13 && room.bounds.height >= 13);
+
+    // Danh sách vị trí các quái đã sinh trong phòng này (để kiểm tra khoảng cách)
+    List<Vector3> roomSpawnedPositions = new List<Vector3>();
+    List<Vector3> roomSquadAnchors = new List<Vector3>();
+
+    // 2. PHÒNG KHO BÁU & ĐIỆN THỜ (Treasure / Shrine):
+    if (room.type == RoomType.Treasure)
+    {
+      if (spawnGuardsInSpecialRooms)
+      {
+        // Phòng kho báu luôn có ít nhất 4 quái (SquadSize.Quad) để tăng tính thử thách canh giữ rương báu
+        int spawned = SpawnSquad(room, false, treasureGuardSquadSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureGuards");
+        if (spawned > 0) totalSquads++;
+
+        // Nếu phòng kho báu có gác lửng Tầng 2, bổ sung thêm lính bắn tỉa trên ban công
+        if (room.hasMezzanine)
+        {
+          SquadSize mezSize = (Random.value < 0.5f) ? SquadSize.Duo : SquadSize.Solo;
+          int mezSpawned = SpawnSquad(room, true, mezSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "TreasureMezzanineGuards");
+          if (mezSpawned > 0) totalSquads++;
+        }
+      }
+    }
+    else if (room.type == RoomType.Shrine)
+    {
+      if (spawnGuardsInSpecialRooms)
+      {
+        // Phòng tế đàn chìa khóa (Key Room): Nhóm 3-4 quái bảo vệ
+        SquadSize shrineSize = (Random.value < 0.65f) ? SquadSize.Quad : SquadSize.Trio;
+        int spawned = SpawnSquad(room, false, shrineSize, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, "ShrineGuards");
+        if (spawned > 0) totalSquads++;
+      }
+    }
+    else
+    {
+      // 3. CÁC PHÒNG CHIẾN ĐẤU (Bao gồm phòng nối với phòng khởi đầu, phòng thường, phòng lớn, phòng gác lửng):
+      // 3A. Sàn trệt Tầng 1:
+      // - Phòng nhỏ & vừa: đúng 1 nhóm
+      // - Phòng lớn: 1 - 2 nhóm
+      int groundSquadCount = isLargeRoom 
+        ? Random.Range(minGroundSquadsLarge, maxGroundSquadsLarge + 1)
+        : Random.Range(minGroundSquadsStandard, maxGroundSquadsStandard + 1);
+
+      for (int s = 0; s < groundSquadCount; s++)
+      {
+        SquadSize size = RollSquadSize();
+        int spawned = SpawnSquad(room, false, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Ground_Squad_{s + 1}");
+        if (spawned > 0) totalSquads++;
+      }
+
+      // 3B. Tầng 2 Gác Lửng (Nếu phòng có gác lửng):
+      // - Phòng nhỏ & vừa: đúng 1 nhóm
+      // - Phòng lớn: 1 - 2 nhóm
+      if (room.hasMezzanine || room.type == RoomType.Mezzanine)
+      {
+        int mezzanineSquadCount = isLargeRoom
+          ? Random.Range(minMezzanineSquadsLarge, maxMezzanineSquadsLarge + 1)
+          : Random.Range(minMezzanineSquadsStandard, maxMezzanineSquadsStandard + 1);
+
+        for (int s = 0; s < mezzanineSquadCount; s++)
+        {
+          SquadSize size = RollSquadSize();
+          int spawned = SpawnSquad(room, true, size, tileSize, roomSpawnedPositions, roomSquadAnchors, ref totalMelee, ref totalRanged, $"Mezzanine_Squad_{s + 1}");
+          if (spawned > 0) totalSquads++;
+        }
+      }
+    }
+
+    if (activeEnemies.Count > roomSpawnedBefore)
+    {
+      roomsPopulated++;
+    }
   }
 
   /// <summary>

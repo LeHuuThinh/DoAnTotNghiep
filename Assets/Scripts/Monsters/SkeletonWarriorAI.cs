@@ -44,6 +44,12 @@ public class SkeletonWarriorAI : EnemyAIBase
   public override EnemyCombatRole CombatRole => EnemyCombatRole.Melee;
   public override bool IsAttacking => isAttacking;
 
+  protected override void Awake()
+  {
+    if (enemyDefense <= 10f) enemyDefense = 15f;
+    base.Awake();
+  }
+
   protected override void Start()
   {
     base.Start();

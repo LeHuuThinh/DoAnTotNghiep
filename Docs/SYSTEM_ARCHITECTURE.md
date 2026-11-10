@@ -64,7 +64,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 * **Giao diện Người chơi Souls-like (PlayerHUD.cs):**
   * **Thanh Máu (Health Bar):** MainFill đỏ kèm **Ghost Bar** vàng nhạt tụt đuổi từ từ sau thời gian trễ ghostShrinkDelay = 0.5s khi dính đòn.
   * **Thanh Thể lực (Stamina Bar):** Màu cam/vàng, co giãn mượt mà khi Lăn né (Roll), Chạy nhanh (Sprint), Chém kiếm (Attack).
-  * **Cụm 3 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm) hoặc Q (Nổ năng lượng).
+  * **Cụm 4 Ngôi Sao Năng Lượng (Spirit Stars):** Nạp đầy dần khi chém trúng quái hoặc parry chuẩn, tiêu hao khi kích hoạt chiêu E (Sóng kiếm - 60), Q (Nổ năng lượng - 90) hoặc R (Tuyệt kỹ Ult - 175).
+* **Giao diện Kỹ năng & Cooldown (`SkillIconUI.cs`):**
+  * Tự động quản lý 3 ô chiêu thức `SkillE`, `SkillQ`, `SkillR` trong cụm `SkillIconUI`.
+  * **Ma trận phản hồi 2 tầng (Dual-State Feedback):**
+    * `Corner` (Viền góc): Bật khi đủ Spirit, tắt khi thiếu Spirit để người chơi biết trước đã tích trữ đủ năng lượng hay chưa.
+    * `Icon` Alpha: Đạt 1.0 (sáng rực) khi hội tụ đủ 2 điều kiện (Đủ Spirit & Không CD); mờ còn 0.1 khi đang CD hoặc thiếu tài nguyên.
+    * `CDFill`: Lớp phủ tối đếm ngược thời gian hồi chiêu ($1.0 \to 0.0$). Tùy chọn hiển thị Text số giây CD.
 * **Giao Diện Thanh Máu Quái Vật World Space Souls-like (EnemyHealthBarUI.cs):**
   * **Billboard 3D Thông Minh:** Tự động xoay mặt vuông góc 100% về phía Camera người chơi (CameraAligned), phẳng phiu và không bị méo lệch góc nhìn ở mọi hướng quan sát. Hỗ trợ tùy chọn khóa trục Y (lockYAxis).
   * **Khai Thác Sprite Grayscale & Hiệu Ứng Souls-like:**
@@ -120,19 +126,26 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
 * **Hệ thống Tài nguyên Player (PlayerStats.cs):**
   * **Máu (Health):** Gắn liền với Health.cs và interface IDamageable.cs.
   * **Thể lực (Stamina):** Max 100. Tiêu hao khi Lướt/Lăn né (Roll: 20), Chạy nhanh (Sprint: 15/s), Chém thường (15), Chém gồng (30), Giơ thế đỡ hụt (20). Tự động hồi phục sau 0.85s trễ.
-  * **Năng lượng Chiêu thức (Spirit / Focus):** Max 150. **Không tự hồi**, chỉ tích lũy khi chém trúng quái (+12 thường, +30 gồng, +35 counter, +40 parry chuẩn). Tiêu hao cho kỹ năng:
-    * **Phím E:** Sóng kiếm chém xa (ProjectileSlash.cs, tốn 50 Spirit).
-    * **Phím Q:** Phép nổ năng lượng diện rộng (AoeSpell.cs, tốn 100 Spirit).
-* **Cơ chế Đỡ đòn & Phản công (Parry & Counter - PlayerCombat.cs & PlayerFeedback.cs):**
-  * Chuột phải (RMB) kích hoạt thế thủ với cửa sổ vàng parryWindowDuration = 0.28s.
-  * **Hiệu Ứng Tóe Lửa Va Chạm Lưỡi Kiếm (Parry VFX.prefab):**
-    * Khi đòn đánh của quái chạm vào Player trong cửa sổ Parry, Health.onCheckParryOrBlock kích hoạt PlayerFeedback.ExecuteParrySuccess.
-    * **Định Vị Điểm Chạm Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (swordTransform.TransformPoint(box.center) với local center Y = 0.81m) kèm tùy biến bù trừ parryBladeOffset, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
-    * **Phản Hồi Thị Giác & Xung Lực:** Khựng hình Hitlag 0.2s (parryHitlagDuration), Camera zoom cận cảnh kịch tính (TriggerParryZoom), tia lửa vàng/trắng tóe ngược chiều cú chém của quái, ngắt chiêu đòn đánh và làm choáng kẻ tấn công.
+
+  * **Năng lượng Chiêu thức (Spirit / Focus):** Max 200 (chia 4 sao trên HUD, mỗi sao 50 Spirit). **Không tự hồi**, chỉ tích lũy khi chém trúng quái (+12 thường, +30 gồng, +35 counter, +40 parry chuẩn). Tiêu hao cho kỹ năng:
+    * **Phím E:** Sóng kiếm chém xa (`ProjectileSlash.cs`, tốn 50 Spirit - 1 sao).
+    * **Phím Q:** Phép nổ năng lượng diện rộng (`AoeSpell.cs`, tốn 100 Spirit - 2 sao).
+    * **Phím R:** Tuyệt kỹ Tối thượng Càn quét Khổng lồ (`Skill Ult.anim`, tốn 200 Spirit - 4 sao / Max thanh). Nhân vật tụ lực gồng kiếm (Hyper Armor + Invulnerable), chớp sáng ngang lưỡi kiếm (Sword Gleam Flare), đơ game (Freeze Frame / Hitlag 0.1s), Zoom Punch Camera nén lực, sau đó bung nhát chém ngang phẳng cực đại kèm Slow-motion 0.95s thực tế, vệt kiếm Ultra-wide Slash Trail scale 2.6x và Gigantic Cleave Hitbox quét diện rộng bán kính 5.5m hình quạt 240 độ (hỗ trợ Scene View Gizmos trực quan). Đồng bộ hoàn toàn hệ thống Slow-mo qua `ActiveSlowMoScale` và đa dạng phím tắt [T] / [-] / [=].
+* **Cơ chế Đỡ đòn & Phản công (Parry & Counter - `PlayerCombat.cs` & `PlayerFeedback.cs`):**
+  * Chuột phải (RMB) kích hoạt thế thủ với cửa sổ vàng `parryWindowDuration = 0.28s`.
+  * **Hiệu Ứng Tóe Lửa Va Chạm Lưỡi Kiếm (`Parry VFX.prefab`):**
+    * Khi đòn đánh của quái chạm vào Player trong cửa sổ Parry, `Health.onCheckParryOrBlock` kích hoạt `PlayerFeedback.ExecuteParrySuccess`.
+    * **Định Vị Điểm Chạm Lưỡi Kiếm:** Không dùng tọa độ va chạm dưới thấp; định vị trực tiếp tại **tâm hình học giữa thân lưỡi kiếm** (`swordTransform.TransformPoint(box.center)` với local center Y = 0.81m) kèm tùy biến bù trừ `parryBladeOffset`, đảm bảo tia lửa luôn nổ đẹp mắt ngay trên thân kiếm ngang tầm mắt/ngực khi giơ thế đỡ.
+    * **Phản Hồi Thị Giác & Xung Lực:** Khựng hình Hitlag 0.2s (`parryHitlagDuration`), Camera zoom cận cảnh kịch tính (`TriggerParryZoom`), tia lửa vàng/trắng tóe ngược chiều cú chém của quái, ngắt chiêu đòn đánh và làm choáng kẻ tấn công.
   * Parry trúng đòn: Hoàn trả thể lực, nạp mạnh Spirit (+40), làm choáng đối thủ và mở ra đòn Counter sát thương cực lớn.
-* **Cơ chế Né đòn & Di chuyển (PlayerController.cs):**
+* **Cơ chế Né đòn & Di chuyển (`PlayerController.cs` & `TargetLockSystem.cs`):**
   * Phím Shift: Nhấn nhả (< 0.25s) để Lăn né với 0.45s thời gian bất tử (I-frames); Giữ (> 0.25s) để Sprint.
-  * Khóa mục tiêu (Target Lock Souls-like): Camera tập trung vào mục tiêu, nhân vật chuyển sang thế vờn/bước ngang (strafeSpeed).
+  * **Hệ thống Khóa Mục Tiêu Souls-like (`TargetLockSystem.cs`):**
+    * Bấm Chuột giữa (Middle Mouse) để bật/tắt khóa mục tiêu gần nhất. Nhân vật chuyển sang thế vờn/bước ngang (`strafeSpeed`), camera tập trung vào đối thủ (`ThirdPersonCamera.cs`).
+    * **Chuyển mục tiêu bằng vẩy chuột (Mouse Flick Switch):** Khi đang lock, vẩy chuột sang trái hoặc phải (`delta.x` vượt `mouseFlickThreshold = 20`) để chuyển khóa sang con quái gần nhất ở phía tương ứng trên màn hình (Viewport Space). Tích hợp bộ lọc xung lực tự nhiên (`flickDecayRate = 120/s`) và hồi chiêu `switchCooldown = 0.25s` chống giật nhảy cóc.
+    * **Bộ lọc chênh lệch cao độ tầng 2 (`maxLockElevationDifference = 4.2m`):** Triệt tiêu 100% hiện tượng camera ngửa lên trần gác lửng tầng 2 (cao 8m) khi quái tầng 1 chết hoặc khi bấm khóa. Tự ngắt khóa an toàn nếu khoảng cách độ cao vượt quá `breakLockElevationDifference = 6.5m`.
+    * Tự động chuyển mượt sang quái tiếp theo khi quái hiện tại chết (`TrySwitchToNextTarget`).
+
   * Nhảy & Rơi (Jump, Fall, Air Control, phân biệt tiếp đất nhẹ và Hard Landing khựng chân khi rơi từ gác lửng).
 * **Đạo diễn Lượt đánh Quái (AttackTokenDirector.cs):**
   * Áp dụng hệ thống Token Pool. Quái bao vây chỉ giữ cự ly vờn; chỉ quái nào xin được "Attack Token" từ Director mới được lao vào tấn công, chống spam hội đồng.
@@ -365,39 +378,78 @@ flowchart TD
 1. **Hệ Thống Rơi Đồ Thế Giới (Loot Drop & World Drops):**
    * **Nguồn rơi đồ:** Quái vật chết (Health.onDeath), Thùng gỗ/hòm đập vỡ (BreakableProp.cs nhận đòn qua IDamageable), Rương kho báu mở (ChestInteractable.cs).
    * **Hệ Thống 3 Cấp Độ Rương & VFX Tia Sáng Mở Nắp (Chest Tiers & Opening Light Rays):**
-     * **Rương Thường (Interactive_Chest.prefab):** Model rương gỗ cổ điển, phát chùm tia sáng xanh lá (#22C55E).
-     * **Rương Hiếm (Interactive_Chest_Rare.prefab):** Model viền vàng nạm ngọc, phát chùm tia sáng tím thần bí (#A855F7).
-     * **Rương Boss (Interactive_Chest_Boss.prefab):** Model rương hoàng kim đại thánh đường (scale 1.35x), phát chùm tia sáng vàng kim rực rỡ (#F59E0B).
-     * **Cơ chế tia sáng đa tầng (OpenVFX):** Gồm Point Light (Flash Flare bùng nổ khi hé nắp qua FlashLightRoutine), Rays (luồng tia sáng nón vươn cao), Stars (hạt sao lấp lánh) và Circles (vòng hào quang). Tự động kích hoạt đồng bộ khi nắp rương hé mở (vfxDelay = 0.05s) qua ChestInteractable.cs.
-   * **Hiệu ứng vật lý văng đồ (Arc Pop Physics):** Vật phẩm búng nảy theo hình vòng cung parabol nhẹ khi xuất hiện (LootDropper.cs), tránh đè dính chùm.
-   * **Vật phẩm thế giới (WorldItemPickup.cs):** Model 3D thu nhỏ, xoay lơ lửng, tia sáng hào quang nhẹ (Loot Beam/Glow) tương ứng theo độ hiếm.
-   * **Tương tác nhặt đồ:** Player lại gần trong bán kính 2m hiển thị Pickup Prompt UI (Icon + Tên + Phím [F]). Tiền Vàng hỗ trợ cơ chế tự động bay hút (Magnetic Auto-pickup) khi lại gần.
-   * **Thông báo nhặt đồ (PickupNotificationFeed.cs):** Xếp chồng mép trái màn hình, trượt mượt lên từ dưới (smooth slide up), mờ dần sau 2.5s.
+
+     * **Rương Thường (`Interactive_Chest.prefab`):** Model rương gỗ cổ điển, phát chùm tia sáng xanh lá (`#22C55E`).
+     * **Rương Hiếm (`Interactive_Chest_Rare.prefab`):** Model viền vàng nạm ngọc, phát chùm tia sáng tím thần bí (`#A855F7`).
+     * **Rương Boss (`Interactive_Chest_Boss.prefab`):** Model rương hoàng kim đại thánh đường (scale 1.35x), phát chùm tia sáng vàng kim rực rỡ (`#F59E0B`).
+     * **Cơ chế tia sáng đa tầng (`OpenVFX`):** Gồm `Point Light` (Flash Flare bùng nổ khi hé nắp qua `FlashLightRoutine`), `Rays` (luồng tia sáng nón vươn cao), `Stars` (hạt sao lấp lánh) và `Circles` (vòng hào quang). Tự động kích hoạt đồng bộ khi nắp rương hé mở (`vfxDelay = 0.05s`) qua `ChestInteractable.cs`.
+   * **Hiệu ứng vật lý văng đồ (Arc Pop Physics):** Vật phẩm búng nảy theo hình vòng cung parabol nhẹ khi xuất hiện (`LootDropper.cs`), tránh đè dính chùm.
+   * **Vật phẩm thế giới (`WorldItemPickup.cs`):** Model 3D thu nhỏ, xoay lơ lửng, tia sáng hào quang nhẹ (Loot Beam/Glow) tương ứng theo độ hiếm.
+    * **Hệ Thống Danh Sách Tương Tác Dọc & Cuộn Chuột Tập Trung (PlayerInteraction.cs, InteractionListUI.cs, InteractionTarget.cs):**
+      * Hợp nhất toàn bộ đối tượng tương tác IInteractable (Cổng dịch chuyển, Rương báu, Cửa, NPC) và vật phẩm rơi WorldItemPickup thành 1 danh sách dọc duy nhất bên phải tâm màn hình (x: 247, y: 0), triệt tiêu 100% lỗi chồng đè 2 UI.
+      * **Điều hướng cuộn chuột (Mouse Scroll Wheel) & Phím Mũi Tên:** Người chơi lăn con lăn chuột để chọn đối tượng cần tương tác/nhặt; danh sách hỗ trợ cửa sổ trượt (Sliding Window) hiển thị tối đa 5 dòng mượt mà.
+      * **Phản hồi Corner Kép (Dual Corner Active State):** Mục đang được chọn (Selected) tự động bật sáng 2 Corner (Góc viền nền Background & Góc viền KeyIcon phím F) và hiển thị sáng rõ (lpha = 1.0f); các mục còn lại tắt 2 Corner và làm mờ nhẹ (lpha = 0.6f).
+      * **Nhặt đồ có chủ đích (Single Target Action):** Gỡ bỏ hoàn toàn việc bắt phím F riêng lẻ trong từng instance rơi đất, loại bỏ triệt để lỗi "bấm 1 lần nhặt hết toàn bộ đồ trong tầm". Bấm phím F chỉ nhặt hoặc tương tác đúng mục đang chọn; nhặt xong danh sách tự co lại và chọn tiếp mục kế tiếp.
+      * **Tiền Vàng:** Duy trì cơ chế tự động hút nam châm (Magnetic Auto-pickup 3.8m), không làm rác danh sách phím F.
+   * **Thông báo nhặt đồ (`PickupNotificationFeed.cs`):** Xếp chồng mép trái màn hình, trượt mượt lên từ dưới (smooth slide up), mờ dần sau 2.5s.
+
 2. **Hệ Thống Túi Đồ 2 Cửa Sổ (Dual-Pane Inventory Screen - Phím Tab):**
    * **Kiến trúc điều phối chính (InventoryUIController.cs):** Quản lý đóng/mở mượt mà bằng CanvasGroup (phím Tab hoặc Esc), tự động giải phóng con trỏ chuột (Cursor.lockState = None), khóa di chuyển người chơi và đóng băng xoay camera / combat. Tự động kiểm tra và khởi tạo EventSystem + InputSystemUIInputModule tại runtime nếu scene bị thiếu.
    * **Cửa sổ Trái (Character & Stats):**
-     * **3D Character Preview (CharacterPreviewController.cs):** Camera phụ chuyên dụng soi nhân vật qua RenderTexture (512x512). Thiết lập cullingMask = 1 << 3 (chỉ soi Layer 3: Player) giúp loại bỏ 100% tường, sàn, quái hầm ngục khỏi khung xem trước; kèm đèn định hướng mềm. Hỗ trợ sự kiện chuột IDragHandler cho phép nhấp giữ chuột trái và kéo ngang trên khung để xoay nhân vật 360 độ. Tự động tắt Camera khi đóng túi để tiết kiệm 100% tài nguyên GPU trong lúc chơi game.
-     * **Ô trang bị (EquipmentSlotUI.cs):** Quản lý 2 ô chuyên dụng: Ô Vũ khí (WeaponSlot) & Ô Giáp (ArmorSlot). Tự động ẩn placeholder khi đã mặc đồ, đổi icon và tô màu nền trắng RarityBG theo phẩm cấp món đồ. Click vào mở popup chi tiết với nút [Tháo ra].
-     * **Bảng chỉ số thời gian thực (PlayerStatsPanelUI.cs):** Tự động liên kết và đọc chỉ số từ PlayerCombat.cs, Health.cs, PlayerStats.cs và InventoryManager.cs. Hiển thị: Sát thương tấn công (ATK + Bonus), Phòng thủ (DEF), Máu tối đa (Max HP + Bonus), Thể lực tối đa (Stamina + Bonus). Cập nhật tức thì ngay khi đổi trang bị.
-     * **Nút Cộng Điểm Tiềm Năng (BtnAttributePoints):** Mở Modal phân bổ thuộc tính (sẵn sàng kết nối Task RPG-05).
+
+     * **3D Character Preview (`CharacterPreviewController.cs` & `PlayerWeaponVisualSync.cs`):** Camera phụ chuyên dụng soi nhân vật qua `RenderTexture` (512x512). Thiết lập `cullingMask = 1 << 3` (chỉ soi Layer 3: Player) giúp loại bỏ 100% tường, sàn, quái hầm ngục khỏi khung xem trước. Tự động đồng bộ đệ quy Layer 3 cho mọi vũ khí kiếm khi đổi trang bị (`SetLayerRecursively` & `EnsurePlayerAndWeaponLayers`). Tích hợp **Smart Adaptive Studio Lighting** tự động phân biệt cường độ sáng giữa hầm ngục (`dungeonLightIntensity = 1.3f`) và làng ngoài trời (`landLightIntensity = 0.25f`), thiết lập góc chiếu Studio Key Light 3/4 nghệ thuật và sử dụng hook URP `RenderPipelineManager.beginCameraRendering` để cô lập hoàn toàn đèn xem trước (không bao giờ rọi vào Player ở ngoài thế giới). Hỗ trợ sự kiện chuột `IDragHandler` cho phép nhấp giữ chuột trái và kéo ngang trên khung để xoay nhân vật 360 độ. Tự động tắt Camera khi đóng túi hoặc chuyển sang chế độ 2D để tiết kiệm 100% tài nguyên GPU trong lúc chơi game.
+     * **Ô trang bị (`EquipmentSlotUI.cs`):** Quản lý 3 ô chuyên dụng: Ô Vũ khí (`WeaponSlot`), Ô Giáp (`ArmorSlot`) và Ô Tiêu Hao / Bình Máu (`UsableSlot`). Tự động ẩn placeholder khi đã mặc đồ, đổi icon và tô màu nền trắng `RarityBG` theo phẩm cấp món đồ. Hỗ trợ hiển thị số lượng dồn stack và vòng xoay hồi chiêu `CDFill` (Radial 360) cho ô `UsableSlot`.
+     * **Ô Phím Tắt Tiêu Hao Ngoài Màn Hình HUD (`UsableSlotUI.cs`):** Cố định góc dưới-trái màn hình HUD, hiển thị icon bình thuốc đã trang bị, số lượng stack, phím tắt [C] và vòng xoay tiến trình hồi chiêu `CDFill`. Hỗ trợ nhấn phím [C] hoặc click chuột trực tiếp để hồi máu ngay lập tức kèm hoạt ảnh nhún nảy (Punchy Pop 1.15x).
+     * **Thời Gian Hồi Chiêu Dùng Chung 2.0s (Global Shared Consumable Cooldown):** Thuốc dùng từ phím C, click HUD hoặc bấm `[Use]` trong Popup đều kích hoạt thời gian hồi chiêu 2.0s chung, đồng bộ vòng xoay `CDFill` trên HUD, LeftPanel và toàn bộ các ô chứa bình thuốc trong lưới 30 ô, đồng thời tạm khóa nút `[Use]` để chống spam bất tử.
+     * **Bảng chỉ số thời gian thực (`PlayerStatsPanelUI.cs`):** Tự động liên kết và đọc chỉ số từ `PlayerCombat.cs`, `Health.cs`, `PlayerStats.cs` và `InventoryManager.cs`. Hiển thị: Sát thương tấn công (ATK + Bonus), Phòng thủ (DEF), Máu tối đa (Max HP + Bonus), Thể lực tối đa (Stamina + Bonus). Cập nhật tức thì ngay khi đổi trang bị.
+     * **Nút Cộng Điểm Tiềm Năng (`BtnAttributePoints`):** Mở Modal phân bổ thuộc tính (sẵn sàng kết nối Task RPG-05).
    * **Cửa sổ Phải (Kho Đồ & Thao Tác):**
-     * **Thanh Tab phân loại 4 danh mục:** BtnAll (Tất cả), BtnWeapon (Vũ khí), BtnArmor (Giáp), BtnItem (Vật phẩm tiêu hao & nguyên liệu). Tự động lọc lưới và điều khiển viền góc SelectHighlight tương ứng, giữ nguyên độc lập bảng màu Color Tint trên Button của Unity.
-     * **Lưới 30 ô túi đồ (InventorySlotUI.cs):** GridLayoutGroup 5x6. Hiển thị Icon (tự động ẩn an toàn nếu chưa có sprite), nền trắng RarityBG đổi màu theo phẩm cấp Rarity, số lượng dồn stack (xCount), viền trang trí góc SelectHighlight khi được chọn.
-     * **Hiển thị Tiền Vàng:** Cập nhật số dư vàng thời gian thực qua event OnGoldChanged.
-     * **Bảng Chi Tiết Vật Phẩm Động (ItemDetailPopupUI.cs):**
-       * Tự động tính toán toạ độ và bám theo ô đồ vừa click (PositionNearSlot): Mặc định đặt góc trên-trái của Popup nằm đúng tâm ô đồ; nếu ô ở hàng dưới cùng thì tự động đảo pivot thành góc dưới-trái để trồi lên trên; nếu ô ở sát mép phải thì tự động mở sang trái, đảm bảo 100% không tràn khỏi màn hình. Click lại chính ô đó sẽ tự động đóng Popup.
-       * Tách riêng Text độ hiếm ItemRarity (tô màu theo phẩm cấp) và phân loại ItemType.
-       * Cụm 4 nút hành động: BtnEquip và BtnUnequip xếp đè cùng 1 vị trí (Trang bị hiện khi xem đồ trong túi, Tháo ra hiện khi xem đồ đang mặc); BtnUse cho vật phẩm tiêu hao (bình máu); BtnDrop vứt đồ rơi ra sàn thế giới.
-3. **Kinh Nghiệm, Cấp Độ & Điểm Tiềm Năng (PlayerProgression.cs, AttributeAllocationUI.cs):**
-   * **EXP & Cấp độ:** Tiêu diệt quái vật (EnemyAIBase.cs) nhận EXP. Cập nhật thanh EXP dạng vòng tròn chữ C (ExpRingFill) trên PlayerHUD.cs với ánh xạ fill từ 0.19 đến 0.58. Hiển thị Cấp độ trên huy hiệu LevelText.
-   * **Điểm tiềm năng (Attribute Points):** Lên cấp thưởng điểm (mặc định 3 điểm / cấp). Mở modal phân bổ từ nút BtnAttributePoints ở cửa sổ trái Inventory (hiển thị badge +X điểm khả dụng).
-   * **Phân bổ 3 chỉ số:** Sức Tấn Công (ATK), Máu Tối Đa (Max HP), Thể Lực Tối Đa (Max Stamina) với chế độ xem trước thay đổi chỉ số thời gian thực (Current -> Preview (+Bonus)).
-   * **Đồng bộ Combat & Sinh tồn:** Bấm "Xác Nhận" áp dụng trực tiếp vào Health.cs (BaseMaxHealth + SetBonusMaxHealth), PlayerStats.cs (BaseMaxStamina + SetBonusMaxStamina) và PlayerCombat.cs (TotalAttackBonus cho toàn bộ các đòn đánh).
-   * **Tẩy Điểm Tiềm Năng (Reset Stats):** Nút Reset tiêu tốn X Vàng (tùy biến Inspector, mặc định 100 Vàng) qua InventoryManager.cs. Hoàn lại 100% điểm tiềm năng và xóa bỏ toàn bộ bonus đã cộng. Kiểm tra chặt chẽ số dư Vàng và khóa nút nếu không đủ.
-4. **Hub Ngôi Làng & Thợ Rèn (LandScene):**
+     * **Thanh Tab phân loại 4 danh mục (TabBar):** BtnAll (Tất cả), BtnWeapon (Vũ khí), BtnArmor (Giáp), BtnItem (Vật phẩm tiêu hao & nguyên liệu).
+       * *Phồng kích thước nhận diện (Selected Scale):* Nút tab đang được chọn luôn duy trì kích thước phồng lớn hơn nhẹ (	abSelectedScale = 1.08f) và được đưa lên lớp hiển thị trên cùng (SetAsLastSibling()) giúp người chơi nhận biết danh mục trực quan tức thì.
+       * *Hoạt ảnh Pop/Punch chuyển Tab:* Khi bấm chuyển đổi qua lại, nút mới nảy phồng mạnh lên mức (	abPopPunchScale = 1.15f) rồi co về 1.08f bằng UITransitionHelper.EaseOutQuad qua Time.unscaledDeltaTime (đạt 60 FPS mượt mà kể cả khi pause game), nút cũ co mượt mà về 	abNormalScale = 1.0f.
+       * Tự động lọc lưới và điều khiển viền góc SelectHighlight tương ứng, giữ nguyên độc lập bảng màu Color Tint trên Button của Unity.
+     * **Lưới 30 ô túi đồ (`InventorySlotUI.cs`):** GridLayoutGroup 5x6. Hiển thị Icon (tự động ẩn an toàn nếu chưa có sprite), nền trắng `RarityBG` đổi màu theo phẩm cấp Rarity, số lượng dồn stack (`xCount`), viền trang trí góc `SelectHighlight` khi được chọn.
+     * **Hiển thị Tiền Vàng:** Cập nhật số dư vàng thời gian thực qua event `OnGoldChanged`.
+     * **Bảng Chi Tiết Vật Phẩm Động (`ItemDetailPopupUI.cs`):**
+       * Tự động tính toán toạ độ và bám theo ô đồ vừa click (`PositionNearSlot`): Mặc định đặt góc trên-trái của Popup nằm đúng tâm ô đồ; nếu ô ở hàng dưới cùng thì tự động đảo pivot thành góc dưới-trái để trồi lên trên; nếu ô ở sát mép phải thì tự động mở sang trái, đảm bảo 100% không tràn khỏi màn hình. Click lại chính ô đó sẽ tự động đóng Popup.
+       * Tách riêng Text độ hiếm `ItemRarity` (tô màu theo phẩm cấp) và phân loại `ItemType`.
+       * Cụm 4 nút hành động: `BtnEquip` và `BtnUnequip` xếp đè cùng 1 vị trí (Trang bị hiện khi xem đồ trong túi, Tháo ra hiện khi xem đồ đang mặc); `BtnUse` cho vật phẩm tiêu hao (bình máu); `BtnDrop` vứt đồ rơi ra sàn thế giới.
+3. **Kinh Nghiệm, Cấp Độ & Điểm Tiềm Năng (`PlayerProgression.cs`, `AttributeAllocationUI.cs`):**
+   * **EXP & Cấp độ:** Tiêu diệt quái vật (`EnemyAIBase.cs`) nhận EXP. Cập nhật thanh EXP dạng vòng tròn chữ C (`ExpRingFill`) trên `PlayerHUD.cs` với ánh xạ fill từ `0.19` đến `0.58`. Hiển thị Cấp độ trên huy hiệu `LevelText`.
+   * **Điểm tiềm năng (Attribute Points):** Lên cấp thưởng điểm (mặc định 3 điểm / cấp). Mở modal phân bổ từ nút `BtnAttributePoints` ở cửa sổ trái Inventory (hiển thị badge `+X` điểm khả dụng).
+   * **Phân bổ 3 chỉ số:** Sức Tấn Công (ATK), Máu Tối Đa (Max HP), Thể Lực Tối Đa (Max Stamina) với chế độ xem trước thay đổi chỉ số thời gian thực (`Current -> Preview (+Bonus)`).
+   * **Đồng bộ Combat & Sinh tồn:** Bấm "Xác Nhận" áp dụng trực tiếp vào `Health.cs` (`BaseMaxHealth` + `SetBonusMaxHealth`), `PlayerStats.cs` (`BaseMaxStamina` + `SetBonusMaxStamina`) và `PlayerCombat.cs` (`TotalAttackBonus` cho toàn bộ các đòn đánh).
+   * **Tẩy Điểm Tiềm Năng (Reset Stats):** Nút Reset tiêu tốn X Vàng (tùy biến Inspector, mặc định 100 Vàng) qua `InventoryManager.cs`. Hoàn lại 100% điểm tiềm năng và xóa bỏ toàn bộ bonus đã cộng. Kiểm tra chặt chẽ số dư Vàng và khóa nút nếu không đủ.
+4. **Hub Ngôi Làng & Thợ Rèn (`LandScene`):**
    * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
-   * **Thợ rèn (Blacksmith):** Tiêu tốn nguyên liệu (Đá cường hóa kiếm) và Vàng để nâng cấp vũ khí (+1, +2...), tăng sát thương chém và hiệu ứng visual.
-   * **Cổng dịch chuyển (PortalController.cs):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
+   * **Thợ rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (`BlacksmithUIController.cs`, `CraftingRecipe.cs`, `BlacksmithUpgradeConfig.cs` - Task RPG-08):**
+     * **Kiến trúc Cường hóa (+1 đến +5):** Mỗi cấp cường hóa gia tăng **+15% Sát thương cơ bản (ATK)** của vũ khí hoặc **+15% Phòng thủ (DEF)** của giáp, lưu trữ độc lập theo từng instance trong `InventorySlot.UpgradeLevel` mà không can thiệp ScriptableObject gốc. Cập nhật trực tiếp vào `InventoryManager.GetTotalAttackBonus()` và `GetTotalDefenseBonus()`.
+     * **Badge Cấp Độ & Hào Quang Thần Binh:** Tự động hiển thị Badge `+1`..`+5` màu vàng kim `#FFD700` ở góc trên ô đồ (`InventorySlotUI.cs`). Khi vũ khí đạt cấp tối đa `+5`, kích hoạt hào quang phát sáng vàng kim quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
+     * **Công thức nâng cấp theo bậc:**
+       + Cấp `+1`: 1 Đá Cường Hóa (`mat_upgrade_stone`) + 50 Vàng.
+       + Cấp `+2`: 2 Đá Cường Hóa + 100 Vàng.
+       + Cấp `+3`: 3 Đá Cường Hóa + 200 Vàng.
+       + Cấp `+4`: 1 Tinh Thể Hoàn Mỹ (`mat_upgrade_crystal`) + 4 Đá Cường Hóa + 400 Vàng.
+       + Cấp `+5 (MAX)`: 2 Tinh Thể Hoàn Mỹ + 6 Đá Cường Hóa + 700 Vàng.
+     * **Hệ thống Chế tạo Thần Binh (Crafting Recipes):** 6 công thức rèn trang bị cực phẩm từ Lõi Boss & Nguyên liệu quái:
+       + *Cốt Ma Kiếm:* 5 Mảnh Xương Quái + 1 Huy Hiệu Chiến Binh + 150 Vàng.
+       + *Hồ Ly Katana:* 3 Mảnh Xương Quái + 2 Bụi Ma Pháp + 1 Giấy Da Cổ + 250 Vàng.
+       + *Băng Nha Cực Kiếm:* 1 Trái Tim Băng Ice Core + 2 Mảnh Cổ Tự Băng + 4 Đá Cường Hóa + 500 Vàng.
+       + *Hỏa Long Diệt Thế Kiếm:* 1 Lõi Lửa Flame Core + 2 Huy Hiệu Liệt Hỏa + 2 Tinh Thể Hoàn Mỹ + 800 Vàng.
+       + *Giáp Xương Quái:* 6 Mảnh Xương Quái + 2 Huy Hiệu Chiến Binh + 200 Vàng.
+       + *Băng Giáp Cực Bắc:* 1 Trái Tim Băng Ice Core + 2 Mảnh Cổ Tự Băng + 1 Tinh Thể Hoàn Mỹ + 600 Vàng.
+     * **Giao Diện 2 Panel Đồng Bộ:** Panel Trái gồm 2 Tab chuyển đổi [ NÂNG CẤP | RÈN ] (cửa sổ so sánh Before/After, container nguyên liệu, hiển thị giá vàng thời gian thực). Panel Phải đồng bộ 30 ô túi đồ và Popup thao tác với nút `[Put in]` độc quyền.
+     * **NPC Thợ Rèn & Công Cụ 1-Click:** `BlacksmithInteractable.cs` gắn trên `BlackSmithNPC` (bán kính 3.2m, phím F); Tool `BlacksmithSetupEditor.cs` với MenuItem `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp Master Dashboard.
+   * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
+   * **Tối Ưu Hóa Hiệu Năng Ngôi Làng (NpcPatrol.cs & LandSceneOptimizerEditor.cs):**
+     - **Distance LOD Culling & Hibernation cho 61+ NPCs:** Tự động đưa NPC ở xa (> 48m) vào chế độ ngủ đông (dừng NavMeshAgent, tắt né tránh, ngắt tính toán Animator qua CullCompletely), giải phóng 100% CPU. Khi người chơi lại gần (< 40m), NPC tự động thức tỉnh tuần tra mượt mà. Quét cự ly Time-sliced 0.35s rải đều các frame.
+     - **Animator Culling (CullUpdateTransforms):** Dừng tính toán biến dạng xương khi NPC khuất tầm nhìn camera.
+     - **Hạ cấp Tránh va chạm (LowQualityObstacleAvoidance):** Cắt giảm 70% chi phí CPU tính toán RVO cho dân làng đi tuần.
+     - **Bộ nhớ đệm tĩnh Waypoints:** Dùng chung mảng sharedWaypoints loại bỏ 61 lần quét GameObject.Find trùng lặp.
+     - **Gộp Mesh Sỏi Đá (Gravel Combine):** Gộp 94 viên sỏi thành 1 Draw Call duy nhất bằng CombineMeshes 32-bit.
+     - **Static Batching & Lọc Bóng Đổ:** Đánh dấu Static cho 214 đối tượng kiến trúc; tắt đổ bóng cho tiểu cảnh nhỏ (sỏi, bụi hoa, hàng rào, chum vại) và chỉ giữ bóng đổ cho công trình lớn.
+     - **Terrain GPU Instancing:** Bật drawInstanced = true, khống chế 	reeDistance = 200m đồng bộ camera far clip 150m.
+
 
 ---
 
@@ -415,6 +467,27 @@ flowchart TD
   * **Phần Trăm & Ấn Ký Spinner:** Hiển thị số % ở góc phải thanh loading và ấn ký vòng tròn xoay tròn liên tục theo Time.unscaledDeltaTime.
 * **Sinh Hầm Ngục Theo Chặng (Time-Sliced PCG - DungeonManager.cs, DungeonRenderer.cs):**
   * Chia nhỏ việc dựng lưới 3D, gác lửng tầng 2, props và bake NavMesh thành các giai đoạn qua nhiều khung hình (yield return null), triệt tiêu 100% hiện tượng khựng đơ khung hình khi tạo lập hầm ngục quy mô lớn.
+
+---
+
+### F. Bảng Điều Khiển Quản Trị & Thử Nghiệm (Developer Admin Cheat Console)
+* **Dịch Vụ Quản Trị Trung Tâm (AdminCheatManager.cs - Self-Healing Singleton & DontDestroyOnLoad):**
+  * Tự động khởi tạo và phục hồi (EnsureInstance()) khi kéo Prefab AdminCheatCanvas.prefab vào bất kỳ Scene nào (LandScene, DungeonScene...) mà không cần kéo Manager thủ công.
+  * Hỗ trợ 3 phím nóng mở Console: Phím **~** (Backquote), **F1** hoặc **F2** (chống xung đột bộ gõ tiếng Việt Unikey/EVKey), và phím **Esc** để đóng nhanh.
+  * Tích hợp cơ chế khóa con trỏ chuột (CursorLockMode.None / Locked) và tạm dừng hành động nhân vật khi mở bảng điều khiển. Chống bấm đúp frame (lastToggleFrame).
+  * **Ma Trận Dịch Chuyển Linh Hoạt (Safe Teleport Matrix):**
+    * Trong DungeonScene: Dịch chuyển đến Start Entrance, Cổng Đại Lộ Boss, Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng Tầng 2 (cao độ 8m).
+    * Trong LandScene: Tự động fallback sang các địa danh làng: Chuông Làng (Village Bell), Cổng Dịch Chuyển (Portal), Tiệm Rèn (Smithy), Cửa Hàng Vũ Khí (Weapons Shop), Cối Xay Gió (Windmill Lookout).
+  * **Bộ Công Cụ Thử Nghiệm Toàn Diện:**
+    * Tạo lại hầm ngục thời gian thực (RegenerateDungeon).
+    * Diệt quái bán kính 25m hoặc toàn bản đồ (KillRadius / KillAll).
+    * Đóng băng AI quái vật (FreezeEnemies) thành bia tập đánh tĩnh.
+    * God Mode, Vô hạn Thể lực (Stamina), Vô hạn Năng lượng (Spirit Stars), Siêu tốc độ (1.0x - 3.5x).
+    * Bơm Vàng, EXP, Điểm Tiềm Năng, Bình Máu, Vũ khí Huyền thoại Dragonic Sword.
+* **Giao Diện Điều Khiển (AdminCheatUI.cs & AdminCheatCanvas.prefab):**
+  * 5 Tab chức năng: Teleport, Dungeon, Player, Combat, RPG & Loot.
+  * Mini Debug Overlay góc trên-phải: Hiển thị FPS thời gian thực, tọa độ Player (X, Y, Z), phòng hiện tại / vị trí làng, và huy hiệu trạng thái Cheat ([GOD], [INF STAM], [INF SPIRIT], [FROZEN AI], [SPD]).
+  * Hệ thống Toast Notification mượt mà phản hồi tức thì mỗi khi thực thi lệnh.
 
 ---
 

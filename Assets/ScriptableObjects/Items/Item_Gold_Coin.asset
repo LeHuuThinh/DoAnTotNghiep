@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: currency_gold
   itemName: Gold Coin
-  description: Common currency used throughout the realm. Used to forge weapons at
-    the Blacksmith or purchase supplies.
-  icon: {fileID: 21300000, guid: e7f477f3895bda14ab618c66591c57ed, type: 3}
+  description: The standard currency circulating across Haven and beyond. Used for
+    purchasing goods at the Village Shop and forging weapons at the Blacksmith.
+  icon: {fileID: 21300000, guid: 8037393fa37339f49a25968a1edcd013, type: 3}
   itemType: 4
   rarity: 0
   maxStack: 9999

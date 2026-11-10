@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 using InfiniteLabyrinth.Inventory;
 
@@ -15,7 +16,12 @@ namespace InfiniteLabyrinth.UI
   {
     [Header("=== GIAO DIỆN ===")]
     [SerializeField] private Image itemIcon;
-    [SerializeField] private Image rarityBorder;
+    [Tooltip("Nền glow mờ theo phẩm cấp")]
+    [SerializeField] private Image rarityBg;
+    [Tooltip("Thanh bar dưới icon theo phẩm cấp")]
+    [SerializeField] private Image rarityBar;
+    [FormerlySerializedAs("rarityBorder")]
+    [SerializeField] private Image legacyRarityBorder;
     [SerializeField] private TextMeshProUGUI itemNameText;
     [SerializeField] private TextMeshProUGUI quantityText;
     [SerializeField] private CanvasGroup canvasGroup;
@@ -63,12 +69,22 @@ namespace InfiniteLabyrinth.UI
                 ?? transform.Find("Icon")?.GetComponent<Image>();
       }
 
-      if (rarityBorder == null)
+      if (rarityBg == null)
       {
-        rarityBorder = transform.Find("IconGroup/Border")?.GetComponent<Image>()
-                    ?? transform.Find("IconGroup/RarityBG")?.GetComponent<Image>()
-                    ?? transform.Find("RarityBar")?.GetComponent<Image>()
-                    ?? transform.Find("Border")?.GetComponent<Image>();
+        rarityBg = transform.Find("IconGroup/RarityBG")?.GetComponent<Image>()
+                ?? transform.Find("RarityBG")?.GetComponent<Image>();
+      }
+
+      if (rarityBar == null)
+      {
+        rarityBar = transform.Find("IconGroup/RarityBar")?.GetComponent<Image>()
+                 ?? transform.Find("RarityBar")?.GetComponent<Image>();
+      }
+
+      if (rarityBg == null && rarityBar == null && legacyRarityBorder == null)
+      {
+        legacyRarityBorder = transform.Find("IconGroup/Border")?.GetComponent<Image>()
+                          ?? transform.Find("Border")?.GetComponent<Image>();
       }
 
       if (itemNameText == null)
@@ -94,13 +110,32 @@ namespace InfiniteLabyrinth.UI
 
       if (itemIcon != null)
       {
-        itemIcon.sprite = item.Icon;
-        itemIcon.enabled = (item.Icon != null);
+        bool hasIcon = (item.Icon != null);
+        itemIcon.gameObject.SetActive(hasIcon);
+        itemIcon.enabled = hasIcon;
+        if (hasIcon)
+        {
+          itemIcon.sprite = item.Icon;
+          itemIcon.color = Color.white;
+        }
       }
 
-      if (rarityBorder != null)
+      // Đổi màu nền glow mờ và thanh bar dưới icon theo phẩm cấp
+      if (rarityBg != null)
       {
-        rarityBorder.color = rarityColor;
+        rarityBg.gameObject.SetActive(true);
+        rarityBg.color = rarityColor;
+      }
+
+      if (rarityBar != null)
+      {
+        rarityBar.gameObject.SetActive(true);
+        rarityBar.color = rarityColor;
+      }
+
+      if (rarityBg == null && rarityBar == null && legacyRarityBorder != null)
+      {
+        legacyRarityBorder.color = rarityColor;
       }
 
       if (itemNameText != null)

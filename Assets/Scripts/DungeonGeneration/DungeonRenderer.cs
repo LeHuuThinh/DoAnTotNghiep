@@ -186,6 +186,7 @@ public class DungeonRenderer : MonoBehaviour
         if (r.hasMezzanine)
         {
           BuildMezzanine(r, data);
+          yield return null;
         }
       }
     }
@@ -194,22 +195,25 @@ public class DungeonRenderer : MonoBehaviour
     if (data.bossRoom != null)
     {
       BuildBossArenaPillars(data.bossRoom, data);
+      yield return null;
     }
 
     onProgress?.Invoke(0.50f);
     yield return null;
 
-    // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Sinh TRƯỚC khi Bake NavMesh để NavMesh tự động đục lỗ né vật cản)
+    // 3. TRANG TRÍ PROPS VÀ HỆ THỐNG CHIẾU SÁNG (Time-sliced qua từng phòng)
     if (propDecorator == null) propDecorator = GetComponent<DungeonPropDecorator>();
     if (propDecorator == null) propDecorator = gameObject.AddComponent<DungeonPropDecorator>();
-    propDecorator.DecorateDungeon(data, dungeonParent, tileSize);
 
-    onProgress?.Invoke(0.80f);
-    yield return null;
+    yield return StartCoroutine(propDecorator.DecorateDungeonRoutine(data, dungeonParent, tileSize, p =>
+    {
+      float combined = Mathf.Lerp(0.50f, 0.82f, p);
+      onProgress?.Invoke(combined);
+    }));
 
     // 4. TỰ ĐỘNG BAKE NAVMESH VÀ KIỂM ĐỊNH KẾT NỐI TOÀN BỘ SÀN TRỆT, CẦU THANG VÀ TẦNG 2 (Sau khi đã có đầy đủ Props)
+    yield return null;
     BakeAndValidateNavMesh(data);
-
     onProgress?.Invoke(1.0f);
     yield return null;
   }

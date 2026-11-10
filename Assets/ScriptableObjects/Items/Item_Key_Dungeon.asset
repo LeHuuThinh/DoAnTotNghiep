@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: dungeon_key
   itemName: Dungeon Boss Key
-  description: An ancient golden key resonating with sacred magic. Required to unlock the Grand Gate leading into the Boss Arena.
-  icon: {fileID: 21300000, guid: 0812b073c9fb4f34abef407fbecfa972, type: 3}
+  description: An ancient golden key resonating with sacred magic. Required to unlock
+    the Grand Gate leading into the Boss Arena.
+  icon: {fileID: 21300000, guid: 44e5203d69b837f41bfa795feea76f3d, type: 3}
   itemType: 5
   rarity: 4
   maxStack: 1

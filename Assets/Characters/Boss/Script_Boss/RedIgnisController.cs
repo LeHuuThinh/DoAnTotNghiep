@@ -11,6 +11,9 @@ public class RedIgnisController : MonoBehaviour
     [Header("=== BẢNG THÔNG SỐ BOSS (RED IGNIS) ===")]
     [Tooltip("Máu tối đa của Red Ignis (Mặc định: 1200)")]
     [SerializeField] private float bossMaxHealth = 1200f;
+    [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của Red Ignis (Giảm sát thương % theo chuẩn ARPG: Damage * 100 / (100 + Def))")]
+    [SerializeField] private float bossDefense = 25f;
+    public float BossDefense => bossDefense;
     [Tooltip("Thanh sức bền (Poise) tối đa của Red Ignis (Mặc định: 400). Khi cạn về 0 sẽ gây suy yếu (Weaken/Stagger)")]
     [SerializeField] private float maxPoise = 400f;
     [Tooltip("Điểm Poise chịu đòn hiện tại")]
@@ -510,6 +513,7 @@ public class RedIgnisController : MonoBehaviour
             var baseHpField = typeof(Health).GetField("baseMaxHealth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
             if (baseHpField != null) baseHpField.SetValue(health, bossMaxHealth);
 
+            health.SetBaseDefense(bossDefense);
             health.onHealthChanged?.Invoke(bossMaxHealth, bossMaxHealth);
             onHealthChanged?.Invoke(bossMaxHealth, bossMaxHealth);
         }

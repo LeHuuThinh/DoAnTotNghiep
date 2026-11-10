@@ -181,7 +181,7 @@ public class MageGroundSpell : MonoBehaviour
         Vector3 knockbackDir = (col.transform.position - transform.position).normalized;
         knockbackDir.y = 0.35f; // Hất nhẹ người chơi lên
 
-        damageable.TakeDamage(damage, hitPoint, knockbackDir, knockback);
+        damageable.TakeDamage(damage, hitPoint, knockbackDir, knockback, attacker);
       }
     }
 

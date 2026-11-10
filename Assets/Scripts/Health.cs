@@ -9,6 +9,10 @@ public class Health : MonoBehaviour, IDamageable
   [SerializeField] private float currentHealth;
   [SerializeField] private bool isInvulnerable = false; // Bất tử (dùng khi Player lộn nhào né đòn - I-Frames)
 
+  [Header("Defense Settings (ARPG Diminishing Returns)")]
+  [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của thực thể (áp dụng công thức giảm sát thương % chuẩn ARPG: Damage * 100 / (100 + Def))")]
+  [SerializeField] private float baseDefense = 0f;
+
   [Header("Events (Tùy chọn gắn VFX / SFX qua Inspector)")]
   public UnityEvent<float, float> onHealthChanged; // Gửi (currentHealth, maxHealth) để cập nhật thanh máu UI
   public UnityEvent<Vector3, Vector3, float> onTakeDamage; // Gửi (hitPoint, hitDirection, knockbackDistance) để sinh VFX trúng đòn
@@ -20,6 +24,25 @@ public class Health : MonoBehaviour, IDamageable
   public float MaxHealth => maxHealth;
   public float BaseMaxHealth => baseMaxHealth > 0f ? baseMaxHealth : maxHealth;
   public bool IsDead => isDead;
+  public float BaseDefense => baseDefense;
+  public float TotalDefense
+  {
+    get
+    {
+      float total = Mathf.Max(0f, baseDefense);
+      if (CompareTag("Player") && InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+      {
+        total += InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalDefenseBonus();
+      }
+      return total;
+    }
+  }
+
+  public void SetBaseDefense(float defense)
+  {
+    baseDefense = Mathf.Max(0f, defense);
+  }
+
   public Transform LastAttacker { get; private set; }
   public float LastPoiseDamage { get; private set; } = -1f;
 
@@ -33,10 +56,93 @@ public class Health : MonoBehaviour, IDamageable
 
   private float baseMaxHealth = -1f;
 
+  private static float? s_PersistentPlayerHealth = null;
+
+  public static void ResetPersistentPlayerHealth()
+  {
+    s_PersistentPlayerHealth = null;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.ClearSavedHealth();
+    }
+  }
+
+  public static void SetPersistentPlayerHealth(float hp)
+  {
+    s_PersistentPlayerHealth = hp;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerHealth(hp);
+    }
+  }
+
+  /// <summary>
+  /// Hồi đầy 100% máu (Dành cho Chuông Làng hoặc Hồi sinh sau tử trận)
+  /// </summary>
+  public void RefillToFull()
+  {
+    isDead = false;
+    currentHealth = maxHealth;
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = maxHealth;
+      if (GameManager.HasInstance)
+      {
+        GameManager.Instance.SavePlayerHealth(maxHealth);
+      }
+    }
+    onHealthChanged?.Invoke(currentHealth, maxHealth);
+  }
+
   private void Awake()
   {
     baseMaxHealth = maxHealth;
     currentHealth = maxHealth;
+
+    // Item 1: Bảo lưu lượng máu còn lại của Player xuyên TẤT CẢ các Scene (Dù xuống tầng hay về Làng)
+    if (CompareTag("Player"))
+    {
+      if (s_PersistentPlayerHealth.HasValue)
+      {
+        currentHealth = Mathf.Clamp(s_PersistentPlayerHealth.Value, 1f, maxHealth);
+        Debug.Log($"<color=cyan>[Health]</color> 🩸 Đã khôi phục Máu từ scene trước (static cache): {currentHealth:F0}/{maxHealth:F0}");
+      }
+      else if (GameManager.HasInstance && GameManager.Instance.HasSavedHealth)
+      {
+        currentHealth = Mathf.Clamp(GameManager.Instance.SavedHealth, 1f, maxHealth);
+        s_PersistentPlayerHealth = currentHealth;
+        Debug.Log($"<color=cyan>[Health]</color> 🩸 Đã khôi phục Máu từ scene trước (GameManager): {currentHealth:F0}/{maxHealth:F0}");
+      }
+      else
+      {
+        currentHealth = maxHealth;
+        s_PersistentPlayerHealth = currentHealth;
+      }
+    }
+  }
+
+  private void OnDisable()
+  {
+    if (CompareTag("Player") && !isDead)
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+      {
+        GameManager.Instance.SavePlayerHealth(currentHealth);
+      }
+    }
+  }
+
+  private void OnDestroy()
+  {
+    if (CompareTag("Player") && !isDead)
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+      {
+        GameManager.Instance.SavePlayerHealth(currentHealth);
+      }
+    }
   }
 
   /// <summary>
@@ -64,7 +170,7 @@ public class Health : MonoBehaviour, IDamageable
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
-  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null)
+  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal)
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
@@ -79,20 +185,33 @@ public class Health : MonoBehaviour, IDamageable
       return;
     }
 
-    // 2. Tính giảm trừ sát thương từ Giáp trang bị (nếu là Player)
+    // 2. Tính giảm trừ sát thương theo công thức Giảm % chuẩn ARPG / Souls-like
+    // Damage Taken = Raw Damage * (K / (K + Defense)) với K = 100f
+    float totalDefense = TotalDefense;
     float actualDamage = damage;
-    if (CompareTag("Player") && InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    if (totalDefense > 0f)
     {
-      float defense = InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalDefenseBonus();
-      if (defense > 0f)
-      {
-        actualDamage = Mathf.Max(1f, actualDamage - defense);
-      }
+      const float armorConstant = 100f;
+      float damageReductionFactor = armorConstant / (armorConstant + totalDefense);
+      actualDamage = damage * damageReductionFactor;
     }
+    actualDamage = Mathf.Max(1f, Mathf.Round(actualDamage * 10f) / 10f); // Giữ 1 chữ số thập phân, tối thiểu 1 sát thương
 
     // 3. Nếu không parry thì trừ máu bình thường
     currentHealth = Mathf.Max(0f, currentHealth - actualDamage);
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance) GameManager.Instance.SavePlayerHealth(currentHealth);
+    }
     Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
+
+    // 4. Kích hoạt số sát thương bay lên (Floating Damage Number)
+    Vector3 spawnPos = (hitPoint != Vector3.zero) ? hitPoint : (transform.position + Vector3.up * 1.1f);
+    InfiniteLabyrinth.UI.Combat.DamageNumberType effectiveType = CompareTag("Player") 
+      ? InfiniteLabyrinth.UI.Combat.DamageNumberType.PlayerHit 
+      : damageType;
+    InfiniteLabyrinth.UI.Combat.DamageNumberManager.Instance.SpawnDamage(actualDamage, spawnPos, effectiveType);
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -110,6 +229,11 @@ public class Health : MonoBehaviour, IDamageable
     if (isDead || amount <= 0f) return;
 
     currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+    if (CompareTag("Player"))
+    {
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance) GameManager.Instance.SavePlayerHealth(currentHealth);
+    }
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 

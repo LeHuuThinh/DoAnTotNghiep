@@ -87,23 +87,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.LootDropper
   worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
   lootTable:
   - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    randomItemPool:
+    - {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+    - {fileID: 11400000, guid: 228e6ea92fe786946a05a3e4d94ab8d7, type: 2}
     dropChance: 0.35
     minQuantity: 1
     maxQuantity: 1
   - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
-    dropChance: 0.2
+    randomItemPool: []
+    dropChance: 0.15
     minQuantity: 1
-    maxQuantity: 2
+    maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 0.85
-  minGold: 5
+  minGold: 8
   maxGold: 18
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3
   arcDuration: 0.5
+  dropConeAngle: 360
+  useForwardCone: 0
+  wallSafetyPadding: 0.35
   autoDropOnDeath: 1
 --- !u!1001 &5754699676209579850
 PrefabInstance:

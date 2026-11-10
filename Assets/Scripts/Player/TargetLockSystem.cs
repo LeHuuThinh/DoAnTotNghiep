@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class TargetLockSystem : MonoBehaviour
@@ -10,16 +10,40 @@ public class TargetLockSystem : MonoBehaviour
   [SerializeField] private float breakLockRange = 18f;     // Cự ly quái chạy thoát sẽ tự bung khóa
   [SerializeField] private float viewAngleLimit = 75f;     // Góc quét hình nón phía trước camera
 
+  [Header("Elevation Settings (Giới hạn cao độ tầng/gác lửng)")]
+  [Tooltip("Độ chênh lệch cao độ Y tối đa giữa Player và Quái để cho phép khóa (mét). Khuyên dùng 3.8 - 4.5m để chống ngửa camera lên trần gác lửng tầng 2 (cao 8m)")]
+  [SerializeField] private float maxLockElevationDifference = 4.2f;
+  [Tooltip("Độ chênh lệch cao độ Y tối đa trước khi tự động hủy khóa nếu Player/quái rơi xuống tầng khác (mét)")]
+  [SerializeField] private float breakLockElevationDifference = 6.5f;
+
   [Header("Obstacle Occlusion")]
   [Tooltip("Thời gian quái nấp sau tường liên tục (giây) trước khi tự hủy khóa")]
   [SerializeField] private float wallLostGraceTime = 0.8f;
   private float wallOccludedTimer = 0f;
 
-  [Header("Auto Switch Settings (Tự động đổi mục tiêu)")]
+  [Header("Auto Switch Settings (Tự động đổi mục tiêu khi quái chết)")]
   [Tooltip("Tự động chuyển khóa sang quái tiếp theo khi quái hiện tại chết")]
   [SerializeField] private bool autoSwitchOnTargetDeath = true;
   [Tooltip("Bán kính tối đa quét tìm quái tiếp theo khi quái hiện tại chết")]
   [SerializeField] private float switchTargetRange = 16f;
+
+  [Header("Manual Target Switch (Chuyển Mục Tiêu Bằng Chuột)")]
+  [Tooltip("Cho phép vẩy chuột sang trái/phải để chuyển mục tiêu khi đang lock")]
+  [SerializeField] private bool enableMouseFlickSwitch = true;
+  [Tooltip("Ngưỡng xung lực vẩy chuột (Mouse delta X) để kích hoạt chuyển mục tiêu (khuyên dùng 18 - 25)")]
+  [SerializeField] private float mouseFlickThreshold = 20f;
+  [Tooltip("Thời gian hồi chiêu giữa 2 lần chuyển mục tiêu để chống trượt liên tiếp (giây)")]
+  [SerializeField] private float switchCooldown = 0.25f;
+  [Tooltip("Tốc độ suy hao xung lực chuột tích lũy mỗi giây (giúp lọc rê chuột chậm và bắt nhịp vẩy chuột nhanh)")]
+  [SerializeField] private float flickDecayRate = 120f;
+  [Tooltip("Độ lệch ngang Viewport tối thiểu để phân biệt quái bên trái/phải so với mục tiêu hiện tại")]
+  [SerializeField] private float minViewportSeparation = 0.03f;
+
+  [Header("Scroll Wheel Switch (Tùy chọn phụ)")]
+  [Tooltip("Cho phép cuộn con lăn chuột lên/xuống để chuyển mục tiêu")]
+  [SerializeField] private bool enableScrollWheelSwitch = false;
+  [Tooltip("Ngưỡng cuộn con lăn chuột để nhận lệnh")]
+  [SerializeField] private float scrollThreshold = 0.5f;
 
   [Header("UI Reticle (Tùy chọn)")]
   [Tooltip("Kéo một icon/chấm tròn World Space UI vào đây để hiển thị tâm ngắm trên đầu quái")]
@@ -30,17 +54,88 @@ public class TargetLockSystem : MonoBehaviour
   private Health targetHealth;
   private Health playerHealth;
   private Camera mainCamera;
+  [SerializeField] private PlayerCombat playerCombat;
+
+  // Quản lý chuyển mục tiêu thủ công bằng chuột
+  private float accumulatedFlickX = 0f;
+  private float switchCooldownTimer = 0f;
 
   public bool IsLockedOn => currentTarget != null;
   public Transform CurrentTarget => currentTarget;
 
+  private void OnValidate()
+  {
+    if (breakLockRange <= lockRange)
+    {
+      breakLockRange = lockRange + 4f;
+    }
+    if (breakLockElevationDifference <= maxLockElevationDifference)
+    {
+      breakLockElevationDifference = maxLockElevationDifference + 2.5f;
+    }
+  }
+
   private void Awake()
   {
+    if (breakLockRange <= lockRange)
+    {
+      breakLockRange = lockRange + 4f;
+    }
+    if (breakLockElevationDifference <= maxLockElevationDifference)
+    {
+      breakLockElevationDifference = maxLockElevationDifference + 2.5f;
+    }
+
     mainCamera = Camera.main;
     if (lockOnReticle != null) lockOnReticle.SetActive(false);
 
     playerHealth = GetComponent<Health>();
     if (playerHealth == null) playerHealth = GetComponentInParent<Health>();
+
+    if (playerCombat == null) playerCombat = GetComponent<PlayerCombat>();
+    if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
+    if (playerCombat == null) playerCombat = GetComponentInParent<PlayerCombat>();
+  }
+
+  private void Start()
+  {
+    StartCoroutine(WaitForInventoryLockSyncRoutine());
+  }
+
+  private System.Collections.IEnumerator WaitForInventoryLockSyncRoutine()
+  {
+    while (!InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      yield return null;
+    }
+
+    InfiniteLabyrinth.Inventory.InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChangedForLock;
+  }
+
+  private void OnDestroy()
+  {
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
+    {
+      InfiniteLabyrinth.Inventory.InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChangedForLock;
+    }
+  }
+
+  private void HandleEquipmentChangedForLock(InfiniteLabyrinth.Inventory.ItemType type, InfiniteLabyrinth.Inventory.ItemData item)
+  {
+    if (type == InfiniteLabyrinth.Inventory.ItemType.Weapon && item == null)
+    {
+      if (IsLockedOn)
+      {
+        UnlockTarget();
+      }
+    }
+  }
+
+  private bool CanLockOn()
+  {
+    if (playerCombat != null && !playerCombat.HasWeapon) return false;
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance && InfiniteLabyrinth.Inventory.InventoryManager.Instance.EquippedWeapon == null) return false;
+    return true;
   }
 
   private void OnEnable()
@@ -62,7 +157,13 @@ public class TargetLockSystem : MonoBehaviour
       return;
     }
 
+    if (switchCooldownTimer > 0f)
+    {
+      switchCooldownTimer -= Time.deltaTime;
+    }
+
     HandleLockInput();
+    HandleMouseSwitchInput();
     ValidateCurrentTarget();
     UpdateReticlePosition();
   }
@@ -71,7 +172,7 @@ public class TargetLockSystem : MonoBehaviour
   {
     if (playerHealth != null && playerHealth.IsDead) return;
 
-    // Bấm Chuột giữa HOẶC phím Q để Bật/Tắt khóa mục tiêu
+    // Bấm Chuột giữa để Bật/Tắt khóa mục tiêu
     bool togglePressed = false;
     if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame) togglePressed = true;
 
@@ -83,9 +184,160 @@ public class TargetLockSystem : MonoBehaviour
       }
       else
       {
+        if (!CanLockOn()) return;
         LockClosestTarget();
       }
     }
+  }
+
+  /// <summary>
+  /// Lắng nghe cử chỉ chuột (vẩy chuột hoặc cuộn con lăn) để chuyển mục tiêu khi đang Lock
+  /// </summary>
+  private void HandleMouseSwitchInput()
+  {
+    if (!IsLockedOn)
+    {
+      accumulatedFlickX = 0f;
+      return;
+    }
+
+    if (playerHealth != null && playerHealth.IsDead) return;
+
+    if (switchCooldownTimer > 0f)
+    {
+      accumulatedFlickX = 0f;
+      return;
+    }
+
+    if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked)
+    {
+      accumulatedFlickX = 0f;
+      return;
+    }
+
+    // 1. Tùy chọn chuyển mục tiêu bằng con lăn chuột (Scroll Wheel)
+    if (enableScrollWheelSwitch)
+    {
+      float scrollY = Mouse.current.scroll.ReadValue().y;
+      if (Mathf.Abs(scrollY) > scrollThreshold)
+      {
+        bool toRight = scrollY < 0f; // Cuộn xuống = sang phải, cuộn lên = sang trái
+        if (TrySwitchTargetDirection(toRight))
+        {
+          switchCooldownTimer = switchCooldown;
+          accumulatedFlickX = 0f;
+          return;
+        }
+      }
+    }
+
+    // 2. Chuyển mục tiêu bằng vẩy chuột (Mouse Flick)
+    if (enableMouseFlickSwitch)
+    {
+      float deltaX = Mouse.current.delta.ReadValue().x;
+
+      // Nếu đột ngột đổi chiều vẩy chuột thì reset xung lực cũ để bắt nhịp tức thì
+      if ((accumulatedFlickX > 0f && deltaX < -5f) || (accumulatedFlickX < 0f && deltaX > 5f))
+      {
+        accumulatedFlickX = deltaX;
+      }
+      else
+      {
+        // Suy hao lực tích lũy về 0 theo thời gian
+        accumulatedFlickX = Mathf.MoveTowards(accumulatedFlickX, 0f, flickDecayRate * Time.deltaTime);
+        accumulatedFlickX += deltaX;
+      }
+
+      // Kiểm tra xem xung lực vẩy chuột đã vượt ngưỡng kích hoạt chưa
+      if (Mathf.Abs(accumulatedFlickX) >= mouseFlickThreshold)
+      {
+        bool toRight = accumulatedFlickX > 0f;
+        bool switched = TrySwitchTargetDirection(toRight);
+
+        // Luôn giải phóng xung lực tích lũy sau cú vẩy
+        accumulatedFlickX = 0f;
+
+        if (switched)
+        {
+          switchCooldownTimer = switchCooldown;
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Chuyển mục tiêu sang quái gần nhất ở phía bên Phải (toRight = true) hoặc bên Trái (toRight = false) trên màn hình
+  /// </summary>
+  public bool TrySwitchTargetDirection(bool toRight)
+  {
+    if (currentTarget == null) return false;
+    if (mainCamera == null) mainCamera = Camera.main;
+    if (mainCamera == null) return false;
+
+    // Vị trí Viewport của mục tiêu hiện tại trên màn hình
+    Vector3 curVp = mainCamera.WorldToViewportPoint(currentTarget.position + Vector3.up * 1.2f);
+
+    Collider[] colliders = Physics.OverlapSphere(transform.position, switchTargetRange, enemyLayer);
+    Transform bestCandidate = null;
+    float bestScore = float.MaxValue;
+
+    foreach (Collider col in colliders)
+    {
+      Health candidateHealth = col.GetComponentInParent<Health>();
+      if (candidateHealth == null) candidateHealth = col.GetComponentInChildren<Health>();
+
+      Transform candidate = (candidateHealth != null) ? candidateHealth.transform : col.transform.root;
+
+      // Bỏ qua mục tiêu hiện tại và candidate trùng lặp
+      if (candidate == currentTarget || candidate == bestCandidate) continue;
+
+      // Bỏ qua nếu quái đã chết
+      if (candidateHealth != null && candidateHealth.IsDead) continue;
+
+      // KIỂM TRA ĐỘ CAO (ELEVATION CHECK): Bỏ qua quái ở tầng khác (gác lửng tầng 2)
+      float heightDelta = Mathf.Abs(candidate.position.y - transform.position.y);
+      if (heightDelta > maxLockElevationDifference) continue;
+
+      // Kiểm tra vị trí Viewport trên màn hình
+      Vector3 candPos = candidate.position + Vector3.up * 1.2f;
+      Vector3 candVp = mainCamera.WorldToViewportPoint(candPos);
+
+      // Quái phải nằm ở phía trước Camera
+      if (candVp.z <= 0.1f) continue;
+
+      // Cho phép biên độ rộng hơn viền màn hình một chút ([-0.2, 1.2]) để bắt cả quái vừa lọt khỏi mép
+      if (candVp.x < -0.2f || candVp.x > 1.2f || candVp.y < -0.2f || candVp.y > 1.2f) continue;
+
+      // Kiểm tra hướng Trái / Phải
+      float xDiff = toRight ? (candVp.x - curVp.x) : (curVp.x - candVp.x);
+      if (xDiff < minViewportSeparation) continue; // Phải nằm hẳn về phía mong muốn
+
+      // Kiểm tra tường chắn
+      Vector3 rayStart = transform.position + Vector3.up * 1.3f;
+      Vector3 rayEnd = candidate.position + Vector3.up * 1.3f;
+      if (Physics.Linecast(rayStart, rayEnd, obstacleLayer, QueryTriggerInteraction.Ignore)) continue;
+
+      // Chấm điểm: Ưu tiên quái ở gần hướng vẩy trên màn hình nhất (xDiff nhỏ nhất), sau đó xét cự ly 3D
+      float distance = Vector3.Distance(transform.position, candidate.position);
+      float score = xDiff * 15f + (distance / switchTargetRange) * 5f + heightDelta * 0.5f;
+
+      if (score < bestScore)
+      {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+    }
+
+    if (bestCandidate != null)
+    {
+      SetTarget(bestCandidate);
+      wallOccludedTimer = 0f;
+      string dirStr = toRight ? "Phải ➔" : "⬅ Trái";
+      Debug.Log($"<color=cyan>[Lock-On]</color> Vẩy chuột {dirStr}: Chuyển khóa sang: <b>{bestCandidate.name}</b>");
+      return true;
+    }
+
+    return false;
   }
 
   private void LockClosestTarget()
@@ -129,6 +381,10 @@ public class TargetLockSystem : MonoBehaviour
       // Kiểm tra máu: Quái chết thì bỏ qua
       if (candidateHealth != null && candidateHealth.IsDead) continue;
 
+      // KIỂM TRA ĐỘ CAO (ELEVATION CHECK): Bỏ qua quái ở tầng khác (gác lửng tầng 2 cách 8m)
+      float heightDelta = Mathf.Abs(candidate.position.y - transform.position.y);
+      if (heightDelta > maxLockElevationDifference) continue;
+
       // Kiểm tra góc nhìn: Nới lỏng góc nhìn khi chuyển mục tiêu (lên 85 độ) để bao quát tốt hơn
       Vector3 toCandidate = (candidate.position - camTransform.position).normalized;
       float angle = Vector3.Angle(camTransform.forward, toCandidate);
@@ -140,9 +396,9 @@ public class TargetLockSystem : MonoBehaviour
       Vector3 rayEnd = candidate.position + Vector3.up * 1.3f;
       if (Physics.Linecast(rayStart, rayEnd, obstacleLayer, QueryTriggerInteraction.Ignore)) continue;
 
-      // Chấm điểm: Ưu tiên quái ở gần tâm màn hình và gần Player nhất
+      // Chấm điểm: Ưu tiên quái ở gần tâm màn hình, gần Player nhất và ít chênh lệch độ cao
       float distance = Vector3.Distance(transform.position, candidate.position);
-      float score = distance + angle * 0.15f;
+      float score = distance + angle * 0.15f + heightDelta * 0.8f;
 
       if (score < bestScore)
       {
@@ -246,6 +502,15 @@ public class TargetLockSystem : MonoBehaviour
       return;
     }
 
+    // 2b. Quái hoặc Player rơi sang tầng khác (chênh lệch độ cao quá lớn) -> Hủy khóa
+    float heightDelta = Mathf.Abs(currentTarget.position.y - transform.position.y);
+    if (heightDelta > breakLockElevationDifference)
+    {
+      UnlockTarget();
+      wallOccludedTimer = 0f;
+      return;
+    }
+
     // 3. KIỂM TRA TƯỜNG CHẮN AN TOÀN (BỎ QUA TRIGGER VÀ HIỆU ỨNG CHIÊU THỨC)
     Vector3 rayStart = transform.position + Vector3.up * 1.3f;
     Vector3 rayEnd = currentTarget.position + Vector3.up * 1.3f;
@@ -285,5 +550,11 @@ public class TargetLockSystem : MonoBehaviour
   {
     Gizmos.color = Color.cyan;
     Gizmos.DrawWireSphere(transform.position, lockRange);
+    Gizmos.color = new Color(0f, 1f, 1f, 0.35f);
+    Gizmos.DrawWireSphere(transform.position, switchTargetRange);
+
+    // Vẽ hình khối giới hạn cao độ cho phép Lock-On
+    Gizmos.color = new Color(1f, 0.9f, 0.2f, 0.35f);
+    Gizmos.DrawWireCube(transform.position, new Vector3(lockRange * 2f, maxLockElevationDifference * 2f, lockRange * 2f));
   }
 }

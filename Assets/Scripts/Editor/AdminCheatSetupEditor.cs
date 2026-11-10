@@ -169,6 +169,7 @@ namespace InfiniteLabyrinth.Editor
       CanvasGroup panelCg = panelObj.AddComponent<CanvasGroup>();
       so.FindProperty("mainPanelCanvasGroup").objectReferenceValue = panelCg;
       so.FindProperty("mainPanelRoot").objectReferenceValue = panelObj;
+      so.FindProperty("rootCanvasGroup").objectReferenceValue = canvasObj.GetComponent<CanvasGroup>();
 
       Image panelBg = panelObj.AddComponent<Image>();
       if (panelSprite != null)

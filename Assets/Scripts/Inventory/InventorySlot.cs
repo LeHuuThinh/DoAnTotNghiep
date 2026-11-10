@@ -11,27 +11,37 @@ namespace InfiniteLabyrinth.Inventory
   {
     [SerializeField] private ItemData itemData;
     [SerializeField] private int quantity;
+    [SerializeField] private int upgradeLevel = 0; // Cấp cường hóa (+0 đến +5)
 
     public ItemData ItemData => itemData;
     public int Quantity => quantity;
+    public int UpgradeLevel => upgradeLevel;
     public bool IsEmpty => itemData == null || quantity <= 0;
 
     public InventorySlot()
     {
       itemData = null;
       quantity = 0;
+      upgradeLevel = 0;
     }
 
-    public InventorySlot(ItemData item, int count)
+    public InventorySlot(ItemData item, int count, int upgrade = 0)
     {
       itemData = item;
       quantity = count;
+      upgradeLevel = Mathf.Clamp(upgrade, 0, 5);
     }
 
-    public void SetItem(ItemData item, int count)
+    public void SetItem(ItemData item, int count, int upgrade = 0)
     {
       itemData = item;
       quantity = count;
+      upgradeLevel = Mathf.Clamp(upgrade, 0, 5);
+    }
+
+    public void SetUpgradeLevel(int level)
+    {
+      upgradeLevel = Mathf.Clamp(level, 0, 5);
     }
 
     public int AddQuantity(int amount)
@@ -62,6 +72,7 @@ namespace InfiniteLabyrinth.Inventory
     {
       itemData = null;
       quantity = 0;
+      upgradeLevel = 0;
     }
   }
 }

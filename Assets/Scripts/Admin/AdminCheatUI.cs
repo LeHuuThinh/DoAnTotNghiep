@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 /// <summary>
@@ -20,6 +21,7 @@ public class AdminCheatUI : MonoBehaviour
   public enum CheatTab { Teleport, Dungeon, Player, Combat, RPG }
 
   [Header("Root Canvas Structure")]
+  [SerializeField] private CanvasGroup rootCanvasGroup;
   [SerializeField] private CanvasGroup mainPanelCanvasGroup;
   [SerializeField] private GameObject mainPanelRoot;
   [SerializeField] private Button btnClose;
@@ -100,18 +102,24 @@ public class AdminCheatUI : MonoBehaviour
   private void Awake()
   {
     Instance = this;
+    if (rootCanvasGroup == null)
+    {
+      rootCanvasGroup = GetComponent<CanvasGroup>();
+    }
+    AdminCheatManager.EnsureInstance();
   }
 
   private void Start()
   {
+    var mgr = AdminCheatManager.EnsureInstance();
     SetupListeners();
     SwitchTab(CheatTab.Teleport);
     UpdateAllCheatButtonsVisual();
 
-    if (AdminCheatManager.Instance != null)
+    if (mgr != null)
     {
-      AdminCheatManager.Instance.OnMenuToggled += HandleMenuToggled;
-      AdminCheatManager.Instance.OnCheatExecuted += ShowToast;
+      mgr.OnMenuToggled += HandleMenuToggled;
+      mgr.OnCheatExecuted += ShowToast;
     }
 
     // Both Admin Panel and Debug Overlay are closed/hidden by default on start
@@ -129,6 +137,29 @@ public class AdminCheatUI : MonoBehaviour
 
   private void Update()
   {
+    // Fail-safe direct hotkey listener in case keyboard events need immediate response
+    if (Keyboard.current != null)
+    {
+      if (Keyboard.current.backquoteKey.wasPressedThisFrame ||
+          Keyboard.current.f1Key.wasPressedThisFrame ||
+          Keyboard.current.f2Key.wasPressedThisFrame)
+      {
+        var mgr = AdminCheatManager.EnsureInstance();
+        if (mgr != null)
+        {
+          mgr.ToggleMenu();
+        }
+      }
+      else if (AdminCheatManager.IsOpen && Keyboard.current.escapeKey.wasPressedThisFrame)
+      {
+        var mgr = AdminCheatManager.EnsureInstance();
+        if (mgr != null)
+        {
+          mgr.CloseMenu();
+        }
+      }
+    }
+
     // Update Debug Overlay only when it is active/visible
     if (debugOverlayRoot != null && debugOverlayRoot.activeInHierarchy)
     {
@@ -312,14 +343,27 @@ public class AdminCheatUI : MonoBehaviour
   /// </summary>
   private void SetPanelVisible(bool visible)
   {
+    // 0. Root CanvasGroup (nếu có gắn trên AdminCheatCanvas để ẩn/hiện toàn bộ canvas)
+    if (rootCanvasGroup == null)
+    {
+      rootCanvasGroup = GetComponent<CanvasGroup>();
+    }
+
+    if (rootCanvasGroup != null)
+    {
+      rootCanvasGroup.alpha = visible ? 1f : 0f;
+      rootCanvasGroup.interactable = visible;
+      rootCanvasGroup.blocksRaycasts = visible;
+    }
+
     // 1. Main Admin Panel
-    if (mainPanelCanvasGroup != null)
+    if (mainPanelCanvasGroup != null && mainPanelCanvasGroup != rootCanvasGroup)
     {
       mainPanelCanvasGroup.alpha = visible ? 1f : 0f;
       mainPanelCanvasGroup.interactable = visible;
       mainPanelCanvasGroup.blocksRaycasts = visible;
     }
-    else if (mainPanelRoot != null)
+    else if (mainPanelRoot != null && mainPanelCanvasGroup == null)
     {
       mainPanelRoot.SetActive(visible);
     }
@@ -401,20 +445,27 @@ public class AdminCheatUI : MonoBehaviour
         txtPlayerPos.text = $"Position: <color=#81D4FA>({pos.x:F1}, {pos.y:F1}, {pos.z:F1})</color>";
       }
 
-      if (txtCurrentRoom != null && DungeonManager.Instance != null && DungeonManager.Instance.currentData != null)
+      if (txtCurrentRoom != null)
       {
-        float tSize = (DungeonManager.Instance.generator != null) ? DungeonManager.Instance.generator.tileSize : 2f;
-        int gridX = Mathf.FloorToInt(pos.x / tSize);
-        int gridZ = Mathf.FloorToInt(pos.z / tSize);
-        RoomData room = DungeonManager.Instance.currentData.GetRoomAt(gridX, gridZ);
-
-        if (room != null)
+        if (DungeonManager.Instance != null && DungeonManager.Instance.currentData != null)
         {
-          txtCurrentRoom.text = $"Room: <color=#FFE082>#{room.id} ({room.type})</color>";
+          float tSize = (DungeonManager.Instance.generator != null) ? DungeonManager.Instance.generator.tileSize : 2f;
+          int gridX = Mathf.FloorToInt(pos.x / tSize);
+          int gridZ = Mathf.FloorToInt(pos.z / tSize);
+          RoomData room = DungeonManager.Instance.currentData.GetRoomAt(gridX, gridZ);
+
+          if (room != null)
+          {
+            txtCurrentRoom.text = $"Room: <color=#FFE082>#{room.id} ({room.type})</color>";
+          }
+          else
+          {
+            txtCurrentRoom.text = "Room: <color=#888888>Corridor / Entrance</color>";
+          }
         }
         else
         {
-          txtCurrentRoom.text = "Room: <color=#888888>Corridor / Entrance</color>";
+          txtCurrentRoom.text = "Location: <color=#81C784>Haven Village Hub (Peaceful)</color>";
         }
       }
     }

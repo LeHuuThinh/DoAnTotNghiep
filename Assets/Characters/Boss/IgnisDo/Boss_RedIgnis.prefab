@@ -183,6 +183,7 @@ MonoBehaviour:
   maxHealth: 1200
   currentHealth: 1200
   isInvulnerable: 0
+  baseDefense: 25
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -205,6 +206,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bossMaxHealth: 1200
+  bossDefense: 25
   maxPoise: 500
   currentPoise: 500
   weakenFrontDuration: 4.27

@@ -935,13 +935,13 @@ public class PlayerBotAI : MonoBehaviour
             GUI.color = new Color(0.2f, 1f, 0.4f, 0.95f);
             GUI.Box(new Rect(20, 20, 440, 55), 
                 $"🤖 [BOT PLAYER ĐANG TỰ ĐÁNH (SPARRING)]\n" +
-                $"Trạng thái: {currentState} | [B]: TẮT BOT | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
+                $"Trạng thái: {currentState} | [B]: TẮT BOT | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
         }
         else
         {
             GUI.color = new Color(1f, 1f, 1f, 0.85f);
-            GUI.Box(new Rect(20, 20, 390, 36), 
-                $"🎮 Thủ công | [B]: Bật Bot | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
+GUI.Box(new Rect(20, 20, 380, 36), 
+                $"🎮 Thủ công | [B]: Bật Bot | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
         }
 
         GUI.color = Color.white;

@@ -1,0 +1,29 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Potion_Health_Large
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: potion_health_large
+  itemName: Large Health Potion
+  description: "A potent restorative draught brewed from ancient mystical roots. Instantly restores 100 Health points."
+  icon: {fileID: 21300000, guid: 04653cd57cca946458fdd5241634c67d, type: 3}
+  itemType: 2
+  rarity: 2
+  maxStack: 5
+  goldValue: 65
+  bonusAttack: 0
+  bonusDefense: 0
+  bonusHealth: 0
+  bonusStamina: 0
+  healAmount: 100
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 0}

@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 347b07964517b0046ad4f4bd42602197, type: 3}
+  m_Name: EquipmentShopData
+  m_EditorClassIdentifier: InfiniteLabyrinth.Shop::InfiniteLabyrinth.Shop.ShopData
+  shopId: equipment_shop
+  shopTitle: EQUIPMENT & ARMORY
+  shopDescription: Basic weapons and sturdy armor for adventurers.
+  items:
+  - itemData: {fileID: 11400000, guid: 0a5275c8def1647489bd98f46bc3a2d2, type: 2}
+    buyPrice: 60
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: b048573c4f6bbda4f9d151acaf76c80b, type: 2}
+    buyPrice: 40
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 1fa95291773753f4b9021b52e49ec4c2, type: 2}
+    buyPrice: 100
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 29aa6209c27f86e4b81c5651ce3bffe7, type: 2}
+    buyPrice: 180
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
+    buyPrice: 250
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 497c38e457a3ced41aaad0c647b95eda, type: 2}
+    buyPrice: 50
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: eccf2470cd8b90e4e99ffed5bed4897a, type: 2}
+    buyPrice: 100
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+    buyPrice: 180
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 596a197d90005564ab7e6937e9777465, type: 2}
+    buyPrice: 300
+    stockQuantity: -1

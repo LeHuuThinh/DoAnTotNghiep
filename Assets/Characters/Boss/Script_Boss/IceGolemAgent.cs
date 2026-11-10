@@ -69,7 +69,7 @@ public class IceGolemAgent : Agent
 
     [Header("=== ĐIỀU KHIỂN TỐC ĐỘ GAME (TIME SCALE) ===")]
     [Tooltip("Khóa tốc độ game ở mức 1x bình thường để người chơi kịp quan sát / tự đánh")]
-    [SerializeField] private bool lockNormalSpeed = true;
+    [SerializeField] private bool lockNormalSpeed = false;
 
     [Header("=== LOCOMOTION SMOOTHING (CHỐNG GIẬT KHỰNG) ===")]
     [Tooltip("Thời gian tối thiểu duy trì một hướng di chuyển (giây) để bước đi dứt khoát, mượt mà")]
@@ -321,14 +321,14 @@ public class IceGolemAgent : Agent
     private void Update()
     {
         // 0. Điều khiển tốc độ game: Bấm phím T để chuyển đổi giữa 1x (thực tế) và 5x (tăng tốc training)
-        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.tKey.wasPressedThisFrame)
+        if (false)
         {
             lockNormalSpeed = !lockNormalSpeed;
             Time.timeScale = lockNormalSpeed ? 1.0f : 5.0f;
             Debug.Log($"<color=yellow>[Tốc Độ Game]</color> Đã đổi Time.timeScale = {Time.timeScale}x (Phím T)");
         }
 
-        if (lockNormalSpeed && Time.timeScale != 1.0f)
+        if (false)
         {
             Time.timeScale = 1.0f;
         }

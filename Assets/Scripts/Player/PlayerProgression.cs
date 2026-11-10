@@ -119,6 +119,27 @@ namespace InfiniteLabyrinth.Progression
       DontDestroyOnLoad(gameObject);
     }
 
+    private void OnEnable()
+    {
+      UnityEngine.SceneManagement.SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+      UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+    private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+      StartCoroutine(DelayedApplyStatsOnSceneLoaded());
+    }
+
+    private System.Collections.IEnumerator DelayedApplyStatsOnSceneLoaded()
+    {
+      yield return null; // Chờ 1 frame để Player mới nạp xong
+      ApplyStatsToPlayer();
+    }
+
     private void Start()
     {
       // Đồng bộ chỉ số lên Player khi bắt đầu game

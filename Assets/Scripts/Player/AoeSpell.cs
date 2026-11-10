@@ -10,14 +10,22 @@ public class AoeSpell : MonoBehaviour
   [SerializeField] private float explodeDelay = 0.5f;     // Thời gian tụ khí trước khi phát nổ
   [SerializeField] private LayerMask targetLayers;       // BẮT BUỘC CHỌN "Enemy" TRÊN INSPECTOR
 
+  [Header("Hitlag Settings")]
+  [Tooltip("Thời gian khựng đơ game (giây) khi vụ nổ chấn địa AOE trúng quái vật")]
+  [SerializeField] private float hitlagDuration = 0.20f;
+  [Range(0.01f, 0.2f)]
+  [SerializeField] private float hitlagTimeScale = 0.05f;
+
   [Header("Timing")]
   [SerializeField] private float totalLifeTime = 3.0f;
 
   private Transform attacker;
+  private float bonusDamage = 0f;
 
-  public void Initialize(Transform attackerRoot)
+  public void Initialize(Transform attackerRoot, float additionalBonusDamage = 0f)
   {
     attacker = attackerRoot;
+    bonusDamage = additionalBonusDamage;
 
     // Kích hoạt tất cả Particle System con của cụm AOE
     ParticleSystem[] particles = GetComponentsInChildren<ParticleSystem>();
@@ -37,6 +45,7 @@ public class AoeSpell : MonoBehaviour
     // Quét sát thương hình cầu quanh tâm
     Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius, targetLayers);
 
+    bool hitAny = false;
     foreach (Collider col in hitColliders)
     {
       if (attacker != null && col.transform.root == attacker) continue;
@@ -44,12 +53,19 @@ public class AoeSpell : MonoBehaviour
       IDamageable damageable = col.GetComponentInParent<IDamageable>();
       if (damageable != null)
       {
+        hitAny = true;
         Vector3 hitPoint = col.ClosestPoint(transform.position);
         Vector3 knockbackDir = (col.transform.position - transform.position).normalized;
         knockbackDir.y = 0.25f; // Hất quái hơi văng bổng lên
 
-        damageable.TakeDamage(damage, hitPoint, knockbackDir, knockback);
+        float finalDamage = Mathf.Max(1f, damage + bonusDamage);
+        damageable.TakeDamage(finalDamage, hitPoint, knockbackDir, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillQ);
       }
+    }
+
+    if (hitAny)
+    {
+      TriggerPlayerHitlag();
     }
   }
 
@@ -60,5 +76,21 @@ public class AoeSpell : MonoBehaviour
     Gizmos.DrawSphere(transform.position, radius);
     Gizmos.color = Color.magenta;
     Gizmos.DrawWireSphere(transform.position, radius);
+  }
+
+  private void TriggerPlayerHitlag()
+  {
+    if (hitlagDuration <= 0f) return;
+    if (attacker != null)
+    {
+      PlayerFeedback feedback = attacker.GetComponent<PlayerFeedback>() ?? attacker.GetComponentInChildren<PlayerFeedback>();
+      if (feedback != null)
+      {
+        feedback.TriggerHitlag(hitlagDuration, hitlagTimeScale);
+        return;
+      }
+    }
+    PlayerFeedback anyFeedback = FindAnyObjectByType<PlayerFeedback>();
+    anyFeedback?.TriggerHitlag(hitlagDuration, hitlagTimeScale);
   }
 }

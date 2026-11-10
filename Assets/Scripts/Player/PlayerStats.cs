@@ -33,16 +33,18 @@ public class PlayerStats : MonoBehaviour
   [SerializeField] private float parryWhiffCost = 20f;
 
   [Header("=== SPIRIT (NĂNG LƯỢNG KỸ NĂNG) ===")]
-  [Tooltip("Năng lượng kỹ năng tối đa (Cap = 150)")]
-  [SerializeField] private float maxSpirit = 150f;
+  [Tooltip("Năng lượng kỹ năng tối đa (Cap = 200)")]
+  [SerializeField] private float maxSpirit = 200f;
   [Tooltip("Năng lượng kỹ năng hiện tại (theo dõi thời gian thực)")]
   [SerializeField] private float currentSpirit = 0f;
 
   [Header("Spirit Costs (Tiêu Hao Cho Kỹ Năng)")]
   [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng E (Slash Projectile)")]
-  [SerializeField] private float skillECost = 50f;
+  [SerializeField] private float skillECost = 60f;
   [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng Q (AOE Spell)")]
-  [SerializeField] private float skillQCost = 100f;
+  [SerializeField] private float skillQCost = 90f;
+  [Tooltip("Năng lượng tiêu hao khi dùng Kỹ năng R (Ultimate Colossal Slash)")]
+  [SerializeField] private float skillRCost = 175f;
 
   [Header("Spirit Gains (Tích Lũy Từ Combat)")]
   [Tooltip("Năng lượng nhận được khi chém thường trúng quái")]
@@ -75,6 +77,7 @@ public class PlayerStats : MonoBehaviour
 
   public float SkillECost => skillECost;
   public float SkillQCost => skillQCost;
+  public float SkillRCost => skillRCost;
 
   public float SpiritGainOnLightHit => spiritGainOnLightHit;
   public float SpiritGainOnChargeHit => spiritGainOnChargeHit;
@@ -83,11 +86,78 @@ public class PlayerStats : MonoBehaviour
 
   private float baseMaxStamina = -1f;
 
+  private static float? s_PersistentSpirit = null;
+
+  public static void ResetPersistentSpirit()
+  {
+    s_PersistentSpirit = 0f;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.ResetPlayerSpirit();
+    }
+  }
+
+  public static void SetPersistentSpirit(float spirit)
+  {
+    s_PersistentSpirit = spirit;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerSpirit(spirit);
+    }
+  }
+
+  /// <summary>
+  /// Hồi đầy 100% Thần lực (Spirit) - Dành cho Chuông Làng hoặc Hồi sinh
+  /// </summary>
+  public void RefillSpiritToFull()
+  {
+    currentSpirit = maxSpirit;
+    s_PersistentSpirit = maxSpirit;
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SavePlayerSpirit(maxSpirit);
+    }
+    onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
+  }
+
   private void Awake()
   {
     baseMaxStamina = maxStamina;
     currentStamina = maxStamina;
-    currentSpirit = Mathf.Clamp(currentSpirit, 0f, maxSpirit);
+
+    // Khôi phục Năng lượng Kỹ năng (Spirit) xuyên Scene
+    if (s_PersistentSpirit.HasValue)
+    {
+      currentSpirit = Mathf.Clamp(s_PersistentSpirit.Value, 0f, maxSpirit);
+    }
+    else if (GameManager.HasInstance && GameManager.Instance.HasSavedSpirit)
+    {
+      currentSpirit = Mathf.Clamp(GameManager.Instance.SavedSpirit, 0f, maxSpirit);
+      s_PersistentSpirit = currentSpirit;
+    }
+    else
+    {
+      currentSpirit = Mathf.Clamp(currentSpirit, 0f, maxSpirit);
+      s_PersistentSpirit = currentSpirit;
+    }
+  }
+
+  private void OnDisable()
+  {
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+    {
+      GameManager.Instance.SavePlayerSpirit(currentSpirit);
+    }
+  }
+
+  private void OnDestroy()
+  {
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+    {
+      GameManager.Instance.SavePlayerSpirit(currentSpirit);
+    }
   }
 
   /// <summary>
@@ -205,6 +275,8 @@ public class PlayerStats : MonoBehaviour
     }
 
     currentSpirit = Mathf.Max(0f, currentSpirit - amount);
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance) GameManager.Instance.SavePlayerSpirit(currentSpirit);
     onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
     return true;
   }
@@ -213,6 +285,8 @@ public class PlayerStats : MonoBehaviour
   {
     if (amount <= 0f) return;
     currentSpirit = Mathf.Min(maxSpirit, currentSpirit + amount);
+    s_PersistentSpirit = currentSpirit;
+    if (GameManager.HasInstance) GameManager.Instance.SavePlayerSpirit(currentSpirit);
     onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
   }
 }

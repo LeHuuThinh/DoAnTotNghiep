@@ -136,14 +136,18 @@ namespace InfiniteLabyrinth.Inventory
         for (int i = 0; i < lootTable.Count; i++)
         {
           var entry = lootTable[i];
-          if (entry != null && entry.item != null)
+          if (entry != null)
           {
             if (Random.value <= entry.dropChance)
             {
-              int count = entry.EvaluateQuantity();
-              if (count > 0)
+              ItemData resolvedItem = entry.ResolveItem();
+              if (resolvedItem != null)
               {
-                requests.Add(new DropRequest { Item = entry.item, Count = count, Prefab = worldPickupPrefab });
+                int count = entry.EvaluateQuantity();
+                if (count > 0)
+                {
+                  requests.Add(new DropRequest { Item = resolvedItem, Count = count, Prefab = worldPickupPrefab });
+                }
               }
             }
           }
@@ -373,5 +377,39 @@ namespace InfiniteLabyrinth.Inventory
 
       return targetGroundPos;
     }
+
+    /// <summary>
+    /// API hỗ trợ cài đặt cấu hình rơi Vàng từ Editor/Script
+    /// </summary>
+    public void ConfigureGold(ItemData goldItem, float chance, int min, int max)
+    {
+      goldItemData = goldItem;
+      goldDropChance = Mathf.Clamp01(chance);
+      minGold = min;
+      maxGold = max;
+    }
+
+    /// <summary>
+    /// API hỗ trợ gán danh sách rơi đồ từ Editor/Script
+    /// </summary>
+    public void SetLootTable(List<LootEntry> newTable)
+    {
+      lootTable = newTable != null ? new List<LootEntry>(newTable) : new List<LootEntry>();
+    }
+
+    /// <summary>
+    /// API hỗ trợ thiết lập Prefab hiển thị rơi đồ
+    /// </summary>
+    public void SetPrefabs(GameObject worldPickup, GoldDropVisualConfig goldConfig)
+    {
+      if (worldPickup != null) worldPickupPrefab = worldPickup;
+      if (goldConfig != null) goldVisualConfig = goldConfig;
+    }
+
+    public List<LootEntry> GetLootTable() => lootTable;
+    public ItemData GoldItem => goldItemData;
+    public float GoldDropChance => goldDropChance;
+    public int MinGold => minGold;
+    public int MaxGold => maxGold;
   }
 }

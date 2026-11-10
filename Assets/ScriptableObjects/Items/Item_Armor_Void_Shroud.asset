@@ -1,0 +1,29 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Armor_Void_Shroud
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: armor_void_shroud
+  itemName: Voidwalker Mantle
+  description: "Ethereal mantle woven from the deep cosmic void, warping mortal strikes away from the bearer (+58 DEF, +320 HP, +40 Stamina)."
+  icon: {fileID: 21300000, guid: cae15144b15116f4eb7f596da188e229, type: 3}
+  itemType: 1
+  rarity: 4
+  maxStack: 1
+  goldValue: 1400
+  bonusAttack: 0
+  bonusDefense: 58
+  bonusHealth: 320
+  bonusStamina: 40
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 0}

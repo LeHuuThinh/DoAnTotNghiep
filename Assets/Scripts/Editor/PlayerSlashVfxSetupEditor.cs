@@ -186,6 +186,13 @@ namespace InfiniteLabyrinth.Editor
           Debug.Log("[PlayerSlashVfxSetup] + Đã gắn Q Slash VFX cho Skill Q");
         }
 
+        SerializedProperty propSkillUltPrefab = soSlash.FindProperty("skillUltConfig.customPrefab");
+        if (propSkillUltPrefab != null && (propSkillUltPrefab.objectReferenceValue == null || slashVfxPrefab != null))
+        {
+          propSkillUltPrefab.objectReferenceValue = slashVfxPrefab;
+          Debug.Log("[PlayerSlashVfxSetup] + Đã gắn Slash VFX cho Skill Ult");
+        }
+
         SerializedProperty propRoot = soSlash.FindProperty("slashSpawnRoot");
         if (propRoot != null && propRoot.objectReferenceValue == null)
         {
@@ -290,6 +297,12 @@ namespace InfiniteLabyrinth.Editor
           propSkillQPrefab.objectReferenceValue = qSlashVfxPrefab;
         }
 
+        SerializedProperty propSkillUltPrefab = soSlash.FindProperty("skillUltConfig.customPrefab");
+        if (propSkillUltPrefab != null && (propSkillUltPrefab.objectReferenceValue == null || slashVfxPrefab != null))
+        {
+          propSkillUltPrefab.objectReferenceValue = slashVfxPrefab;
+        }
+
         SerializedProperty propRoot = soSlash.FindProperty("slashSpawnRoot");
         if (propRoot != null && propRoot.objectReferenceValue == null)
         {
@@ -390,7 +403,7 @@ namespace InfiniteLabyrinth.Editor
       }
       EditorGUILayout.EndHorizontal();
 
-      EditorGUILayout.HelpBox("Phím tắt trong Game:\n• [ : Giảm tốc độ\n• ] : Tăng tốc độ\n• \\ : Reset 1.0x chuẩn\n• Giữ G hoặc T : Bật Slow-Mo tức thì (0.15x)", MessageType.Info);
+      EditorGUILayout.HelpBox("Phím tắt trong Game:\n• [ : Giảm tốc độ (1.0 -> 0.5 -> 0.25 -> 0.1 -> 0.05)\n• ] : Tăng tốc độ (0.05 -> 0.1 -> 0.25 -> 0.5 -> 1.0)", MessageType.Info);
       EditorGUILayout.EndVertical();
 
       EditorGUILayout.Space(12);
@@ -449,6 +462,11 @@ namespace InfiniteLabyrinth.Editor
       if (GUILayout.Button("💥 Test Skill Q Slash (Đập Đất AOE)", GUILayout.Height(30)))
       {
         slashScript.TestSkillQ();
+      }
+      GUI.backgroundColor = new Color(1f, 0.25f, 0.25f);
+      if (GUILayout.Button("⚔️ Test Skill Ult Slash (Chém Ngang Khổng Lồ)", GUILayout.Height(32)))
+      {
+        slashScript.TestSkillUlt();
       }
       GUI.backgroundColor = Color.white;
 

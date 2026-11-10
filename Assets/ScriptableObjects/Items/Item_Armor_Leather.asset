@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,18 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
   m_Name: Item_Armor_Leather
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
-  id: armor_warrior_leather
-  itemName: Explorer Leather Armor
-  description: Durable leather armor that reduces incoming damage (+6 DEF) and increases
-    vitality (+25 Max HP).
-  icon: {fileID: 21300000, guid: 2808837efb0bfb14ab39aafa9bdefa53, type: 3}
+  id: armor_leather_explorer
+  itemName: Explorer Leather Vest
+  description: "Sturdy explorer leather vest crafted to withstand punishing dungeon expeditions (+9 DEF, +45 HP, +15 Stamina)."
+  icon: {fileID: 21300000, guid: e18ac49bbc813714c829786739242efc, type: 3}
   itemType: 1
-  rarity: 0
+  rarity: 1
   maxStack: 1
-  goldValue: 60
+  goldValue: 160
   bonusAttack: 0
-  bonusDefense: 6
-  bonusHealth: 25
+  bonusDefense: 9
+  bonusHealth: 45
   bonusStamina: 15
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}

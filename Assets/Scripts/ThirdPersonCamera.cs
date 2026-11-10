@@ -620,6 +620,11 @@ public class ThirdPersonCamera : MonoBehaviour
         return;
       }
 
+      if (InfiniteLabyrinth.UI.ShopUIController.IsOpen)
+      {
+        return;
+      }
+
       Cursor.lockState = CursorLockMode.Locked;
       Cursor.visible = false;
     }

@@ -14,6 +14,7 @@ namespace InfiniteLabyrinth.UI
   /// </summary>
   public class InventoryUIController : MonoBehaviour
   {
+    public static InventoryUIController Instance { get; private set; }
     public static bool IsOpen { get; private set; } = false;
 
     public enum InventoryTab
@@ -35,6 +36,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Controller hiển thị 3D Character Preview")]
     [SerializeField] private CharacterPreviewController characterPreview;
 
+    [Tooltip("Toggle chuyển đổi xem trước 3D / 2D")]
+    [SerializeField] private CharacterPreviewToggleUI previewModeToggle;
+
     [Tooltip("Ô trang bị Vũ khí")]
     [SerializeField] private EquipmentSlotUI weaponSlot;
 
@@ -43,6 +47,12 @@ namespace InfiniteLabyrinth.UI
 
     [Tooltip("Panel hiển thị chỉ số nhân vật thời gian thực")]
     [SerializeField] private PlayerStatsPanelUI statsPanel;
+
+    [Tooltip("Ô trang bị Bình thuốc / Tiêu hao (UsableSlot) ở LeftPanel")]
+    [SerializeField] private EquipmentSlotUI usableSlot;
+
+    [Tooltip("Ô phím tắt Bình thuốc trên màn hình HUD (UsableSlotUI)")]
+    [SerializeField] private UsableSlotUI hudUsableSlot;
 
     [Header("=== CỬA SỔ PHẢI (RIGHT PANE) ===")]
     [Tooltip("Container chứa 30 ô túi đồ (có GridLayoutGroup)")]
@@ -68,6 +78,21 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private GameObject tabWeaponHighlight;
     [SerializeField] private GameObject tabArmorHighlight;
     [SerializeField] private GameObject tabItemHighlight;
+
+    [Header("=== HIỆU ỨNG PHỒNG NÚT TAB (TAB SCALE ANIMATION) ===")]
+    [Tooltip("Tỉ lệ phồng khi tab đang được chọn (1.08 = phồng to hơn 8% cho dễ nhận biết)")]
+    [SerializeField] private float tabSelectedScale = 1.08f;
+
+    [Tooltip("Tỉ lệ bình thường khi tab không được chọn")]
+    [SerializeField] private float tabNormalScale = 1.0f;
+
+    [Tooltip("Độ phồng tối đa lúc nảy (punch peak) khi bấm chuyển tab")]
+    [SerializeField] private float tabPopPunchScale = 1.15f;
+
+    [Tooltip("Thời gian hoạt ảnh phồng nảy khi chuyển tab (giây)")]
+    [SerializeField] private float tabAnimDuration = 0.18f;
+
+    private Coroutine activeTabAnimRoutine;
 
     [Header("=== HOẠT ẢNH CHUYỂN CẢNH (SOULS-LIKE TRANSITIONS) ===")]
     [Tooltip("Panel bên trái chứa 3D Preview, Trang bị và Stats")]
@@ -101,11 +126,23 @@ namespace InfiniteLabyrinth.UI
 
     private void Awake()
     {
+      Instance = this;
+
+      if (GetComponent<InventoryDragDropController>() == null)
+      {
+        gameObject.AddComponent<InventoryDragDropController>();
+      }
+
       EnsureEventSystem();
 
       if (rootCanvasGroup == null)
       {
         rootCanvasGroup = GetComponent<CanvasGroup>();
+      }
+
+      if (previewModeToggle == null)
+      {
+        previewModeToggle = GetComponentInChildren<CharacterPreviewToggleUI>(true);
       }
 
       AutoFindPanels();
@@ -137,6 +174,10 @@ namespace InfiniteLabyrinth.UI
       {
         armorSlot.OnClicked += HandleEquipmentSlotClicked;
       }
+      if (usableSlot != null)
+      {
+        usableSlot.OnClicked += HandleEquipmentSlotClicked;
+      }
     }
 
     private void AutoFindPanels()
@@ -144,6 +185,10 @@ namespace InfiniteLabyrinth.UI
       if (leftPanel == null) leftPanel = transform.Find("LeftPanel") as RectTransform;
       if (rightPanel == null) rightPanel = transform.Find("RightPanel") as RectTransform;
       if (darkOverlay == null) darkOverlay = transform.Find("DarkOverlay")?.GetComponent<Image>();
+      if (usableSlot == null && leftPanel != null) usableSlot = leftPanel.Find("UsableSlot")?.GetComponent<EquipmentSlotUI>();
+      if (usableSlot == null) usableSlot = transform.Find("LeftPanel/UsableSlot")?.GetComponent<EquipmentSlotUI>();
+      if (hudUsableSlot == null) hudUsableSlot = GetComponentInParent<Canvas>()?.GetComponentInChildren<UsableSlotUI>(true);
+      AutoFindTabs();
     }
 
     private void CacheOriginalPositions()
@@ -185,22 +230,49 @@ namespace InfiniteLabyrinth.UI
         InventoryManager.Instance.OnInventoryChanged += HandleInventoryDataChanged;
         InventoryManager.Instance.OnGoldChanged += UpdateGoldDisplay;
         InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChanged;
+        InventoryManager.Instance.OnUsableChanged += HandleUsableChanged;
       }
 
       // Mặc định ẩn Inventory khi vào game
       ForceCloseImmediately();
     }
 
+    private void OnDisable()
+    {
+      if (activeTabAnimRoutine != null)
+      {
+        StopCoroutine(activeTabAnimRoutine);
+        activeTabAnimRoutine = null;
+      }
+    }
+
     private void OnDestroy()
     {
+      if (Instance == this)
+      {
+        Instance = null;
+      }
+
       if (InventoryManager.HasInstance)
       {
         InventoryManager.Instance.OnInventoryChanged -= HandleInventoryDataChanged;
         InventoryManager.Instance.OnGoldChanged -= UpdateGoldDisplay;
         InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChanged;
+        InventoryManager.Instance.OnUsableChanged -= HandleUsableChanged;
       }
 
       IsOpen = false;
+    }
+
+    /// <summary>
+    /// Đóng popup xem chi tiết vật phẩm nếu đang mở
+    /// </summary>
+    public void CloseDetailPopup()
+    {
+      if (itemDetailPopup != null && itemDetailPopup.gameObject.activeSelf)
+      {
+        itemDetailPopup.Hide();
+      }
     }
 
     private void Update()
@@ -226,6 +298,23 @@ namespace InfiniteLabyrinth.UI
         else
         {
           CloseInventory();
+        }
+      }
+
+      // 3. Đồng bộ tiến trình hồi chiêu CDFill cho các ô khi Inventory đang mở
+      if (IsOpen && InventoryManager.HasInstance)
+      {
+        float cdNorm = InventoryManager.Instance.ConsumableCooldownNormalized;
+        if (usableSlot != null)
+        {
+          usableSlot.SetCooldownNormalized(cdNorm);
+        }
+        for (int i = 0; i < bagSlots.Count; i++)
+        {
+          if (bagSlots[i] != null)
+          {
+            bagSlots[i].SetCooldownNormalized(cdNorm);
+          }
         }
       }
     }
@@ -266,8 +355,31 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    public void AutoFindTabs()
+    {
+      Transform tabBar = rightPanel != null ? rightPanel.Find("TabBar") : transform.Find("RightPanel/TabBar");
+      if (tabBar != null)
+      {
+        if (tabAllButton == null) tabAllButton = tabBar.Find("BtnAll")?.GetComponent<Button>();
+        if (tabWeaponButton == null) tabWeaponButton = tabBar.Find("BtnWeapon")?.GetComponent<Button>();
+        if (tabArmorButton == null) tabArmorButton = tabBar.Find("BtnArmor")?.GetComponent<Button>();
+        if (tabItemButton == null) tabItemButton = tabBar.Find("BtnItem")?.GetComponent<Button>();
+
+        if (tabAllHighlight == null && tabAllButton != null)
+          tabAllHighlight = tabAllButton.transform.Find("SelectHighlight")?.gameObject;
+        if (tabWeaponHighlight == null && tabWeaponButton != null)
+          tabWeaponHighlight = tabWeaponButton.transform.Find("SelectHighlight")?.gameObject;
+        if (tabArmorHighlight == null && tabArmorButton != null)
+          tabArmorHighlight = tabArmorButton.transform.Find("SelectHighlight")?.gameObject;
+        if (tabItemHighlight == null && tabItemButton != null)
+          tabItemHighlight = tabItemButton.transform.Find("SelectHighlight")?.gameObject;
+      }
+    }
+
     private void SetupTabButtons()
     {
+      AutoFindTabs();
+
       if (tabAllButton != null)
       {
         tabAllButton.onClick.AddListener(() => SwitchTab(InventoryTab.All));
@@ -291,6 +403,8 @@ namespace InfiniteLabyrinth.UI
         tabItemButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
         if (tabItemHighlight == null) tabItemHighlight = tabItemButton.transform.Find("SelectHighlight")?.gameObject;
       }
+
+      UpdateTabButtonsVisual(animate: false);
     }
 
     private void EnsureEventSystem()
@@ -305,6 +419,12 @@ namespace InfiniteLabyrinth.UI
           esObj.AddComponent<InputSystemUIInputModule>();
           Debug.LogWarning("[Inventory] Scene thiếu EventSystem! Đã tự động tạo EventSystem + InputSystemUIInputModule.");
         }
+      }
+
+      if (EventSystem.current != null)
+      {
+        // Đặt ngưỡng phân biệt giữa Click và Drag (8px) giúp mở popup click rất nhạy và kéo thả mượt mà
+        EventSystem.current.pixelDragThreshold = 8;
       }
     }
 
@@ -326,7 +446,7 @@ namespace InfiniteLabyrinth.UI
 
       // 1. Reset về Tab Tất cả, làm mới dữ liệu và ẩn popup trước khi hiện UI để không bị nháy hình 1 frame
       currentTab = InventoryTab.All;
-      UpdateTabButtonsVisual();
+      UpdateTabButtonsVisual(animate: false);
       RefreshAll();
 
       if (itemDetailPopup != null)
@@ -345,8 +465,12 @@ namespace InfiniteLabyrinth.UI
         cachedPlayerController.LockMovement();
       }
 
-      // 4. Kích hoạt camera xem trước 3D
-      if (characterPreview != null)
+      // 4. Kích hoạt camera xem trước (áp dụng theo chế độ 3D hoặc 2D)
+      if (previewModeToggle != null)
+      {
+        previewModeToggle.ApplyCurrentModeToPreview();
+      }
+      else if (characterPreview != null)
       {
         characterPreview.EnablePreview(true);
       }
@@ -628,7 +752,7 @@ namespace InfiniteLabyrinth.UI
     public void SwitchTab(InventoryTab tab)
     {
       currentTab = tab;
-      UpdateTabButtonsVisual();
+      UpdateTabButtonsVisual(animate: true);
 
       if (itemDetailPopup != null)
       {
@@ -638,13 +762,122 @@ namespace InfiniteLabyrinth.UI
       RefreshBagGrid();
     }
 
-    private void UpdateTabButtonsVisual()
+    public void UpdateTabButtonsVisual(bool animate = false)
     {
       // Bật / Tắt viền SelectHighlight của từng Tab khi được chọn
       if (tabAllHighlight != null) tabAllHighlight.SetActive(currentTab == InventoryTab.All);
       if (tabWeaponHighlight != null) tabWeaponHighlight.SetActive(currentTab == InventoryTab.Weapon);
       if (tabArmorHighlight != null) tabArmorHighlight.SetActive(currentTab == InventoryTab.Armor);
       if (tabItemHighlight != null) tabItemHighlight.SetActive(currentTab == InventoryTab.Item);
+
+      // Đưa nút tab đang chọn lên trên cùng của TabBar (render on top of neighbor buttons)
+      Button selectedBtn = GetTabButton(currentTab);
+      if (selectedBtn != null)
+      {
+        selectedBtn.transform.SetAsLastSibling();
+      }
+
+      if (animate && gameObject.activeInHierarchy)
+      {
+        if (activeTabAnimRoutine != null)
+        {
+          StopCoroutine(activeTabAnimRoutine);
+        }
+        activeTabAnimRoutine = StartCoroutine(AnimateTabTransitionRoutine());
+      }
+      else
+      {
+        if (activeTabAnimRoutine != null)
+        {
+          StopCoroutine(activeTabAnimRoutine);
+          activeTabAnimRoutine = null;
+        }
+        ApplyTabScalesImmediate();
+      }
+    }
+
+    public Button GetTabButton(InventoryTab tab)
+    {
+      switch (tab)
+      {
+        case InventoryTab.All: return tabAllButton;
+        case InventoryTab.Weapon: return tabWeaponButton;
+        case InventoryTab.Armor: return tabArmorButton;
+        case InventoryTab.Item: return tabItemButton;
+        default: return null;
+      }
+    }
+
+    private void ApplyTabScalesImmediate()
+    {
+      SetButtonScaleImmediate(tabAllButton, currentTab == InventoryTab.All ? tabSelectedScale : tabNormalScale);
+      SetButtonScaleImmediate(tabWeaponButton, currentTab == InventoryTab.Weapon ? tabSelectedScale : tabNormalScale);
+      SetButtonScaleImmediate(tabArmorButton, currentTab == InventoryTab.Armor ? tabSelectedScale : tabNormalScale);
+      SetButtonScaleImmediate(tabItemButton, currentTab == InventoryTab.Item ? tabSelectedScale : tabNormalScale);
+    }
+
+    private void SetButtonScaleImmediate(Button btn, float scale)
+    {
+      if (btn != null)
+      {
+        btn.transform.localScale = new Vector3(scale, scale, 1f);
+      }
+    }
+
+    private System.Collections.IEnumerator AnimateTabTransitionRoutine()
+    {
+      float duration = Mathf.Max(0.05f, tabAnimDuration);
+      float elapsed = 0f;
+
+      // Lưu scale hiện tại của cả 4 nút làm điểm bắt đầu (chống giật khi bấm đổi liên tục)
+      float allStart = tabAllButton != null ? tabAllButton.transform.localScale.x : tabNormalScale;
+      float weaponStart = tabWeaponButton != null ? tabWeaponButton.transform.localScale.x : tabNormalScale;
+      float armorStart = tabArmorButton != null ? tabArmorButton.transform.localScale.x : tabNormalScale;
+      float itemStart = tabItemButton != null ? tabItemButton.transform.localScale.x : tabNormalScale;
+
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+
+        // Hiệu ứng nảy hình chuông (sine wave) cho nút được chọn: đạt đỉnh ở t=0.5
+        float punchFactor = Mathf.Sin(t * Mathf.PI);
+
+        // Đường cong chuyển động mượt mà EaseOutQuad
+        float ease = UITransitionHelper.EaseOutQuad(t);
+
+        // Cập nhật từng nút
+        UpdateSingleTabScale(tabAllButton, allStart, currentTab == InventoryTab.All, ease, punchFactor);
+        UpdateSingleTabScale(tabWeaponButton, weaponStart, currentTab == InventoryTab.Weapon, ease, punchFactor);
+        UpdateSingleTabScale(tabArmorButton, armorStart, currentTab == InventoryTab.Armor, ease, punchFactor);
+        UpdateSingleTabScale(tabItemButton, itemStart, currentTab == InventoryTab.Item, ease, punchFactor);
+
+        yield return null;
+      }
+
+      ApplyTabScalesImmediate();
+      activeTabAnimRoutine = null;
+    }
+
+    private void UpdateSingleTabScale(Button btn, float startScale, bool isSelected, float ease, float punchFactor)
+    {
+      if (btn == null) return;
+
+      float current;
+      if (isSelected)
+      {
+        // Nội suy từ startScale về tabSelectedScale, cộng thêm độ phồng punch nảy ở giữa
+        float baseScale = Mathf.Lerp(startScale, tabSelectedScale, ease);
+        float punchOffset = Mathf.Max(0.04f, tabPopPunchScale - tabSelectedScale) * punchFactor;
+        current = baseScale + punchOffset;
+      }
+      else
+      {
+        // Nội suy mượt từ startScale về tabNormalScale
+        current = Mathf.Lerp(startScale, tabNormalScale, ease);
+      }
+
+      btn.transform.localScale = new Vector3(current, current, 1f);
     }
 
     /// <summary>
@@ -752,6 +985,11 @@ namespace InfiniteLabyrinth.UI
       {
         armorSlot.SetEquippedItem(InventoryManager.Instance.EquippedArmor);
       }
+
+      if (usableSlot != null)
+      {
+        usableSlot.SetEquippedItem(InventoryManager.Instance.EquippedUsable, InventoryManager.Instance.EquippedUsableCount);
+      }
     }
 
     /// <summary>
@@ -840,6 +1078,14 @@ namespace InfiniteLabyrinth.UI
       {
         RefreshEquipment();
         RefreshStats();
+      }
+    }
+
+    private void HandleUsableChanged(ItemData item, int count)
+    {
+      if (IsOpen)
+      {
+        RefreshEquipment();
       }
     }
   }

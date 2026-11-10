@@ -29,6 +29,7 @@ public class SkeletonMageAI : EnemyAIBase
 
   protected override void Awake()
   {
+    if (enemyDefense <= 0f) enemyDefense = 5f;
     base.Awake();
 
     // Mặc định cự ly đánh xa của Pháp sư

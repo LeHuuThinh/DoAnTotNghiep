@@ -89096,6 +89096,13 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
+  - time: 1
+    functionName: PlayChargeHit1Slash
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 1.1333333
     functionName: DisableWeaponHitbox
     data: 
@@ -89105,6 +89112,13 @@ AnimationClip:
     messageOptions: 0
   - time: 1.6
     functionName: EnableChargeHit2Hitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.6
+    functionName: PlayChargeHit2Slash
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

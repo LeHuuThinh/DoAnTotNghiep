@@ -40,13 +40,30 @@ public class PortalController : MonoBehaviour, IInteractable
   [Tooltip("Nếu bật, tương tác cổng sẽ mở giao diện 2 cửa sổ VictoryPortalUI (Về làng / Đi tầng 2 / Ở lại) thay vì chuyển cảnh ngay")]
   [SerializeField] private bool openVictoryChoiceUI = false;
 
+  private void Awake()
+  {
+    // Tự động kiểm tra và cấu hình scene đích phù hợp nếu bị trùng scene hiện tại
+    string activeScene = SceneManager.GetActiveScene().name;
+    if (string.IsNullOrEmpty(targetSceneName) || targetSceneName == activeScene)
+    {
+      if (activeScene == "LandScene")
+      {
+        targetSceneName = "DungeonScene";
+      }
+      else if (activeScene == "DungeonScene")
+      {
+        targetSceneName = "LandScene";
+      }
+    }
+  }
+
   public void SetVictoryPortalMode(bool isVictoryPortal)
   {
     openVictoryChoiceUI = isVictoryPortal;
     if (isVictoryPortal)
     {
-      interactionPrompt = "Vào Cổng Thắng Trận (Giữ F)";
-      targetName = "Cổng Chiến Thắng";
+      interactionPrompt = "Enter the Portal";
+      targetName = "VictoryPortal";
       requiresHold = true;
       requiredHoldTime = 2.0f;
     }
@@ -54,10 +71,9 @@ public class PortalController : MonoBehaviour, IInteractable
 
   public bool IsVictoryPortal()
   {
+    // Item 3: Chỉ mở UI lựa chọn khi openVictoryChoiceUI được bật hoặc là Cổng Boss sinh ra
     if (openVictoryChoiceUI) return true;
     if (gameObject.name.Contains("Victory") || (transform.root != null && transform.root.name.Contains("Victory"))) return true;
-    if (transform.parent != null && (transform.parent.name.Contains("Socket") || transform.parent.name.Contains("Pedestal") || transform.parent.name.Contains("Boss") || transform.parent.name.Contains("Victory"))) return true;
-    if (SceneManager.GetActiveScene().name == "DungeonScene") return true;
     return false;
   }
 
@@ -126,10 +142,35 @@ public class PortalController : MonoBehaviour, IInteractable
       Instantiate(teleportVfxPrefab, transform.position, Quaternion.identity);
     }
 
+    // Khi trở về Làng (LandScene) từ Dungeon: Tăng ngày +1 và lưu lượng máu còn lại (không tự hồi đầy)
+    if (targetSceneName == "LandScene")
+    {
+      if (GameManager.HasInstance)
+      {
+        GameManager.Instance.AdvanceDay();
+      }
+
+      if (player != null)
+      {
+        Health playerHp = player.GetComponent<Health>();
+        if (playerHp != null && !playerHp.IsDead && GameManager.HasInstance)
+        {
+          GameManager.Instance.SavePlayerHealth(playerHp.CurrentHealth);
+        }
+      }
+    }
+
+    // Nếu đi từ Làng vào DungeonScene, nạp đúng số tầng đang đi được bảo lưu trong GameManager
+    int floorToLoad = targetFloor;
+    if (targetSceneName == "DungeonScene" && GameManager.HasInstance)
+    {
+      floorToLoad = GameManager.Instance.CurrentFloor;
+    }
+
     // Chuyển Scene thông qua LoadingScreenManager (màn hình loading mượt mà kèm mẹo và ảnh nền)
     if (LoadingScreenManager.Instance != null)
     {
-      LoadingScreenManager.Instance.LoadScene(targetSceneName, targetFloor);
+      LoadingScreenManager.Instance.LoadScene(targetSceneName, floorToLoad);
     }
     else
     {

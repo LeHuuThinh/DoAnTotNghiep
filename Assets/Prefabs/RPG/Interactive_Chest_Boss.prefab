@@ -9978,26 +9978,50 @@ MonoBehaviour:
   worldPickupPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   goldVisualConfig: {fileID: 11400000, guid: 5bcd08a0ae97b46408bae0f47c5dc93d, type: 2}
   lootTable:
-  - item: {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
-    dropChance: 1
-    minQuantity: 2
-    maxQuantity: 4
-  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
-    dropChance: 1
-    minQuantity: 2
-    maxQuantity: 5
-  - item: {fileID: 11400000, guid: d3d64b16a9d03e749abe5fc57238dfc6, type: 2}
+  - item: {fileID: 11400000, guid: d607f6844e69096449d100f1442f234d, type: 2}
+    randomItemPool: []
     dropChance: 1
     minQuantity: 1
     maxQuantity: 1
-  - item: {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+  - item: {fileID: 11400000, guid: 0600cc650835ff64f9d30e08d9b7b7e1, type: 2}
+    randomItemPool: []
     dropChance: 1
+    minQuantity: 2
+    maxQuantity: 3
+  - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    randomItemPool: []
+    dropChance: 1
+    minQuantity: 3
+    maxQuantity: 5
+  - item: {fileID: 11400000, guid: c8e4a6db4e421654787fae0a632deb8f, type: 2}
+    randomItemPool: []
+    dropChance: 1
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: 420a4cbe66f95064192363210dfc9861, type: 2}
+    randomItemPool: []
+    dropChance: 1
+    minQuantity: 3
+    maxQuantity: 3
+  - item: {fileID: 11400000, guid: 35fb540df63871148a3c056092261912, type: 2}
+    randomItemPool: []
+    dropChance: 1
+    minQuantity: 2
+    maxQuantity: 2
+  - item: {fileID: 11400000, guid: e816844065c55dc498fd01f7533f5181, type: 2}
+    randomItemPool:
+    - {fileID: 11400000, guid: e816844065c55dc498fd01f7533f5181, type: 2}
+    - {fileID: 11400000, guid: f48b5249ecf26854990ea3cf23ec4c8e, type: 2}
+    - {fileID: 11400000, guid: 491a153bff6200e499a954849407be99, type: 2}
+    - {fileID: 11400000, guid: 3721843f2fc6e4047a32332e3c1f758e, type: 2}
+    - {fileID: 11400000, guid: ee9a7b5216f7cfb4b916e0d9eef5c8b3, type: 2}
+    dropChance: 0.65
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 1
-  minGold: 150
-  maxGold: 300
+  minGold: 180
+  maxGold: 350
   minDropRadius: 1
   maxDropRadius: 2.8
   arcHeight: 1.5

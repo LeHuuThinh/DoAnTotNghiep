@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -58,8 +58,7 @@ namespace InfiniteLabyrinth.UI
       EditorGUILayout.EndHorizontal();
     }
 
-    [MenuItem("Infinite Labyrinth/UI/Thiết Lập Victory Portal Choice UI (Task D02-5D)", false, 20)]
-    [MenuItem("Tools/Infinite Labyrinth/Setup Victory Portal UI")]
+    [MenuItem("Infinite Labyrinth/Core Loop & UI/3. Cấu Hình Victory Portal (GM-03)", false, 3)]
     public static void SetupVictoryPortalUIMenuItem()
     {
       // 1. Kiểm tra trong Canvas.prefab
@@ -241,3 +240,4 @@ namespace InfiniteLabyrinth.UI
     }
   }
 }
+

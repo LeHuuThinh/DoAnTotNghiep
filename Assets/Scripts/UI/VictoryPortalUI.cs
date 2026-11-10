@@ -572,6 +572,19 @@ namespace InfiniteLabyrinth.UI
       isOpen = true;
       isExecutingChoice = false;
 
+      // Cập nhật số tầng kế tiếp động dựa theo GameManager (Task GM-03)
+      int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+      nextFloorNumber = currentFloor + 1;
+      // Item 1: NextFloorPanel giữ nguyên text trên là 'Dungeon', chỉ sửa nút bấm ở dưới thành 'GO TO FLOOR <x>'
+      if (dungeonTitle != null)
+      {
+        dungeonTitle.text = "Dungeon";
+      }
+      if (dungeonButtonText != null)
+      {
+        dungeonButtonText.text = $"GO TO FLOOR {nextFloorNumber}";
+      }
+
       // 1. Mở khóa con trỏ chuột
       Cursor.lockState = CursorLockMode.None;
       Cursor.visible = true;
@@ -677,13 +690,32 @@ namespace InfiniteLabyrinth.UI
         audioSource.PlayOneShot(confirmSound);
       }
 
-      switch (choice)
+            switch (choice)
       {
         case PortalChoice.ReturnToTown:
-          Debug.Log($"<color=lime>[VictoryPortalUI]</color> 🏡 Xác nhận TRỞ VỀ LÀNG! Đang chuyển cảnh tới '{townSceneName}'...");
+          Debug.Log($"<color=lime>[VictoryPortalUI]</color> 🏡 Xác nhận TRỞ VỀ LÀNG sau khi diệt Boss! Đang chuyển cảnh tới '{townSceneName}'...");
+          // Item 2: Đã đánh bại Boss của tầng hiện tại -> Cập nhật tăng số tầng lên tầng kế tiếp (+1 Floor)
+          if (GameManager.HasInstance)
+          {
+            GameManager.Instance.AdvanceFloor();
+            GameManager.Instance.AdvanceDay();
+          }
+          int nextTargetFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 2;
+
+          // Item 1: Lưu lượng máu hiện tại sang scene Làng (không tự động hồi đầy, phải tới Chuông Làng cầu nguyện)
+          GameObject playerObjTown = GameObject.FindWithTag("Player");
+          if (playerObjTown != null)
+          {
+            Health playerHp = playerObjTown.GetComponent<Health>();
+            if (playerHp != null && !playerHp.IsDead && GameManager.HasInstance)
+            {
+              GameManager.Instance.SavePlayerHealth(playerHp.CurrentHealth);
+            }
+          }
+
           if (LoadingScreenManager.Instance != null)
           {
-            LoadingScreenManager.Instance.LoadScene(townSceneName, 1);
+            LoadingScreenManager.Instance.LoadScene(townSceneName, nextTargetFloor);
           }
           else
           {
@@ -692,10 +724,28 @@ namespace InfiniteLabyrinth.UI
           break;
 
         case PortalChoice.NextFloor:
-          Debug.Log($"<color=cyan>[VictoryPortalUI]</color> ⚔️ Xác nhận TIẾN VÀO TẦNG {nextFloorNumber}! Đang nạp '{nextFloorSceneName}'...");
+          // GM-03: Xuống Tầng Kế Tiếp -> Tăng CurrentFloor += 1, nạp DungeonScene với Floor mới
+          int targetFloor = (GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1) + 1;
+          Debug.Log($"<color=cyan>[VictoryPortalUI]</color> 🏰 Xác nhận TIẾN VÀO TẦNG {targetFloor}! Đang nạp '{nextFloorSceneName}'...");
+          if (GameManager.HasInstance)
+          {
+            GameManager.Instance.SetFloor(targetFloor);
+
+            // Bảo lưu lượng máu còn lại của người chơi sang tầng kế tiếp
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+              Health playerHp = playerObj.GetComponent<Health>();
+              if (playerHp != null && !playerHp.IsDead)
+              {
+                GameManager.Instance.SavePlayerHealth(playerHp.CurrentHealth);
+              }
+            }
+          }
+
           if (LoadingScreenManager.Instance != null)
           {
-            LoadingScreenManager.Instance.LoadScene(nextFloorSceneName, nextFloorNumber);
+            LoadingScreenManager.Instance.LoadScene(nextFloorSceneName, targetFloor);
           }
           else
           {

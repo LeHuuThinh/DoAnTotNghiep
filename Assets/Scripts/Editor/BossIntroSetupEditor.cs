@@ -53,6 +53,15 @@ namespace InfiniteLabyrinth.Editor
         Debug.Log("<color=yellow>[SetupEditor]</color> ℹ️ Scene đã có BossIntroDirector.");
       }
 
+      SerializedObject soDirector = new SerializedObject(director);
+      SerializedProperty pAnticipation = soDirector.FindProperty("bossJumpAnticipation");
+      if (pAnticipation != null) pAnticipation.floatValue = 0.05f;
+      SerializedProperty pFollow = soDirector.FindProperty("jumpCamFollowDuration");
+      if (pFollow != null) pFollow.floatValue = 5.0f;
+      SerializedProperty pTracking = soDirector.FindProperty("jumpCamTrackingSpeed");
+      if (pTracking != null) pTracking.floatValue = 24.0f;
+      soDirector.ApplyModifiedProperties();
+
       // 3. Kiểm tra Prefab BossPedestal
       GameObject pedestalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/BossPedestal.prefab");
       if (pedestalPrefab != null)

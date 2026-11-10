@@ -88,6 +88,14 @@ namespace InfiniteLabyrinth.Interaction
     [SerializeField] private GameObject bossChestPrefab;
     [Tooltip("Prefab Cổng Dịch Chuyển Chiến Thắng (portal.prefab)")]
     [SerializeField] private GameObject victoryPortalPrefab;
+    [Tooltip("Prefab vòng tròn ma thuật giáng thế trên bục (BossLootSpawnVFX.prefab)")]
+    [SerializeField] private GameObject bossLootSpawnVfxPrefab;
+    [Tooltip("Hệ số nhân tỉ lệ scale của vòng tròn ma thuật (mặc định 1.0f để dùng trực tiếp kích thước thiết lập trong Prefab BossLootSpawnVFX)")]
+    [SerializeField] private float lootSpawnVfxScaleMultiplier = 1.0f;
+    [Tooltip("Thời gian Rương và Cổng hiện từ từ trồi lên khỏi vòng ma thuật (giây, mặc định 1.6s)")]
+    [SerializeField] private float entityMaterializeDuration = 1.6f;
+    [Tooltip("Thời gian vòng ma thuật mờ dần biến mất sau khi rương và cổng đã hiện xong (giây)")]
+    [SerializeField] private float vfxFadeOutDuration = 2.0f;
     [Tooltip("Hiệu ứng VFX ánh sáng bừng sáng giáng thế trên bục")]
     [SerializeField] private GameObject spawnBurstVfxPrefab;
     [Tooltip("Âm thanh thần thánh khi Rương & Cổng giáng thế")]
@@ -99,9 +107,10 @@ namespace InfiniteLabyrinth.Interaction
     [Tooltip("Tự động khôi phục camera & player sau khi chuỗi chiến thắng hoàn tất")]
     [SerializeField] private bool autoReturnToPlayer = true;
 
-    // Tham chiếu runtime của rương và cổng đã sinh
+    // Tham chiếu runtime của rương, cổng và VFX đã sinh
     private GameObject spawnedBossChestInstance;
     private GameObject spawnedVictoryPortalInstance;
+    private GameObject spawnedLootVfxInstance;
 
     public bool IsVictorySequenceActive => isVictorySequenceActive;
 
@@ -140,7 +149,14 @@ namespace InfiniteLabyrinth.Interaction
       {
         victoryPortalPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Portal/portal.prefab");
       }
+      if (bossLootSpawnVfxPrefab == null)
+      {
+        bossLootSpawnVfxPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/RPG/BossLootSpawnVFX.prefab");
+      }
 #endif
+      if (bossChestPrefab == null) bossChestPrefab = Resources.Load<GameObject>("Interactive_Chest_Boss");
+      if (victoryPortalPrefab == null) victoryPortalPrefab = Resources.Load<GameObject>("portal");
+      if (bossLootSpawnVfxPrefab == null) bossLootSpawnVfxPrefab = Resources.Load<GameObject>("BossLootSpawnVFX");
     }
 
     private void OnEnable()
@@ -458,19 +474,53 @@ namespace InfiniteLabyrinth.Interaction
             camTrans.rotation = targetPedestalCamRot;
           }
 
-          // 2. KHOẢNH KHẮC GIÁNG THẾ: SINH RƯƠNG BOSS VÀ CỔNG DỊCH CHUYỂN
+          // 2. KHOẢNH KHẮC GIÁNG THẾ: SINH VÒNG MA THUẬT, RƯƠNG BOSS VÀ CỔNG DỊCH CHUYỂN
           EnsurePedestalPrefabs();
+
+          // A. Sinh vòng tròn ma thuật BossLootSpawnVFX chính giữa rương và portal
+          GameObject spawnedLootVfx = null;
+          if (bossLootSpawnVfxPrefab != null)
+          {
+            Vector3 vfxPos = platformCenter + Vector3.up * 0.04f;
+            spawnedLootVfx = Instantiate(bossLootSpawnVfxPrefab, vfxPos, pedestalObj.transform.rotation, pedestalObj.transform);
+            spawnedLootVfx.name = "BossLootSpawnVFX";
+            // Lấy trực tiếp scale thiết lập từ Prefab gốc (nếu bạn chỉnh scale trong Prefab thì sẽ tự động áp dụng)
+            Vector3 basePrefabScale = bossLootSpawnVfxPrefab.transform.localScale;
+            float scaleMult = lootSpawnVfxScaleMultiplier > 0f ? lootSpawnVfxScaleMultiplier : 1.0f;
+            spawnedLootVfx.transform.localScale = basePrefabScale * scaleMult;
+            spawnedLootVfxInstance = spawnedLootVfx;
+          }
+
+          // Âm thanh thần thánh giáng thế
+          if (pedestalSpawnSound != null)
+          {
+            AudioSource.PlayClipAtPoint(pedestalSpawnSound, mainCam != null ? mainCam.transform.position : chestPos);
+          }
+
+          // Bừng sáng Point Light phụ trợ
+          StartCoroutine(PedestalSpawnFlareRoutine(platformCenter + Vector3.up * 1.5f));
+
+          // B. Sinh Rương và Portal ở scale = 0 để hiện từ từ lên song song với VFX
+          Vector3 chestTargetScale = Vector3.one;
+          Vector3 portalTargetScale = Vector3.one;
+
+          Vector3 chestStartPos = chestPos - Vector3.up * 0.35f;
+          Vector3 portalStartPos = portalPos - Vector3.up * 0.35f;
 
           if (bossChestPrefab != null && spawnedBossChestInstance == null)
           {
-            spawnedBossChestInstance = Instantiate(bossChestPrefab, chestPos, chestRot, pedestalObj.transform);
+            spawnedBossChestInstance = Instantiate(bossChestPrefab, chestStartPos, chestRot, pedestalObj.transform);
             spawnedBossChestInstance.name = "Interactive_Chest_Boss";
+            chestTargetScale = spawnedBossChestInstance.transform.localScale;
+            spawnedBossChestInstance.transform.localScale = Vector3.zero;
           }
 
           if (victoryPortalPrefab != null && spawnedVictoryPortalInstance == null)
           {
-            spawnedVictoryPortalInstance = Instantiate(victoryPortalPrefab, portalPos, portalRot, pedestalObj.transform);
+            spawnedVictoryPortalInstance = Instantiate(victoryPortalPrefab, portalStartPos, portalRot, pedestalObj.transform);
             spawnedVictoryPortalInstance.name = "VictoryPortal";
+            portalTargetScale = spawnedVictoryPortalInstance.transform.localScale;
+            spawnedVictoryPortalInstance.transform.localScale = Vector3.zero;
 
             PortalController portalCtrl = spawnedVictoryPortalInstance.GetComponentInChildren<PortalController>(true);
             if (portalCtrl != null)
@@ -484,17 +534,59 @@ namespace InfiniteLabyrinth.Interaction
             }
           }
 
-          // Hiệu ứng ánh sáng thần thánh bừng nở trên bục đá
-          StartCoroutine(PedestalSpawnFlareRoutine(platformCenter + Vector3.up * 1.5f));
-
-          // Âm thanh thần thánh giáng thế
-          if (pedestalSpawnSound != null)
+          // C. Diễn hoạt hiện từ từ (Materialize / Sprout): Rương & Portal trồi lên và nở to từ 0 -> 1 song song với VFX
+          float matTimer = 0f;
+          while (matTimer < entityMaterializeDuration)
           {
-            AudioSource.PlayClipAtPoint(pedestalSpawnSound, mainCam != null ? mainCam.transform.position : chestPos);
+            matTimer += Time.deltaTime;
+            float t = Mathf.Clamp01(matTimer / entityMaterializeDuration);
+
+            // Đường cong trồi lên mượt mà (EaseOutCubic cho scale, SmoothStep cho vị trí Y)
+            float scaleT = 1f - Mathf.Pow(1f - t, 3f);
+            float posT = Mathf.SmoothStep(0f, 1f, t);
+
+            if (spawnedBossChestInstance != null)
+            {
+              spawnedBossChestInstance.transform.localScale = Vector3.LerpUnclamped(Vector3.zero, chestTargetScale, scaleT);
+              spawnedBossChestInstance.transform.position = Vector3.Lerp(chestStartPos, chestPos, posT);
+            }
+
+            if (spawnedVictoryPortalInstance != null)
+            {
+              spawnedVictoryPortalInstance.transform.localScale = Vector3.LerpUnclamped(Vector3.zero, portalTargetScale, scaleT);
+              spawnedVictoryPortalInstance.transform.position = Vector3.Lerp(portalStartPos, portalPos, posT);
+            }
+
+            // Camera tiếp tục trôi chậm nghệ thuật trong lúc các vật phẩm hiện ra
+            if (camTrans != null)
+            {
+              camTrans.position += pedestalObj.transform.right * (cinematicDriftSpeed * Time.deltaTime * 0.35f);
+              camTrans.rotation = Quaternion.LookRotation((pedestalLookTarget - camTrans.position).normalized);
+            }
+
+            yield return null;
+          }
+
+          // Chốt scale và tọa độ cuối cùng
+          if (spawnedBossChestInstance != null)
+          {
+            spawnedBossChestInstance.transform.localScale = chestTargetScale;
+            spawnedBossChestInstance.transform.position = chestPos;
+          }
+          if (spawnedVictoryPortalInstance != null)
+          {
+            spawnedVictoryPortalInstance.transform.localScale = portalTargetScale;
+            spawnedVictoryPortalInstance.transform.position = portalPos;
           }
 
           OnPedestalEntitiesSpawned?.Invoke();
-          Debug.Log("<color=gold>[BossVictoryDirector]</color> 👑 Rương Boss & Cổng Dịch Chuyển đã bừng sáng giáng thế trên Bục Đá 12m!");
+          Debug.Log("<color=gold>[BossVictoryDirector]</color> 👑 Rương Boss & Cổng Dịch Chuyển đã hiện ra hoàn tất từ vòng ma thuật trên Bục Đá 12m!");
+
+          // D. KẾT THÚC VFX: Sau khi rương và portal đã hiện hoàn tất, dừng phát hạt để VFX mờ tan tự nhiên
+          if (spawnedLootVfx != null)
+          {
+            StopAndFadeVfx(spawnedLootVfx, vfxFadeOutDuration);
+          }
 
           // 3. Giữ camera ngắm bục với chuyển động trôi chậm nghệ thuật (Cinematic Drift)
           float pedHoldTimer = 0f;
@@ -554,6 +646,42 @@ namespace InfiniteLabyrinth.Interaction
       OnVictorySequenceComplete?.Invoke();
       isVictorySequenceActive = false;
       Debug.Log("<color=gold>[BossVictoryDirector]</color> 🏆 Chuỗi chiến thắng hoàn tất 100%! Player sẵn sàng tiến lên bục 12m nhận thưởng.");
+    }
+
+    private void StopAndFadeVfx(GameObject vfxObj, float fadeDuration = 2.0f)
+    {
+      if (vfxObj == null) return;
+
+      // 1. Dừng phát hạt mới để các hạt đang bay tự tàn lụi tự nhiên
+      ParticleSystem[] psList = vfxObj.GetComponentsInChildren<ParticleSystem>();
+      foreach (var ps in psList)
+      {
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+      }
+
+      // 2. Làm mờ dần Point Light (nếu có)
+      Light vfxLight = vfxObj.GetComponentInChildren<Light>();
+      if (vfxLight != null)
+      {
+        StartCoroutine(FadeOutLightRoutine(vfxLight, Mathf.Min(fadeDuration, 1.2f)));
+      }
+
+      // 3. Tự hủy GameObject sau khi toàn bộ hạt đã biến mất
+      Destroy(vfxObj, fadeDuration);
+    }
+
+    private IEnumerator FadeOutLightRoutine(Light targetLight, float duration)
+    {
+      if (targetLight == null) yield break;
+      float startInt = targetLight.intensity;
+      float timer = 0f;
+      while (timer < duration && targetLight != null)
+      {
+        timer += Time.deltaTime;
+        targetLight.intensity = Mathf.Lerp(startInt, 0f, timer / duration);
+        yield return null;
+      }
+      if (targetLight != null) targetLight.intensity = 0f;
     }
 
     private IEnumerator PedestalSpawnFlareRoutine(Vector3 center)
@@ -662,6 +790,11 @@ namespace InfiniteLabyrinth.Interaction
       {
         Destroy(spawnedVictoryPortalInstance);
         spawnedVictoryPortalInstance = null;
+      }
+      if (spawnedLootVfxInstance != null)
+      {
+        Destroy(spawnedLootVfxInstance);
+        spawnedLootVfxInstance = null;
       }
 
       Camera mainCam = Camera.main;
