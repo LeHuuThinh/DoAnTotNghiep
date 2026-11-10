@@ -244,16 +244,28 @@ PrefabInstance:
       value: Boss_RedIgnis
       objectReference: {fileID: 0}
     - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
-      propertyPath: hitFlashColor.b
-      value: 0.8584906
+      propertyPath: comboHitDamage
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
-      propertyPath: hitFlashColor.g
-      value: 0.8584906
+      propertyPath: comboHitRadius
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
-      propertyPath: hitFlashColor.r
+      propertyPath: jumpAttackDamage
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: attackSlashDamage
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: comboLungeDistance
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3806274301772261099, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
+      propertyPath: horizontalSlashDamage
+      value: 45
       objectReference: {fileID: 0}
     - target: {fileID: 4345900317041521329, guid: f3bf8acd6c0ded94780fbb4037ff7822, type: 3}
       propertyPath: m_LocalPosition.x
@@ -949,6 +961,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1443231080541979558, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: currentHealth
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443231080541979558, guid: db39e9736dc24354d97037437d9c8841, type: 3}
+      propertyPath: isInvulnerable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5452323325029716220, guid: db39e9736dc24354d97037437d9c8841, type: 3}
       propertyPath: m_Name
       value: Player

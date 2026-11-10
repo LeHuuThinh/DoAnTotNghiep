@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_artifact
   itemName: Ancient Artifact Blade
-  description: "A relic excavated from a forgotten epoch, humming with incomprehensible primordial energy (+92 Attack, +70 Max HP, +35 Stamina)."
+  description: A relic excavated from a forgotten epoch, humming with incomprehensible
+    primordial energy (+92 Attack, +70 Max HP, +35 Stamina).
   icon: {fileID: 21300000, guid: b298b56e60dd9fb4f902ccda9a833dd2, type: 3}
   itemType: 0
   rarity: 4

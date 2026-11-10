@@ -247,13 +247,13 @@ MonoBehaviour:
   bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
   bodyAuraRange: 16
   bodyAuraIntensity: 3
-  attack1Cooldown: 15
-  gumoGumoCooldown: 15
-  flameBreathCooldown: 15
-  jumpAttackCooldown: 15
-  runAttackCooldown: 15
-  attackLTCooldown: 15
-  iceBallCooldown: 15
+  attack1Cooldown: 1.5
+  gumoGumoCooldown: 6
+  flameBreathCooldown: 8
+  jumpAttackCooldown: 7
+  runAttackCooldown: 6
+  attackLTCooldown: 5
+  iceBallCooldown: 7
   specialSkillGlobalCooldown: 3
   runAttackSpeed: 12
   runAttackDuration: 1.25

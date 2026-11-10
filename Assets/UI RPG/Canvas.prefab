@@ -184,6 +184,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5017674671895563600}
   selectHighlight: {fileID: 2579747039561019228}
   stackCountText: {fileID: 7564580074518652606}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 2195434422162633816}
   cdFillImage: {fileID: 0}
 --- !u!1 &13755255230680751
@@ -1970,6 +1971,7 @@ MonoBehaviour:
   rarityBar: {fileID: 4288803033334008145}
   selectHighlight: {fileID: 1823499421442385312}
   stackCountText: {fileID: 5437796009997083375}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 6661650729720656512}
   cdFillImage: {fileID: 0}
 --- !u!1 &211417492735857160
@@ -5236,6 +5238,7 @@ MonoBehaviour:
   rarityBar: {fileID: 3121651139732595036}
   selectHighlight: {fileID: 436736290586544077}
   stackCountText: {fileID: 8477463002847726761}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 1206646659404297663}
   cdFillImage: {fileID: 0}
 --- !u!1 &791512797556572323
@@ -6396,6 +6399,7 @@ MonoBehaviour:
   rarityBar: {fileID: 2383534942298677535}
   selectHighlight: {fileID: 7742204867912371451}
   stackCountText: {fileID: 5035338283670908960}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 8728163067908695543}
   cdFillImage: {fileID: 0}
 --- !u!1 &964952374532654149
@@ -8185,6 +8189,7 @@ MonoBehaviour:
   rarityBar: {fileID: 3831746389823667205}
   selectHighlight: {fileID: 8517889772165773486}
   stackCountText: {fileID: 386519897317861078}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 2632241740421216647}
   cdFillImage: {fileID: 0}
 --- !u!1 &1209451738019099254
@@ -9780,6 +9785,7 @@ MonoBehaviour:
   rarityBar: {fileID: 8916974791224389007}
   selectHighlight: {fileID: 5261434836554633601}
   stackCountText: {fileID: 8131140707132354207}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 270174166843047607}
   cdFillImage: {fileID: 0}
 --- !u!1 &1553420441673249846
@@ -11269,6 +11275,7 @@ MonoBehaviour:
   btnUse: {fileID: 2784496783415038277}
   btnDrop: {fileID: 5892717344879462943}
   btnSell: {fileID: 0}
+  btnPutIn: {fileID: 0}
   openDuration: 0.1
   slideDuration: 0.08
   closeDuration: 0.07
@@ -11481,7 +11488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.50980395}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -12580,6 +12587,7 @@ MonoBehaviour:
   rarityBar: {fileID: 3132898272956301913}
   selectHighlight: {fileID: 6905694671922443633}
   stackCountText: {fileID: 6439110394575050743}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 1336475728871760478}
   cdFillImage: {fileID: 0}
 --- !u!1 &2066442788093365513
@@ -13765,6 +13773,7 @@ MonoBehaviour:
   rarityBar: {fileID: 4758428169283447128}
   selectHighlight: {fileID: 1817134644225492767}
   stackCountText: {fileID: 3367110452722127728}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 6456753141626939890}
   cdFillImage: {fileID: 0}
 --- !u!1 &2388048526592244663
@@ -13972,21 +13981,21 @@ MonoBehaviour:
   playerCombat: {fileID: 0}
   slotE:
     slotName: Skill E (Slash)
-    rootTransform: {fileID: 0}
+    rootTransform: {fileID: 7088927085107665666}
     iconImage: {fileID: 3872168129675710104}
     cornerObject: {fileID: 5583559459733730263}
     cdFillImage: {fileID: 138216462689070355}
     cdText: {fileID: 0}
   slotQ:
     slotName: Skill Q (AOE Slam)
-    rootTransform: {fileID: 0}
+    rootTransform: {fileID: 4398856605986976737}
     iconImage: {fileID: 7189428205759569673}
     cornerObject: {fileID: 3756928795315574184}
     cdFillImage: {fileID: 4018408702104048289}
     cdText: {fileID: 0}
   slotR:
     slotName: Skill R (Ultimate)
-    rootTransform: {fileID: 0}
+    rootTransform: {fileID: 8326945088863147801}
     iconImage: {fileID: 4974619212151911735}
     cornerObject: {fileID: 7890409823241218226}
     cdFillImage: {fileID: 3643169286606874255}
@@ -14804,6 +14813,7 @@ MonoBehaviour:
   rarityBar: {fileID: 728899499820735312}
   selectHighlight: {fileID: 5330357189599342151}
   stackCountText: {fileID: 7860944593748326146}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 266791084428657143}
   cdFillImage: {fileID: 0}
 --- !u!1 &2580000982873879533
@@ -16755,7 +16765,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.50980395}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -20009,6 +20019,7 @@ MonoBehaviour:
   rarityBar: {fileID: 7162816860434941536}
   selectHighlight: {fileID: 706928080633778266}
   stackCountText: {fileID: 3473026930471642882}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 1974634322103067217}
   cdFillImage: {fileID: 0}
 --- !u!1 &3552175051635070804
@@ -21078,6 +21089,7 @@ MonoBehaviour:
   rarityBar: {fileID: 2926986445314075398}
   selectHighlight: {fileID: 8355358292269625507}
   stackCountText: {fileID: 3958974613865056490}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 4352657974267691001}
   cdFillImage: {fileID: 0}
 --- !u!1 &3688263730209197140
@@ -21736,7 +21748,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -21972,6 +21984,7 @@ MonoBehaviour:
   rarityBar: {fileID: 9073221658798127282}
   selectHighlight: {fileID: 7440485836089159798}
   stackCountText: {fileID: 5267837395468367979}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 3749466207926248925}
   cdFillImage: {fileID: 0}
 --- !u!1 &3832395838880393987
@@ -25815,6 +25828,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5992906169877503680}
   selectHighlight: {fileID: 6139261378637042053}
   stackCountText: {fileID: 521105326022389094}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 6666885395838378293}
   cdFillImage: {fileID: 0}
 --- !u!1 &4563986863861106851
@@ -26747,6 +26761,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5266718843896874224}
   selectHighlight: {fileID: 8314237203047556385}
   stackCountText: {fileID: 5569032652419795770}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 1085206480697315870}
   cdFillImage: {fileID: 0}
 --- !u!1 &4661061158455481680
@@ -29994,6 +30009,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5382017703482210923}
   selectHighlight: {fileID: 4116705079049314050}
   stackCountText: {fileID: 72768910320843875}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 991334242704895785}
   cdFillImage: {fileID: 0}
 --- !u!1 &5440856553154858078
@@ -30683,7 +30699,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -32429,6 +32445,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5135014614165022067}
   selectHighlight: {fileID: 1582019388448276251}
   stackCountText: {fileID: 6119721100724180214}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 5688036876121862149}
   cdFillImage: {fileID: 0}
 --- !u!1 &5973442299592161575
@@ -32743,6 +32760,7 @@ MonoBehaviour:
   rarityBar: {fileID: 531135276181305720}
   selectHighlight: {fileID: 3377246917532204243}
   stackCountText: {fileID: 4542507441012667561}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 4131449162278853725}
   cdFillImage: {fileID: 0}
 --- !u!1 &6017637094911048317
@@ -33102,6 +33120,7 @@ MonoBehaviour:
   rarityBar: {fileID: 1036612115133189985}
   selectHighlight: {fileID: 4669212138395833426}
   stackCountText: {fileID: 3230086899096944766}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 7151272769857240080}
   cdFillImage: {fileID: 0}
 --- !u!1 &6059557351953955329
@@ -33611,6 +33630,7 @@ MonoBehaviour:
   rarityBar: {fileID: 2908436040981204527}
   selectHighlight: {fileID: 4534302915255524857}
   stackCountText: {fileID: 7413089969695610285}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 2016120289230974727}
   cdFillImage: {fileID: 0}
 --- !u!1 &6105555332130732640
@@ -35819,6 +35839,7 @@ MonoBehaviour:
   rarityBar: {fileID: 6387723440655547902}
   selectHighlight: {fileID: 2767711133393946254}
   stackCountText: {fileID: 6800344142358332044}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 431487098580224383}
   cdFillImage: {fileID: 0}
 --- !u!1 &6355844779814691775
@@ -40046,6 +40067,7 @@ MonoBehaviour:
   rarityBar: {fileID: 7288629025132740348}
   selectHighlight: {fileID: 8300653908572141026}
   stackCountText: {fileID: 308653088177999531}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 6847829252415958898}
   cdFillImage: {fileID: 0}
 --- !u!1 &7090000774172877173
@@ -40268,6 +40290,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5796798897272729347}
   selectHighlight: {fileID: 5440878576941830003}
   stackCountText: {fileID: 9088953003025900806}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 3076201761816654389}
   cdFillImage: {fileID: 0}
 --- !u!1 &7162917330548246063
@@ -41103,7 +41126,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.50980395}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -41677,6 +41700,7 @@ MonoBehaviour:
   rarityBar: {fileID: 1108166419273521421}
   selectHighlight: {fileID: 1061166403645587906}
   stackCountText: {fileID: 8136213227430880202}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 9115865024001395354}
   cdFillImage: {fileID: 0}
 --- !u!1 &7532791498451368444
@@ -42040,6 +42064,7 @@ MonoBehaviour:
   rarityBar: {fileID: 8247445417387460631}
   selectHighlight: {fileID: 2834043254901708823}
   stackCountText: {fileID: 699440408489860705}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 8808445353774381663}
   cdFillImage: {fileID: 0}
 --- !u!1 &7560871584608130710
@@ -42187,6 +42212,7 @@ MonoBehaviour:
   rarityBar: {fileID: 6220915454528556943}
   selectHighlight: {fileID: 5093673738246976685}
   stackCountText: {fileID: 1644074846670743541}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 1370120600563474333}
   cdFillImage: {fileID: 0}
 --- !u!1 &7599130224835158559
@@ -44244,7 +44270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -46155,6 +46181,7 @@ MonoBehaviour:
   rarityBar: {fileID: 7785090098364386099}
   selectHighlight: {fileID: 3732141776672725118}
   stackCountText: {fileID: 9160676574840683429}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 2129726393392689903}
   cdFillImage: {fileID: 0}
 --- !u!1 &8297351308595447146
@@ -47002,6 +47029,7 @@ MonoBehaviour:
   rarityBar: {fileID: 431016241259243796}
   selectHighlight: {fileID: 6890559929635070113}
   stackCountText: {fileID: 1617544526590342398}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 8931848363425784687}
   cdFillImage: {fileID: 0}
 --- !u!1 &8502154708658586838
@@ -47736,6 +47764,7 @@ MonoBehaviour:
   rarityBar: {fileID: 565468290993004225}
   selectHighlight: {fileID: 6134218054343419062}
   stackCountText: {fileID: 8075437198849048320}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 5207388614401426106}
   cdFillImage: {fileID: 0}
 --- !u!1 &8703680692961425737
@@ -47964,6 +47993,7 @@ MonoBehaviour:
   rarityBar: {fileID: 5537313076662456792}
   selectHighlight: {fileID: 7410303049253875591}
   stackCountText: {fileID: 7537682445725523906}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 3362271459229171732}
   cdFillImage: {fileID: 0}
 --- !u!1 &8757420009568183775
@@ -50090,6 +50120,7 @@ MonoBehaviour:
   rarityBar: {fileID: 3688120906653890009}
   selectHighlight: {fileID: 6023779946857175388}
   stackCountText: {fileID: 1268318286827487464}
+  upgradeBadgeText: {fileID: 0}
   slotButton: {fileID: 8321037311680967687}
   cdFillImage: {fileID: 0}
 --- !u!1 &9042447282506611949
