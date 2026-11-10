@@ -101,7 +101,7 @@ public class AttackTokenDirector : MonoBehaviour
   }
 
 #if UNITY_EDITOR
-  [UnityEditor.MenuItem("Tools/Combat/Create Attack Token Director")]
+  [UnityEditor.MenuItem("Infinite Labyrinth/Combat/Create Attack Token Director", false, 15)]
   public static void CreateDirectorInScene()
   {
     AttackTokenDirector existing = FindAnyObjectByType<AttackTokenDirector>();

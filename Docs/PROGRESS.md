@@ -49,7 +49,10 @@
 | **RPG / Drops** | Rơi đồ vật lý từ Quái, Thùng vỡ & Rương (RPG-02) | ✅ Hoàn thành | `LootDropper.cs` quỹ đạo búng vòng cung Arc Pop; `BreakableProp.cs` nhận sát thương vỡ thùng; `ChestInteractable.cs` rương lật nắp tung đồ; `WorldItemPickup.cs` mô hình 3D xoay lơ lửng hào quang Rarity; Hệ thống 4 mô hình Vàng phân cấp theo số lượng |
 | **RPG / Interaction** | UI Nhặt đồ & Feed thông báo mép trái (RPG-03) | ✅ Hoàn thành | `PickupPromptUI.cs` bảng nhặt đồ nổi (phím F, 2m, tên đổi màu Rarity, CanvasGroup fade); Hút Vàng tự động (Magnetic 4.2m bay vào ngực); `PickupNotificationFeed.cs` thông báo xếp tầng trượt mượt |
 | **RPG / UI** | Giao diện Túi Đồ 2 Cửa Sổ (RPG-04) | ✅ Hoàn thành | `InventoryUIController.cs` (phím Tab/Esc, khóa chuột/di chuyển/camera); 3D Character Preview xoay 360 độ qua RenderTexture; 2 ô trang bị Weapon & Armor; Bảng chỉ số thời gian thực; Lưới 30 ô phân loại 4 Tab; Popup chi tiết bám theo ô thông minh |
-| **RPG / Items** | Cơ Sở Dữ Liệu 49 Vật Phẩm & Đồng Bộ Visual Kiếm (RPG-06) | ✅ Hoàn thành | `ItemDatabaseGenerator.cs` khởi tạo 49 ScriptableObjects (20 vũ khí, 8 giáp, 13 nguyên liệu & lõi boss, 6 dược phẩm, vàng, chìa khóa); `PlayerWeaponVisualSync.cs` tự động đổi 3D model kiếm trên tay Player khi đổi trang bị trong Inventory |
+| **RPG / Items** | Cơ Sở Dữ Liệu 51 Vật Phẩm & Đồng Bộ Visual Kiếm (RPG-06 & RPG-09) | ✅ Hoàn thành | `ItemDatabaseGenerator.cs` khởi tạo 51 ScriptableObjects (20 vũ khí, 8 giáp, 15 nguyên liệu, đá quý & lõi boss, 6 dược phẩm, vàng, chìa khóa); `PlayerWeaponVisualSync.cs` tự động đổi 3D model kiếm trên tay Player khi đổi trang bị trong Inventory |
+| **RPG / Shop** | Hệ Thống Cửa Hàng Làng Haven (RPG-07) | ✅ Hoàn thành | `ShopData.cs`, `ShopUIController.cs`, `ShopInteractable.cs`: 2 NPC Shop Trang bị & Nhu yếu phẩm, bán đồ nhận 40% Vàng, khóa bán đồ đang mặc & chìa khóa |
+| **RPG / Blacksmith** | Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo (RPG-08) | ✅ Hoàn thành | `BlacksmithUIController.cs`, `CraftingRecipe.cs`: Cường hóa +1 đến +5 (+15% ATK/cấp, badge vàng kim, hào quang vũ khí +5), chế tạo thần binh từ Lõi Boss |
+| **RPG / Drops Balance** | Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (RPG-09) | ✅ Hoàn thành | `LootDropper.cs`, `LootTableSetupEditor.cs`: Đồng bộ 100% Ma trận rơi đồ cho 10 Prefabs (3 Thùng gỗ, 4 Quái Skeleton, 3 Cấp độ Rương); Bổ sung Monster Gem (20-25% từ quái) & Boss Gem (100% từ Boss) chuyên bán lấy Vàng |
 | **PCG / Dungeon** | Phòng Tế Đàn & Chìa Khóa Hầm Ngục (D02-2) | ✅ Hoàn thành | Nhận diện `keyRoom` xa nhất nhánh cụt; sinh `wallset_shrine`; Chìa Khóa Hầm Ngục `DungeonKeyPickup` lơ lửng, phát quang Legendary vàng, nhặt F lưu `dungeon_key` vào `InventoryManager` |
 | **PCG / Boss Arena** | Cơ Chế Boss Arena Toàn Diện (D-02 / D02-1 -> D02-5) | ✅ Hoàn thành | Phòng Boss 900 tiles trần 24m, Đại Lộ 40m, 4 Cột trụ né đòn, 3 Tầng ánh sáng; Đại Môn phong ấn (Hold F 2.5s) & Cổng sương mù Fog Gate; Đạo diễn Intro Cutscene 5 pha; Bục Đá 12m; Rương Boss bung tỏa quạt nón & Cổng chiến thắng 2 cửa sổ Hold-to-Confirm |
 
@@ -57,22 +60,15 @@
 
 ## 2. Các Tính Năng Đang Thiếu / Cần Thực Hiện Tiếp Theo (Theo Thứ Tự Ưu Tiên)
 
-1. **[ĐÃ HOÀN THÀNH - Task RPG-07] Cửa Hàng Làng Haven (Tách 2 Shop: Trang Bị & Nhu Yếu Phẩm):**
-   - Tương tác với 2 NPC Thương Nhân tại `LandScene` (bấm phím F mở UI Shop tương ứng: `EquipmentShop` & `SuppliesShop`).
-   - Dùng chung 1 Prefab Canvas UI và `ShopUIController.cs` nạp dữ liệu động từ `ShopData.cs` (`EquipmentShopData` & `SuppliesShopData`).
-   - Giao diện 2 Panel: Trái (Hàng bán Shop: List + Detail + Mua kèm bộ chọn số lượng, đổi màu đỏ chữ giá tiền & disable nút Mua khi thiếu vàng); Phải (Túi đồ Player + Bán từng món 40% giá trị gốc, khóa bán đồ đang mặc/chìa khóa boss).
-
-2. **[Ưu tiên 2 - Task RPG-08] Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo (Blacksmith NPC):**
-   - Tương tác với NPC Thợ Rèn tại cụm `BlackSmith` ở `LandScene` (bấm phím F mở UI Lò Rèn).
-   - Mở rộng `InventorySlot.cs` và `InventoryManager.cs` lưu `upgradeLevel` (0 -> 5) cho từng instance trang bị (tăng +15% ATK/cấp, hiển thị Badge `+1`..`+5` góc ô).
-   - UI 2 Panel: Trái (Tab Nâng Cấp so sánh Before/After, nhãn "CẤP TỐI ĐA", danh sách nguyên liệu `Đang có / Cần` + Tab Rèn thần binh từ Lõi Boss); Phải (Túi đồ người chơi lọc mờ thông minh, nút "Bỏ Vào Nâng Cấp").
-   - Hiệu ứng rèn đe búa, tia lửa UI Sparks VFX, punch scale và hào quang tỏa sáng cho vũ khí đạt `+5`.
-
-3. **[Ưu tiên 3 - Task RPG-09] Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables):**
-   - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `ChestInteractable.cs`, `BreakableProp.cs`, và `EnemyAIBase.cs` cho 4 quái Skeleton, 3 loại thùng gỗ, 3 cấp rương, và 3 Boss.
-
-4. **[Ưu tiên 4 - Task ML-03 & ML-04] Trí Tuệ Nhân Tạo Red Ignis & Đóng Gói Huấn Luyện:**
+1. **[ĐÃ HOÀN THÀNH - Task RPG-07] Cửa Hàng Làng Haven (Tách 2 Shop: Trang Bị & Nhu Yếu Phẩm)**
+2. **[ĐÃ HOÀN THÀNH - Task RPG-08] Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo (Blacksmith NPC)**
+3. **[ĐÃ HOÀN THÀNH - Task RPG-09] Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables & Gems)**
+4. **[Ưu tiên 1 - Task ML-03 & ML-04] Trí Tuệ Nhân Tạo Red Ignis & Đóng Gói Huấn Luyện:**
    - Thiết kế `RedIgnisAgent.cs` (Boss Duelist: kiếm thuật tốc độ, 2 Pha tái sinh đổi diện mạo mới).
+   - Huấn luyện PPO đa sàn đấu (Multi-Arena) và xuất file `.onnx` nhúng vào game thời gian thực.
+5. **[Ưu tiên 2 - Task POL-01 & POL-02] Hệ Thống Menu & Âm Thanh Hoàn Chỉnh:**
+   - Menu chính (MainMenu), Cài đặt (Settings), Menu tạm dừng (PauseMenu).
+   - Hệ thống SFX va chạm kiếm, đe búa thợ rèn, quái gầm và BGM Làng / Hầm ngục / Đấu Boss.
    - Huấn luyện PPO đa sàn đấu (Multi-Arena) và xuất file `.onnx` nhúng vào game thời gian thực.
 
 5. **[Ưu tiên 5 - Task POL-01 & POL-02] Hệ Thống Menu & Âm Thanh Hoàn Chỉnh:**

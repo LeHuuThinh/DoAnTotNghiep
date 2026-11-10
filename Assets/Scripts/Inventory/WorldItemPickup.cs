@@ -14,6 +14,11 @@ namespace InfiniteLabyrinth.Inventory
     [Header("=== DỮ LIỆU VẬT PHẨM ===")]
     [SerializeField] private ItemData itemData;
     [SerializeField] private int quantity = 1;
+    [SerializeField] private int upgradeLevel = 0;
+    [SerializeField] private EquipmentAffixData affixData;
+
+    public EquipmentAffixData AffixData => affixData;
+    public int UpgradeLevel => upgradeLevel;
 
     [Header("=== THIẾT LẬP HIỂN THỊ & HIỆU ỨNG ===")]
     [Tooltip("Transform chứa model 3D (để xoay và nhấp nhô)")]
@@ -158,10 +163,16 @@ namespace InfiniteLabyrinth.Inventory
     /// <summary>
     /// Khởi tạo vật phẩm đặt tĩnh (hoặc lơ lửng trên bệ/tế đàn) không cần nảy parabol
     /// </summary>
-    public void InitializeStatic(ItemData data, int count = 1)
+    public void InitializeStatic(ItemData data, int count = 1, int upgrade = 0, EquipmentAffixData affix = null)
     {
       itemData = data;
       quantity = count;
+      upgradeLevel = upgrade;
+      affixData = affix;
+      if (affixData == null && itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor))
+      {
+        affixData = EquipmentAffixGenerator.Generate(itemData, upgradeLevel);
+      }
       isLanded = true;
       ApplyRarityVisuals();
     }
@@ -178,10 +189,16 @@ namespace InfiniteLabyrinth.Inventory
     /// <summary>
     /// Khởi tạo dữ liệu và kích hoạt hiệu ứng nảy búng vòng cung parabol (Arc Pop)
     /// </summary>
-    public void Initialize(ItemData data, int count, Vector3 targetGroundPos, float arcHeight = 1.2f, float duration = 0.5f)
+    public void Initialize(ItemData data, int count, Vector3 targetGroundPos, float arcHeight = 1.2f, float duration = 0.5f, int upgrade = 0, EquipmentAffixData affix = null)
     {
       itemData = data;
       quantity = count;
+      upgradeLevel = upgrade;
+      affixData = affix;
+      if (affixData == null && itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor))
+      {
+        affixData = EquipmentAffixGenerator.Generate(itemData, upgradeLevel);
+      }
       ApplyRarityVisuals();
 
       StartCoroutine(ArcPopRoutine(targetGroundPos, arcHeight, duration));
@@ -421,7 +438,7 @@ namespace InfiniteLabyrinth.Inventory
     {
       if (InventoryManager.HasInstance)
       {
-        bool success = InventoryManager.Instance.AddItem(itemData, quantity, out int remainder);
+        bool success = InventoryManager.Instance.AddItem(itemData, quantity, out int remainder, notifyPickup: true, allowRefillEquippedUsable: true, upgradeLevel: upgradeLevel, affixData: affixData);
         if (success)
         {
           if (remainder <= 0)

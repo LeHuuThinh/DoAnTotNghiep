@@ -14,6 +14,28 @@ public class PlayerController : MonoBehaviour
         set => speedMultiplier = Mathf.Max(0.1f, value);
     }
 
+    public float EquipmentSpeedMultiplier => InfiniteLabyrinth.Inventory.InventoryManager.HasInstance
+        ? (1f + InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalMoveSpeedBonus() / 100f)
+        : 1f;
+
+    private float temporarySpeedBonusTimer = 0f;
+    private float temporarySpeedBonusPercent = 0f;
+
+    public void TriggerTemporarySpeedBoost(float percent, float duration)
+    {
+        temporarySpeedBonusPercent = Mathf.Max(temporarySpeedBonusPercent, percent);
+        temporarySpeedBonusTimer = Mathf.Max(temporarySpeedBonusTimer, duration);
+    }
+
+    public float EffectiveSpeedMultiplier
+    {
+        get
+        {
+            float buff = temporarySpeedBonusTimer > 0f ? (1f + temporarySpeedBonusPercent / 100f) : 1f;
+            return speedMultiplier * EquipmentSpeedMultiplier * buff;
+        }
+    }
+
     [Header("Movement Speeds")]
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float strafeSpeed = 3.8f;      // Tốc độ khi bước ngang/lùi vờn quái
@@ -161,6 +183,16 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (health != null && health.IsDead) return;
+
+        if (temporarySpeedBonusTimer > 0f)
+        {
+            temporarySpeedBonusTimer -= Time.deltaTime;
+            if (temporarySpeedBonusTimer <= 0f)
+            {
+                temporarySpeedBonusPercent = 0f;
+            }
+        }
+
         HandleMovement();
         UpdateAnimation();
     }
@@ -373,7 +405,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, rotationSpeed * Time.deltaTime);
                     }
 
-                    lockedAirVelocity = moveDir * (strafeSpeed * speedMultiplier);
+                    lockedAirVelocity = moveDir * (strafeSpeed * EffectiveSpeedMultiplier);
                 }
                 else
                 {
@@ -382,7 +414,7 @@ public class PlayerController : MonoBehaviour
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
                     }
 
-                    float currentSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
+                    float currentSpeed = (IsRunning ? runSpeed : moveSpeed) * EffectiveSpeedMultiplier;
                     lockedAirVelocity = moveDir * currentSpeed;
                 }
 
@@ -421,7 +453,7 @@ public class PlayerController : MonoBehaviour
             // Cho phép điều chỉnh hướng nhẹ trên không (Air Control) giúp đáp sàn/cầu thang dễ dàng hơn
             if (airControl > 0f && desiredMoveDirection.sqrMagnitude > 0.001f)
             {
-                float targetSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
+                float targetSpeed = (IsRunning ? runSpeed : moveSpeed) * EffectiveSpeedMultiplier;
                 Vector3 targetAirVel = desiredMoveDirection * targetSpeed;
                 lockedAirVelocity = Vector3.Lerp(lockedAirVelocity, targetAirVel, airControl * 6f * Time.deltaTime);
             }
@@ -436,7 +468,7 @@ public class PlayerController : MonoBehaviour
             // Lực ép xuống cần nhanh hơn vận tốc ngang một chút (tốc độ * 1.35f, tối thiểu 6f).
             // Với Walk = 4m/s -> ép -6f (nhẹ nhàng, mượt mà).
             // Với Run = 8m/s -> ép -11f (chân luôn dính khít mặt dốc, không bao giờ bị nhảy cóc hay tách rời sàn).
-            float curSpeed = (IsRunning ? runSpeed : moveSpeed) * speedMultiplier;
+            float curSpeed = (IsRunning ? runSpeed : moveSpeed) * EffectiveSpeedMultiplier;
             float groundStick = Mathf.Max(6f, curSpeed * 1.35f);
             finalVelocity.y = -groundStick;
         }
@@ -503,6 +535,12 @@ public class PlayerController : MonoBehaviour
         rollTimer = rollDuration;
         rollIFrameTimer = rollIFrameDuration;
         if (health != null) health.SetInvulnerable(true);
+
+        if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+            InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.SprintWind))
+        {
+            TriggerTemporarySpeedBoost(20f, 2.5f);
+        }
 
         animator.SetTrigger(RollHash);
         rollDirection = desiredMoveDirection.sqrMagnitude > 0.001f ? desiredMoveDirection.normalized : transform.forward;

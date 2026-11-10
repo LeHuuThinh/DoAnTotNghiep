@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using InfiniteLabyrinth.Blacksmith;
 
 namespace InfiniteLabyrinth.Inventory
 {
@@ -32,8 +33,10 @@ namespace InfiniteLabyrinth.Inventory
     [SerializeField] private int currentGold = 0;
     [SerializeField] private ItemData equippedWeapon;
     [SerializeField] private int equippedWeaponUpgradeLevel = 0;
+    [SerializeField] private EquipmentAffixData equippedWeaponAffix;
     [SerializeField] private ItemData equippedArmor;
     [SerializeField] private int equippedArmorUpgradeLevel = 0;
+    [SerializeField] private EquipmentAffixData equippedArmorAffix;
     [SerializeField] private ItemData equippedUsable;
     [SerializeField] private int equippedUsableCount = 0;
 
@@ -59,13 +62,15 @@ namespace InfiniteLabyrinth.Inventory
     public IReadOnlyList<InventorySlot> Slots => slots;
     public ItemData EquippedWeapon => equippedWeapon;
     public int EquippedWeaponUpgradeLevel => equippedWeaponUpgradeLevel;
+    public EquipmentAffixData EquippedWeaponAffix => equippedWeaponAffix;
     public ItemData EquippedArmor => equippedArmor;
     public int EquippedArmorUpgradeLevel => equippedArmorUpgradeLevel;
+    public EquipmentAffixData EquippedArmorAffix => equippedArmorAffix;
     public ItemData EquippedUsable => equippedUsable;
     public int EquippedUsableCount => equippedUsableCount;
     public float ConsumableGlobalCooldown => consumableGlobalCooldown;
     public float ConsumableCooldownTimer => consumableCooldownTimer;
-    public bool IsConsumableOnCooldown => consumableCooldownTimer > 0f;
+    public bool IsConsumableOnCooldown => !AdminCheatManager.IsNoCooldown && consumableCooldownTimer > 0f;
     public float ConsumableCooldownNormalized => consumableGlobalCooldown > 0f ? Mathf.Clamp01(consumableCooldownTimer / consumableGlobalCooldown) : 0f;
 
     private Health cachedPlayerHealth;
@@ -118,10 +123,12 @@ namespace InfiniteLabyrinth.Inventory
       if (equippedWeapon == null && starterWeapon != null)
       {
         equippedWeapon = starterWeapon;
+        if (equippedWeaponAffix == null) equippedWeaponAffix = EquipmentAffixGenerator.Generate(starterWeapon);
       }
       if (equippedArmor == null && starterArmor != null)
       {
         equippedArmor = starterArmor;
+        if (equippedArmorAffix == null) equippedArmorAffix = EquipmentAffixGenerator.Generate(starterArmor);
       }
       if (equippedUsable == null && starterUsable != null && starterUsableCount > 0)
       {
@@ -157,6 +164,16 @@ namespace InfiniteLabyrinth.Inventory
 
     private void UpdateConsumableCooldown()
     {
+      if (AdminCheatManager.IsNoCooldown)
+      {
+        if (consumableCooldownTimer > 0f)
+        {
+          consumableCooldownTimer = 0f;
+          OnConsumableCooldownUpdated?.Invoke(0f, consumableGlobalCooldown);
+        }
+        return;
+      }
+
       if (consumableCooldownTimer > 0f)
       {
         consumableCooldownTimer -= Time.unscaledDeltaTime;
@@ -193,7 +210,7 @@ namespace InfiniteLabyrinth.Inventory
     /// <param name="quantity">Số lượng cần thêm</param>
     /// <param name="remainder">Số lượng còn dư chưa nhặt được nếu túi đầy</param>
     /// <returns>True nếu nhặt được ít nhất 1 cái, False nếu hoàn toàn không chứa được</returns>
-    public bool AddItem(ItemData item, int quantity, out int remainder, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0)
+    public bool AddItem(ItemData item, int quantity, out int remainder, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0, EquipmentAffixData affixData = null)
     {
       remainder = quantity;
       if (item == null || quantity <= 0) return false;
@@ -249,7 +266,12 @@ namespace InfiniteLabyrinth.Inventory
           if (slots[i].IsEmpty)
           {
             int toPut = Mathf.Min(remainder, item.MaxStack);
-            slots[i].SetItem(item, toPut, upgradeLevel);
+            EquipmentAffixData toAssignAffix = affixData;
+            if (toAssignAffix == null && (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor))
+            {
+              toAssignAffix = EquipmentAffixGenerator.Generate(item, upgradeLevel);
+            }
+            slots[i].SetItem(item, toPut, upgradeLevel, toAssignAffix);
             remainder -= toPut;
             if (remainder <= 0) break;
           }
@@ -270,9 +292,9 @@ namespace InfiniteLabyrinth.Inventory
       return false; // Túi đầy hoàn toàn
     }
 
-    public bool AddItem(ItemData item, int quantity = 1, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0)
+    public bool AddItem(ItemData item, int quantity = 1, bool notifyPickup = true, bool allowRefillEquippedUsable = true, int upgradeLevel = 0, EquipmentAffixData affixData = null)
     {
-      return AddItem(item, quantity, out _, notifyPickup, allowRefillEquippedUsable, upgradeLevel);
+      return AddItem(item, quantity, out _, notifyPickup, allowRefillEquippedUsable, upgradeLevel, affixData);
     }
 
     /// <summary>
@@ -430,7 +452,7 @@ namespace InfiniteLabyrinth.Inventory
       // 1. Nếu ô B đang trống -> Chuyển toàn bộ sang B
       if (slotB.IsEmpty)
       {
-        slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel);
+        slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel, slotA.AffixData);
         slotA.Clear();
         OnInventoryChanged?.Invoke();
         return true;
@@ -442,7 +464,7 @@ namespace InfiniteLabyrinth.Inventory
         int remainder = slotB.AddQuantity(slotA.Quantity);
         if (remainder > 0)
         {
-          slotA.SetItem(slotA.ItemData, remainder, slotA.UpgradeLevel);
+          slotA.SetItem(slotA.ItemData, remainder, slotA.UpgradeLevel, slotA.AffixData);
         }
         else
         {
@@ -456,9 +478,10 @@ namespace InfiniteLabyrinth.Inventory
       ItemData tempItem = slotB.ItemData;
       int tempQty = slotB.Quantity;
       int tempUpgrade = slotB.UpgradeLevel;
+      EquipmentAffixData tempAffix = slotB.AffixData;
 
-      slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel);
-      slotA.SetItem(tempItem, tempQty, tempUpgrade);
+      slotB.SetItem(slotA.ItemData, slotA.Quantity, slotA.UpgradeLevel, slotA.AffixData);
+      slotA.SetItem(tempItem, tempQty, tempUpgrade, tempAffix);
 
       OnInventoryChanged?.Invoke();
       return true;
@@ -480,14 +503,17 @@ namespace InfiniteLabyrinth.Inventory
       {
         ItemData oldWeapon = equippedWeapon;
         int oldUpgrade = equippedWeaponUpgradeLevel;
+        EquipmentAffixData oldAffix = equippedWeaponAffix;
 
+        slot.EnsureAffixData();
         equippedWeapon = item;
         equippedWeaponUpgradeLevel = slot.UpgradeLevel;
+        equippedWeaponAffix = slot.AffixData;
         slot.Clear();
 
         if (oldWeapon != null)
         {
-          slot.SetItem(oldWeapon, 1, oldUpgrade);
+          slot.SetItem(oldWeapon, 1, oldUpgrade, oldAffix);
         }
 
         OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
@@ -497,14 +523,17 @@ namespace InfiniteLabyrinth.Inventory
       {
         ItemData oldArmor = equippedArmor;
         int oldUpgrade = equippedArmorUpgradeLevel;
+        EquipmentAffixData oldAffix = equippedArmorAffix;
 
+        slot.EnsureAffixData();
         equippedArmor = item;
         equippedArmorUpgradeLevel = slot.UpgradeLevel;
+        equippedArmorAffix = slot.AffixData;
         slot.Clear();
 
         if (oldArmor != null)
         {
-          slot.SetItem(oldArmor, 1, oldUpgrade);
+          slot.SetItem(oldArmor, 1, oldUpgrade, oldAffix);
         }
 
         OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
@@ -560,16 +589,18 @@ namespace InfiniteLabyrinth.Inventory
 
       var targetSlot = slots[targetSlotIndex];
       int unequipUpgrade = (type == ItemType.Weapon) ? equippedWeaponUpgradeLevel : (type == ItemType.Armor ? equippedArmorUpgradeLevel : 0);
+      EquipmentAffixData unequipAffix = (type == ItemType.Weapon) ? equippedWeaponAffix : (type == ItemType.Armor ? equippedArmorAffix : null);
 
       // 1. Ô đích đang trống -> Đặt đồ tháo vào ô đó
       if (targetSlot.IsEmpty)
       {
-        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade);
+        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade, unequipAffix);
 
         if (type == ItemType.Weapon)
         {
           equippedWeapon = null;
           equippedWeaponUpgradeLevel = 0;
+          equippedWeaponAffix = null;
           OnEquipmentChanged?.Invoke(ItemType.Weapon, null);
           OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, 0);
         }
@@ -577,6 +608,7 @@ namespace InfiniteLabyrinth.Inventory
         {
           equippedArmor = null;
           equippedArmorUpgradeLevel = 0;
+          equippedArmorAffix = null;
           OnEquipmentChanged?.Invoke(ItemType.Armor, null);
           OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, 0);
         }
@@ -618,12 +650,16 @@ namespace InfiniteLabyrinth.Inventory
         ItemData newEquip = targetSlot.ItemData;
         int newQty = targetSlot.Quantity;
         int newUpgrade = targetSlot.UpgradeLevel;
-        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade);
+        targetSlot.EnsureAffixData();
+        EquipmentAffixData newAffix = targetSlot.AffixData;
+
+        targetSlot.SetItem(toUnequip, toUnequipCount, unequipUpgrade, unequipAffix);
 
         if (type == ItemType.Weapon)
         {
           equippedWeapon = newEquip;
           equippedWeaponUpgradeLevel = newUpgrade;
+          equippedWeaponAffix = newAffix;
           OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
           OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, equippedWeaponUpgradeLevel);
         }
@@ -631,6 +667,7 @@ namespace InfiniteLabyrinth.Inventory
         {
           equippedArmor = newEquip;
           equippedArmorUpgradeLevel = newUpgrade;
+          equippedArmorAffix = newAffix;
           OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
           OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, equippedArmorUpgradeLevel);
         }
@@ -852,17 +889,19 @@ namespace InfiniteLabyrinth.Inventory
 
       ItemData item = slots[slotIndex].ItemData;
       int dropCount = Mathf.Min(count, slots[slotIndex].Quantity);
+      int upLevel = slots[slotIndex].UpgradeLevel;
+      EquipmentAffixData affix = slots[slotIndex].AffixData;
 
       // Trừ số lượng trong túi
       slots[slotIndex].RemoveQuantity(dropCount);
       OnInventoryChanged?.Invoke();
 
       // Sinh model rơi ra đất trước mặt nhân vật nếu có prefab
-      SpawnWorldDrop(item, dropCount);
+      SpawnWorldDrop(item, dropCount, upLevel, affix);
       return true;
     }
 
-    private void SpawnWorldDrop(ItemData item, int count)
+    private void SpawnWorldDrop(ItemData item, int count, int upgradeLevel = 0, EquipmentAffixData affix = null)
     {
       if (item == null || count <= 0) return;
 
@@ -918,7 +957,7 @@ namespace InfiniteLabyrinth.Inventory
       }
 
       // Khởi tạo quỹ đạo búng nảy Parabol, hào quang Rarity và tương tác nhặt đồ
-      pickup.Initialize(item, count, targetGroundPos, arcHeight: 0.95f, duration: 0.45f);
+      pickup.Initialize(item, count, targetGroundPos, arcHeight: 0.95f, duration: 0.45f, upgrade: upgradeLevel, affix: affix);
     }
 
     /// <summary>
@@ -1013,12 +1052,14 @@ namespace InfiniteLabyrinth.Inventory
       float bonus = 0f;
       if (equippedWeapon != null)
       {
-        float weaponAtk = equippedWeapon.BonusAttack * (1f + 0.15f * equippedWeaponUpgradeLevel);
-        bonus += weaponAtk;
+        float baseAtk = (equippedWeaponAffix != null && equippedWeaponAffix.rolledAttack > 0f) ? equippedWeaponAffix.rolledAttack : equippedWeapon.BonusAttack;
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, equippedWeaponUpgradeLevel);
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.AttackBonus);
       }
       if (equippedArmor != null)
       {
         bonus += equippedArmor.BonusAttack;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.AttackBonus);
       }
       return bonus;
     }
@@ -1028,12 +1069,14 @@ namespace InfiniteLabyrinth.Inventory
       float bonus = 0f;
       if (equippedArmor != null)
       {
-        float armorDef = equippedArmor.BonusDefense * (1f + 0.15f * equippedArmorUpgradeLevel);
-        bonus += armorDef;
+        float baseDef = (equippedArmorAffix != null && equippedArmorAffix.rolledDefense > 0f) ? equippedArmorAffix.rolledDefense : equippedArmor.BonusDefense;
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, equippedArmorUpgradeLevel);
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.DefenseBonus);
       }
       if (equippedWeapon != null)
       {
         bonus += equippedWeapon.BonusDefense;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.DefenseBonus);
       }
       return bonus;
     }
@@ -1041,17 +1084,153 @@ namespace InfiniteLabyrinth.Inventory
     public float GetTotalHealthBonus()
     {
       float bonus = 0f;
-      if (equippedArmor != null) bonus += equippedArmor.BonusHealth;
-      if (equippedWeapon != null) bonus += equippedWeapon.BonusHealth;
+      if (equippedArmor != null)
+      {
+        float baseHp = (equippedArmorAffix != null && equippedArmorAffix.rolledHealth > 0f) ? equippedArmorAffix.rolledHealth : equippedArmor.BonusHealth;
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, equippedArmorUpgradeLevel);
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.HealthBonus);
+      }
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.BonusHealth;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.HealthBonus);
+      }
       return bonus;
     }
 
     public float GetTotalStaminaBonus()
     {
       float bonus = 0f;
-      if (equippedArmor != null) bonus += equippedArmor.BonusStamina;
-      if (equippedWeapon != null) bonus += equippedWeapon.BonusStamina;
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.BonusStamina;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.MaxStamina);
+      }
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.BonusStamina;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.MaxStamina);
+      }
       return bonus;
+    }
+
+    public float GetTotalCritRateBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedWeapon.BonusCritRate, equippedWeaponUpgradeLevel);
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.CritRate);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedArmor.BonusCritRate, equippedArmorUpgradeLevel);
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.CritRate);
+      }
+      return bonus;
+    }
+
+    public float GetTotalCritDamageBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedWeapon.BonusCritDamage, equippedWeaponUpgradeLevel);
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.CritDamage);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedArmor.BonusCritDamage, equippedArmorUpgradeLevel);
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.CritDamage);
+      }
+      return bonus;
+    }
+
+    public float GetTotalLifestealBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedWeapon.BonusLifesteal, equippedWeaponUpgradeLevel);
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.Lifesteal);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += BlacksmithUpgradeConfig.CalculateUpgradedSubStat(equippedArmor.BonusLifesteal, equippedArmorUpgradeLevel);
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.Lifesteal);
+      }
+      return bonus;
+    }
+
+    public float GetTotalSpiritCostReductionBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.SpiritCostReduction;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.SpiritCostReduction);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.SpiritCostReduction;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.SpiritCostReduction);
+      }
+      return Mathf.Clamp(bonus, 0f, 60f); // Tối đa giảm 60%
+    }
+
+    public float GetTotalStaminaCostReductionBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.StaminaCostReduction;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.StaminaCostReduction);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.StaminaCostReduction;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.StaminaCostReduction);
+      }
+      return Mathf.Clamp(bonus, 0f, 60f); // Tối đa giảm 60%
+    }
+
+    public float GetTotalSpiritGainBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.SpiritGainBonus;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.SpiritGainBonus);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.SpiritGainBonus;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.SpiritGainBonus);
+      }
+      return bonus;
+    }
+
+    public float GetTotalMoveSpeedBonus()
+    {
+      float bonus = 0f;
+      if (equippedWeapon != null)
+      {
+        bonus += equippedWeapon.MoveSpeedBonus;
+        if (equippedWeaponAffix != null) bonus += equippedWeaponAffix.GetSubStatValue(SubStatType.MoveSpeedBonus);
+      }
+      if (equippedArmor != null)
+      {
+        bonus += equippedArmor.MoveSpeedBonus;
+        if (equippedArmorAffix != null) bonus += equippedArmorAffix.GetSubStatValue(SubStatType.MoveSpeedBonus);
+      }
+      return Mathf.Clamp(bonus, -50f, 100f);
+    }
+
+    public bool HasEnchantment(EnchantmentType type)
+    {
+      if (equippedWeaponAffix != null && equippedWeaponAffix.HasEnchantment(type)) return true;
+      if (equippedArmorAffix != null && equippedArmorAffix.HasEnchantment(type)) return true;
+      return false;
     }
 
     public List<InventorySlot> GetSlotsByCategory(ItemType category)
@@ -1094,6 +1273,7 @@ namespace InfiniteLabyrinth.Inventory
       if (type == ItemType.Weapon && equippedWeapon != null && equippedWeaponUpgradeLevel < 5)
       {
         equippedWeaponUpgradeLevel++;
+        equippedWeaponAffix?.UpdateEnchantmentUnlocks(equippedWeaponUpgradeLevel);
         OnEquipmentChanged?.Invoke(ItemType.Weapon, equippedWeapon);
         OnEquipmentUpgradeChanged?.Invoke(ItemType.Weapon, equippedWeaponUpgradeLevel);
         OnInventoryChanged?.Invoke();
@@ -1102,12 +1282,33 @@ namespace InfiniteLabyrinth.Inventory
       if (type == ItemType.Armor && equippedArmor != null && equippedArmorUpgradeLevel < 5)
       {
         equippedArmorUpgradeLevel++;
+        equippedArmorAffix?.UpdateEnchantmentUnlocks(equippedArmorUpgradeLevel);
         OnEquipmentChanged?.Invoke(ItemType.Armor, equippedArmor);
         OnEquipmentUpgradeChanged?.Invoke(ItemType.Armor, equippedArmorUpgradeLevel);
         OnInventoryChanged?.Invoke();
         return true;
       }
       return false;
+    }
+
+    /// <summary>
+    /// Phát sự kiện cập nhật túi đồ thủ công khi các hệ thống khác (như Lò Rèn) sửa đổi slot
+    /// </summary>
+    public void NotifyInventoryChanged()
+    {
+      OnInventoryChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Xóa một ô trong túi đồ theo index
+    /// </summary>
+    public void ClearSlot(int index)
+    {
+      if (index >= 0 && index < slots.Count)
+      {
+        slots[index].Clear();
+        OnInventoryChanged?.Invoke();
+      }
     }
   }
 }

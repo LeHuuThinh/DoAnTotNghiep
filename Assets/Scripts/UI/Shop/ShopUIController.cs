@@ -19,6 +19,8 @@ namespace InfiniteLabyrinth.UI
   {
     public static ShopUIController Instance { get; private set; }
     public static bool IsOpen { get; private set; } = false;
+    public static int LastClosedFrame { get; private set; } = -1;
+    private int openedFrame = -1;
 
     public enum InventoryTab
     {
@@ -136,12 +138,29 @@ namespace InfiniteLabyrinth.UI
     {
       if (!IsOpen) return;
 
-      // Phím ESC hoặc phím Tab đóng Cửa Hàng
       if (Keyboard.current != null)
       {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.tabKey.wasPressedThisFrame)
+        // 1. Phím F đóng Cửa Hàng (bỏ qua frame vừa mở để tránh đóng ngay lập tức)
+        if (Keyboard.current.fKey.wasPressedThisFrame)
         {
-          CloseShop();
+          if (Time.frameCount != openedFrame)
+          {
+            CloseShop();
+            return;
+          }
+        }
+
+        // 2. Phím ESC đóng popup chi tiết trước (nếu đang mở) hoặc đóng Cửa Hàng
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+          if (itemDetailPopup != null && itemDetailPopup.gameObject.activeSelf)
+          {
+            itemDetailPopup.Hide();
+          }
+          else
+          {
+            CloseShop();
+          }
         }
       }
     }
@@ -370,6 +389,7 @@ namespace InfiniteLabyrinth.UI
       if (shopData == null) return;
       currentShopData = shopData;
       IsOpen = true;
+      openedFrame = Time.frameCount;
 
       AutoFindReferences();
       CachePlayerController();
@@ -417,6 +437,7 @@ namespace InfiniteLabyrinth.UI
     {
       if (!IsOpen) return;
       IsOpen = false;
+      LastClosedFrame = Time.frameCount;
 
       if (itemDetailPopup != null)
       {
@@ -724,8 +745,13 @@ namespace InfiniteLabyrinth.UI
         return;
       }
 
-      // 2. Thêm vật phẩm vào túi đồ
-      bool added = InventoryManager.Instance.AddItem(item, 1, out int remainder, notifyPickup: true);
+      // 2. Thêm vật phẩm vào túi đồ (tự động roll dòng ngẫu nhiên và phù phép nếu là trang bị)
+      EquipmentAffixData affix = null;
+      if (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor)
+      {
+        affix = EquipmentAffixGenerator.Generate(item);
+      }
+      bool added = InventoryManager.Instance.AddItem(item, 1, out int remainder, notifyPickup: true, affixData: affix);
       if (!added || remainder > 0)
       {
         // Túi đồ đầy

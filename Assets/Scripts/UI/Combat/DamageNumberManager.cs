@@ -305,7 +305,7 @@ namespace InfiniteLabyrinth.UI.Combat
     /// <summary>
     /// Kích hoạt số sát thương bay lên tại vị trí va chạm thế giới (World Position)
     /// </summary>
-    public void SpawnDamage(float damage, Vector3 worldPosition, DamageNumberType type = DamageNumberType.Normal)
+    public void SpawnDamage(float damage, Vector3 worldPosition, DamageNumberType type = DamageNumberType.Normal, bool isCrit = false)
     {
       if (damage <= 0f) return;
 
@@ -334,7 +334,7 @@ namespace InfiniteLabyrinth.UI.Combat
       }
 
       activeItems.Add(item);
-      item.Spawn(damage, worldPosition, type, style, cachedMainCamera, ReturnToPool);
+      item.Spawn(damage, worldPosition, type, style, cachedMainCamera, ReturnToPool, isCrit);
     }
 
     private void ReturnToPool(DamageNumberItem item)

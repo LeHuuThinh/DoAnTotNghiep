@@ -1,4 +1,4 @@
-# Kiến Trúc Hệ Thống (System Architecture) - Infinite Labyrinth
+﻿# Kiến Trúc Hệ Thống (System Architecture) - Infinite Labyrinth
 
 > **Dự án:** Infinite Labyrinth (Game 3D Action RPG Roguelite - Đồ Án Tốt Nghiệp)  
 > **Phong cách nghệ thuật:** Faceted Low-poly  
@@ -418,7 +418,17 @@ flowchart TD
 4. **Hub Ngôi Làng & Thợ Rèn (`LandScene`):**
    * **Chuông Làng Trung Tâm (Village Bell):** Điểm linh hồn hồi phục 100% máu, điểm Respawn sau khi tử trận.
    * **Thợ rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (`BlacksmithUIController.cs`, `CraftingRecipe.cs`, `BlacksmithUpgradeConfig.cs` - Task RPG-08):**
-     * **Kiến trúc Cường hóa (+1 đến +5):** Mỗi cấp cường hóa gia tăng **+15% Sát thương cơ bản (ATK)** của vũ khí hoặc **+15% Phòng thủ (DEF)** của giáp, lưu trữ độc lập theo từng instance trong `InventorySlot.UpgradeLevel` mà không can thiệp ScriptableObject gốc. Cập nhật trực tiếp vào `InventoryManager.GetTotalAttackBonus()` và `GetTotalDefenseBonus()`.
+     * **Kiến trúc Cường hóa Lai (Hybrid Scaling: Flat + %) & Chỉ Số Động:**
+        + Khắc phục triệt để lỗi "vũ khí yếu cấp thấp nâng cấp không bõ": Áp dụng công thức lai giữa phần trăm và giá trị cố định:
+          - ATK = baseAttack * (1 + 0.08 * level) + (4 * level)
+          - DEF = baseDefense * (1 + 0.08 * level) + (2 * level)
+          - HP = baseHealth * (1 + 0.08 * level) + (12 * level)
+          - Dòng phụ: Tăng nhẹ +3% / cấp.
+        + **7 Chỉ số mở rộng:** CritRate, CritDamage, Lifesteal (cap 25 HP), SpiritCostReduction (giảm tiêu hao Spirit chiêu E/Q/R), StaminaCostReduction (giảm hao thể lực Dash/Roll/Attack), SpiritGainBonus (tăng Spirit hồi khi đánh trúng hoặc Parry), MoveSpeedBonus.
+        + **Dữ Liệu Động Instance Data & Procedural Roll (EquipmentAffixData.cs, EquipmentAffixGenerator.cs):** Mỗi trang bị rơi ra đất, mua shop hoặc rèn đều roll dòng chính (+-8%~25%), dòng phụ (0-4 dòng theo Rarity) và các ô phù phép độc lập.
+        + **Hệ thống Phù Phép Thức Tỉnh Tại Mốc +1, +3, +5 (Enchantment Awakening):**
+          - Mở 1 ô (+1) cho Common/Uncommon, 2 ô (+1, +3) cho Rare, 3 ô (+1, +3, +5) cho Epic/Legendary.
+          - 10 Phù phép chuyên sâu: BleedingCrit (gây chảy máu rút 30% dmg qua 3s khi bạo kích), SkillECostReduction (-30% Spirit chiêu E), SkillQCostReduction (-30% Spirit chiêu Q), SkillRCostReduction (-25% Spirit chiêu R), LowHealthBloodthirst (+8% hút máu khi dưới 50% HP), TitanCharge (+25% sát thương đòn gồng), ParryStaminaRestore (hồi 25 thể lực khi parry thành công), SprintWind (+20% tốc chạy sau khi lăn né), CritFrenzy (+15% tốc chạy khi chém crit), SoulSiphon (tiêu diệt mục tiêu hồi 15 Spirit & 15 HP).
      * **Badge Cấp Độ & Hào Quang Thần Binh:** Tự động hiển thị Badge `+1`..`+5` màu vàng kim `#FFD700` ở góc trên ô đồ (`InventorySlotUI.cs`). Khi vũ khí đạt cấp tối đa `+5`, kích hoạt hào quang phát sáng vàng kim quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
      * **Công thức nâng cấp theo bậc:**
        + Cấp `+1`: 1 Đá Cường Hóa (`mat_upgrade_stone`) + 50 Vàng.
@@ -467,20 +477,21 @@ flowchart TD
 ### F. Bảng Điều Khiển Quản Trị & Thử Nghiệm (Developer Admin Cheat Console)
 * **Dịch Vụ Quản Trị Trung Tâm (AdminCheatManager.cs - Self-Healing Singleton & DontDestroyOnLoad):**
   * Tự động khởi tạo và phục hồi (EnsureInstance()) khi kéo Prefab AdminCheatCanvas.prefab vào bất kỳ Scene nào (LandScene, DungeonScene...) mà không cần kéo Manager thủ công.
-  * Hỗ trợ 3 phím nóng mở Console: Phím **~** (Backquote), **F1** hoặc **F2** (chống xung đột bộ gõ tiếng Việt Unikey/EVKey), và phím **Esc** để đóng nhanh.
+  * Hỗ trợ 3 phím nóng mở Console: Phím **~** (Backquote), **F1** hoặc **F2** (chống xung đột bộ gõ tiếng Việt Unikey/EVKey), và phím **Esc** / nút **✕** để đóng nhanh.
   * Tích hợp cơ chế khóa con trỏ chuột (CursorLockMode.None / Locked) và tạm dừng hành động nhân vật khi mở bảng điều khiển. Chống bấm đúp frame (lastToggleFrame).
-  * **Ma Trận Dịch Chuyển Linh Hoạt (Safe Teleport Matrix):**
-    * Trong DungeonScene: Dịch chuyển đến Start Entrance, Cổng Đại Lộ Boss, Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng Tầng 2 (cao độ 8m).
-    * Trong LandScene: Tự động fallback sang các địa danh làng: Chuông Làng (Village Bell), Cổng Dịch Chuyển (Portal), Tiệm Rèn (Smithy), Cửa Hàng Vũ Khí (Weapons Shop), Cối Xay Gió (Windmill Lookout).
+  * **Ma Trận Dịch Chuyển Linh Hoạt Thích Ứng Scene (Dynamic Safe Teleport Matrix):**
+    * Trong LandScene: Hiển thị và dịch chuyển chuẩn xác tới 6 địa danh làng Haven: Chuông Làng (Village Bell), Cổng Hầm Ngục (Village Portal), Tiệm Binh Khí (Equipment Shop), Tiệm Dược Liệu (Supplies Shop), Lò Rèn Haven (Blacksmith), Cối Xay Gió (Windmill Lookout); Nút Fast Travel vào Dungeon Tầng 1.
+    * Trong DungeonScene: Dịch chuyển đến Start Entrance, Cổng Đại Lộ Boss, Tâm Đấu Trường Boss (Arena Center), Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng Tầng 2 (cao độ 8m); Nút Về Làng Haven bảo toàn kho đồ.
   * **Bộ Công Cụ Thử Nghiệm Toàn Diện:**
-    * Tạo lại hầm ngục thời gian thực (RegenerateDungeon).
-    * Diệt quái bán kính 25m hoặc toàn bản đồ (KillRadius / KillAll).
-    * Đóng băng AI quái vật (FreezeEnemies) thành bia tập đánh tĩnh.
-    * God Mode, Vô hạn Thể lực (Stamina), Vô hạn Năng lượng (Spirit Stars), Siêu tốc độ (1.0x - 3.5x).
-    * Bơm Vàng, EXP, Điểm Tiềm Năng, Bình Máu, Vũ khí Huyền thoại Dragonic Sword.
+    * Quản lý Vòng lặp Ngày & Bản đồ: AdvanceDay (Day +1), ResetDayTo1, Mở sáng 100% bản đồ hầm ngục (RevealAll), Mở toang Đại Môn Boss (ForceOpenGate), Tái sinh hầm ngục thời gian thực (RegenerateDungeon).
+    * **Bia Tập Đánh Thử Sát Thương (Damage Dummy 10,000 HP):** Sinh quái đứng yên, tắt AI, khóa NavMesh, cài đặt 10.000 HP & 0 DEF để kiểm tra combo đòn đánh, sát thương vũ khí và số Floating Damage Numbers; Nút hồi máu dummy và xóa sạch dummy.
+    * Đóng băng AI quái vật (FreezeEnemies) và sinh 4 quái Skeleton thường.
+    * God Mode, Vô hạn Thể lực (Stamina), Vô hạn Spirit (4 sao), **No Cooldown Cheat (0s hồi chiêu)** cho kỹ năng E, Q, R và bình máu, Siêu tốc độ (1.0x - 3.5x).
+    * Bơm Vàng, EXP, Điểm Tiềm Năng, Bình Máu, Vũ khí Huyền thoại.
 * **Giao Diện Điều Khiển (AdminCheatUI.cs & AdminCheatCanvas.prefab):**
-  * 5 Tab chức năng: Teleport, Dungeon, Player, Combat, RPG & Loot.
-  * Mini Debug Overlay góc trên-phải: Hiển thị FPS thời gian thực, tọa độ Player (X, Y, Z), phòng hiện tại / vị trí làng, và huy hiệu trạng thái Cheat ([GOD], [INF STAM], [INF SPIRIT], [FROZEN AI], [SPD]).
+  * 5 Tab chức năng: Teleport (Scene-aware), World (Day & Cheats), Player (Stats & No CD), Monsters (10k Dummy & AI), Creative (Kho Sáng Tạo 51 Items).
+  * **Cửa Sổ Sáng Tạo (Creative Mode - Toàn bộ 51 Items Game):** Thanh tìm kiếm thời gian thực (`TMP_InputField`), bộ nút lọc phân loại nhanh (`ALL`, `WEAPON`, `ARMOR`, `POTION`, `MATERIAL`, `KEY/GOLD`), danh sách ScrollView hiển thị toàn bộ 51 items (bao gồm cả `MonsterGem` và `BossGem`) kèm Icon, Tên theo màu Rarity, chỉ số, nút `[ +1 ]` và `[ +Max ]` nhận đồ thẳng vào túi.
+  * Mini Debug Overlay góc trên-phải: Hiển thị FPS thời gian thực, tọa độ Player (X, Y, Z), phòng hiện tại / vị trí làng, và huy hiệu trạng thái Cheat ([GOD], [INF STAM], [INF SPIRIT], [NO CD], [FROZEN AI], [SPD]).
   * Hệ thống Toast Notification mượt mà phản hồi tức thì mỗi khi thực thi lệnh.
 
 ---
@@ -494,3 +505,4 @@ flowchart TD
   * LandScene -> DungeonScene (qua Portal).
   * DungeonScene (thắng Boss) -> UI popup chọn: Về Làng (LandScene) hoặc Đi tiếp (DungeonScene tầng kế).
   * DungeonScene (thua cuộc) -> Tự động chuyển về LandScene tại vị trí Chuông Làng.
+

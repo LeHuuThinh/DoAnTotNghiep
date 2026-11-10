@@ -20,6 +20,8 @@ namespace InfiniteLabyrinth.UI
   {
     public static BlacksmithUIController Instance { get; private set; }
     public static bool IsOpen { get; private set; } = false;
+    public static int LastClosedFrame { get; private set; } = -1;
+    private int openedFrame = -1;
 
     public enum BlacksmithTab
     {
@@ -64,6 +66,9 @@ namespace InfiniteLabyrinth.UI
 
     [SerializeField] private GameObject arrowObj;
 
+    [Header("=== Ô ĐE RÈN (UPGRADE SLOT INTERACTION) ===")]
+    [SerializeField] private BlacksmithUpgradeSlotUI upgradeSlotUI;
+
     [SerializeField] private Transform afterWindow;
     [SerializeField] private Image afterIcon;
     [SerializeField] private Image afterRarityBg;
@@ -87,6 +92,7 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private Image forgeSlotIcon;
     [SerializeField] private Image forgeSlotRarityBg;
     [SerializeField] private Image forgeSlotRarityBar;
+    [SerializeField] private Button btnForgeSlot;
     [SerializeField] private TextMeshProUGUI forgeItemName;
     [SerializeField] private TextMeshProUGUI forgeItemStats;
     [SerializeField] private Transform forgeMaterialsContainer;
@@ -128,10 +134,20 @@ namespace InfiniteLabyrinth.UI
     private PlayerController cachedPlayerController;
     private Coroutine transitionRoutine;
 
-    // Item đang chọn để nâng cấp
+    // Item đang chọn để nâng cấp (tạm giữ trên đe rèn)
     private int selectedBagSlotIndex = -1;
     private ItemData selectedUpgradeItem = null;
     private int selectedUpgradeLevel = 0;
+
+    private ItemData heldUpgradeItem = null;
+    private int heldUpgradeLevel = 0;
+    private EquipmentAffixData heldUpgradeAffixData = null;
+    private int originalBagIndex = -1;
+
+    public ItemData HeldUpgradeItem => heldUpgradeItem;
+    public int HeldUpgradeLevel => heldUpgradeLevel;
+    public EquipmentAffixData HeldUpgradeAffixData => heldUpgradeAffixData;
+    public bool HasUpgradeItem => heldUpgradeItem != null;
 
     // Recipe đang chọn để rèn
     private List<ForgeRecipeSlotUI> recipeSlots = new List<ForgeRecipeSlotUI>();
@@ -151,10 +167,13 @@ namespace InfiniteLabyrinth.UI
       }
       Instance = this;
 
-      if (InventoryDragDropController.Instance == null)
+      if (InventoryDragDropController.Instance == null || !InventoryDragDropController.Instance.gameObject.activeInHierarchy)
       {
         var existing = FindFirstObjectByType<InventoryDragDropController>();
-        if (existing == null) gameObject.AddComponent<InventoryDragDropController>();
+        if (existing == null || !existing.gameObject.activeInHierarchy)
+        {
+          gameObject.AddComponent<InventoryDragDropController>();
+        }
       }
 
       AutoFindReferences();
@@ -183,9 +202,27 @@ namespace InfiniteLabyrinth.UI
 
       if (Keyboard.current != null)
       {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.tabKey.wasPressedThisFrame)
+        // 1. Phím F đóng Lò Rèn (bỏ qua frame vừa mở để tránh đóng ngay lập tức)
+        if (Keyboard.current.fKey.wasPressedThisFrame)
         {
-          CloseBlacksmith();
+          if (Time.frameCount != openedFrame)
+          {
+            CloseBlacksmith();
+            return;
+          }
+        }
+
+        // 2. Phím ESC đóng popup chi tiết trước (nếu đang mở) hoặc đóng Lò Rèn
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+          if (itemDetailPopup != null && itemDetailPopup.gameObject.activeSelf)
+          {
+            itemDetailPopup.Hide();
+          }
+          else
+          {
+            CloseBlacksmith();
+          }
         }
       }
     }
@@ -226,6 +263,9 @@ namespace InfiniteLabyrinth.UI
             Transform slot = beforeWindow.Find("UpgradeSlot");
             if (slot != null)
             {
+              if (upgradeSlotUI == null) upgradeSlotUI = slot.GetComponent<BlacksmithUpgradeSlotUI>();
+              if (upgradeSlotUI == null) upgradeSlotUI = slot.gameObject.AddComponent<BlacksmithUpgradeSlotUI>();
+              upgradeSlotUI.AutoFindReferences();
               if (beforeIcon == null) beforeIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
               if (beforeRarityBg == null) beforeRarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
               if (beforeRarityBar == null) beforeRarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
@@ -294,6 +334,7 @@ namespace InfiniteLabyrinth.UI
             Transform slot = win.Find("ForgeSlot");
             if (slot != null)
             {
+              if (btnForgeSlot == null) btnForgeSlot = slot.GetComponent<Button>();
               if (forgeSlotIcon == null) forgeSlotIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
               if (forgeSlotRarityBg == null) forgeSlotRarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
               if (forgeSlotRarityBar == null) forgeSlotRarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
@@ -363,6 +404,7 @@ namespace InfiniteLabyrinth.UI
 
       if (btnUpgrade != null) btnUpgrade.onClick.AddListener(HandleUpgradeClicked);
       if (btnForge != null) btnForge.onClick.AddListener(HandleForgeClicked);
+      if (btnForgeSlot != null) btnForgeSlot.onClick.AddListener(HandleForgeSlotClicked);
 
       if (itemDetailPopup != null)
       {
@@ -384,6 +426,18 @@ namespace InfiniteLabyrinth.UI
         InventoryManager.Instance.OnInventoryChanged -= HandleInventoryDataChanged;
         InventoryManager.Instance.OnGoldChanged -= HandleGoldChanged;
       }
+
+      if (bagSlots != null)
+      {
+        for (int i = 0; i < bagSlots.Count; i++)
+        {
+          if (bagSlots[i] != null)
+          {
+            bagSlots[i].OnClicked -= HandleBagSlotClicked;
+            bagSlots[i].OnRightClicked -= HandleBagSlotRightClicked;
+          }
+        }
+      }
     }
 
     private void AutoFindSlots()
@@ -399,6 +453,8 @@ namespace InfiniteLabyrinth.UI
         {
           bagSlots[i].OnClicked -= HandleBagSlotClicked;
           bagSlots[i].OnClicked += HandleBagSlotClicked;
+          bagSlots[i].OnRightClicked -= HandleBagSlotRightClicked;
+          bagSlots[i].OnRightClicked += HandleBagSlotRightClicked;
         }
       }
     }
@@ -418,6 +474,7 @@ namespace InfiniteLabyrinth.UI
     public void OpenBlacksmith()
     {
       IsOpen = true;
+      openedFrame = Time.frameCount;
       AutoFindReferences();
       CachePlayerController();
 
@@ -432,13 +489,13 @@ namespace InfiniteLabyrinth.UI
       // Mặc định mở Tab Cường Hóa (Upgrade)
       SwitchBlacksmithTab(BlacksmithTab.Upgrade);
 
-      // Làm mới kho đồ bên phải & tự động chọn vũ khí đầu tiên nếu có
-      currentInventoryTab = InventoryTab.Weapon;
+      // Làm mới kho đồ bên phải & đặt ô cường hóa về trạng thái chờ
+      currentInventoryTab = InventoryTab.All;
       UpdateInventoryTabHighlight();
       RefreshInventoryGrid();
       UpdatePlayerGold();
 
-      AutoSelectFirstWeaponToUpgrade();
+      ResetUpgradeSlot();
 
       // Cấu hình popup
       if (itemDetailPopup != null)
@@ -454,7 +511,15 @@ namespace InfiniteLabyrinth.UI
     public void CloseBlacksmith()
     {
       if (!IsOpen) return;
+
+      // Tự động hoàn trả trang bị nếu còn nằm trên đe rèn
+      if (heldUpgradeItem != null)
+      {
+        TakeOutUpgradeItem();
+      }
+
       IsOpen = false;
+      LastClosedFrame = Time.frameCount;
 
       if (itemDetailPopup != null) itemDetailPopup.HideImmediate();
       if (cachedPlayerController != null) cachedPlayerController.UnlockMovement();
@@ -534,47 +599,323 @@ namespace InfiniteLabyrinth.UI
     // TAB 1: LOGIC CƯỜNG HÓA TRANG BỊ (+1 ĐẾN +5)
     // =========================================================================
 
-    private void AutoSelectFirstWeaponToUpgrade()
+    private void ResetUpgradeSlot()
     {
-      if (!InventoryManager.HasInstance) return;
+      heldUpgradeItem = null;
+      heldUpgradeLevel = 0;
+      heldUpgradeAffixData = null;
+      originalBagIndex = -1;
 
-      // Ưu tiên vũ khí đang trang bị
-      if (InventoryManager.Instance.EquippedWeapon != null)
-      {
-        selectedBagSlotIndex = -100; // Đánh dấu ô đang mặc (Equipped Weapon)
-        selectedUpgradeItem = InventoryManager.Instance.EquippedWeapon;
-        selectedUpgradeLevel = InventoryManager.Instance.EquippedWeaponUpgradeLevel;
-        UpdateUpgradeUI();
-        return;
-      }
-
-      // Hoặc tìm trang bị đầu tiên trong túi đồ
-      var slots = InventoryManager.Instance.Slots;
-      for (int i = 0; i < slots.Count; i++)
-      {
-        if (!slots[i].IsEmpty && (slots[i].ItemData.ItemType == ItemType.Weapon || slots[i].ItemData.ItemType == ItemType.Armor))
-        {
-          selectedBagSlotIndex = i;
-          selectedUpgradeItem = slots[i].ItemData;
-          selectedUpgradeLevel = slots[i].UpgradeLevel;
-          UpdateUpgradeUI();
-          return;
-        }
-      }
-
-      // Không có trang bị nào
       selectedBagSlotIndex = -1;
       selectedUpgradeItem = null;
       selectedUpgradeLevel = 0;
+      ClearUpgradeUI();
+    }
+
+    /// <summary>
+    /// Nạp một trang bị từ túi đồ vào đe rèn để cường hóa (tạm thời nhấc khỏi túi đồ)
+    /// </summary>
+    public void PutItemIntoUpgrade(int bagSlotIndex)
+    {
+      if (!InventoryManager.HasInstance || bagSlotIndex < 0 || bagSlotIndex >= InventoryManager.Instance.Slots.Count) return;
+
+      var slot = InventoryManager.Instance.Slots[bagSlotIndex];
+      if (slot.IsEmpty) return;
+
+      ItemData item = slot.ItemData;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return;
+
+      // Nếu trước đó đang có trang bị khác trên đe rèn -> Hoàn trả lại túi trước!
+      if (heldUpgradeItem != null)
+      {
+        TakeOutUpgradeItem();
+      }
+
+      // 1. Lưu lại trang bị trên đe rèn
+      heldUpgradeItem = item;
+      heldUpgradeLevel = slot.UpgradeLevel;
+      heldUpgradeAffixData = slot.AffixData ?? slot.EnsureAffixData();
+      originalBagIndex = bagSlotIndex;
+
+      // 2. Nhấc ra khỏi túi đồ của người chơi
+      InventoryManager.Instance.ClearSlot(bagSlotIndex);
+
+      // 3. Đồng bộ trạng thái UI đe rèn
+      selectedUpgradeItem = heldUpgradeItem;
+      selectedUpgradeLevel = heldUpgradeLevel;
+      selectedBagSlotIndex = originalBagIndex;
+
       UpdateUpgradeUI();
+      RefreshInventoryGrid();
+
+      if (itemDetailPopup != null)
+      {
+        itemDetailPopup.HideImmediate();
+      }
+    }
+
+    /// <summary>
+    /// Tháo trang bị từ đe rèn trả lại túi đồ (vào ô chỉ định hoặc ô ban đầu)
+    /// </summary>
+    public void TakeOutUpgradeItem(int targetBagIndex = -1)
+    {
+      if (heldUpgradeItem == null || !InventoryManager.HasInstance) return;
+
+      var invSlots = InventoryManager.Instance.Slots;
+      int destIndex = -1;
+
+      // Ưu tiên 1: Ô đích người chơi kéo thả vào (nếu đang trống)
+      if (targetBagIndex >= 0 && targetBagIndex < invSlots.Count && invSlots[targetBagIndex].IsEmpty)
+      {
+        destIndex = targetBagIndex;
+      }
+      // Ưu tiên 2: Ô gốc ban đầu trước khi nhấc ra (nếu đang trống)
+      else if (originalBagIndex >= 0 && originalBagIndex < invSlots.Count && invSlots[originalBagIndex].IsEmpty)
+      {
+        destIndex = originalBagIndex;
+      }
+      // Ưu tiên 3: Tìm ô trống đầu tiên trong túi
+      else
+      {
+        for (int i = 0; i < invSlots.Count; i++)
+        {
+          if (invSlots[i].IsEmpty)
+          {
+            destIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (destIndex >= 0)
+      {
+        invSlots[destIndex].SetItem(heldUpgradeItem, 1, heldUpgradeLevel, heldUpgradeAffixData);
+        InventoryManager.Instance.NotifyInventoryChanged();
+      }
+      else
+      {
+        // Dự phòng túi đầy
+        InventoryManager.Instance.AddItem(heldUpgradeItem, 1, upgradeLevel: heldUpgradeLevel, affixData: heldUpgradeAffixData);
+      }
+
+      // Xóa sạch trạng thái đe rèn
+      heldUpgradeItem = null;
+      heldUpgradeLevel = 0;
+      heldUpgradeAffixData = null;
+      originalBagIndex = -1;
+
+      selectedUpgradeItem = null;
+      selectedUpgradeLevel = 0;
+      selectedBagSlotIndex = -1;
+
+      ClearUpgradeUI();
+      RefreshInventoryGrid();
+      UpdatePlayerGold();
+
+      if (itemDetailPopup != null)
+      {
+        itemDetailPopup.HideImmediate();
+      }
+    }
+
+    /// <summary>
+    /// Xem trước thông tin chi tiết trang bị đang đặt trên đe rèn
+    /// </summary>
+    public void ShowUpgradeSlotPreview()
+    {
+      if (heldUpgradeItem == null || itemDetailPopup == null) return;
+      RectTransform targetRect = upgradeSlotUI != null ? upgradeSlotUI.transform as RectTransform : (beforeWindow as RectTransform);
+      itemDetailPopup.ShowPreview(heldUpgradeItem, targetRect, heldUpgradeAffixData);
     }
 
     public void SetItemToUpgrade(ItemData item, int upgradeLevel, int bagSlotIndex)
     {
-      selectedUpgradeItem = item;
-      selectedUpgradeLevel = Mathf.Clamp(upgradeLevel, 0, 5);
-      selectedBagSlotIndex = bagSlotIndex;
-      UpdateUpgradeUI();
+      PutItemIntoUpgrade(bagSlotIndex);
+    }
+
+    private string BuildUpgradeStatsText(ItemData item, int level, bool showBonusDiff, EquipmentAffixData affix = null)
+    {
+      if (item == null) return "";
+      var sb = new System.Text.StringBuilder();
+
+      // Sát thương (Attack)
+      float baseAtk = (affix != null && affix.rolledAttack > 0f) ? affix.rolledAttack : item.BonusAttack;
+      if (baseAtk > 0f)
+      {
+        float val = BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, level);
+        if (showBonusDiff && level > 0)
+        {
+          float prevVal = BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, level - 1);
+          float diff = val - prevVal;
+          sb.AppendLine($"Attack (ATK): <color=#77FF77>{val:0.#} (+{diff:0.#})</color>");
+        }
+        else
+        {
+          sb.AppendLine($"Attack (ATK): <color=#FFE082>{val:0.#}</color>");
+        }
+      }
+
+      // Phòng thủ (Defense)
+      float baseDef = (affix != null && affix.rolledDefense > 0f) ? affix.rolledDefense : item.BonusDefense;
+      if (baseDef > 0f)
+      {
+        float val = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, level);
+        if (showBonusDiff && level > 0)
+        {
+          float prevVal = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, level - 1);
+          float diff = val - prevVal;
+          sb.AppendLine($"Defense (DEF): <color=#77FF77>{val:0.#} (+{diff:0.#})</color>");
+        }
+        else
+        {
+          sb.AppendLine($"Defense (DEF): <color=#81D4FA>{val:0.#}</color>");
+        }
+      }
+
+      // Máu tối đa (Max Health)
+      float baseHp = (affix != null && affix.rolledHealth > 0f) ? affix.rolledHealth : item.BonusHealth;
+      if (baseHp > 0f)
+      {
+        float val = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, level);
+        if (showBonusDiff && level > 0)
+        {
+          float prevVal = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, level - 1);
+          float diff = val - prevVal;
+          sb.AppendLine($"Max Health: <color=#77FF77>+{val:0.#} (+{diff:0.#})</color>");
+        }
+        else
+        {
+          sb.AppendLine($"Max Health: <color=#EF5350>+{val:0.#}</color>");
+        }
+      }
+
+      // Thể lực tối đa (Max Stamina)
+      if (item.BonusStamina > 0f)
+      {
+        sb.AppendLine($"Max Stamina: <color=#66BB6A>+{item.BonusStamina:0.#}</color>");
+      }
+
+      // DÒNG PHỤ THẦN BINH (SUB-STATS) TỪ AFFIXDATA
+      if (affix != null && affix.subStats.Count > 0)
+      {
+        sb.AppendLine("\n<color=#B0BEC5>── Dòng Phụ ──</color>");
+        for (int i = 0; i < affix.subStats.Count; i++)
+        {
+          var sub = affix.subStats[i];
+          float upVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(sub.value, level);
+          sb.AppendLine(new SubStatEntry(sub.type, upVal).GetFormattedString());
+        }
+      }
+      else
+      {
+        // Chỉ số mở rộng (Crit, Hút máu, Tiện ích)
+        if (item.BonusCritRate > 0f)
+        {
+          float val = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritRate, level);
+          sb.AppendLine($"Critical Rate: <color=#FFB74D>+{val:0.#}%</color>");
+        }
+
+        if (item.BonusCritDamage > 0f)
+        {
+          float val = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritDamage, level);
+          sb.AppendLine($"Critical DMG: <color=#FFA726>+{val:0.#}%</color>");
+        }
+
+        if (item.BonusLifesteal > 0f)
+        {
+          float val = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusLifesteal, level);
+          sb.AppendLine($"Lifesteal: <color=#E57373>+{val:0.#}%</color>");
+        }
+
+        if (item.SpiritCostReduction > 0f)
+        {
+          sb.AppendLine($"Spirit Cost: <color=#4DD0E1>-{item.SpiritCostReduction:0.#}%</color>");
+        }
+
+        if (item.StaminaCostReduction > 0f)
+        {
+          sb.AppendLine($"Stamina Cost: <color=#81C784>-{item.StaminaCostReduction:0.#}%</color>");
+        }
+
+        if (item.SpiritGainBonus > 0f)
+        {
+          sb.AppendLine($"Spirit Gain: <color=#BA68C8>+{item.SpiritGainBonus:0.#}%</color>");
+        }
+
+        if (item.MoveSpeedBonus > 0f)
+        {
+          sb.AppendLine($"Move Speed: <color=#FFF176>+{item.MoveSpeedBonus:0.#}%</color>");
+        }
+      }
+
+      // PHÙ PHÉP THỨC TỈNH (ENCHANTMENTS)
+      if (affix != null && affix.enchantments.Count > 0)
+      {
+        sb.AppendLine("\n<color=#CE93D8>── Phù Phép ──</color>");
+        for (int i = 0; i < affix.enchantments.Count; i++)
+        {
+          var ench = affix.enchantments[i];
+          bool isUnlockedAtThisTier = level >= ench.milestoneLevel;
+          if (isUnlockedAtThisTier)
+          {
+            sb.AppendLine($"<color=#E040FB>✦ [+{ench.milestoneLevel}] {ench.title}</color>");
+          }
+          else
+          {
+            if (showBonusDiff && level == ench.milestoneLevel)
+            {
+              sb.AppendLine($"<color=#FFD54F>✨ Thức tỉnh [+{ench.milestoneLevel}]: {ench.title}!</color>");
+            }
+            else
+            {
+              sb.AppendLine($"<color=#757575>✧ [+{ench.milestoneLevel}] Khóa (+{ench.milestoneLevel})</color>");
+            }
+          }
+        }
+      }
+
+      if (sb.Length == 0)
+      {
+        sb.Append("<color=#B0BEC5>No bonus attributes</color>");
+      }
+
+      return sb.ToString().TrimEnd();
+    }
+
+    private string BuildForgeStatsText(ItemData item)
+    {
+      if (item == null) return "";
+      var sb = new System.Text.StringBuilder();
+
+      if (item.BonusAttack > 0f)
+        sb.AppendLine($"Attack (ATK): <color=#FFE082>+{item.BonusAttack:0.#}</color>");
+      if (item.BonusDefense > 0f)
+        sb.AppendLine($"Defense (DEF): <color=#81D4FA>+{item.BonusDefense:0.#}</color>");
+      if (item.BonusHealth > 0f)
+        sb.AppendLine($"Max Health: <color=#EF5350>+{item.BonusHealth:0.#}</color>");
+      if (item.BonusStamina > 0f)
+        sb.AppendLine($"Max Stamina: <color=#66BB6A>+{item.BonusStamina:0.#}</color>");
+
+      if (sb.Length == 0)
+      {
+        sb.Append("<color=#B0BEC5>No bonus attributes</color>");
+      }
+
+      return sb.ToString().TrimEnd();
+    }
+
+    private void SafeSetIcon(Image img, Sprite icon)
+    {
+      if (img == null) return;
+      bool hasIcon = icon != null;
+      img.gameObject.SetActive(hasIcon);
+      if (hasIcon && img.transform.parent != null && img.transform.parent.name.Contains("Icon"))
+      {
+        img.transform.parent.gameObject.SetActive(true);
+      }
+      img.sprite = icon;
+      img.enabled = hasIcon;
+      img.color = Color.white;
     }
 
     private void UpdateUpgradeUI()
@@ -590,12 +931,7 @@ namespace InfiniteLabyrinth.UI
       bool isMaxLevel = curLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL;
 
       // 1. Before Window
-      if (beforeIcon != null)
-      {
-        beforeIcon.sprite = item.Icon;
-        beforeIcon.enabled = item.Icon != null;
-        beforeIcon.color = Color.white;
-      }
+      SafeSetIcon(beforeIcon, item.Icon);
       Color rColor = item.Rarity.GetRarityColor();
       if (beforeRarityBg != null)
       {
@@ -610,16 +946,9 @@ namespace InfiniteLabyrinth.UI
       if (beforeItemName != null) beforeItemName.text = item.Rarity.FormatWithGradient(item.ItemName);
       if (beforeUpgradeLevelText != null) beforeUpgradeLevelText.text = curLevel > 0 ? $"+{curLevel}" : "+0";
 
-      float currentAtk = BlacksmithUpgradeConfig.CalculateUpgradedAttack(item.BonusAttack, curLevel);
-      float currentDef = BlacksmithUpgradeConfig.CalculateUpgradedDefense(item.BonusDefense, curLevel);
       if (beforeItemStats != null)
       {
-        if (item.ItemType == ItemType.Weapon)
-          beforeItemStats.text = $"Attack (ATK): <color=#FFE082>{currentAtk:0.#}</color>";
-        else if (item.ItemType == ItemType.Armor)
-          beforeItemStats.text = $"Defense (DEF): <color=#81D4FA>{currentDef:0.#}</color>";
-        else
-          beforeItemStats.text = "";
+        beforeItemStats.text = BuildUpgradeStatsText(item, curLevel, false, heldUpgradeAffixData);
       }
 
       // 2. After Window
@@ -627,14 +956,18 @@ namespace InfiniteLabyrinth.UI
       {
         if (afterItemName != null) afterItemName.text = "<color=#FFD700>MAX LEVEL</color>";
         if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = "+5 (MAX)";
-        if (afterItemStats != null) afterItemStats.text = "<color=#FFD700>Weapon at peak power!</color>";
-        if (afterIcon != null)
+        if (afterItemStats != null) afterItemStats.text = "<color=#FFD700>Weapon at peak power (MAX Tier)!</color>";
+        SafeSetIcon(afterIcon, item.Icon);
+        if (afterRarityBg != null)
         {
-          afterIcon.sprite = item.Icon;
-          afterIcon.enabled = item.Icon != null;
+          afterRarityBg.gameObject.SetActive(true);
+          afterRarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
         }
-        if (afterRarityBg != null) afterRarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
-        if (afterRarityBar != null) afterRarityBar.color = rColor;
+        if (afterRarityBar != null)
+        {
+          afterRarityBar.gameObject.SetActive(true);
+          afterRarityBar.color = rColor;
+        }
 
         if (materialsNeededText != null) materialsNeededText.text = "MAXIMUM ENHANCEMENT REACHED";
         ClearMaterialsContainer(upgradeMaterialsContainer);
@@ -657,15 +990,8 @@ namespace InfiniteLabyrinth.UI
       }
 
       int nextLevel = curLevel + 1;
-      float nextAtk = BlacksmithUpgradeConfig.CalculateUpgradedAttack(item.BonusAttack, nextLevel);
-      float nextDef = BlacksmithUpgradeConfig.CalculateUpgradedDefense(item.BonusDefense, nextLevel);
 
-      if (afterIcon != null)
-      {
-        afterIcon.sprite = item.Icon;
-        afterIcon.enabled = item.Icon != null;
-        afterIcon.color = Color.white;
-      }
+      SafeSetIcon(afterIcon, item.Icon);
       if (afterRarityBg != null)
       {
         afterRarityBg.gameObject.SetActive(true);
@@ -680,12 +1006,7 @@ namespace InfiniteLabyrinth.UI
       if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = $"+{nextLevel}";
       if (afterItemStats != null)
       {
-        if (item.ItemType == ItemType.Weapon)
-          afterItemStats.text = $"Attack (ATK): <color=#77FF77>{nextAtk:0.#} (+15%)</color>";
-        else if (item.ItemType == ItemType.Armor)
-          afterItemStats.text = $"Defense (DEF): <color=#77FF77>{nextDef:0.#} (+15%)</color>";
-        else
-          afterItemStats.text = "";
+        afterItemStats.text = BuildUpgradeStatsText(item, nextLevel, true, heldUpgradeAffixData);
       }
 
       // 3. Materials Needed
@@ -777,15 +1098,18 @@ namespace InfiniteLabyrinth.UI
         bool enough = owned >= needed;
         qtyTmp.text = enough ? $"<color=#59F259>{owned}/{needed}</color>" : $"<color=#FF4747>{owned}/{needed}</color>";
       }
-      if (iconImg != null)
-      {
-        iconImg.sprite = icon;
-        iconImg.enabled = icon != null;
-        iconImg.color = Color.white;
-      }
+      SafeSetIcon(iconImg, icon);
       Color rColor = rarity.GetRarityColor();
-      if (bgImg != null) bgImg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
-      if (barImg != null) barImg.color = rColor;
+      if (bgImg != null)
+      {
+        bgImg.gameObject.SetActive(true);
+        bgImg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
+      }
+      if (barImg != null)
+      {
+        barImg.gameObject.SetActive(true);
+        barImg.color = rColor;
+      }
     }
 
     private void ClearMaterialsContainer(Transform container)
@@ -799,19 +1123,41 @@ namespace InfiniteLabyrinth.UI
 
     private void ClearUpgradeUI()
     {
-      if (beforeIcon != null) beforeIcon.enabled = false;
+      if (beforeIcon != null)
+      {
+        beforeIcon.gameObject.SetActive(false);
+        beforeIcon.enabled = false;
+      }
+      if (beforeRarityBg != null) beforeRarityBg.gameObject.SetActive(false);
+      if (beforeRarityBar != null) beforeRarityBar.gameObject.SetActive(false);
       if (beforeItemName != null) beforeItemName.text = "Select equipment";
       if (beforeUpgradeLevelText != null) beforeUpgradeLevelText.text = "";
-      if (beforeItemStats != null) beforeItemStats.text = "Select a weapon or armor from your inventory.";
+      if (beforeItemStats != null) beforeItemStats.text = "<color=#90A4AE>Select a weapon or armor from your bag & click \"Put in\".</color>";
 
-      if (afterIcon != null) afterIcon.enabled = false;
+      if (afterIcon != null)
+      {
+        afterIcon.gameObject.SetActive(false);
+        afterIcon.enabled = false;
+      }
+      if (afterRarityBg != null) afterRarityBg.gameObject.SetActive(false);
+      if (afterRarityBar != null) afterRarityBar.gameObject.SetActive(false);
       if (afterItemName != null) afterItemName.text = "Next Tier";
       if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = "";
-      if (afterItemStats != null) afterItemStats.text = "";
+      if (afterItemStats != null) afterItemStats.text = "<color=#90A4AE>View stats increase and materials needed.</color>";
 
       ClearMaterialsContainer(upgradeMaterialsContainer);
-      if (upgradeGoldPriceText != null) upgradeGoldPriceText.text = "0";
+      if (materialsNeededText != null) materialsNeededText.text = "Materials Needed";
+      if (upgradeGoldPriceText != null)
+      {
+        upgradeGoldPriceText.text = "0";
+        upgradeGoldPriceText.color = normalPriceColor;
+      }
       if (btnUpgrade != null) btnUpgrade.interactable = false;
+      if (btnUpgradeText != null)
+      {
+        btnUpgradeText.text = "ENHANCE";
+        btnUpgradeText.color = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+      }
       if (btnUpgradeBorder != null) btnUpgradeBorder.SetActive(false);
       if (btnUpgradeCorner != null) btnUpgradeCorner.SetActive(false);
     }
@@ -834,22 +1180,16 @@ namespace InfiniteLabyrinth.UI
         InventoryManager.Instance.RemoveItem(BlacksmithUpgradeConfig.UPGRADE_CRYSTAL_ID, req.CrystalCount);
       }
 
-      // 3. Tăng cấp cường hóa
-      if (selectedBagSlotIndex == -100)
+      // 3. Tăng cấp cường hóa của món đồ trên đe rèn
+      heldUpgradeLevel++;
+      selectedUpgradeLevel = heldUpgradeLevel;
+      if (heldUpgradeAffixData != null)
       {
-        // Trang bị đang mặc
-        InventoryManager.Instance.UpgradeEquipped(selectedUpgradeItem.ItemType);
-        selectedUpgradeLevel = (selectedUpgradeItem.ItemType == ItemType.Weapon)
-          ? InventoryManager.Instance.EquippedWeaponUpgradeLevel
-          : InventoryManager.Instance.EquippedArmorUpgradeLevel;
-      }
-      else if (selectedBagSlotIndex >= 0)
-      {
-        // Ô trong túi đồ
-        InventoryManager.Instance.UpgradeSlot(selectedBagSlotIndex);
-        if (selectedBagSlotIndex < InventoryManager.Instance.Slots.Count)
+        heldUpgradeAffixData.UpdateEnchantmentUnlocks(heldUpgradeLevel);
+        var newlyAwakened = heldUpgradeAffixData.enchantments.Find(e => e.milestoneLevel == heldUpgradeLevel);
+        if (newlyAwakened != null)
         {
-          selectedUpgradeLevel = InventoryManager.Instance.Slots[selectedBagSlotIndex].UpgradeLevel;
+          Debug.Log($"<color=magenta>[Blacksmith]</color> ✨ THỨC TỈNH PHÙ PHÉP MỐC +{heldUpgradeLevel}: {newlyAwakened.title}!");
         }
       }
 
@@ -977,12 +1317,7 @@ namespace InfiniteLabyrinth.UI
       ItemData item = recipe.ResultItem;
 
       // 1. Forge Slot
-      if (forgeSlotIcon != null)
-      {
-        forgeSlotIcon.sprite = item.Icon;
-        forgeSlotIcon.enabled = item.Icon != null;
-        forgeSlotIcon.color = Color.white;
-      }
+      SafeSetIcon(forgeSlotIcon, item.Icon);
       Color rColor = item.Rarity.GetRarityColor();
       if (forgeSlotRarityBg != null)
       {
@@ -999,12 +1334,7 @@ namespace InfiniteLabyrinth.UI
       if (forgeItemName != null) forgeItemName.text = item.Rarity.FormatWithGradient(recipe.RecipeName);
       if (forgeItemStats != null)
       {
-        if (item.ItemType == ItemType.Weapon)
-          forgeItemStats.text = $"Attack (ATK): <color=#FFE082>{item.BonusAttack}</color>";
-        else if (item.ItemType == ItemType.Armor)
-          forgeItemStats.text = $"Defense (DEF): <color=#81D4FA>{item.BonusDefense}</color>";
-        else
-          forgeItemStats.text = recipe.Description;
+        forgeItemStats.text = BuildForgeStatsText(item);
       }
 
       // 3. Materials Needed
@@ -1056,7 +1386,13 @@ namespace InfiniteLabyrinth.UI
 
     private void ClearForgeWindow()
     {
-      if (forgeSlotIcon != null) forgeSlotIcon.enabled = false;
+      if (forgeSlotIcon != null)
+      {
+        forgeSlotIcon.gameObject.SetActive(false);
+        forgeSlotIcon.enabled = false;
+      }
+      if (forgeSlotRarityBg != null) forgeSlotRarityBg.gameObject.SetActive(false);
+      if (forgeSlotRarityBar != null) forgeSlotRarityBar.gameObject.SetActive(false);
       if (forgeItemName != null) forgeItemName.text = "Select a Recipe";
       if (forgeItemStats != null) forgeItemStats.text = "Select a divine armament recipe from the list.";
       ClearMaterialsContainer(forgeMaterialsContainer);
@@ -1109,6 +1445,19 @@ namespace InfiniteLabyrinth.UI
       UpdateForgeWindow(r);
       RefreshInventoryGrid();
       UpdatePlayerGold();
+    }
+
+    private void HandleForgeSlotClicked()
+    {
+      if (selectedRecipeSlot == null || selectedRecipeSlot.Recipe == null) return;
+      ItemData item = selectedRecipeSlot.Recipe.ResultItem;
+      if (item == null) return;
+
+      if (itemDetailPopup != null)
+      {
+        RectTransform targetRect = btnForgeSlot != null ? btnForgeSlot.transform as RectTransform : null;
+        itemDetailPopup.ShowPreview(item, targetRect);
+      }
     }
 
     // =========================================================================
@@ -1202,13 +1551,46 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    /// <summary>
+    /// Nhấp chuột phải vào ô đồ trong túi bên phải khi đang mở Lò Rèn:
+    /// Nhanh chóng nạp trang bị (Vũ khí / Giáp) vào đe rèn để cường hóa (tự động hoàn trả trang bị cũ nếu có)
+    /// </summary>
+    private void HandleBagSlotRightClicked(InventorySlotUI slot)
+    {
+      if (slot == null || slot.IsEmpty || slot.CurrentItem == null) return;
+
+      ItemData item = slot.CurrentItem;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor)
+      {
+        Debug.Log($"[Blacksmith] Vật phẩm {item.ItemName} không phải Vũ khí hay Giáp, không thể cường hóa!");
+        return;
+      }
+
+      int bagIndex = slot.ActualBagIndex;
+      if (bagIndex < 0) return;
+
+      // Nạp trang bị vào đe rèn
+      PutItemIntoUpgrade(bagIndex);
+
+      // Tự động chuyển về tab Cường Hóa nếu đang ở tab Forge
+      if (currentBlacksmithTab != BlacksmithTab.Upgrade)
+      {
+        SwitchBlacksmithTab(BlacksmithTab.Upgrade);
+      }
+
+      if (itemDetailPopup != null)
+      {
+        itemDetailPopup.HideImmediate();
+      }
+    }
+
     private void HandlePutInFromBag(InventorySlotUI slot, ItemData item)
     {
       if (slot == null || item == null) return;
       if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return;
 
-      // Đặt món đồ vào ô BeforeWindow để cường hóa
-      SetItemToUpgrade(item, slot.UpgradeLevel, slot.ActualBagIndex);
+      // Nạp món đồ vào đe rèn để cường hóa (tạm thời nhấc khỏi túi)
+      PutItemIntoUpgrade(slot.ActualBagIndex);
 
       // Tự động chuyển về tab Cường Hóa nếu đang ở tab Forge
       if (currentBlacksmithTab != BlacksmithTab.Upgrade)

@@ -11,7 +11,22 @@ namespace InfiniteLabyrinth.Blacksmith
   public static class BlacksmithUpgradeConfig
   {
     public const int MAX_UPGRADE_LEVEL = 5;
-    public const float STAT_BONUS_PER_LEVEL = 0.15f; // +15% mỗi cấp
+
+    // === CÔNG THỨC CƯỜNG HÓA MỚI: KẾT HỢP % VÀ CỘNG THẲNG (FLAT) ===
+    // Dòng chính Vũ khí (ATK): +8% + 4 Flat ATK mỗi cấp
+    public const float ATK_PERCENT_PER_LEVEL = 0.08f;
+    public const float ATK_FLAT_PER_LEVEL = 4.0f;
+
+    // Dòng chính Giáp (DEF): +8% + 2 Flat DEF mỗi cấp
+    public const float DEF_PERCENT_PER_LEVEL = 0.08f;
+    public const float DEF_FLAT_PER_LEVEL = 2.0f;
+
+    // Dòng Máu (HP): +8% + 12 Flat HP mỗi cấp
+    public const float HP_PERCENT_PER_LEVEL = 0.08f;
+    public const float HP_FLAT_PER_LEVEL = 12.0f;
+
+    // Dòng phụ (Crit, Hút máu, v.v.): Tăng nhẹ +3% mỗi cấp
+    public const float SUBSTAT_PERCENT_PER_LEVEL = 0.03f;
 
     public const string UPGRADE_STONE_ID = "mat_upgrade_stone";
     public const string UPGRADE_CRYSTAL_ID = "mat_upgrade_crystal";
@@ -56,21 +71,43 @@ namespace InfiniteLabyrinth.Blacksmith
     }
 
     /// <summary>
-    /// Tính toán sát thương sau khi cường hóa: BaseAttack * (1 + 0.15 * level)
+    /// Tính toán sát thương sau khi cường hóa: BaseAttack * (1 + 0.08 * level) + (4 * level)
     /// </summary>
     public static float CalculateUpgradedAttack(float baseAttack, int level)
     {
+      if (baseAttack <= 0f) return 0f;
       level = Mathf.Clamp(level, 0, MAX_UPGRADE_LEVEL);
-      return baseAttack * (1f + STAT_BONUS_PER_LEVEL * level);
+      return baseAttack * (1f + ATK_PERCENT_PER_LEVEL * level) + (ATK_FLAT_PER_LEVEL * level);
     }
 
     /// <summary>
-    /// Tính toán phòng thủ sau khi cường hóa: BaseDefense * (1 + 0.15 * level)
+    /// Tính toán phòng thủ sau khi cường hóa: BaseDefense * (1 + 0.08 * level) + (2 * level)
     /// </summary>
     public static float CalculateUpgradedDefense(float baseDefense, int level)
     {
+      if (baseDefense <= 0f) return 0f;
       level = Mathf.Clamp(level, 0, MAX_UPGRADE_LEVEL);
-      return baseDefense * (1f + STAT_BONUS_PER_LEVEL * level);
+      return baseDefense * (1f + DEF_PERCENT_PER_LEVEL * level) + (DEF_FLAT_PER_LEVEL * level);
+    }
+
+    /// <summary>
+    /// Tính toán máu tối đa sau khi cường hóa: BaseHealth * (1 + 0.08 * level) + (12 * level)
+    /// </summary>
+    public static float CalculateUpgradedHealth(float baseHealth, int level)
+    {
+      if (baseHealth <= 0f) return 0f;
+      level = Mathf.Clamp(level, 0, MAX_UPGRADE_LEVEL);
+      return baseHealth * (1f + HP_PERCENT_PER_LEVEL * level) + (HP_FLAT_PER_LEVEL * level);
+    }
+
+    /// <summary>
+    /// Tính toán chỉ số dòng phụ sau khi cường hóa (tăng nhẹ +3% mỗi cấp)
+    /// </summary>
+    public static float CalculateUpgradedSubStat(float baseValue, int level)
+    {
+      if (baseValue <= 0f) return 0f;
+      level = Mathf.Clamp(level, 0, MAX_UPGRADE_LEVEL);
+      return baseValue * (1f + SUBSTAT_PERCENT_PER_LEVEL * level);
     }
 
     /// <summary>

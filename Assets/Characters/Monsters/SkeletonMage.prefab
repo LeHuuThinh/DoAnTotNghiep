@@ -70,6 +70,7 @@ MonoBehaviour:
   patrolWaitTime: 3
   attackAnimationSpeed: 1
   expReward: 15
+  enemyDefense: 10
   groundSpellPrefab: {fileID: 4330468513817889461, guid: 2b8670c3a0c493c4582c812ae2294f2c, type: 3}
   staffTipPoint: {fileID: 7695429859635390306}
   staffAuraVfx: {fileID: 7155408594750781030}
@@ -96,6 +97,7 @@ MonoBehaviour:
   maxHealth: 100
   currentHealth: 0
   isInvulnerable: 0
+  baseDefense: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -205,6 +207,11 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 24f9777be1690c145a977f86f47b8278, type: 2}
     randomItemPool: []
     dropChance: 0.08
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
+    randomItemPool: []
+    dropChance: 0.25
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}

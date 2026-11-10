@@ -166,17 +166,31 @@ namespace InfiniteLabyrinth.UI
       }
 
       // Đăng ký sự kiện click cho các ô trang bị
+      SetupEquipmentSlotListeners();
+    }
+
+    private void SetupEquipmentSlotListeners()
+    {
       if (weaponSlot != null)
       {
+        weaponSlot.OnClicked -= HandleEquipmentSlotClicked;
         weaponSlot.OnClicked += HandleEquipmentSlotClicked;
+        weaponSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+        weaponSlot.OnRightClicked += HandleEquipmentSlotRightClicked;
       }
       if (armorSlot != null)
       {
+        armorSlot.OnClicked -= HandleEquipmentSlotClicked;
         armorSlot.OnClicked += HandleEquipmentSlotClicked;
+        armorSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+        armorSlot.OnRightClicked += HandleEquipmentSlotRightClicked;
       }
       if (usableSlot != null)
       {
+        usableSlot.OnClicked -= HandleEquipmentSlotClicked;
         usableSlot.OnClicked += HandleEquipmentSlotClicked;
+        usableSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+        usableSlot.OnRightClicked += HandleEquipmentSlotRightClicked;
       }
     }
 
@@ -188,6 +202,7 @@ namespace InfiniteLabyrinth.UI
       if (usableSlot == null && leftPanel != null) usableSlot = leftPanel.Find("UsableSlot")?.GetComponent<EquipmentSlotUI>();
       if (usableSlot == null) usableSlot = transform.Find("LeftPanel/UsableSlot")?.GetComponent<EquipmentSlotUI>();
       if (hudUsableSlot == null) hudUsableSlot = GetComponentInParent<Canvas>()?.GetComponentInChildren<UsableSlotUI>(true);
+      SetupEquipmentSlotListeners();
       AutoFindTabs();
     }
 
@@ -253,6 +268,34 @@ namespace InfiniteLabyrinth.UI
         Instance = null;
       }
 
+      if (weaponSlot != null)
+      {
+        weaponSlot.OnClicked -= HandleEquipmentSlotClicked;
+        weaponSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+      }
+      if (armorSlot != null)
+      {
+        armorSlot.OnClicked -= HandleEquipmentSlotClicked;
+        armorSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+      }
+      if (usableSlot != null)
+      {
+        usableSlot.OnClicked -= HandleEquipmentSlotClicked;
+        usableSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+      }
+
+      if (bagSlots != null)
+      {
+        for (int i = 0; i < bagSlots.Count; i++)
+        {
+          if (bagSlots[i] != null)
+          {
+            bagSlots[i].OnClicked -= HandleBagSlotClicked;
+            bagSlots[i].OnRightClicked -= HandleBagSlotRightClicked;
+          }
+        }
+      }
+
       if (InventoryManager.HasInstance)
       {
         InventoryManager.Instance.OnInventoryChanged -= HandleInventoryDataChanged;
@@ -279,9 +322,16 @@ namespace InfiniteLabyrinth.UI
     {
       if (Keyboard.current == null) return;
 
-      // 1. Phím Tab mở/đóng túi đồ
+      // 1. Phím Tab mở/đóng túi đồ (chỉ cho phép khi Shop và BlackSmith KHÔNG mở)
       if (Keyboard.current.tabKey.wasPressedThisFrame)
       {
+        if (ShopUIController.IsOpen || BlacksmithUIController.IsOpen ||
+            Time.frameCount == ShopUIController.LastClosedFrame || Time.frameCount == BlacksmithUIController.LastClosedFrame)
+        {
+          // Đang trong Shop hoặc BlackSmith (hoặc vừa đóng cùng frame): Cấm mở túi đồ
+          return;
+        }
+
         ToggleInventory();
       }
       // 2. Phím Esc đóng modal tiềm năng trước, hoặc popup chi tiết, hoặc đóng luôn Inventory
@@ -350,7 +400,10 @@ namespace InfiniteLabyrinth.UI
       {
         if (bagSlots[i] != null)
         {
+          bagSlots[i].OnClicked -= HandleBagSlotClicked;
           bagSlots[i].OnClicked += HandleBagSlotClicked;
+          bagSlots[i].OnRightClicked -= HandleBagSlotRightClicked;
+          bagSlots[i].OnRightClicked += HandleBagSlotRightClicked;
         }
       }
     }
@@ -436,12 +489,15 @@ namespace InfiniteLabyrinth.UI
       }
       else
       {
+        if (ShopUIController.IsOpen || BlacksmithUIController.IsOpen) return;
         OpenInventory();
       }
     }
 
     public void OpenInventory()
     {
+      if (ShopUIController.IsOpen || BlacksmithUIController.IsOpen) return;
+
       IsOpen = true;
 
       // 1. Reset về Tab Tất cả, làm mới dữ liệu và ẩn popup trước khi hiện UI để không bị nháy hình 1 frame
@@ -1037,6 +1093,35 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    /// <summary>
+    /// Xử lý click chuột phải vào 1 ô trong túi đồ:
+    /// Nhanh chóng trang bị vật phẩm (Vũ khí, Giáp, hoặc Bình thuốc) vào ô trang bị tương ứng
+    /// </summary>
+    private void HandleBagSlotRightClicked(InventorySlotUI slot)
+    {
+      if (slot == null || slot.IsEmpty || slot.CurrentItem == null) return;
+      if (!InventoryManager.HasInstance) return;
+
+      ItemData item = slot.CurrentItem;
+      // 3 loại trang bị được hỗ trợ: Vũ khí, Giáp, và Bình thuốc (Consumable)
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Consumable)
+      {
+        return;
+      }
+
+      int bagIndex = slot.ActualBagIndex;
+      if (bagIndex < 0) return;
+
+      bool success = InventoryManager.Instance.EquipFromSlot(bagIndex);
+      if (success)
+      {
+        if (itemDetailPopup != null)
+        {
+          itemDetailPopup.Hide();
+        }
+      }
+    }
+
     private void HandleEquipmentSlotClicked(EquipmentSlotUI eqSlot)
     {
       if (eqSlot == null || eqSlot.IsEmpty)
@@ -1055,6 +1140,26 @@ namespace InfiniteLabyrinth.UI
         else
         {
           itemDetailPopup.ShowForEquipmentSlot(eqSlot);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Xử lý click chuột phải vào 1 trong 3 ô trang bị (Vũ khí, Giáp, Bình thuốc):
+    /// Nhanh chóng tháo trang bị đó trả về túi đồ
+    /// </summary>
+    private void HandleEquipmentSlotRightClicked(EquipmentSlotUI eqSlot)
+    {
+      if (eqSlot == null || eqSlot.IsEmpty || eqSlot.EquippedItem == null) return;
+      if (!InventoryManager.HasInstance) return;
+
+      ItemType slotType = eqSlot.SlotType;
+      bool success = InventoryManager.Instance.Unequip(slotType);
+      if (success)
+      {
+        if (itemDetailPopup != null)
+        {
+          itemDetailPopup.Hide();
         }
       }
     }

@@ -224,7 +224,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         Debug.Log("<color=cyan>[Red Ignis Setup] Đã cấu hình xong Animator Controller với Entry = IdleRI và đầy đủ transitions!</color>");
     }
 
-    [MenuItem("Boss/Phục Hồi WeakenFrontRI Gốc Từ FBX")]
+    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Phục Hồi WeakenFrontRI Gốc Từ FBX", false, 36)]
     public static void RestoreWeakenFrontFromFBX()
     {
         string fbxPath = "Assets/Characters/Boss/IgnisDo/animation/WeakenFrontRI.fbx";
@@ -254,7 +254,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         }
     }
 
-    [MenuItem("Boss/2. Cấu Hình Hoạt Ảnh Weaken (Quỳ WeakenFrontRI -> Đứng Dậy WeakenBackRI)")]
+    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Cấu Hình Hoạt Ảnh Weaken (Quỳ WeakenFrontRI -> Đứng Dậy WeakenBackRI)", false, 37)]
     public static void MenuSetupWeakenAnimationAndStates()
     {
         string controllerPath = "Assets/Characters/Boss/IgnisDo/Ignis_animator.controller";

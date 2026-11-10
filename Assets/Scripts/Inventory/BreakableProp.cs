@@ -32,12 +32,12 @@ namespace InfiniteLabyrinth.Inventory
       propCollider = GetComponent<Collider>();
     }
 
-    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal)
+    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, bool isCrit = false)
     {
       if (isBroken) return;
 
       Vector3 spawnPos = (hitPoint != Vector3.zero) ? hitPoint : (transform.position + Vector3.up * 0.8f);
-      InfiniteLabyrinth.UI.Combat.DamageNumberManager.Instance.SpawnDamage(damage, spawnPos, damageType);
+      InfiniteLabyrinth.UI.Combat.DamageNumberManager.Instance.SpawnDamage(damage, spawnPos, damageType, isCrit);
 
       if (breakInOneHit)
       {

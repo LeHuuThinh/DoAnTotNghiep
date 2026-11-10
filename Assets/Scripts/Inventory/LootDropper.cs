@@ -191,7 +191,12 @@ namespace InfiniteLabyrinth.Inventory
       var pickup = dropObj.GetComponent<WorldItemPickup>();
       if (pickup != null)
       {
-        pickup.Initialize(item, count, targetGroundPos, arcHeight, arcDuration);
+        EquipmentAffixData affix = null;
+        if (item != null && (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor))
+        {
+          affix = EquipmentAffixGenerator.Generate(item);
+        }
+        pickup.Initialize(item, count, targetGroundPos, arcHeight, arcDuration, 0, affix);
       }
     }
 

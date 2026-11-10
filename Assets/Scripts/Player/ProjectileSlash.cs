@@ -38,6 +38,9 @@ public class ProjectileSlash : MonoBehaviour
     private bool hasHit = false;
     private float aliveTimer = 0f;
     private float bonusDamage = 0f;
+    private float critRate = 0f;
+    private float critDamageMultiplier = 1.5f;
+    private float lifestealPercent = 0f;
 
     private void Awake()
     {
@@ -64,10 +67,13 @@ public class ProjectileSlash : MonoBehaviour
         Destroy(gameObject, lifeTime);
     }
 
-    public void Launch(Transform attackerRoot, Vector3 launchDirection, float additionalBonusDamage = 0f)
+    public void Launch(Transform attackerRoot, Vector3 launchDirection, float additionalBonusDamage = 0f, float critRate = 0f, float critDamageMultiplier = 1.5f, float lifesteal = 0f)
     {
         attacker = attackerRoot;
         bonusDamage = additionalBonusDamage;
+        this.critRate = critRate;
+        this.critDamageMultiplier = critDamageMultiplier > 0f ? critDamageMultiplier : 1.5f;
+        this.lifestealPercent = lifesteal;
 
         Collider[] attackerColliders = attackerRoot.GetComponentsInChildren<Collider>();
         foreach (Collider col in attackerColliders)
@@ -134,8 +140,41 @@ public class ProjectileSlash : MonoBehaviour
             {
                 hasHit = true;
                 Vector3 hitPoint = GetSafeHitPoint(other);
-                float finalDamage = Mathf.Max(1f, damage + bonusDamage);
-                damageable.TakeDamage(finalDamage, hitPoint, transform.forward, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillE);
+                bool isCrit = critRate > 0f && UnityEngine.Random.Range(0f, 100f) < critRate;
+                float rawDamage = Mathf.Max(1f, damage + bonusDamage);
+                float finalDamage = isCrit ? (rawDamage * critDamageMultiplier) : rawDamage;
+                damageable.TakeDamage(finalDamage, hitPoint, transform.forward, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillE, isCrit);
+
+                if (isCrit && attacker != null)
+                {
+                    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+                        InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.BleedingCrit))
+                    {
+                        Health targetHealth = damageable as Health ?? (damageable as Component)?.GetComponentInParent<Health>();
+                        if (targetHealth != null && !targetHealth.IsDead)
+                        {
+                            targetHealth.ApplyBleed(finalDamage * 0.3f, 3f, 3, attacker);
+                        }
+                    }
+
+                    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+                        InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
+                    {
+                        var pc = attacker.GetComponent<PlayerController>();
+                        if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+                    }
+                }
+
+                if (lifestealPercent > 0f && attacker != null)
+                {
+                    Health attackerHealth = attacker.GetComponent<Health>();
+                    if (attackerHealth != null && !attackerHealth.IsDead)
+                    {
+                        float healAmount = Mathf.Min(finalDamage * (lifestealPercent / 100f), 25f);
+                        if (healAmount > 0.5f) attackerHealth.Heal(healAmount);
+                    }
+                }
+
                 TriggerPlayerHitlag();
 
                 SpawnHitVfx(hitPoint, -transform.forward);

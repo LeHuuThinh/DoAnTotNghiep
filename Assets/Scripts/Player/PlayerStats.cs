@@ -69,15 +69,64 @@ public class PlayerStats : MonoBehaviour
   public float MaxSpirit => maxSpirit;
   public float CurrentSpirit => currentSpirit;
 
-  public float SprintCostPerSecond => sprintCostPerSecond;
-  public float RollCost => rollCost;
-  public float LightAttackCost => lightAttackCost;
-  public float ChargeAttackCost => chargeAttackCost;
-  public float ParryWhiffCost => parryWhiffCost;
+  // Multipliers từ trang bị
+  private float SpiritCostReductionMultiplier => 
+    InfiniteLabyrinth.Inventory.InventoryManager.HasInstance 
+      ? Mathf.Clamp01(1f - InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalSpiritCostReductionBonus() / 100f) 
+      : 1f;
 
-  public float SkillECost => skillECost;
-  public float SkillQCost => skillQCost;
-  public float SkillRCost => skillRCost;
+  private float StaminaCostReductionMultiplier => 
+    InfiniteLabyrinth.Inventory.InventoryManager.HasInstance 
+      ? Mathf.Clamp01(1f - InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalStaminaCostReductionBonus() / 100f) 
+      : 1f;
+
+  public float SprintCostPerSecond => sprintCostPerSecond * StaminaCostReductionMultiplier;
+  public float RollCost => rollCost * StaminaCostReductionMultiplier;
+  public float LightAttackCost => lightAttackCost * StaminaCostReductionMultiplier;
+  public float ChargeAttackCost => chargeAttackCost * StaminaCostReductionMultiplier;
+  public float ParryWhiffCost => parryWhiffCost * StaminaCostReductionMultiplier;
+
+  public float SkillECost
+  {
+    get
+    {
+      float cost = skillECost * SpiritCostReductionMultiplier;
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.SkillECostReduction))
+      {
+        cost *= 0.7f; // Giảm thêm 30% cho Skill E
+      }
+      return Mathf.Max(1f, cost);
+    }
+  }
+
+  public float SkillQCost
+  {
+    get
+    {
+      float cost = skillQCost * SpiritCostReductionMultiplier;
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.SkillQCostReduction))
+      {
+        cost *= 0.7f; // Giảm thêm 30% cho Skill Q
+      }
+      return Mathf.Max(1f, cost);
+    }
+  }
+
+  public float SkillRCost
+  {
+    get
+    {
+      float cost = skillRCost * SpiritCostReductionMultiplier;
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.SkillRCostReduction))
+      {
+        cost *= 0.75f; // Giảm thêm 25% cho Skill R
+      }
+      return Mathf.Max(1f, cost);
+    }
+  }
 
   public float SpiritGainOnLightHit => spiritGainOnLightHit;
   public float SpiritGainOnChargeHit => spiritGainOnChargeHit;

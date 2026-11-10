@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369aa78ef052d3345958fb066c668292, type: 3}
+  m_Name: Item_Mat_Monster_Gem
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
+  id: mat_monster_gem
+  itemName: Monster Gem
+  description: "A crystallized energy gem dropped by labyrinth monsters. Emits a faint glow of condensed magic. Highly valued by Haven merchants for a good amount of gold."
+  icon: {fileID: 21300000, guid: ebd42bd97667d2949be2b1e26a162396, type: 3}
+  itemType: 3
+  rarity: 1
+  maxStack: 99
+  goldValue: 80
+  bonusAttack: 0
+  bonusDefense: 0
+  bonusHealth: 0
+  bonusStamina: 0
+  healAmount: 0
+  worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
+  weaponVisualPrefab: {fileID: 0}
