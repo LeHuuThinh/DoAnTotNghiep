@@ -54,10 +54,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.65
-  m_Height: 1.25
+  m_Radius: 0.7438288
+  m_Height: 1.6888542
   m_Direction: 1
-  m_Center: {x: 0, y: 0.625, z: 0}
+  m_Center: {x: 0, y: 0.7828257, z: 0}
 --- !u!114 &5726926536506463614
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,8 +106,8 @@ MonoBehaviour:
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 1
-  minGold: 18
-  maxGold: 35
+  minGold: 8
+  maxGold: 15
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3
@@ -116,6 +116,7 @@ MonoBehaviour:
   useForwardCone: 0
   wallSafetyPadding: 0.35
   autoDropOnDeath: 1
+  isEliteDrop: 0
 --- !u!1001 &2420240322504061277
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -124,6 +125,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 53466328641291776}
     m_Modifications:
+    - target: {fileID: 35349923773069732, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 35349923773069732, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 35349923773069732, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.8
+      objectReference: {fileID: 0}
     - target: {fileID: 35349923773069732, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -168,7 +181,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Model
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 152647079826036033, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
+    - {fileID: 1862571740748423937, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
+    - {fileID: 5759576900164228621, guid: de2bdfba730dea44ba50e14683a03b7e, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

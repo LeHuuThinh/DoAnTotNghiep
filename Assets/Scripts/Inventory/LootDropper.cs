@@ -54,6 +54,12 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Tự động đăng ký với Health.onDeath nếu có component Health trên đối tượng")]
     [SerializeField] private bool autoDropOnDeath = true;
 
+    [Header("=== ELITE MODIFIER ===")]
+    [Tooltip("Quái Tinh Nhuệ (Elite) rơi nhiều Vàng hơn x2 và tăng tỷ lệ rơi nguyên liệu")]
+    [SerializeField] private bool isEliteDrop = false;
+
+    public void SetEliteDrop(bool elite) => isEliteDrop = elite;
+
     private static GoldDropVisualConfig cachedDefaultConfig;
     private Health cachedHealth;
     private bool hasDropped = false;
@@ -117,9 +123,12 @@ namespace InfiniteLabyrinth.Inventory
       List<DropRequest> requests = new List<DropRequest>();
 
       // 1. Tính toán rơi Tiền Vàng theo phân cấp Thresholds
-      if (goldItemData != null && Random.value <= goldDropChance)
+      float actualGoldChance = isEliteDrop ? 1.0f : goldDropChance;
+      if (goldItemData != null && Random.value <= actualGoldChance)
       {
-        int goldAmount = Random.Range(minGold, maxGold + 1);
+        int minG = isEliteDrop ? minGold * 2 : minGold;
+        int maxG = isEliteDrop ? maxGold * 2 + 5 : maxGold;
+        int goldAmount = Random.Range(minG, maxG + 1);
         if (goldAmount > 0)
         {
           GameObject goldPrefabToUse = (goldVisualConfig != null) 
@@ -138,7 +147,8 @@ namespace InfiniteLabyrinth.Inventory
           var entry = lootTable[i];
           if (entry != null)
           {
-            if (Random.value <= entry.dropChance)
+            float chance = isEliteDrop ? Mathf.Min(1.0f, entry.dropChance * 1.5f) : entry.dropChance;
+            if (Random.value <= chance)
             {
               ItemData resolvedItem = entry.ResolveItem();
               if (resolvedItem != null)

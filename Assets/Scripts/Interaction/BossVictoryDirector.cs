@@ -163,11 +163,14 @@ namespace InfiniteLabyrinth.Interaction
     {
       IceGolemController.OnBossDefeated -= HandleBossDefeated;
       IceGolemController.OnBossDefeated += HandleBossDefeated;
+      RedIgnisController.OnBossDefeated -= HandleBossDefeated;
+      RedIgnisController.OnBossDefeated += HandleBossDefeated;
     }
 
     private void OnDisable()
     {
       IceGolemController.OnBossDefeated -= HandleBossDefeated;
+      RedIgnisController.OnBossDefeated -= HandleBossDefeated;
     }
 
     /// <summary>

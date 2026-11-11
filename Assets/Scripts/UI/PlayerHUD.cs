@@ -55,6 +55,9 @@ public class PlayerHUD : MonoBehaviour
   [Header("=== AVATAR (TÙY CHỌN) ===")]
   [SerializeField] private Image avatarPortrait;
 
+  [Header("=== BUFF & EFFECT BAR (TASK RPG-11 MỤC 4) ===")]
+  [SerializeField] private InfiniteLabyrinth.UI.PlayerBuffHUD buffHUD;
+
   // Bộ đếm thời gian trễ cho Ghost bar
   private float ghostDelayTimer = 0f;
   private float targetHealthPct = 1f;
@@ -184,6 +187,23 @@ public class PlayerHUD : MonoBehaviour
       Transform t = transform.Find("AvatarContainer/LevelBadge/LevelText");
       if (t == null) t = transform.Find("Avatar_Container/LevelBadge/LevelText");
       if (t != null) levelText = t.GetComponent<TextMeshProUGUI>();
+    }
+
+    // 6. Tìm BuffHUD (EffectBar)
+    if (buffHUD == null)
+    {
+      Transform effectBar = transform.Find("BarsContainer/EffectBar") ?? 
+                            transform.Find("Bars_Container/EffectBar") ?? 
+                            transform.Find("EffectBar");
+      if (effectBar != null)
+      {
+        buffHUD = effectBar.GetComponent<InfiniteLabyrinth.UI.PlayerBuffHUD>();
+        if (buffHUD == null)
+        {
+          buffHUD = effectBar.gameObject.AddComponent<InfiniteLabyrinth.UI.PlayerBuffHUD>();
+        }
+        buffHUD.AutoFindUIComponents();
+      }
     }
   }
 

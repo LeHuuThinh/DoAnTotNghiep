@@ -59,6 +59,20 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private GameObject btnBuyBorder;
     [SerializeField] private GameObject btnBuyCorner;
 
+    [Header("=== CẤU TRÚC CHỈ SỐ MÓN HÀNG SHOP (ITEM STATS & ENCHANT PREVIEW) ===")]
+    [SerializeField] private RectTransform itemStatsContainer;
+    [SerializeField] private GameObject mainStatsRoot;
+    [SerializeField] private TextMeshProUGUI mainStatLabelText;
+    [SerializeField] private TextMeshProUGUI mainStatValueText;
+    [SerializeField] private GameObject subStatsDivider;
+    [SerializeField] private RectTransform subStatsLayoutRoot;
+    [SerializeField] private List<SubStatRowUI> subStatRows = new List<SubStatRowUI>();
+
+    [SerializeField] private RectTransform itemEnchantmentContainer;
+    [SerializeField] private GameObject enchantmentDivider;
+    [SerializeField] private RectTransform enchantmentLayoutRoot;
+    [SerializeField] private List<EnchantRowUI> enchantRows = new List<EnchantRowUI>();
+
     [Header("=== CỬA SỔ PHẢI: TÚI ĐỒ (INVENTORY PANEL) ===")]
     [SerializeField] private RectTransform inventoryPanel;
     [SerializeField] private Transform inventoryGridContainer;
@@ -168,6 +182,7 @@ namespace InfiniteLabyrinth.UI
     /// <summary>
     /// Tự động tìm kiếm toàn bộ thành phần UI nếu chưa gán trong Inspector
     /// </summary>
+    [ContextMenu("Auto Find References")]
     public void AutoFindReferences()
     {
       if (rootCanvasGroup == null) rootCanvasGroup = GetComponent<CanvasGroup>();
@@ -225,6 +240,64 @@ namespace InfiniteLabyrinth.UI
 
           if (detailStatsText == null) detailStatsText = detail.Find("ItemStatsText")?.GetComponent<TextMeshProUGUI>();
           if (detailDescText == null) detailDescText = detail.Find("ItemDescriptionText")?.GetComponent<TextMeshProUGUI>();
+
+          // MainStats & SubStatsLayout (Cấu trúc mới đồng bộ ItemDetail)
+          if (itemStatsContainer == null) itemStatsContainer = detail.Find("ItemStatsText") as RectTransform;
+          if (itemStatsContainer != null)
+          {
+            if (mainStatsRoot == null) mainStatsRoot = itemStatsContainer.Find("MainStats")?.gameObject;
+            if (mainStatLabelText == null) mainStatLabelText = itemStatsContainer.Find("MainStats")?.GetComponent<TextMeshProUGUI>();
+            if (mainStatValueText == null) mainStatValueText = itemStatsContainer.Find("MainStats/Value")?.GetComponent<TextMeshProUGUI>();
+            if (subStatsDivider == null) subStatsDivider = detail.Find("Line (2)")?.gameObject ?? itemStatsContainer.Find("Line (2)")?.gameObject;
+            if (subStatsLayoutRoot == null) subStatsLayoutRoot = itemStatsContainer.Find("SubStatsLayout") as RectTransform;
+
+            if (subStatsLayoutRoot != null && (subStatRows == null || subStatRows.Count < 4))
+            {
+              subStatRows = new List<SubStatRowUI>();
+              string[] subNames = new[] { "SubStats", "SubStats (1)", "SubStats (2)", "SubStats (3)" };
+              for (int i = 0; i < subNames.Length; i++)
+              {
+                Transform t = subStatsLayoutRoot.Find(subNames[i]);
+                if (t != null)
+                {
+                  subStatRows.Add(new SubStatRowUI
+                  {
+                    root = t.gameObject,
+                    labelText = t.GetComponent<TextMeshProUGUI>(),
+                    valueText = t.Find("Value")?.GetComponent<TextMeshProUGUI>()
+                  });
+                }
+              }
+            }
+          }
+
+          // ItemEnchantment & EnchantmentLayout (Cấu trúc mới đồng bộ ItemDetail)
+          if (itemEnchantmentContainer == null) itemEnchantmentContainer = detail.Find("ItemEnchantment") as RectTransform;
+          if (itemEnchantmentContainer != null)
+          {
+            if (enchantmentDivider == null) enchantmentDivider = detail.Find("Line (3)")?.gameObject ?? itemEnchantmentContainer.Find("Line (3)")?.gameObject;
+            if (enchantmentLayoutRoot == null) enchantmentLayoutRoot = itemEnchantmentContainer.Find("EnchantmentLayout") as RectTransform;
+
+            if (enchantmentLayoutRoot != null && (enchantRows == null || enchantRows.Count < 3))
+            {
+              enchantRows = new List<EnchantRowUI>();
+              string[] enchNames = new[] { "Enchant", "Enchant (1)", "Enchant (2)" };
+              for (int i = 0; i < enchNames.Length; i++)
+              {
+                Transform t = enchantmentLayoutRoot.Find(enchNames[i]);
+                if (t != null)
+                {
+                  enchantRows.Add(new EnchantRowUI
+                  {
+                    root = t.gameObject,
+                    iconActive = t.Find("IconActive")?.GetComponent<Image>(),
+                    iconUnactive = t.Find("IconUnactive")?.GetComponent<Image>(),
+                    text = t.Find("EnchantmentText")?.GetComponent<TextMeshProUGUI>()
+                  });
+                }
+              }
+            }
+          }
 
           Transform footer = detail.Find("Footer");
           if (footer != null)
@@ -648,9 +721,8 @@ namespace InfiniteLabyrinth.UI
         detailRarityBar.color = rColor;
       }
 
-      // 3. Chỉ số & Mô tả (English)
-      if (detailStatsText != null) detailStatsText.text = BuildStatsString(item);
-      if (detailDescText != null) detailDescText.text = item.Description;
+      // 3. Chỉ số & Mô tả (Cấu trúc mới đồng bộ ItemDetail: MainStats, SubStats, Enchantment Hints)
+      DisplayItemDetailHints(item);
 
       // 4. Giá & Nút Mua (Đổi màu đỏ ở đây nếu thiếu tiền)
       UpdateBuyButtonState(entry, currentGold);
@@ -711,6 +783,13 @@ namespace InfiniteLabyrinth.UI
       if (detailIconImage != null) detailIconImage.enabled = false;
       if (detailStatsText != null) detailStatsText.text = "";
       if (detailDescText != null) detailDescText.text = "Select an item from the list.";
+
+      // Ẩn các container chỉ số & phù phép
+      if (itemStatsContainer != null) itemStatsContainer.gameObject.SetActive(false);
+      if (itemEnchantmentContainer != null) itemEnchantmentContainer.gameObject.SetActive(false);
+      if (subStatsDivider != null) subStatsDivider.SetActive(false);
+      if (enchantmentDivider != null) enchantmentDivider.SetActive(false);
+
       if (detailPriceText != null)
       {
         detailPriceText.text = "0";
@@ -972,6 +1051,345 @@ namespace InfiniteLabyrinth.UI
       if (item.HealAmount > 0f) sb.AppendLine($"<color=#77FF77>Health Recovery:</color> +{item.HealAmount} HP");
 
       return sb.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// Hiển thị thông số xem trước (Hint) cho món hàng:
+    /// - Vũ khí: Attack min - max
+    /// - Giáp: HP / DEF min-max / min-max
+    /// - SubStats: Substat 1, 2, 3...
+    /// - Enchant: Mốc phù phép thức tỉnh tiềm năng tại +1, +3, +5
+    /// - Consumable / Material: hiển thị đúng loại và mô tả
+    /// </summary>
+    private void DisplayItemDetailHints(ItemData item)
+    {
+      if (item == null)
+      {
+        if (itemStatsContainer != null) itemStatsContainer.gameObject.SetActive(false);
+        if (itemEnchantmentContainer != null) itemEnchantmentContainer.gameObject.SetActive(false);
+        if (detailDescText != null) detailDescText.text = "";
+        return;
+      }
+
+      bool isEquipment = item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor;
+
+      if (isEquipment)
+      {
+        var (varMin, varMax) = GetRarityVariance(item.Rarity);
+
+        // 1. DÒNG CHÍNH (MAIN STATS)
+        if (itemStatsContainer != null) itemStatsContainer.gameObject.SetActive(true);
+        if (mainStatsRoot != null) mainStatsRoot.SetActive(true);
+
+        if (item.ItemType == ItemType.Weapon)
+        {
+          float baseAtk = item.BonusAttack > 0f ? item.BonusAttack : 10f;
+          float minAtk = Mathf.Max(1f, Mathf.Round(baseAtk * varMin * 10f) / 10f);
+          float maxAtk = Mathf.Max(1f, Mathf.Round(baseAtk * varMax * 10f) / 10f);
+
+          if (mainStatLabelText != null) mainStatLabelText.text = "Attack";
+          if (mainStatValueText != null) mainStatValueText.text = $"{minAtk:0.#} - {maxAtk:0.#}";
+        }
+        else // Armor
+        {
+          bool hasDef = item.BonusDefense > 0f;
+          bool hasHp = item.BonusHealth > 0f;
+
+          if (hasDef && hasHp)
+          {
+            float minDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varMin * 10f) / 10f);
+            float maxDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varMax * 10f) / 10f);
+            float minHp = Mathf.Max(5f, Mathf.Round(item.BonusHealth * varMin * 10f) / 10f);
+            float maxHp = Mathf.Max(5f, Mathf.Round(item.BonusHealth * varMax * 10f) / 10f);
+
+            if (mainStatLabelText != null) mainStatLabelText.text = "DEF or HP";
+            if (mainStatValueText != null) mainStatValueText.text = $"{minDef:0.#}-{maxDef:0.#} | {minHp:0.#}-{maxHp:0.#}";
+          }
+          else if (hasDef)
+          {
+            float minDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varMin * 10f) / 10f);
+            float maxDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varMax * 10f) / 10f);
+
+            if (mainStatLabelText != null) mainStatLabelText.text = "Defense";
+            if (mainStatValueText != null) mainStatValueText.text = $"{minDef:0.#} - {maxDef:0.#}";
+          }
+          else
+          {
+            float baseHp = hasHp ? item.BonusHealth : 20f;
+            float minHp = Mathf.Max(5f, Mathf.Round(baseHp * varMin * 10f) / 10f);
+            float maxHp = Mathf.Max(5f, Mathf.Round(baseHp * varMax * 10f) / 10f);
+
+            if (mainStatLabelText != null) mainStatLabelText.text = "Max Health";
+            if (mainStatValueText != null) mainStatValueText.text = $"{minHp:0.#} - {maxHp:0.#}";
+          }
+        }
+
+        // 2. DÒNG PHỤ (SUB-STATS)
+        int maxSubCount = GetMaxSubStatCount(item.Rarity);
+        if (maxSubCount > 0 && subStatRows != null && subStatRows.Count > 0)
+        {
+          if (subStatsDivider != null) subStatsDivider.SetActive(true);
+          if (subStatsLayoutRoot != null) subStatsLayoutRoot.gameObject.SetActive(true);
+
+          for (int i = 0; i < subStatRows.Count; i++)
+          {
+            if (subStatRows[i] == null || subStatRows[i].root == null) continue;
+
+            if (i < maxSubCount)
+            {
+              subStatRows[i].root.SetActive(true);
+              if (subStatRows[i].labelText != null)
+              {
+                subStatRows[i].labelText.text = $"Substat {i + 1}";
+                subStatRows[i].labelText.enableWordWrapping = false;
+              }
+              if (subStatRows[i].valueText != null)
+              {
+                subStatRows[i].valueText.text = "<color=#90A4AE>Random</color>";
+                subStatRows[i].valueText.enableWordWrapping = false;
+              }
+            }
+            else
+            {
+              subStatRows[i].root.SetActive(false);
+            }
+          }
+        }
+        else
+        {
+          if (subStatsDivider != null) subStatsDivider.SetActive(false);
+          if (subStatsLayoutRoot != null) subStatsLayoutRoot.gameObject.SetActive(false);
+          for (int i = 0; i < subStatRows.Count; i++)
+          {
+            if (subStatRows[i]?.root != null) subStatRows[i].root.SetActive(false);
+          }
+        }
+
+        // 3. MỐC PHÙ PHÉP THỨC TỈNH (ENCHANTMENT HINTS: +1, +3, +5)
+        var milestones = GetEnchantMilestones(item.Rarity);
+        int maxEnchCount = milestones.Count;
+        if (maxEnchCount > 0 && enchantRows != null && enchantRows.Count > 0)
+        {
+          if (itemEnchantmentContainer != null) itemEnchantmentContainer.gameObject.SetActive(true);
+          if (enchantmentDivider != null) enchantmentDivider.SetActive(true);
+          if (enchantmentLayoutRoot != null) enchantmentLayoutRoot.gameObject.SetActive(true);
+
+          for (int i = 0; i < enchantRows.Count; i++)
+          {
+            if (enchantRows[i] == null || enchantRows[i].root == null) continue;
+
+            if (i < maxEnchCount)
+            {
+              int msLevel = milestones[i];
+              enchantRows[i].root.SetActive(true);
+              if (enchantRows[i].iconActive != null) enchantRows[i].iconActive.gameObject.SetActive(false);
+              if (enchantRows[i].iconUnactive != null) enchantRows[i].iconUnactive.gameObject.SetActive(true);
+
+              if (enchantRows[i].text != null)
+              {
+                enchantRows[i].text.text = $"<color=#757575>[+{msLevel}] Random Enchantment</color>";
+              }
+            }
+            else
+            {
+              enchantRows[i].root.SetActive(false);
+            }
+          }
+        }
+        else
+        {
+          if (itemEnchantmentContainer != null) itemEnchantmentContainer.gameObject.SetActive(false);
+          if (enchantmentDivider != null) enchantmentDivider.SetActive(false);
+          if (enchantmentLayoutRoot != null) enchantmentLayoutRoot.gameObject.SetActive(false);
+          for (int i = 0; i < enchantRows.Count; i++)
+          {
+            if (enchantRows[i]?.root != null) enchantRows[i].root.SetActive(false);
+          }
+        }
+
+        // 4. Mô tả trang bị (Lore description)
+        if (detailDescText != null)
+        {
+          detailDescText.gameObject.SetActive(true);
+          detailDescText.text = !string.IsNullOrEmpty(item.Description) ? item.Description : "";
+        }
+      }
+      else
+      {
+        // === VẬT PHẨM THƯỜNG (Consumable / Material / Currency) ===
+        // 1. Tắt khu vực Phù phép thức tỉnh (chỉ dành cho Trang bị)
+        if (itemEnchantmentContainer != null) itemEnchantmentContainer.gameObject.SetActive(false);
+        if (enchantmentDivider != null) enchantmentDivider.SetActive(false);
+        if (enchantmentLayoutRoot != null) enchantmentLayoutRoot.gameObject.SetActive(false);
+
+        // 2. Để trống dòng MainStats (theo yêu cầu: không dùng MainStats hiển thị công dụng)
+        if (mainStatsRoot != null) mainStatsRoot.SetActive(false);
+        if (mainStatLabelText != null) mainStatLabelText.text = "";
+        if (mainStatValueText != null) mainStatValueText.text = "";
+
+        // 3. Đưa mô tả công dụng / đặc tính của vật phẩm xuống khu vực SubStats
+        var subList = new List<(string label, string val)>();
+
+        if (item.ItemType == ItemType.Consumable)
+        {
+          if (item.HealAmount > 0f)
+          {
+            subList.Add(("HP Recovery", $"<color=#77FF77>+{item.HealAmount:0.#} HP</color>"));
+            subList.Add(("Effect", "Instant Restore"));
+          }
+          else if (item.BonusDefense > 0f)
+          {
+            subList.Add(("Defense Boost", $"<color=#81D4FA>+{item.BonusDefense:0.#} DEF</color>"));
+            subList.Add(("Duration", "30 Seconds"));
+          }
+          else if (item.BonusAttack > 0f)
+          {
+            subList.Add(("Attack Boost", $"<color=#FFB74D>+{item.BonusAttack:0.#} ATK</color>"));
+            subList.Add(("Duration", "30 Seconds"));
+          }
+          else if (item.BonusStamina > 0f)
+          {
+            subList.Add(("Stamina Boost", $"<color=#81C784>+{item.BonusStamina:0.#} Max</color>"));
+            subList.Add(("Effect", "Regen Boost"));
+          }
+          else if (item.BonusHealth > 0f)
+          {
+            subList.Add(("Health Boost", $"<color=#77FF77>+{item.BonusHealth:0.#} Max HP</color>"));
+            subList.Add(("Effect", "Increases Max HP"));
+          }
+          else if (!string.IsNullOrEmpty(item.Id) && item.Id.Contains("spirit"))
+          {
+            subList.Add(("Spirit Recovery", "<color=#BA68C8>Instant Spirit</color>"));
+            subList.Add(("Effect", "Replenish Skills"));
+          }
+          else
+          {
+            subList.Add(("Item Type", "Consumable"));
+          }
+        }
+        else if (item.ItemType == ItemType.Material)
+        {
+          if (!string.IsNullOrEmpty(item.Id) && (item.Id.Contains("upgrade_stone") || item.Id.Contains("stone")))
+          {
+            subList.Add(("Usage", "<color=#FFE082>Gear Upgrade</color>"));
+            subList.Add(("Target", "Haven Forge"));
+            subList.Add(("Upgrade Range", "+1 to +5"));
+          }
+          else
+          {
+            subList.Add(("Usage", "<color=#FFE082>Crafting Material</color>"));
+          }
+        }
+        else
+        {
+          subList.Add(("Item Type", item.ItemType.ToString()));
+        }
+
+        // Bổ sung thông tin Max Stack nếu còn dòng trống (định dạng gọn xN chuẩn RPG)
+        int maxAvailableRows = subStatRows != null ? subStatRows.Count : 4;
+        if (item.MaxStack > 1 && subList.Count < maxAvailableRows)
+        {
+          subList.Add(("Max Stack", $"x{item.MaxStack}"));
+        }
+
+        // 4. Kích hoạt và gán dữ liệu vào cụm SubStats
+        if (itemStatsContainer != null) itemStatsContainer.gameObject.SetActive(true);
+        if (subStatsDivider != null) subStatsDivider.SetActive(true);
+        if (subStatsLayoutRoot != null) subStatsLayoutRoot.gameObject.SetActive(true);
+
+        if (subStatRows != null && subStatRows.Count > 0)
+        {
+          for (int i = 0; i < subStatRows.Count; i++)
+          {
+            if (subStatRows[i] == null || subStatRows[i].root == null) continue;
+
+            if (i < subList.Count)
+            {
+              subStatRows[i].root.SetActive(true);
+              if (subStatRows[i].labelText != null)
+              {
+                subStatRows[i].labelText.text = subList[i].label;
+                subStatRows[i].labelText.enableWordWrapping = false;
+                subStatRows[i].labelText.enableAutoSizing = true;
+                subStatRows[i].labelText.fontSizeMin = 12f;
+                subStatRows[i].labelText.fontSizeMax = 20f;
+              }
+              if (subStatRows[i].valueText != null)
+              {
+                subStatRows[i].valueText.text = subList[i].val;
+                subStatRows[i].valueText.enableWordWrapping = false;
+                subStatRows[i].valueText.enableAutoSizing = true;
+                subStatRows[i].valueText.fontSizeMin = 12f;
+                subStatRows[i].valueText.fontSizeMax = 20f;
+              }
+            }
+            else
+            {
+              subStatRows[i].root.SetActive(false);
+            }
+          }
+        }
+
+        // 5. Mô tả vật phẩm (Lore description)
+        if (detailDescText != null)
+        {
+          detailDescText.gameObject.SetActive(true);
+          detailDescText.text = !string.IsNullOrEmpty(item.Description) ? item.Description : "";
+        }
+      }
+
+      // Legacy fallback nếu không có cấu trúc container mới
+      if (itemStatsContainer == null && detailStatsText != null)
+      {
+        detailStatsText.text = BuildStatsString(item);
+      }
+    }
+
+    private (float min, float max) GetRarityVariance(ItemRarity rarity)
+    {
+      switch (rarity)
+      {
+        case ItemRarity.Common: return (0.92f, 1.08f);
+        case ItemRarity.Uncommon: return (0.94f, 1.12f);
+        case ItemRarity.Rare: return (0.96f, 1.16f);
+        case ItemRarity.Epic: return (1.00f, 1.20f);
+        case ItemRarity.Legendary: return (1.05f, 1.25f);
+        default: return (0.92f, 1.08f);
+      }
+    }
+
+    private int GetMaxSubStatCount(ItemRarity rarity)
+    {
+      switch (rarity)
+      {
+        case ItemRarity.Common: return 1;
+        case ItemRarity.Uncommon: return 2;
+        case ItemRarity.Rare: return 2;
+        case ItemRarity.Epic: return 3;
+        case ItemRarity.Legendary: return 4;
+        default: return 0;
+      }
+    }
+
+    private List<int> GetEnchantMilestones(ItemRarity rarity)
+    {
+      var milestones = new List<int>();
+      if (rarity == ItemRarity.Common || rarity == ItemRarity.Uncommon)
+      {
+        milestones.Add(1);
+      }
+      else if (rarity == ItemRarity.Rare)
+      {
+        milestones.Add(1);
+        milestones.Add(3);
+      }
+      else // Epic & Legendary
+      {
+        milestones.Add(1);
+        milestones.Add(3);
+        milestones.Add(5);
+      }
+      return milestones;
     }
   }
 }

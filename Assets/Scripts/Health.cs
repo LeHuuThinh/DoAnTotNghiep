@@ -17,6 +17,12 @@ public class Health : MonoBehaviour, IDamageable
   public UnityEvent<float, float> onHealthChanged; // Gửi (currentHealth, maxHealth) để cập nhật thanh máu UI
   public UnityEvent<Vector3, Vector3, float> onTakeDamage; // Gửi (hitPoint, hitDirection, knockbackDistance) để sinh VFX trúng đòn
   public UnityEvent onDeath;
+  public UnityEvent<bool> onBleedStateChanged = new UnityEvent<bool>(); // Báo hiệu bật/tắt icon xuất huyết trên HUD
+
+  [Header("Status Effects Settings")]
+  [SerializeField] private GameObject bleedVfxPrefab;
+  private Coroutine activeBleedRoutine = null;
+  public bool IsBleeding { get; private set; } = false;
 
   private bool isDead = false;
 
@@ -25,11 +31,40 @@ public class Health : MonoBehaviour, IDamageable
   public float BaseMaxHealth => baseMaxHealth > 0f ? baseMaxHealth : maxHealth;
   public bool IsDead => isDead;
   public float BaseDefense => baseDefense;
+  private float temporaryDefenseBonus = 0f;
+  private float temporaryDefenseTimer = 0f;
+  private float temporaryDefenseDuration = 30f;
+
+  public bool HasTemporaryDefenseBoost => temporaryDefenseTimer > 0f;
+  public float TemporaryDefenseTimer => temporaryDefenseTimer;
+  public float TemporaryDefenseDuration => temporaryDefenseDuration > 0f ? temporaryDefenseDuration : 30f;
+  public float TemporaryDefenseBonus => temporaryDefenseBonus;
+
+  public void TriggerTemporaryDefenseBoost(float bonus, float duration)
+  {
+    temporaryDefenseBonus = Mathf.Max(temporaryDefenseBonus, bonus);
+    temporaryDefenseTimer = Mathf.Max(temporaryDefenseTimer, duration);
+    temporaryDefenseDuration = Mathf.Max(temporaryDefenseDuration, duration);
+  }
+
+  private void Update()
+  {
+    if (temporaryDefenseTimer > 0f)
+    {
+      temporaryDefenseTimer -= Time.deltaTime;
+      if (temporaryDefenseTimer <= 0f)
+      {
+        temporaryDefenseTimer = 0f;
+        temporaryDefenseBonus = 0f;
+      }
+    }
+  }
+
   public float TotalDefense
   {
     get
     {
-      float total = Mathf.Max(0f, baseDefense);
+      float total = Mathf.Max(0f, baseDefense) + (temporaryDefenseTimer > 0f ? temporaryDefenseBonus : 0f);
       if (CompareTag("Player") && InfiniteLabyrinth.Inventory.InventoryManager.HasInstance)
       {
         total += InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalDefenseBonus();
@@ -106,6 +141,11 @@ public class Health : MonoBehaviour, IDamageable
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
+  /// <summary>
+  /// Cài đặt lượng máu tối đa và hiện tại theo giá trị mới (Alias của SetCustomHealth)
+  /// </summary>
+  public void SetMaxHealth(float newMaxHealth) => SetCustomHealth(newMaxHealth);
+
   private void Awake()
   {
     baseMaxHealth = maxHealth;
@@ -159,6 +199,8 @@ public class Health : MonoBehaviour, IDamageable
 
   /// <summary>
   /// Cập nhật Máu tối đa kết hợp từ Điểm tiềm năng (Progression) và Trang bị (Equipment).
+  /// Luôn giữ nguyên lượng máu hiện tại của người chơi (chỉ clamp nếu vượt quá Max Health mới),
+  /// triệt tiêu hoàn toàn lỗi tháo/gắn trang bị nhiều lần làm đầy cây máu (infinite heal exploit).
   /// </summary>
   public void SetBonusMaxHealth(float progressionBonus, float equipmentBonus = 0f)
   {
@@ -167,16 +209,16 @@ public class Health : MonoBehaviour, IDamageable
       baseMaxHealth = maxHealth;
     }
 
-    float oldMax = maxHealth;
     maxHealth = Mathf.Max(1f, baseMaxHealth + progressionBonus + equipmentBonus);
+    currentHealth = Mathf.Min(currentHealth, maxHealth);
 
-    if (maxHealth > oldMax)
+    if (CompareTag("Player"))
     {
-      currentHealth += (maxHealth - oldMax);
-    }
-    else
-    {
-      currentHealth = Mathf.Min(currentHealth, maxHealth);
+      s_PersistentPlayerHealth = currentHealth;
+      if (GameManager.HasInstance && !GameManager.IsApplicationQuitting)
+      {
+        GameManager.Instance.SavePlayerHealth(currentHealth);
+      }
     }
 
     onHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -260,6 +302,16 @@ public class Health : MonoBehaviour, IDamageable
   public void Revive(float targetHealth = -1f)
   {
     isDead = false;
+    if (activeBleedRoutine != null)
+    {
+      StopCoroutine(activeBleedRoutine);
+      activeBleedRoutine = null;
+    }
+    if (IsBleeding)
+    {
+      IsBleeding = false;
+      onBleedStateChanged?.Invoke(false);
+    }
     currentHealth = (targetHealth > 0f) ? Mathf.Min(targetHealth, maxHealth) : maxHealth;
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
@@ -267,27 +319,66 @@ public class Health : MonoBehaviour, IDamageable
   public void ApplyBleed(float totalDamage, float duration = 3f, int ticks = 3, Transform attacker = null)
   {
     if (isDead || totalDamage <= 0f) return;
-    StartCoroutine(BleedRoutine(totalDamage, duration, ticks, attacker));
+
+    if (activeBleedRoutine != null)
+    {
+      StopCoroutine(activeBleedRoutine);
+      activeBleedRoutine = null;
+    }
+
+    activeBleedRoutine = StartCoroutine(BleedRoutine(totalDamage, duration, ticks, attacker));
   }
 
   private System.Collections.IEnumerator BleedRoutine(float totalDamage, float duration, int ticks, Transform attacker)
   {
+    IsBleeding = true;
+    onBleedStateChanged?.Invoke(true);
+
+    if (bleedVfxPrefab == null)
+    {
+      bleedVfxPrefab = Resources.Load<GameObject>("BleedVFX");
+    }
+
     float tickInterval = duration / Mathf.Max(1, ticks);
     float tickDamage = totalDamage / Mathf.Max(1, ticks);
 
     for (int i = 0; i < ticks; i++)
     {
       yield return new WaitForSeconds(tickInterval);
-      if (isDead) yield break;
+      if (isDead) break;
 
-      TakeDamage(tickDamage, transform.position + Vector3.up * 0.5f, Vector3.up, 0f, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, false);
+      Vector3 spawnPos = transform.position + Vector3.up * 0.65f;
+
+      // 1. Kích hoạt hiệu ứng tóe máu BleedVFX mỗi nhịp rút máu
+      if (bleedVfxPrefab != null)
+      {
+        Instantiate(bleedVfxPrefab, spawnPos, Quaternion.identity);
+      }
+
+      // 2. Rút máu với kiểu sát thương Bleed (Số đỏ thẫm + Icon Giọt Máu)
+      TakeDamage(tickDamage, spawnPos, Vector3.up, 0f, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.Bleed, false);
     }
+
+    IsBleeding = false;
+    activeBleedRoutine = null;
+    onBleedStateChanged?.Invoke(false);
   }
 
   private void Die()
   {
     if (isDead) return;
     isDead = true;
+
+    if (activeBleedRoutine != null)
+    {
+      StopCoroutine(activeBleedRoutine);
+      activeBleedRoutine = null;
+    }
+    if (IsBleeding)
+    {
+      IsBleeding = false;
+      onBleedStateChanged?.Invoke(false);
+    }
 
     // Kích hoạt Phù Phép Soul Siphon (Hồi phục HP & Spirit cho Player khi tiêu diệt mục tiêu)
     if (LastAttacker != null && LastAttacker.CompareTag("Player") && !CompareTag("Player"))

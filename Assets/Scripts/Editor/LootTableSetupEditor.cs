@@ -47,10 +47,10 @@ namespace InfiniteLabyrinth.Editor
         if (File.Exists(MinionPrefabPath))
         {
           string minionText = File.ReadAllText(MinionPrefabPath);
-          // b179c3d4e5f608192a3b4c5d6e7f8001 là GUID của Item_Mat_Monster_Gem.asset (Task RPG-09)
-          if (!minionText.Contains("b179c3d4e5f608192a3b4c5d6e7f8001"))
+          // Kiểm tra xem đã cập nhật sang chuẩn cân bằng kinh tế mới chưa (minGold: 1 thay vì minGold: 3)
+          if (!minionText.Contains("minGold: 1") || !minionText.Contains("goldDropChance: 0.65"))
           {
-            Debug.Log("[LootTableSetupEditor] Phát hiện cấu hình rơi đồ mới (MonsterGem/BossGem). Đang tự động cập nhật Ma Trận Rơi Đồ chuẩn...");
+            Debug.Log("[LootTableSetupEditor] Phát hiện bản cân bằng kinh tế mới (Balanced Gold Economy). Đang tự động cập nhật Ma Trận Rơi Đồ chuẩn...");
             ConfigureAllLootTables(false);
           }
         }
@@ -72,21 +72,21 @@ namespace InfiniteLabyrinth.Editor
       int updatedCount = 0;
 
       // ==========================================
-      // 1. CẤU HÌNH 3 THÙNG GỖ ĐẬP ĐƯỢC
+      // 1. CẤU HÌNH 3 THÙNG GỖ ĐẬP ĐƯỢC (CÂN BẰNG MỚI)
       // ==========================================
       // A. Thùng Nhỏ (Breakable_Barrel_Small)
-      // 70% Vàng (2-6), 25% Bình Máu Nhỏ
+      // 50% Vàng (1-3), 25% Bình Máu Nhỏ
       updatedCount += ConfigurePrefab(BarrelSmallPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 0.70f, minGold: 2, maxGold: 6,
+        goldChance: 0.50f, minGold: 1, maxGold: 3,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health.asset"), 0.25f, 1, 1)
         });
 
       // B. Thùng Vừa (Breakable_Barrel_Medium)
-      // 85% Vàng (8-18), 35% Bình Máu Nhỏ HOẶC Tiên Dược Thể Lực, 15% Đá Cường Hóa
+      // 70% Vàng (3-7), 35% Bình Máu Nhỏ HOẶC Tiên Dược Thể Lực, 15% Đá Cường Hóa
       updatedCount += ConfigurePrefab(BarrelMediumPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 0.85f, minGold: 8, maxGold: 18,
+        goldChance: 0.70f, minGold: 3, maxGold: 7,
         entries: new List<LootEntry>
         {
           CreatePoolEntry(new List<ItemData> { LoadItem("Item_Potion_Health.asset"), LoadItem("Item_Potion_Stamina_Elixir.asset") }, 0.35f, 1, 1),
@@ -94,9 +94,9 @@ namespace InfiniteLabyrinth.Editor
         });
 
       // C. Thùng Lớn (Breakable_Barrel_Large)
-      // 100% Vàng (18-35), 40% Bình Máu Lớn, 25% 1-2 Đá Cường Hóa, 5% Thiết Kiếm Rỉ Sét
+      // 100% Vàng (8-15), 40% Bình Máu Lớn, 25% 1-2 Đá Cường Hóa, 5% Thiết Kiếm Rỉ Sét
       updatedCount += ConfigurePrefab(BarrelLargePrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 18, maxGold: 35,
+        goldChance: 1.0f, minGold: 8, maxGold: 15,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health_Large.asset"), 0.40f, 1, 1),
@@ -105,61 +105,61 @@ namespace InfiniteLabyrinth.Editor
         });
 
       // ==========================================
-      // 2. CẤU HÌNH 4 QUÁI SKELETON
+      // 2. CẤU HÌNH 4 QUÁI SKELETON (CÂN BẰNG MỚI)
       // ==========================================
       // A. Skeleton Minion
-      // 100% Vàng (3-8), 30% Mảnh Xương Quái, 20% Ngọc Quái Vật (Monster Gem)
+      // 65% Vàng (1-3), 30% Mảnh Xương Quái, 6% Ngọc Quái Vật (Monster Gem)
       updatedCount += ConfigurePrefab(MinionPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 3, maxGold: 8,
+        goldChance: 0.65f, minGold: 1, maxGold: 3,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Mat_Bone_Fragment.asset"), 0.30f, 1, 1),
-          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.20f, 1, 1)
+          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.06f, 1, 1)
         });
 
       // B. Skeleton Warrior
-      // 100% Vàng (8-16), 45% 1-2 Mảnh Xương, 20% Huy Hiệu Chiến Binh, 10% Đá Cường Hóa, 22% Ngọc Quái Vật
+      // 80% Vàng (3-6), 45% 1-2 Mảnh Xương, 20% Huy Hiệu Chiến Binh, 10% Đá Cường Hóa, 8% Ngọc Quái Vật
       updatedCount += ConfigurePrefab(WarriorPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 8, maxGold: 16,
+        goldChance: 0.80f, minGold: 3, maxGold: 6,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Mat_Bone_Fragment.asset"), 0.45f, 1, 2),
           CreateEntry(LoadItem("Item_Mat_Warrior_Insignia.asset"), 0.20f, 1, 1),
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.10f, 1, 1),
-          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.22f, 1, 1)
+          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
         });
 
       // C. Skeleton Rogue
-      // 100% Vàng (10-20), 40% 1-2 Mũi Tên Đen, 20% Bình Máu Nhỏ, 12% Tiên Dược Thể Lực, 22% Ngọc Quái Vật
+      // 80% Vàng (4-7), 40% 1-2 Mũi Tên Đen, 20% Bình Máu Nhỏ, 12% Tiên Dược Thể Lực, 8% Ngọc Quái Vật
       updatedCount += ConfigurePrefab(RoguePrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 10, maxGold: 20,
+        goldChance: 0.80f, minGold: 4, maxGold: 7,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Mat_Dark_Arrowhead.asset"), 0.40f, 1, 2),
           CreateEntry(LoadItem("Item_Potion_Health.asset"), 0.20f, 1, 1),
           CreateEntry(LoadItem("Item_Potion_Stamina_Elixir.asset"), 0.12f, 1, 1),
-          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.22f, 1, 1)
+          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
         });
 
       // D. Skeleton Mage
-      // 100% Vàng (16-32), 50% 1-2 Bụi Tinh Hoa Ma Pháp, 25% Đá Cường Hóa, 8% Giấy Da Cổ Ma Thuật, 25% Ngọc Quái Vật
+      // 90% Vàng (7-12), 50% 1-2 Bụi Tinh Hoa Ma Pháp, 25% Đá Cường Hóa, 8% Giấy Da Cổ Ma Thuật, 12% Ngọc Quái Vật
       updatedCount += ConfigurePrefab(MagePrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 16, maxGold: 32,
+        goldChance: 0.90f, minGold: 7, maxGold: 12,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Mat_Arcane_Dust.asset"), 0.50f, 1, 2),
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.25f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Spell_Parchment.asset"), 0.08f, 1, 1),
-          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.25f, 1, 1)
+          CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.12f, 1, 1)
         });
 
       // ==========================================
-      // 3. CẤU HÌNH 3 CẤP ĐỘ RƯƠNG KHO BÁU
+      // 3. CẤU HÌNH 3 CẤP ĐỘ RƯƠNG KHO BÁU (CÂN BẰNG MỚI)
       // ==========================================
       // A. Rương Thường (Interactive_Chest)
-      // 100% Vàng (30-75), 100% 1-2 Bình Máu Nhỏ, 40% 1 Đá Cường Hóa, 25% Trang bị Uncommon ngẫu nhiên
+      // 100% Vàng (20-40), 100% 1-2 Bình Máu Nhỏ, 40% 1 Đá Cường Hóa, 25% Trang bị Uncommon ngẫu nhiên
       updatedCount += ConfigurePrefab(ChestNormalPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 30, maxGold: 75,
+        goldChance: 1.0f, minGold: 20, maxGold: 40,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health.asset"), 1.0f, 1, 2),
@@ -174,9 +174,9 @@ namespace InfiniteLabyrinth.Editor
         });
 
       // B. Rương Hiếm (Interactive_Chest_Rare)
-      // 100% Vàng (80-180), 100% 2-3 Bình Máu Lớn, 100% 2-3 Đá Cường Hóa, 50% Vũ khí Rare ngẫu nhiên, 30% Thiết Giáp Sắt
+      // 100% Vàng (50-90), 100% 2-3 Bình Máu Lớn, 100% 2-3 Đá Cường Hóa, 50% Vũ khí Rare ngẫu nhiên, 30% Thiết Giáp Sắt
       updatedCount += ConfigurePrefab(ChestRarePrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 80, maxGold: 180,
+        goldChance: 1.0f, minGold: 50, maxGold: 90,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health_Large.asset"), 1.0f, 2, 3),
@@ -192,10 +192,10 @@ namespace InfiniteLabyrinth.Editor
         });
 
       // C. Rương Boss Bục Đá 12m (Interactive_Chest_Boss)
-      // 100% Vàng (180-350), 100% 1 Boss Gem (Epic), 100% Trái Tim Băng Ice Core, 100% 2-3 Mảnh Cổ Tự Băng,
+      // 100% Vàng (150-250), 100% 1 Boss Gem (Epic), 100% Trái Tim Băng Ice Core, 100% 2-3 Mảnh Cổ Tự Băng,
       // 100% 3-5 Đá Cường Hóa, 100% 1 Tinh Thể Hoàn Mỹ, 100% 3 Bình Máu Lớn, 100% 2 Mật Năng Lượng Spirit, 65% Trang bị Epic/Legendary
       updatedCount += ConfigurePrefab(ChestBossPrefabPath, worldPickup, goldConfig, goldItem,
-        goldChance: 1.0f, minGold: 180, maxGold: 350,
+        goldChance: 1.0f, minGold: 150, maxGold: 250,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Mat_Boss_Gem.asset"), 1.0f, 1, 1),
@@ -221,15 +221,16 @@ namespace InfiniteLabyrinth.Editor
       AssetDatabase.SaveAssets();
       AssetDatabase.Refresh();
 
-      Debug.Log($"[LootTableSetupEditor] Đã cấu hình và lưu thành công Ma Trận Rơi Đồ cho {updatedCount}/10 Prefabs và {sceneUpdated} đối tượng trong Scene!");
+      Debug.Log($"[LootTableSetupEditor] Đã cấu hình và lưu thành công Ma Trận Rơi Đồ Cân Bằng cho {updatedCount}/10 Prefabs và {sceneUpdated} đối tượng trong Scene!");
       if (showDialog)
       {
         EditorUtility.DisplayDialog("Infinite Labyrinth - RPG",
-          $"Đã cấu hình thành công Ma Trận Rơi Đồ Toàn Diện (Task RPG-09):\n" +
+          $"Đã cấu hình thành công Ma Trận Rơi Đồ Cân Bằng Mới (Balanced Economy):\n" +
           $"- {updatedCount}/10 Prefabs (3 Thùng gỗ, 4 Quái Skeleton, 3 Cấp độ Rương)\n" +
           $"- {sceneUpdated} Đối tượng LootDropper trong Scene\n" +
-          "- Bổ sung Monster Gem (20-25% từ 4 quái Skeleton)\n" +
-          "- Bổ sung Boss Gem (100% từ Rương Boss)\n\nTất cả dữ liệu đã được lưu trực tiếp vào Prefabs!", "OK");
+          "- Tỉ lệ rơi Monster Gem: 6-12% (giá 35 Gold, bán 14 Gold)\n" +
+          "- Boss Gem: giá 400 Gold (bán 160 Gold)\n" +
+          "- Vàng quái và thùng gỗ đã được cân đối tỉ lệ chuẩn Roguelite (~750-850 Gold/run)!\n\nTất cả dữ liệu đã được lưu trực tiếp vào Prefabs!", "OK");
       }
     }
 
@@ -283,11 +284,11 @@ namespace InfiniteLabyrinth.Editor
         if (objName.Contains("SkeletonMinion"))
         {
           dropper.SetPrefabs(worldPickup, goldConfig);
-          dropper.ConfigureGold(goldItem, 1.0f, 3, 8);
+          dropper.ConfigureGold(goldItem, 0.65f, 1, 3);
           dropper.SetLootTable(new List<LootEntry>
           {
             CreateEntry(LoadItem("Item_Mat_Bone_Fragment.asset"), 0.30f, 1, 1),
-            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.20f, 1, 1)
+            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.06f, 1, 1)
           });
           EditorUtility.SetDirty(dropper);
           sceneUpdatedCount++;
@@ -295,13 +296,13 @@ namespace InfiniteLabyrinth.Editor
         else if (objName.Contains("SkeletonWarrior"))
         {
           dropper.SetPrefabs(worldPickup, goldConfig);
-          dropper.ConfigureGold(goldItem, 1.0f, 8, 16);
+          dropper.ConfigureGold(goldItem, 0.80f, 3, 6);
           dropper.SetLootTable(new List<LootEntry>
           {
             CreateEntry(LoadItem("Item_Mat_Bone_Fragment.asset"), 0.45f, 1, 2),
             CreateEntry(LoadItem("Item_Mat_Warrior_Insignia.asset"), 0.20f, 1, 1),
             CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.10f, 1, 1),
-            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.22f, 1, 1)
+            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
           });
           EditorUtility.SetDirty(dropper);
           sceneUpdatedCount++;
@@ -309,13 +310,13 @@ namespace InfiniteLabyrinth.Editor
         else if (objName.Contains("SkeletonRogue"))
         {
           dropper.SetPrefabs(worldPickup, goldConfig);
-          dropper.ConfigureGold(goldItem, 1.0f, 10, 20);
+          dropper.ConfigureGold(goldItem, 0.80f, 4, 7);
           dropper.SetLootTable(new List<LootEntry>
           {
             CreateEntry(LoadItem("Item_Mat_Dark_Arrowhead.asset"), 0.40f, 1, 2),
             CreateEntry(LoadItem("Item_Potion_Health.asset"), 0.20f, 1, 1),
             CreateEntry(LoadItem("Item_Potion_Stamina_Elixir.asset"), 0.12f, 1, 1),
-            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.22f, 1, 1)
+            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
           });
           EditorUtility.SetDirty(dropper);
           sceneUpdatedCount++;
@@ -323,13 +324,13 @@ namespace InfiniteLabyrinth.Editor
         else if (objName.Contains("SkeletonMage"))
         {
           dropper.SetPrefabs(worldPickup, goldConfig);
-          dropper.ConfigureGold(goldItem, 1.0f, 16, 32);
+          dropper.ConfigureGold(goldItem, 0.90f, 7, 12);
           dropper.SetLootTable(new List<LootEntry>
           {
             CreateEntry(LoadItem("Item_Mat_Arcane_Dust.asset"), 0.50f, 1, 2),
             CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.25f, 1, 1),
             CreateEntry(LoadItem("Item_Mat_Spell_Parchment.asset"), 0.08f, 1, 1),
-            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.25f, 1, 1)
+            CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.12f, 1, 1)
           });
           EditorUtility.SetDirty(dropper);
           sceneUpdatedCount++;
@@ -337,7 +338,7 @@ namespace InfiniteLabyrinth.Editor
         else if (objName.Contains("Interactive_Chest_Boss"))
         {
           dropper.SetPrefabs(worldPickup, goldConfig);
-          dropper.ConfigureGold(goldItem, 1.0f, 180, 350);
+          dropper.ConfigureGold(goldItem, 1.0f, 150, 250);
           dropper.SetLootTable(new List<LootEntry>
           {
             CreateEntry(LoadItem("Item_Mat_Boss_Gem.asset"), 1.0f, 1, 1),

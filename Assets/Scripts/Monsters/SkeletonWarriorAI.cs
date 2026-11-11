@@ -60,6 +60,12 @@ public class SkeletonWarriorAI : EnemyAIBase
     }
   }
 
+  public override void ApplyScaledStats(float hpMultiplier, float damageMultiplier, float defenseBonus, int expBonus, bool elite)
+  {
+    base.ApplyScaledStats(hpMultiplier, damageMultiplier, defenseBonus, expBonus, elite);
+    attackDamage *= damageMultiplier;
+  }
+
   protected override void HandleCirclingState(float distanceToPlayer)
   {
     RotateTowards(playerTransform.position);

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_punk
   itemName: Barbed Punk Blade
-  description: "A fierce jagged blade lined with vicious barbs, engineered for swift rending slashes (+31 Attack, +10 Stamina)."
+  description: "A fierce jagged blade lined with vicious barbs, engineered for swift rending slashes (+31 Attack)."
   icon: {fileID: 21300000, guid: 7527a62d06fa9644197fa9e995add815, type: 3}
   itemType: 0
   rarity: 2
@@ -23,7 +23,7 @@ MonoBehaviour:
   bonusAttack: 31
   bonusDefense: 0
   bonusHealth: 0
-  bonusStamina: 10
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 2874611441229299984, guid: f709b427e67efa249ad029dcfc42301f, type: 3}

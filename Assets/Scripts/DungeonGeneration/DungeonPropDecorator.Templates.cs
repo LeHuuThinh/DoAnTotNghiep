@@ -242,12 +242,12 @@ public partial class DungeonPropDecorator
             }
           }
 
-          // A. Xử lý các Socket Thùng gỗ
+          // A. Xử lý các Socket Thùng gỗ (Sinh theo tỷ lệ trọng số loại thùng)
           foreach (Transform socket in barrelSockets)
           {
             if (enableLootAndBreakables && enableTemplateLoot && breakableBarrelPrefabs.Count > 0 && Random.value < templateBarrelSpawnChance)
             {
-              GameObject barrelPrefab = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject barrelPrefab = GetRandomBreakableBarrel();
               GameObject barrelObj = Instantiate(barrelPrefab, socket.position, socket.rotation, interactablesGroup);
               EnsureNavMeshObstacleModifier(barrelObj);
 
@@ -612,7 +612,7 @@ public partial class DungeonPropDecorator
             {
               if (enableLootAndBreakables && breakableBarrelPrefabs.Count > 0 && Random.value < templateBarrelSpawnChance)
               {
-                GameObject barrelPrefab = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+                GameObject barrelPrefab = GetRandomBreakableBarrel();
                 GameObject barrelObj = Instantiate(barrelPrefab, child.position, child.rotation, interactablesGroup);
                 EnsureNavMeshObstacleModifier(barrelObj);
               }

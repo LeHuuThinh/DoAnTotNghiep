@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_demonic
   itemName: Nether Demonic Blade
-  description: "Forged from nether metals within the underworld abyss, emanating an overwhelming murderous aura (+63 Attack, +35 Max HP)."
+  description: "Forged from nether metals within the underworld abyss, emanating an overwhelming murderous aura (+63 Attack)."
   icon: {fileID: 21300000, guid: 0dc7e5ee833047a46a572db2a9eb96ec, type: 3}
   itemType: 0
   rarity: 3
@@ -22,7 +22,7 @@ MonoBehaviour:
   goldValue: 900
   bonusAttack: 63
   bonusDefense: 0
-  bonusHealth: 35
+  bonusHealth: 0
   bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}

@@ -111,8 +111,8 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 | **Boss Red Ignis** | `mat_boss_fire_core` | **Lõi Lửa Nguyên Thủy (True Flame Core)** | Legendary | 10 | **Rương Boss Red Ignis** (Rơi 100% 1 lõi) | Chế tạo *Dragonfire Apocalypse* & *Giáp Hỏa Long*. |
 | **Boss Purple Ignis**| `mat_boss_void_essence`| **Tinh Chất Vực Thẳm (Abyssal Essence)** | Epic | 20 | **Rương Boss Purple Ignis** | Chế tạo trang bị bóng tối và tẩy điểm miễn phí. |
 | **Boss Purple Ignis**| `mat_boss_void_eye` | **Con Mắt Hư Không (Void Singularity)** | Legendary | 10 | **Rương Boss Purple Ignis** (Rơi 100% 1 lõi) | Chế tạo *Excalibur Sovereign* & *Hư Không Giáp*. |
-| **Đá Quý Bán Vàng** | `mat_monster_gem` | **Ngọc Quái Vật (Monster Gem)** | Uncommon | 99 | 4 Quái Skeleton (Tỉ lệ 20 - 25%) | Bán vào Shop lấy Vàng dồi dào (+32 Vàng/viên). |
-| **Đá Quý Bán Vàng** | `mat_boss_gem` | **Đại Ma Viên Ngọc (Boss Gem)** | Epic | 99 | **Rương Boss Bục Đá 12m** (Rơi 100% 1 viên) | Bán vào Shop nhận khoản tài sản khổng lồ (+200 Vàng/viên). |
+| **Đá Quý Bán Vàng** | `mat_monster_gem` | **Ngọc Quái Vật (Monster Gem)** | Uncommon | 99 | 4 Quái Skeleton (Tỉ lệ 6 - 12%) | Bán vào Shop lấy Vàng ổn định (+14 Vàng/viên, giá gốc 35). |
+| **Đá Quý Bán Vàng** | `mat_boss_gem` | **Đại Ma Viên Ngọc (Boss Gem)** | Epic | 99 | **Rương Boss Bục Đá 12m** (Rơi 100% 1 viên) | Bán vào Shop nhận khoản tài sản chiến công lớn (+160 Vàng/viên, giá gốc 400). |
 
 ---
 
@@ -129,19 +129,22 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 
 ---
 
-## 6. Ma Trận Phân Bổ Rơi Đồ (Detailed Drop Tables)
+## 6. Ma Trận Phân Bổ Rơi Đồ Đã Cân Bằng (Balanced Drop Tables)
+*(Được tính toán tối ưu cho quy mô trung bình ~100 quái/tầng hầm ngục + 1 boss, tổng thu 1 tầng đạt ~750 - 850 Gold chuẩn Roguelite)*
 
-### A. 3 Loại Thùng Gỗ Đập Được (`BreakableProp.cs`):
-* **Thùng Nhỏ (`Breakable_Barrel_Small`):**
-  * 70%: Rơi 2 – 6 Tiền Vàng.
+### A. 3 Loại Thùng Gỗ Đập Được (`BreakableProp.cs` & `DungeonPropDecorator.cs`):
+*(Áp dụng tỷ lệ sinh có trọng số Weighted Spawning: Thùng Nhỏ 58%, Thùng Vừa 30%, Thùng Lớn 12% để bảo đảm độ hiếm và mỹ thuật không gian)*
+
+* **Thùng Nhỏ (`Breakable_Barrel_Small` - Tỷ lệ sinh 58%):**
+  * 50%: Rơi 1 – 3 Tiền Vàng.
   * 25%: Rơi 1 Bình Máu Nhỏ.
-  * 5%: Rỗng.
-* **Thùng Vừa (`Breakable_Barrel_Medium`):**
-  * 85%: Rơi 8 – 18 Tiền Vàng.
+  * 25%: Rỗng.
+* **Thùng Vừa (`Breakable_Barrel_Medium` - Tỷ lệ sinh 30%):**
+  * 70%: Rơi 3 – 7 Tiền Vàng.
   * 35%: Rơi 1 Bình Máu Nhỏ hoặc 1 Tiên Dược Thể Lực.
   * 15%: Rơi 1 Đá Cường Hóa.
-* **Thùng Lớn (`Breakable_Barrel_Large`):**
-  * 100%: Rơi 18 – 35 Tiền Vàng.
+* **Thùng Lớn (`Breakable_Barrel_Large` - Tỷ lệ sinh 12% [Jackpot]):**
+  * 100%: Rơi 8 – 15 Tiền Vàng.
   * 40%: Rơi 1 Bình Máu Lớn.
   * 25%: Rơi 1 – 2 Đá Cường Hóa.
   * 5%: Rơi Thiết Kiếm Rỉ Sét (`weapon_sword_rusty_iron`).
@@ -150,45 +153,45 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 
 ### B. 4 Quái Vật Skeleton (`EnemyAIBase.cs`):
 * **Skeleton Minion (Lính Xương Đánh Lén):**
-  * 100%: 3 – 8 Tiền Vàng.
+  * 65%: 1 – 3 Tiền Vàng.
   * 30%: 1 Mảnh Xương Quái (`mat_bone_fragment`).
-  * **20%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 32 Vàng).**
+  * **6%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
 * **Skeleton Warrior (Chiến Binh Xương Cận Chiến):**
-  * 100%: 8 – 16 Tiền Vàng.
+  * 80%: 3 – 6 Tiền Vàng.
   * 45%: 1 – 2 Mảnh Xương Quái (`mat_bone_fragment`).
   * 20%: 1 Huy Hiệu Chiến Binh (`mat_warrior_insignia`).
   * 10%: 1 Đá Cường Hóa (`mat_upgrade_stone`).
-  * **22%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 32 Vàng).**
+  * **8%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
 * **Skeleton Rogue (Thích Khách Cung Thủ Tầm Xa):**
-  * 100%: 10 – 20 Tiền Vàng.
+  * 80%: 4 – 7 Tiền Vàng.
   * 40%: 1 – 2 Mũi Tên Đen (`mat_dark_arrowhead`).
   * 20%: 1 Bình Máu Nhỏ (`potion_health_small`).
   * 12%: 1 Tiên Dược Thể Lực (`potion_stamina_elixir`).
-  * **22%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 32 Vàng).**
+  * **8%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
 * **Skeleton Mage (Pháp Sư Triệu Hồi & Cầu Lửa):**
-  * 100%: 16 – 32 Tiền Vàng.
+  * 90%: 7 – 12 Tiền Vàng.
   * 50%: 1 – 2 Bụi Tinh Hoa Ma Pháp (`mat_arcane_dust`).
   * 25%: 1 Đá Cường Hóa (`mat_upgrade_stone`).
   * 8%: 1 Giấy Da Cổ Ma Thuật (`mat_spell_parchment`).
-  * **25%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 32 Vàng).**
+  * **12%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
 
 ---
 
 ### C. 3 Cấp Độ Rương Kho Báu (`ChestInteractable.cs`):
 * **Rương Thường (`Interactive_Chest` - Viền Xanh Lá):**
-  * 100%: 30 – 75 Tiền Vàng.
+  * 100%: 20 – 40 Tiền Vàng.
   * 100%: 1 – 2 Bình Máu Nhỏ.
   * 40%: 1 Đá Cường Hóa.
   * 25%: Rơi 1 Trang bị Uncommon ngẫu nhiên (*Novice Knight Sword*, *Broad Iron Blade*, *Explorer Leather Vest*).
 * **Rương Hiếm (`Interactive_Chest_Rare` - Viền Tím Thần Bí / Phòng Ngách & Gác Lửng):**
-  * 100%: 80 – 180 Tiền Vàng.
+  * 100%: 50 – 90 Tiền Vàng.
   * 100%: 2 – 3 Bình Máu Lớn.
   * 100%: 2 – 3 Đá Cường Hóa (`mat_upgrade_stone`).
   * 50%: Rơi 1 Vũ Khí Rare ngẫu nhiên (*Punk Blade*, *Bonecleaver*, *Deathbringer*, *Equilibrium Blade*).
   * 30%: Rơi Giáp Sắt Cường Hóa (*Reinforced Iron Cuirass*).
 * **Rương Boss Bục Đá 12m (`Interactive_Chest_Boss` - Viền Hoàng Kim Thánh Đường):**
-  * 100%: **180 – 350 Tiền Vàng** (Bung tỏa hình nón cực đẹp).
-  * **100%: 1 Đại Ma Viên Ngọc (`mat_boss_gem` - Epic, bán 200 Vàng).**
+  * 100%: **150 – 250 Tiền Vàng** (Bung tỏa hình nón cực đẹp).
+  * **100%: 1 Đại Ma Viên Ngọc (`mat_boss_gem` - Epic, bán 160 Vàng).**
   * 100%: **1 Lõi Boss Huyền Thoại Tương Ứng** (Ice Core / Flame Core / Void Eye).
   * 100%: 2 – 3 Mảnh Cổ Tự / Tinh chất Epic của Boss tương ứng.
   * 100%: 3 – 5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ (`mat_upgrade_crystal`).

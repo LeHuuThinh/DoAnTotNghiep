@@ -56,11 +56,17 @@ namespace InfiniteLabyrinth.Interaction
     {
       if (player == null) return;
 
-      // 1. Hồi 100% Máu (Health)
+      // 1. Hồi 100% Máu (Health) & Kích hoạt Healing VFX
       Health health = player.GetComponent<Health>();
       if (health != null)
       {
         health.RefillToFull();
+      }
+
+      PlayerFeedback feedback = player.GetComponent<PlayerFeedback>();
+      if (feedback != null)
+      {
+        feedback.PlayHealingVfx();
       }
 
       // 2. Hồi 100% Thần Lực (Spirit) & Thể Lực (Stamina)

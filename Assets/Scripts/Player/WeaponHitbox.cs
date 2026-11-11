@@ -165,8 +165,8 @@ public class WeaponHitbox : MonoBehaviour
         if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
             InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
         {
-          var pc = attacker.GetComponent<PlayerController>();
-          if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+          var pcCombat = attacker.GetComponentInChildren<PlayerCombat>() ?? attacker.GetComponent<PlayerCombat>();
+          if (pcCombat != null) pcCombat.TriggerAttackSpeedBoost(15f, 3.5f);
         }
       }
 

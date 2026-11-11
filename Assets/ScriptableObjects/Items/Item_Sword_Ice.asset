@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_ice
   itemName: Frostfang Glacial Sword
-  description: "An unmelting glacial blade carved from the Ice Golem, chilling the sinew and muscle of struck targets (+68 Attack, +8 DEF, +20 Stamina)."
+  description: "An unmelting glacial blade carved from the Ice Golem, chilling the sinew and muscle of struck targets (+68 Attack)."
   icon: {fileID: 21300000, guid: e317ec5eec0e585458b7721f350287e8, type: 3}
   itemType: 0
   rarity: 3
   maxStack: 1
   goldValue: 1000
   bonusAttack: 68
-  bonusDefense: 8
+  bonusDefense: 0
   bonusHealth: 0
-  bonusStamina: 20
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 6355415749775563603, guid: 33b2876aee63913438ca8ad7a6c153e9, type: 3}

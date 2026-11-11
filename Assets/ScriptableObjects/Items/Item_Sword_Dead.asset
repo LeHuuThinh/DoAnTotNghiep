@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_dead
   itemName: Deathbringer Sword
-  description: "A grim blade steeped in necromantic aura, siphoning lingering vigor from fallen foes (+40 Attack, +15 Max HP)."
+  description: "A grim blade steeped in necromantic aura, siphoning lingering vigor from fallen foes (+40 Attack)."
   icon: {fileID: 21300000, guid: 8f7e4d5e3150dfb44a455ff4c154df6e, type: 3}
   itemType: 0
   rarity: 2
@@ -22,7 +22,7 @@ MonoBehaviour:
   goldValue: 520
   bonusAttack: 40
   bonusDefense: 0
-  bonusHealth: 15
+  bonusHealth: 0
   bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}

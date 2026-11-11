@@ -138,6 +138,29 @@ public class PlayerCombat : MonoBehaviour
   [Tooltip("Sát thương Poise đòn Phản công Counter (Lập tức phá vỡ thế mọi quái)")]
   [SerializeField] private float counterAttackPoiseDamage = 120f;
 
+  [Header("=== PHÙ PHÉP THỨC TỈNH: CUỒNG TRẢM (CRIT FRENZY) ===")]
+  private float attackSpeedBoostTimer = 0f;
+  private float attackSpeedBoostMaxDuration = 3.5f;
+  private float attackSpeedBoostMultiplier = 1.0f;
+
+  public bool IsAttackSpeedBoosted => attackSpeedBoostTimer > 0f;
+  public float AttackSpeedBoostTimer => attackSpeedBoostTimer;
+  public float AttackSpeedBoostDuration => attackSpeedBoostMaxDuration > 0f ? attackSpeedBoostMaxDuration : 3.5f;
+  public float AttackSpeedBonusTimer => attackSpeedBoostTimer;
+  public float AttackSpeedBonusDuration => attackSpeedBoostMaxDuration > 0f ? attackSpeedBoostMaxDuration : 3.5f;
+  public float CurrentAttackSpeedMultiplier => attackSpeedBoostTimer > 0f ? attackSpeedBoostMultiplier : 1.0f;
+
+  public void TriggerAttackSpeedBoost(float percent, float duration)
+  {
+    attackSpeedBoostMultiplier = 1.0f + (percent / 100f);
+    attackSpeedBoostTimer = Mathf.Max(attackSpeedBoostTimer, duration);
+    attackSpeedBoostMaxDuration = Mathf.Max(attackSpeedBoostMaxDuration, duration);
+    if (animator != null && isAttacking)
+    {
+      animator.speed = attackSpeedBoostMultiplier;
+    }
+  }
+
   [Header("Parry & Counter Settings")]
   [Tooltip("Khung thời gian vàng (giây) tính từ khi bấm Chuột Phải mà đòn chém của quái bị gạt")]
   [SerializeField] private float parryWindowDuration = 0.28f;
@@ -409,6 +432,21 @@ public class PlayerCombat : MonoBehaviour
       parryTimer = 0f;
     }
 
+    // Đếm ngược buff Tốc Đánh (Crit Frenzy)
+    if (attackSpeedBoostTimer > 0f)
+    {
+      attackSpeedBoostTimer -= Time.deltaTime;
+      if (attackSpeedBoostTimer <= 0f)
+      {
+        attackSpeedBoostTimer = 0f;
+        attackSpeedBoostMultiplier = 1.0f;
+        if (!isHoldingMouse && currentActiveSkill == ActiveSkillType.None && !isAttacking && animator != null)
+        {
+          animator.speed = 1.0f;
+        }
+      }
+    }
+
     // Quản lý Layer tay phải
     if (animator != null && swordLayerIndex < animator.layerCount)
     {
@@ -661,6 +699,10 @@ public class PlayerCombat : MonoBehaviour
 
     if (playerController != null) playerController.LockMovement();
 
+    if (animator != null)
+    {
+      animator.speed = (attackSpeedBoostTimer > 0f) ? attackSpeedBoostMultiplier : 1.0f;
+    }
     animator.SetInteger(ComboStepHash, comboStep);
     animator.SetTrigger(AttackTriggerHash);
   }
@@ -695,6 +737,10 @@ public class PlayerCombat : MonoBehaviour
 
     if (playerController != null) playerController.LockMovement();
 
+    if (animator != null)
+    {
+      animator.speed = (attackSpeedBoostTimer > 0f) ? attackSpeedBoostMultiplier : 1.0f;
+    }
     animator.SetTrigger(JumpAttackTriggerHash);
   }
 
@@ -1229,8 +1275,7 @@ public class PlayerCombat : MonoBehaviour
           if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
               InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
           {
-            var pc = root.GetComponent<PlayerController>();
-            if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+            TriggerAttackSpeedBoost(15f, 3.5f);
           }
         }
 
@@ -1304,7 +1349,7 @@ public class PlayerCombat : MonoBehaviour
 
   [Header("=== CRITICAL & COMBAT STATS ===")]
   [Tooltip("Tỷ lệ bạo kích cơ bản (%)")]
-  [SerializeField] private float baseCritRate = 5f;
+  [SerializeField] private float baseCritRate = 10f;
   [Tooltip("Sát thương bạo kích cơ bản (%): 150 = x1.5")]
   [SerializeField] private float baseCritDamage = 150f;
 
@@ -1484,7 +1529,7 @@ public class PlayerCombat : MonoBehaviour
       };
       labelStyle.normal.textColor = Color.white;
 
-      string info = $"⚔️ Skill Ult Hitbox (R)\nBán kính: {ultHitboxRadius:F1}m | Đẩy trước: {ultHitboxForwardOffset:F1}m\nCao: {ultHitboxHeightOffset:F2}m | Góc: {ultHitboxAngle}°";
+      string info = $"Skill Ult Hitbox (R)\nBán kính: {ultHitboxRadius:F1}m | Đẩy trước: {ultHitboxForwardOffset:F1}m\nCao: {ultHitboxHeightOffset:F2}m | Góc: {ultHitboxAngle}°";
       UnityEditor.Handles.Label(hitboxCenter + Vector3.up * (ultHitboxRadius + 0.35f), info, labelStyle);
     }
   }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_vanguard
   itemName: Vanguard Broadsword
-  description: "A broadsword carried by frontline vanguards, bolstering both vitality and striking momentum (+27 Attack, +20 Max HP)."
+  description: "A broadsword carried by frontline vanguards, bolstering both vitality and striking momentum (+27 Attack)."
   icon: {fileID: 21300000, guid: 2d4b155344631764dbbd9491ff3ae1a3, type: 3}
   itemType: 0
   rarity: 2
@@ -22,7 +22,7 @@ MonoBehaviour:
   goldValue: 320
   bonusAttack: 27
   bonusDefense: 0
-  bonusHealth: 20
+  bonusHealth: 0
   bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}

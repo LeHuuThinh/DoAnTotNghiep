@@ -19,7 +19,7 @@ MonoBehaviour:
   itemType: 3
   rarity: 3
   maxStack: 99
-  goldValue: 500
+  goldValue: 400
   bonusAttack: 0
   bonusDefense: 0
   bonusHealth: 0

@@ -77,6 +77,17 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private TextMeshProUGUI afterUpgradeLevelText;
     [SerializeField] private TextMeshProUGUI afterItemStats;
 
+    [Header("=== CẤU TRÚC CHI TIẾT BEFORE / AFTER (CHUẨN ITEM DETAILS) ===")]
+    [SerializeField] private BlacksmithUpgradeWindowUI beforeWindowUI = new BlacksmithUpgradeWindowUI();
+    [SerializeField] private BlacksmithUpgradeWindowUI afterWindowUI = new BlacksmithUpgradeWindowUI();
+    [SerializeField] private BlacksmithUpgradeWindowUI forgeWindowUI = new BlacksmithUpgradeWindowUI();
+
+    [Header("=== TOOLTIP GIẢI THÍCH (ENCHANT HINT) ===")]
+    [SerializeField] private RectTransform enchantHintRect;
+    [SerializeField] private CanvasGroup enchantHintCanvasGroup;
+    [SerializeField] private TextMeshProUGUI enchantHintText;
+    private Coroutine hintFadeRoutine;
+
     [SerializeField] private TextMeshProUGUI materialsNeededText;
     [SerializeField] private Transform upgradeMaterialsContainer;
     [SerializeField] private TextMeshProUGUI upgradeGoldPriceText;
@@ -266,13 +277,15 @@ namespace InfiniteLabyrinth.UI
               if (upgradeSlotUI == null) upgradeSlotUI = slot.GetComponent<BlacksmithUpgradeSlotUI>();
               if (upgradeSlotUI == null) upgradeSlotUI = slot.gameObject.AddComponent<BlacksmithUpgradeSlotUI>();
               upgradeSlotUI.AutoFindReferences();
-              if (beforeIcon == null) beforeIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
-              if (beforeRarityBg == null) beforeRarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
-              if (beforeRarityBar == null) beforeRarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
             }
-            if (beforeItemName == null) beforeItemName = beforeWindow.Find("ItemName")?.GetComponent<TextMeshProUGUI>();
-            if (beforeUpgradeLevelText == null) beforeUpgradeLevelText = beforeWindow.Find("UpgradeLevel")?.GetComponent<TextMeshProUGUI>();
-            if (beforeItemStats == null) beforeItemStats = beforeWindow.Find("ItemStats")?.GetComponent<TextMeshProUGUI>();
+            beforeWindowUI.AutoFind(beforeWindow);
+            if (beforeIcon == null) beforeIcon = beforeWindowUI.itemIcon;
+            if (beforeRarityBg == null) beforeRarityBg = beforeWindowUI.rarityBg;
+            if (beforeRarityBar == null) beforeRarityBar = beforeWindowUI.rarityBar;
+            if (beforeItemName == null) beforeItemName = beforeWindowUI.itemName;
+            if (beforeUpgradeLevelText == null) beforeUpgradeLevelText = beforeWindowUI.upgradeLevelText;
+            if (beforeItemStats == null) beforeItemStats = beforeWindowUI.fallbackItemStats;
+            SetupEnchantRowHoverTriggers(beforeWindowUI);
           }
 
           if (arrowObj == null) arrowObj = upTr.Find("Arrow")?.gameObject;
@@ -280,16 +293,53 @@ namespace InfiniteLabyrinth.UI
           afterWindow = upTr.Find("AfterWindow");
           if (afterWindow != null)
           {
-            Transform slot = afterWindow.Find("UpgradeSlot");
-            if (slot != null)
+            afterWindowUI.AutoFind(afterWindow);
+            if (afterIcon == null) afterIcon = afterWindowUI.itemIcon;
+            if (afterRarityBg == null) afterRarityBg = afterWindowUI.rarityBg;
+            if (afterRarityBar == null) afterRarityBar = afterWindowUI.rarityBar;
+            if (afterItemName == null) afterItemName = afterWindowUI.itemName;
+            if (afterUpgradeLevelText == null) afterUpgradeLevelText = afterWindowUI.upgradeLevelText;
+            if (afterItemStats == null) afterItemStats = afterWindowUI.fallbackItemStats;
+            SetupEnchantRowHoverTriggers(afterWindowUI);
+          }
+
+          // Tìm hoặc nhân bản EnchantHint cho Lò Rèn (đặt dưới BlackSmithPanel để dùng chung cho cả Upgrade và Forge)
+          if (enchantHintRect == null)
+          {
+            Transform hTr = blacksmithPanel?.Find("EnchantHint")
+                         ?? upgradePanelObj?.transform.Find("EnchantHint")
+                         ?? beforeWindow?.Find("EnchantHint")
+                         ?? afterWindow?.Find("EnchantHint")
+                         ?? transform.Find("EnchantHint");
+            if (hTr != null)
             {
-              if (afterIcon == null) afterIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
-              if (afterRarityBg == null) afterRarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
-              if (afterRarityBar == null) afterRarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
+              enchantHintRect = hTr as RectTransform;
+              enchantHintCanvasGroup = hTr.GetComponent<CanvasGroup>();
+              enchantHintText = hTr.Find("Text")?.GetComponent<TextMeshProUGUI>() ?? hTr.GetComponentInChildren<TextMeshProUGUI>(true);
             }
-            if (afterItemName == null) afterItemName = afterWindow.Find("ItemName")?.GetComponent<TextMeshProUGUI>();
-            if (afterUpgradeLevelText == null) afterUpgradeLevelText = afterWindow.Find("UpgradeLevel")?.GetComponent<TextMeshProUGUI>();
-            if (afterItemStats == null) afterItemStats = afterWindow.Find("ItemStats")?.GetComponent<TextMeshProUGUI>();
+            else if (itemDetailPopup != null)
+            {
+              Transform templateHint = itemDetailPopup.transform.Find("EnchantHint");
+              if (templateHint != null)
+              {
+                Transform pTarget = blacksmithPanel != null ? blacksmithPanel.transform : transform;
+                GameObject clone = Instantiate(templateHint.gameObject, pTarget);
+                clone.name = "EnchantHint";
+                enchantHintRect = clone.GetComponent<RectTransform>();
+                enchantHintCanvasGroup = clone.GetComponent<CanvasGroup>();
+                enchantHintText = clone.GetComponentInChildren<TextMeshProUGUI>(true);
+              }
+            }
+          }
+          if (enchantHintRect != null && blacksmithPanel != null && enchantHintRect.parent != blacksmithPanel.transform)
+          {
+            enchantHintRect.SetParent(blacksmithPanel.transform, false);
+            enchantHintRect.SetAsLastSibling();
+          }
+          if (enchantHintCanvasGroup != null)
+          {
+            enchantHintCanvasGroup.alpha = 0f;
+            enchantHintCanvasGroup.blocksRaycasts = false;
           }
 
           if (materialsNeededText == null) materialsNeededText = upTr.Find("MaterialsNeededText")?.GetComponent<TextMeshProUGUI>();
@@ -331,17 +381,15 @@ namespace InfiniteLabyrinth.UI
           Transform win = fgTr.Find("ItemForgeWindow");
           if (win != null)
           {
-            Transform slot = win.Find("ForgeSlot");
-            if (slot != null)
-            {
-              if (btnForgeSlot == null) btnForgeSlot = slot.GetComponent<Button>();
-              if (forgeSlotIcon == null) forgeSlotIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
-              if (forgeSlotRarityBg == null) forgeSlotRarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
-              if (forgeSlotRarityBar == null) forgeSlotRarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
-            }
-            if (forgeItemName == null) forgeItemName = win.Find("ItemName")?.GetComponent<TextMeshProUGUI>();
-            if (forgeItemStats == null) forgeItemStats = win.Find("ItemStats")?.GetComponent<TextMeshProUGUI>();
+            forgeWindowUI.AutoFind(win);
+            if (btnForgeSlot == null) btnForgeSlot = win.Find("ForgeSlot")?.GetComponent<Button>();
+            if (forgeSlotIcon == null) forgeSlotIcon = forgeWindowUI.itemIcon;
+            if (forgeSlotRarityBg == null) forgeSlotRarityBg = forgeWindowUI.rarityBg;
+            if (forgeSlotRarityBar == null) forgeSlotRarityBar = forgeWindowUI.rarityBar;
+            if (forgeItemName == null) forgeItemName = forgeWindowUI.itemName;
+            if (forgeItemStats == null) forgeItemStats = forgeWindowUI.fallbackItemStats;
             if (forgeMaterialsContainer == null) forgeMaterialsContainer = win.Find("MaterialsHorizontalVIew");
+            SetupEnchantRowHoverTriggers(forgeWindowUI);
 
             Transform footer = win.Find("Footer");
             if (footer != null)
@@ -521,7 +569,9 @@ namespace InfiniteLabyrinth.UI
       IsOpen = false;
       LastClosedFrame = Time.frameCount;
 
+      HideEnchantHintImmediate();
       if (itemDetailPopup != null) itemDetailPopup.HideImmediate();
+      HideEnchantHintImmediate();
       if (cachedPlayerController != null) cachedPlayerController.UnlockMovement();
       Cursor.lockState = CursorLockMode.Locked;
       Cursor.visible = false;
@@ -583,6 +633,7 @@ namespace InfiniteLabyrinth.UI
       if (forgePanelObj != null) forgePanelObj.SetActive(tab == BlacksmithTab.Forge);
 
       if (itemDetailPopup != null) itemDetailPopup.HideImmediate();
+      HideEnchantHintImmediate();
 
       if (tab == BlacksmithTab.Upgrade)
       {
@@ -756,7 +807,9 @@ namespace InfiniteLabyrinth.UI
       }
 
       // Phòng thủ (Defense)
-      float baseDef = (affix != null && affix.rolledDefense > 0f) ? affix.rolledDefense : item.BonusDefense;
+      float baseDef = (item.ItemType == ItemType.Armor && affix != null)
+        ? affix.rolledDefense
+        : item.BonusDefense;
       if (baseDef > 0f)
       {
         float val = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, level);
@@ -773,7 +826,9 @@ namespace InfiniteLabyrinth.UI
       }
 
       // Máu tối đa (Max Health)
-      float baseHp = (affix != null && affix.rolledHealth > 0f) ? affix.rolledHealth : item.BonusHealth;
+      float baseHp = (item.ItemType == ItemType.Armor && affix != null)
+        ? affix.rolledHealth
+        : item.BonusHealth;
       if (baseHp > 0f)
       {
         float val = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, level);
@@ -858,17 +913,17 @@ namespace InfiniteLabyrinth.UI
           bool isUnlockedAtThisTier = level >= ench.milestoneLevel;
           if (isUnlockedAtThisTier)
           {
-            sb.AppendLine($"<color=#E040FB>✦ [+{ench.milestoneLevel}] {ench.title}</color>");
+            sb.AppendLine($"<color=#E040FB>[+{ench.milestoneLevel}] {ench.title}</color>");
           }
           else
           {
             if (showBonusDiff && level == ench.milestoneLevel)
             {
-              sb.AppendLine($"<color=#FFD54F>✨ Thức tỉnh [+{ench.milestoneLevel}]: {ench.title}!</color>");
+              sb.AppendLine($"<color=#FFD54F>[Thức tỉnh +{ench.milestoneLevel}]: {ench.title}!</color>");
             }
             else
             {
-              sb.AppendLine($"<color=#757575>✧ [+{ench.milestoneLevel}] Khóa (+{ench.milestoneLevel})</color>");
+              sb.AppendLine($"<color=#757575>[+{ench.milestoneLevel}] Khóa (+{ench.milestoneLevel})</color>");
             }
           }
         }
@@ -931,45 +986,39 @@ namespace InfiniteLabyrinth.UI
       bool isMaxLevel = curLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL;
 
       // 1. Before Window
-      SafeSetIcon(beforeIcon, item.Icon);
+      SafeSetIcon(beforeWindowUI.itemIcon, item.Icon);
       Color rColor = item.Rarity.GetRarityColor();
-      if (beforeRarityBg != null)
+      if (beforeWindowUI.rarityBg != null)
       {
-        beforeRarityBg.gameObject.SetActive(true);
-        beforeRarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
+        beforeWindowUI.rarityBg.gameObject.SetActive(true);
+        beforeWindowUI.rarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
       }
-      if (beforeRarityBar != null)
+      if (beforeWindowUI.rarityBar != null)
       {
-        beforeRarityBar.gameObject.SetActive(true);
-        beforeRarityBar.color = rColor;
+        beforeWindowUI.rarityBar.gameObject.SetActive(true);
+        beforeWindowUI.rarityBar.color = rColor;
       }
-      if (beforeItemName != null) beforeItemName.text = item.Rarity.FormatWithGradient(item.ItemName);
-      if (beforeUpgradeLevelText != null) beforeUpgradeLevelText.text = curLevel > 0 ? $"+{curLevel}" : "+0";
 
-      if (beforeItemStats != null)
-      {
-        beforeItemStats.text = BuildUpgradeStatsText(item, curLevel, false, heldUpgradeAffixData);
-      }
+      PopulateWindowStats(beforeWindowUI, item, curLevel, curLevel, false, heldUpgradeAffixData);
 
       // 2. After Window
+      SafeSetIcon(afterWindowUI.itemIcon, item.Icon);
+      if (afterWindowUI.rarityBg != null)
+      {
+        afterWindowUI.rarityBg.gameObject.SetActive(true);
+        afterWindowUI.rarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
+      }
+      if (afterWindowUI.rarityBar != null)
+      {
+        afterWindowUI.rarityBar.gameObject.SetActive(true);
+        afterWindowUI.rarityBar.color = rColor;
+      }
+
       if (isMaxLevel)
       {
-        if (afterItemName != null) afterItemName.text = "<color=#FFD700>MAX LEVEL</color>";
-        if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = "+5 (MAX)";
-        if (afterItemStats != null) afterItemStats.text = "<color=#FFD700>Weapon at peak power (MAX Tier)!</color>";
-        SafeSetIcon(afterIcon, item.Icon);
-        if (afterRarityBg != null)
-        {
-          afterRarityBg.gameObject.SetActive(true);
-          afterRarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
-        }
-        if (afterRarityBar != null)
-        {
-          afterRarityBar.gameObject.SetActive(true);
-          afterRarityBar.color = rColor;
-        }
+        PopulateWindowStats(afterWindowUI, item, curLevel, curLevel, true, heldUpgradeAffixData);
 
-        if (materialsNeededText != null) materialsNeededText.text = "MAXIMUM ENHANCEMENT REACHED";
+        if (materialsNeededText != null) materialsNeededText.text = "Materials Needed";
         ClearMaterialsContainer(upgradeMaterialsContainer);
 
         if (upgradeGoldPriceText != null)
@@ -990,24 +1039,7 @@ namespace InfiniteLabyrinth.UI
       }
 
       int nextLevel = curLevel + 1;
-
-      SafeSetIcon(afterIcon, item.Icon);
-      if (afterRarityBg != null)
-      {
-        afterRarityBg.gameObject.SetActive(true);
-        afterRarityBg.color = new Color(rColor.r, rColor.g, rColor.b, 0.25f);
-      }
-      if (afterRarityBar != null)
-      {
-        afterRarityBar.gameObject.SetActive(true);
-        afterRarityBar.color = rColor;
-      }
-      if (afterItemName != null) afterItemName.text = item.Rarity.FormatWithGradient(item.ItemName);
-      if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = $"+{nextLevel}";
-      if (afterItemStats != null)
-      {
-        afterItemStats.text = BuildUpgradeStatsText(item, nextLevel, true, heldUpgradeAffixData);
-      }
+      PopulateWindowStats(afterWindowUI, item, curLevel, nextLevel, true, heldUpgradeAffixData);
 
       // 3. Materials Needed
       if (materialsNeededText != null) materialsNeededText.text = "Materials Needed";
@@ -1123,27 +1155,8 @@ namespace InfiniteLabyrinth.UI
 
     private void ClearUpgradeUI()
     {
-      if (beforeIcon != null)
-      {
-        beforeIcon.gameObject.SetActive(false);
-        beforeIcon.enabled = false;
-      }
-      if (beforeRarityBg != null) beforeRarityBg.gameObject.SetActive(false);
-      if (beforeRarityBar != null) beforeRarityBar.gameObject.SetActive(false);
-      if (beforeItemName != null) beforeItemName.text = "Select equipment";
-      if (beforeUpgradeLevelText != null) beforeUpgradeLevelText.text = "";
-      if (beforeItemStats != null) beforeItemStats.text = "<color=#90A4AE>Select a weapon or armor from your bag & click \"Put in\".</color>";
-
-      if (afterIcon != null)
-      {
-        afterIcon.gameObject.SetActive(false);
-        afterIcon.enabled = false;
-      }
-      if (afterRarityBg != null) afterRarityBg.gameObject.SetActive(false);
-      if (afterRarityBar != null) afterRarityBar.gameObject.SetActive(false);
-      if (afterItemName != null) afterItemName.text = "Next Tier";
-      if (afterUpgradeLevelText != null) afterUpgradeLevelText.text = "";
-      if (afterItemStats != null) afterItemStats.text = "<color=#90A4AE>View stats increase and materials needed.</color>";
+      ClearWindowUI(beforeWindowUI, true);
+      ClearWindowUI(afterWindowUI, false);
 
       ClearMaterialsContainer(upgradeMaterialsContainer);
       if (materialsNeededText != null) materialsNeededText.text = "Materials Needed";
@@ -1160,6 +1173,8 @@ namespace InfiniteLabyrinth.UI
       }
       if (btnUpgradeBorder != null) btnUpgradeBorder.SetActive(false);
       if (btnUpgradeCorner != null) btnUpgradeCorner.SetActive(false);
+
+      HideEnchantHintImmediate();
     }
 
     private void HandleUpgradeClicked()
@@ -1183,24 +1198,36 @@ namespace InfiniteLabyrinth.UI
       // 3. Tăng cấp cường hóa của món đồ trên đe rèn
       heldUpgradeLevel++;
       selectedUpgradeLevel = heldUpgradeLevel;
+      int newlyAwakenedIndex = -1;
       if (heldUpgradeAffixData != null)
       {
         heldUpgradeAffixData.UpdateEnchantmentUnlocks(heldUpgradeLevel);
         var newlyAwakened = heldUpgradeAffixData.enchantments.Find(e => e.milestoneLevel == heldUpgradeLevel);
         if (newlyAwakened != null)
         {
-          Debug.Log($"<color=magenta>[Blacksmith]</color> ✨ THỨC TỈNH PHÙ PHÉP MỐC +{heldUpgradeLevel}: {newlyAwakened.title}!");
+          newlyAwakenedIndex = heldUpgradeAffixData.enchantments.FindIndex(e => e.milestoneLevel == heldUpgradeLevel);
+          Debug.Log($"<color=magenta>[Blacksmith]</color> [THỨC TỈNH PHÙ PHÉP MỐC +{heldUpgradeLevel}]: {newlyAwakened.title}!");
         }
       }
 
-      // 4. Punch Scale Animation (Game Feel)
+      // 4. Hoạt ảnh thức tỉnh phù phép & Punch Scale Animation
       if (afterWindow != null)
       {
         StartCoroutine(PunchRoutine(afterWindow, 1.1f, 0.15f));
       }
+      if (beforeWindow != null)
+      {
+        StartCoroutine(PunchRoutine(beforeWindow, 1.05f, 0.15f));
+      }
 
       // 5. Làm mới UI
       UpdateUpgradeUI();
+
+      if (newlyAwakenedIndex >= 0 && newlyAwakenedIndex < beforeWindowUI.enchantRows.Count)
+      {
+        StartCoroutine(AwakenFlashRoutine(beforeWindowUI.enchantRows[newlyAwakenedIndex]));
+      }
+
       RefreshInventoryGrid();
       UpdatePlayerGold();
     }
@@ -1332,6 +1359,7 @@ namespace InfiniteLabyrinth.UI
 
       // 2. Name & Stats
       if (forgeItemName != null) forgeItemName.text = item.Rarity.FormatWithGradient(recipe.RecipeName);
+      PopulateForgePreviewWindow(forgeWindowUI, item);
       if (forgeItemStats != null)
       {
         forgeItemStats.text = BuildForgeStatsText(item);
@@ -1393,6 +1421,7 @@ namespace InfiniteLabyrinth.UI
       }
       if (forgeSlotRarityBg != null) forgeSlotRarityBg.gameObject.SetActive(false);
       if (forgeSlotRarityBar != null) forgeSlotRarityBar.gameObject.SetActive(false);
+      ClearWindowUI(forgeWindowUI, true);
       if (forgeItemName != null) forgeItemName.text = "Select a Recipe";
       if (forgeItemStats != null) forgeItemStats.text = "Select a divine armament recipe from the list.";
       ClearMaterialsContainer(forgeMaterialsContainer);
@@ -1400,6 +1429,12 @@ namespace InfiniteLabyrinth.UI
       if (btnForge != null) btnForge.interactable = false;
       if (btnForgeBorder != null) btnForgeBorder.SetActive(false);
       if (btnForgeCorner != null) btnForgeCorner.SetActive(false);
+      if (btnForgeText != null)
+      {
+        btnForgeText.text = "FORGE";
+        btnForgeText.color = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+      }
+      HideEnchantHintImmediate();
     }
 
     private void HandleForgeClicked()
@@ -1470,6 +1505,7 @@ namespace InfiniteLabyrinth.UI
       UpdateInventoryTabHighlight();
       RefreshInventoryGrid();
       if (itemDetailPopup != null) itemDetailPopup.HideImmediate();
+      HideEnchantHintImmediate();
     }
 
     private void UpdateInventoryTabHighlight()
@@ -1659,6 +1695,818 @@ namespace InfiniteLabyrinth.UI
         yield return null;
       }
       tr.localScale = Vector3.one;
+    }
+
+    // =========================================================================
+    // HỆ THỐNG HIỂN THỊ BEFORE / AFTER WINDOWS & ENCHANT HINT (TASK RPG-11)
+    // =========================================================================
+
+    private void PopulateWindowStats(BlacksmithUpgradeWindowUI winUI, ItemData item, int curLevel, int targetLevel, bool isAfter, EquipmentAffixData affix)
+    {
+      if (winUI == null || item == null) return;
+
+      bool isMaxLevel = isAfter && curLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL;
+
+      // 1. Upgrade Level indicator (+1, +3, +5... hoặc MAX)
+      if (winUI.upgradeLevelText != null)
+      {
+        winUI.upgradeLevelText.gameObject.SetActive(true);
+        if (isMaxLevel)
+        {
+          winUI.upgradeLevelText.text = "<color=#FFD700>MAX</color>";
+        }
+        else if (targetLevel > 0)
+        {
+          winUI.upgradeLevelText.text = $"+{targetLevel}";
+        }
+        else
+        {
+          winUI.upgradeLevelText.text = "+0";
+        }
+      }
+
+      // 2. Tên vật phẩm (giữ nguyên tên cùng gradient như before)
+      if (winUI.itemName != null)
+      {
+        winUI.itemName.text = item.Rarity.FormatWithGradient(item.ItemName);
+      }
+
+      // 3. Chỉ số chính (Main Stats)
+      if (winUI.mainStatsRoot != null)
+      {
+        winUI.mainStatsRoot.SetActive(true);
+
+        if (item.ItemType == ItemType.Weapon)
+        {
+          float baseAtk = (affix != null && affix.rolledAttack > 0f) ? affix.rolledAttack : item.BonusAttack;
+          if (baseAtk <= 0f) baseAtk = 10f;
+          float curAtk = BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, curLevel);
+          float targetAtk = BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, targetLevel);
+          float diffAtk = targetAtk - curAtk;
+
+          if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Attack";
+          if (winUI.mainStatValue != null)
+          {
+            if (isAfter && !isMaxLevel && diffAtk > 0.05f)
+              winUI.mainStatValue.text = $"{targetAtk:0.#} <color=#55FF55>(+{diffAtk:0.#})</color>";
+            else
+              winUI.mainStatValue.text = $"{targetAtk:0.#}";
+          }
+        }
+        else // Armor
+        {
+          bool isDefense = (affix != null) ? (affix.rolledDefense > 0f) : (item.BonusDefense > 0f);
+
+          if (isDefense)
+          {
+            float baseDef = (affix != null && affix.rolledDefense > 0f) ? affix.rolledDefense : item.BonusDefense;
+            float curDef = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, curLevel);
+            float targetDef = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, targetLevel);
+            float diffDef = targetDef - curDef;
+
+            if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Defense";
+            if (winUI.mainStatValue != null)
+            {
+              if (isAfter && !isMaxLevel && diffDef > 0.05f)
+                winUI.mainStatValue.text = $"{targetDef:0.#} <color=#55FF55>(+{diffDef:0.#})</color>";
+              else
+                winUI.mainStatValue.text = $"{targetDef:0.#}";
+            }
+          }
+          else
+          {
+            float baseHp = (affix != null && affix.rolledHealth > 0f) ? affix.rolledHealth : item.BonusHealth;
+            float curHp = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, curLevel);
+            float targetHp = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, targetLevel);
+            float diffHp = targetHp - curHp;
+
+            if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Max Health";
+            if (winUI.mainStatValue != null)
+            {
+              if (isAfter && !isMaxLevel && diffHp > 0.05f)
+                winUI.mainStatValue.text = $"{targetHp:0.#} <color=#55FF55>(+{diffHp:0.#})</color>";
+              else
+                winUI.mainStatValue.text = $"{targetHp:0.#}";
+            }
+          }
+        }
+      }
+
+      // 4. Các dòng chỉ số phụ (Sub Stats - tối đa 4, 100% Procedural Affixes)
+      var subList = new List<(string name, string valStr)>();
+
+      if (affix != null && affix.subStats != null && affix.subStats.Count > 0)
+      {
+        for (int i = 0; i < affix.subStats.Count && subList.Count < 4; i++)
+        {
+          var sub = affix.subStats[i];
+          float curVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(sub.value, curLevel);
+          float targetVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(sub.value, targetLevel);
+          float diffVal = targetVal - curVal;
+          var (sName, sValStr) = ItemDetailPopupUI.FormatSubStat(sub.type, targetVal);
+          bool isPercent = sub.type != SubStatType.AttackBonus &&
+                           sub.type != SubStatType.DefenseBonus &&
+                           sub.type != SubStatType.HealthBonus &&
+                           sub.type != SubStatType.MaxStamina;
+          string diffUnit = isPercent ? "%" : "";
+          if (isAfter && !isMaxLevel && diffVal > 0.05f)
+          {
+            sValStr = $"{sValStr} <color=#55FF55>(+{diffVal:0.#}{diffUnit})</color>";
+          }
+          subList.Add((sName, sValStr));
+        }
+      }
+
+      if (affix == null || affix.subStats == null || affix.subStats.Count == 0)
+      {
+        // Static fallback nếu không có procedural affixes
+        if (item.BonusCritRate > 0f && subList.Count < 4)
+        {
+          float curVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritRate, curLevel);
+          float targetVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritRate, targetLevel);
+          float diffVal = targetVal - curVal;
+          string valStr = isAfter && !isMaxLevel && diffVal > 0.05f ? $"+ {targetVal:0.#}% <color=#55FF55>(+{diffVal:0.#}%)</color>" : $"+ {targetVal:0.#}%";
+          subList.Add(("Critical Rate", valStr));
+        }
+        if (item.BonusCritDamage > 0f && subList.Count < 4)
+        {
+          float curVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritDamage, curLevel);
+          float targetVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritDamage, targetLevel);
+          float diffVal = targetVal - curVal;
+          string valStr = isAfter && !isMaxLevel && diffVal > 0.05f ? $"+ {targetVal:0.#}% <color=#55FF55>(+{diffVal:0.#}%)</color>" : $"+ {targetVal:0.#}%";
+          subList.Add(("Critical Damage", valStr));
+        }
+        if (item.BonusLifesteal > 0f && subList.Count < 4)
+        {
+          float curVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusLifesteal, curLevel);
+          float targetVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusLifesteal, targetLevel);
+          float diffVal = targetVal - curVal;
+          string valStr = isAfter && !isMaxLevel && diffVal > 0.05f ? $"+ {targetVal:0.#}% <color=#55FF55>(+{diffVal:0.#}%)</color>" : $"+ {targetVal:0.#}%";
+          subList.Add(("Lifesteal", valStr));
+        }
+        if (item.SpiritCostReduction > 0f && subList.Count < 4) subList.Add(("Spirit Cost", $"- {item.SpiritCostReduction:0.#}%"));
+        if (item.StaminaCostReduction > 0f && subList.Count < 4) subList.Add(("Stamina Cost", $"- {item.StaminaCostReduction:0.#}%"));
+        if (item.SpiritGainBonus > 0f && subList.Count < 4) subList.Add(("Spirit Gain", $"+ {item.SpiritGainBonus:0.#}%"));
+        if (item.MoveSpeedBonus > 0f && subList.Count < 4) subList.Add(("Movement Speed", $"+ {item.MoveSpeedBonus:0.#}%"));
+      }
+
+      int activeSubCount = Mathf.Min(subList.Count, 4);
+      if (activeSubCount > 0)
+      {
+        if (winUI.subStatsDivider != null) winUI.subStatsDivider.SetActive(true);
+        if (winUI.subStatsLayoutRoot != null) winUI.subStatsLayoutRoot.gameObject.SetActive(true);
+
+        for (int i = 0; i < winUI.subStatRows.Count; i++)
+        {
+          if (winUI.subStatRows[i] == null || winUI.subStatRows[i].root == null) continue;
+          if (i < activeSubCount)
+          {
+            winUI.subStatRows[i].root.SetActive(true);
+            if (winUI.subStatRows[i].labelText != null) winUI.subStatRows[i].labelText.text = subList[i].name;
+            if (winUI.subStatRows[i].valueText != null) winUI.subStatRows[i].valueText.text = subList[i].valStr;
+          }
+          else
+          {
+            winUI.subStatRows[i].root.SetActive(false);
+          }
+        }
+      }
+      else
+      {
+        if (winUI.subStatsDivider != null) winUI.subStatsDivider.SetActive(false);
+        if (winUI.subStatsLayoutRoot != null) winUI.subStatsLayoutRoot.gameObject.SetActive(false);
+        for (int i = 0; i < winUI.subStatRows.Count; i++)
+        {
+          if (winUI.subStatRows[i]?.root != null) winUI.subStatRows[i].root.SetActive(false);
+        }
+      }
+
+      // 5. Phù phép thức tỉnh (Enchantments - tối đa 3)
+      var enchantList = (affix != null && affix.enchantments != null) ? affix.enchantments : null;
+      int activeEnchCount = (enchantList != null) ? Mathf.Min(enchantList.Count, 3) : 0;
+
+      if (activeEnchCount > 0)
+      {
+        if (winUI.itemEnchantmentContainer != null) winUI.itemEnchantmentContainer.gameObject.SetActive(true);
+        if (winUI.enchantmentDivider != null) winUI.enchantmentDivider.SetActive(true);
+        if (winUI.enchantmentLayoutRoot != null) winUI.enchantmentLayoutRoot.gameObject.SetActive(true);
+
+        for (int i = 0; i < winUI.enchantRows.Count; i++)
+        {
+          if (winUI.enchantRows[i] == null || winUI.enchantRows[i].root == null) continue;
+          if (i < activeEnchCount)
+          {
+            var ench = enchantList[i];
+            bool curActive = curLevel >= ench.milestoneLevel;
+            bool targetActive = isMaxLevel ? true : (targetLevel >= ench.milestoneLevel);
+            bool willAwaken = isAfter && !isMaxLevel && (targetLevel >= ench.milestoneLevel) && !curActive;
+
+            winUI.activeEnchantmentsCache[i] = ench;
+            winUI.enchantRows[i].root.SetActive(true);
+
+            if (winUI.enchantRows[i].iconActive != null) winUI.enchantRows[i].iconActive.gameObject.SetActive(targetActive);
+            if (winUI.enchantRows[i].iconUnactive != null) winUI.enchantRows[i].iconUnactive.gameObject.SetActive(!targetActive);
+
+            var (eTitle, _) = ItemDetailPopupUI.GetEnchantmentEnglishInfo(ench.enchantType, ench.title, ench.description);
+
+            if (winUI.enchantRows[i].text != null)
+            {
+              if (willAwaken)
+              {
+                winUI.enchantRows[i].text.text = $"<color=#FFD700><b>[+{ench.milestoneLevel}] {eTitle}</b></color>";
+              }
+              else if (targetActive)
+              {
+                winUI.enchantRows[i].text.text = $"<color=#E040FB>[+{ench.milestoneLevel}] {eTitle}</color>";
+              }
+              else
+              {
+                string tag = isAfter ? $"Requires +{ench.milestoneLevel}" : "Locked";
+                winUI.enchantRows[i].text.text = $"<color=#757575>[+{ench.milestoneLevel}] {eTitle} <size=80%>({tag})</size></color>";
+              }
+            }
+          }
+          else
+          {
+            winUI.enchantRows[i].root.SetActive(false);
+            winUI.activeEnchantmentsCache[i] = null;
+          }
+        }
+      }
+      else
+      {
+        if (winUI.itemEnchantmentContainer != null) winUI.itemEnchantmentContainer.gameObject.SetActive(false);
+        if (winUI.enchantmentDivider != null) winUI.enchantmentDivider.SetActive(false);
+        if (winUI.enchantmentLayoutRoot != null) winUI.enchantmentLayoutRoot.gameObject.SetActive(false);
+        for (int i = 0; i < 3; i++) winUI.activeEnchantmentsCache[i] = null;
+        for (int i = 0; i < winUI.enchantRows.Count; i++)
+        {
+          if (winUI.enchantRows[i]?.root != null) winUI.enchantRows[i].root.SetActive(false);
+        }
+      }
+
+      // 6. Fallback legacy text
+      if (winUI.fallbackItemStats != null)
+      {
+        winUI.fallbackItemStats.text = isMaxLevel
+          ? "<color=#FFD700>Weapon at peak power (MAX Tier)!</color>"
+          : BuildUpgradeStatsText(item, targetLevel, isAfter, affix);
+      }
+    }
+
+    /// <summary>
+    /// Hiển thị thông số gợi ý (Range x - y, Substats có thể có, Enchantments mốc thức tỉnh) trong cửa sổ Rèn (Forge)
+    /// </summary>
+    private void PopulateForgePreviewWindow(BlacksmithUpgradeWindowUI winUI, ItemData item)
+    {
+      if (winUI == null || item == null) return;
+
+      ItemRarity rarity = item.Rarity;
+      float varianceMin = 0.92f;
+      float varianceMax = 1.08f;
+      switch (rarity)
+      {
+        case ItemRarity.Common:
+          varianceMin = 0.92f; varianceMax = 1.08f;
+          break;
+        case ItemRarity.Uncommon:
+          varianceMin = 0.94f; varianceMax = 1.12f;
+          break;
+        case ItemRarity.Rare:
+          varianceMin = 0.96f; varianceMax = 1.16f;
+          break;
+        case ItemRarity.Epic:
+          varianceMin = 1.00f; varianceMax = 1.20f;
+          break;
+        case ItemRarity.Legendary:
+          varianceMin = 1.05f; varianceMax = 1.25f;
+          break;
+      }
+
+      // 1. Level Text (Cửa sổ rèn không cần số cấp)
+      if (winUI.upgradeLevelText != null)
+      {
+        winUI.upgradeLevelText.gameObject.SetActive(false);
+      }
+
+      // 2. Chỉ số chính (Main Stats: Attack x - y hoặc DEF / HP x-y / x-y)
+      if (winUI.mainStatsRoot != null)
+      {
+        winUI.mainStatsRoot.SetActive(true);
+
+        if (item.ItemType == ItemType.Weapon)
+        {
+          float baseAtk = item.BonusAttack > 0f ? item.BonusAttack : 10f;
+          float minAtk = Mathf.Max(1f, Mathf.Round(baseAtk * varianceMin * 10f) / 10f);
+          float maxAtk = Mathf.Max(1f, Mathf.Round(baseAtk * varianceMax * 10f) / 10f);
+
+          if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Attack";
+          if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minAtk:0.#} - {maxAtk:0.#}";
+        }
+        else // Armor
+        {
+          bool hasDef = item.BonusDefense > 0f;
+          bool hasHp = item.BonusHealth > 0f;
+
+          if (hasDef && hasHp)
+          {
+            float minDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varianceMin * 10f) / 10f);
+            float maxDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varianceMax * 10f) / 10f);
+            float minHp = Mathf.Max(5f, Mathf.Round(item.BonusHealth * varianceMin * 10f) / 10f);
+            float maxHp = Mathf.Max(5f, Mathf.Round(item.BonusHealth * varianceMax * 10f) / 10f);
+
+            if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "DEF or HP";
+            if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minDef:0.#}-{maxDef:0.#} | {minHp:0.#}-{maxHp:0.#}";
+          }
+          else if (hasDef)
+          {
+            float minDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varianceMin * 10f) / 10f);
+            float maxDef = Mathf.Max(1f, Mathf.Round(item.BonusDefense * varianceMax * 10f) / 10f);
+
+            if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Defense";
+            if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minDef:0.#} - {maxDef:0.#}";
+          }
+          else
+          {
+            float baseHp = hasHp ? item.BonusHealth : 20f;
+            float minHp = Mathf.Max(5f, Mathf.Round(baseHp * varianceMin * 10f) / 10f);
+            float maxHp = Mathf.Max(5f, Mathf.Round(baseHp * varianceMax * 10f) / 10f);
+
+            if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Max Health";
+            if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minHp:0.#} - {maxHp:0.#}";
+          }
+        }
+      }
+
+      // 3. Substats có thể có theo Rarity (Substat 1, 2, 3...)
+      int maxSubCount = 0;
+      switch (rarity)
+      {
+        case ItemRarity.Common: maxSubCount = 1; break;
+        case ItemRarity.Uncommon: maxSubCount = 2; break;
+        case ItemRarity.Rare: maxSubCount = 2; break;
+        case ItemRarity.Epic: maxSubCount = 3; break;
+        case ItemRarity.Legendary: maxSubCount = 4; break;
+      }
+
+      if (maxSubCount > 0)
+      {
+        if (winUI.subStatsDivider != null) winUI.subStatsDivider.SetActive(true);
+        if (winUI.subStatsLayoutRoot != null) winUI.subStatsLayoutRoot.gameObject.SetActive(true);
+
+        for (int i = 0; i < winUI.subStatRows.Count; i++)
+        {
+          if (winUI.subStatRows[i] == null || winUI.subStatRows[i].root == null) continue;
+          if (i < maxSubCount)
+          {
+            winUI.subStatRows[i].root.SetActive(true);
+            if (winUI.subStatRows[i].labelText != null) winUI.subStatRows[i].labelText.text = $"Substat {i + 1}";
+            if (winUI.subStatRows[i].valueText != null) winUI.subStatRows[i].valueText.text = "<color=#90A4AE>Random</color>";
+          }
+          else
+          {
+            winUI.subStatRows[i].root.SetActive(false);
+          }
+        }
+      }
+      else
+      {
+        if (winUI.subStatsDivider != null) winUI.subStatsDivider.SetActive(false);
+        if (winUI.subStatsLayoutRoot != null) winUI.subStatsLayoutRoot.gameObject.SetActive(false);
+        for (int i = 0; i < winUI.subStatRows.Count; i++)
+        {
+          if (winUI.subStatRows[i]?.root != null) winUI.subStatRows[i].root.SetActive(false);
+        }
+      }
+
+      // 4. Các ô Phù Phép (Enchantments) theo Rarity
+      var milestones = new List<int>();
+      if (rarity == ItemRarity.Common || rarity == ItemRarity.Uncommon)
+      {
+        milestones.Add(1);
+      }
+      else if (rarity == ItemRarity.Rare)
+      {
+        milestones.Add(1);
+        milestones.Add(3);
+      }
+      else // Epic & Legendary
+      {
+        milestones.Add(1);
+        milestones.Add(3);
+        milestones.Add(5);
+      }
+
+      int maxEnchCount = milestones.Count;
+      if (maxEnchCount > 0)
+      {
+        if (winUI.itemEnchantmentContainer != null) winUI.itemEnchantmentContainer.gameObject.SetActive(true);
+        if (winUI.enchantmentDivider != null) winUI.enchantmentDivider.SetActive(true);
+        if (winUI.enchantmentLayoutRoot != null) winUI.enchantmentLayoutRoot.gameObject.SetActive(true);
+
+        for (int i = 0; i < winUI.enchantRows.Count; i++)
+        {
+          if (winUI.enchantRows[i] == null || winUI.enchantRows[i].root == null) continue;
+          if (i < maxEnchCount)
+          {
+            int msLevel = milestones[i];
+            winUI.enchantRows[i].root.SetActive(true);
+            if (winUI.enchantRows[i].iconActive != null) winUI.enchantRows[i].iconActive.gameObject.SetActive(false);
+            if (winUI.enchantRows[i].iconUnactive != null) winUI.enchantRows[i].iconUnactive.gameObject.SetActive(true);
+            if (winUI.enchantRows[i].text != null)
+            {
+              winUI.enchantRows[i].text.text = $"<color=#757575>[+{msLevel}] Random Enchantment</color>";
+            }
+
+            // Gắn cache để hover vẫn hiện EnchantHint giải thích
+            winUI.activeEnchantmentsCache[i] = new EnchantmentEntry
+            {
+              enchantType = EnchantmentType.None,
+              milestoneLevel = msLevel,
+              title = "Random Enchantment",
+              description = $"Unlocks a random passive perk upon enhancing this armament to +{msLevel} at the Blacksmith."
+            };
+          }
+          else
+          {
+            winUI.enchantRows[i].root.SetActive(false);
+            winUI.activeEnchantmentsCache[i] = null;
+          }
+        }
+      }
+      else
+      {
+        if (winUI.itemEnchantmentContainer != null) winUI.itemEnchantmentContainer.gameObject.SetActive(false);
+        if (winUI.enchantmentDivider != null) winUI.enchantmentDivider.SetActive(false);
+        if (winUI.enchantmentLayoutRoot != null) winUI.enchantmentLayoutRoot.gameObject.SetActive(false);
+        for (int i = 0; i < winUI.enchantRows.Count; i++)
+        {
+          if (winUI.enchantRows[i]?.root != null) winUI.enchantRows[i].root.SetActive(false);
+          winUI.activeEnchantmentsCache[i] = null;
+        }
+      }
+    }
+
+    private void ClearWindowUI(BlacksmithUpgradeWindowUI winUI, bool isBefore)
+    {
+      if (winUI == null) return;
+
+      if (winUI.itemIcon != null)
+      {
+        winUI.itemIcon.gameObject.SetActive(false);
+        winUI.itemIcon.enabled = false;
+      }
+      if (winUI.rarityBg != null) winUI.rarityBg.gameObject.SetActive(false);
+      if (winUI.rarityBar != null) winUI.rarityBar.gameObject.SetActive(false);
+
+      if (winUI.itemName != null) winUI.itemName.text = isBefore ? "Select equipment" : "Next Tier";
+      if (winUI.upgradeLevelText != null) winUI.upgradeLevelText.text = "";
+
+      if (winUI.mainStatsRoot != null) winUI.mainStatsRoot.SetActive(false);
+      if (winUI.subStatsDivider != null) winUI.subStatsDivider.SetActive(false);
+      if (winUI.subStatsLayoutRoot != null) winUI.subStatsLayoutRoot.gameObject.SetActive(false);
+      if (winUI.itemEnchantmentContainer != null) winUI.itemEnchantmentContainer.gameObject.SetActive(false);
+      if (winUI.enchantmentDivider != null) winUI.enchantmentDivider.SetActive(false);
+      if (winUI.enchantmentLayoutRoot != null) winUI.enchantmentLayoutRoot.gameObject.SetActive(false);
+
+      for (int i = 0; i < winUI.subStatRows.Count; i++)
+      {
+        if (winUI.subStatRows[i]?.root != null) winUI.subStatRows[i].root.SetActive(false);
+      }
+      for (int i = 0; i < winUI.enchantRows.Count; i++)
+      {
+        if (winUI.enchantRows[i]?.root != null) winUI.enchantRows[i].root.SetActive(false);
+      }
+      for (int i = 0; i < 3; i++) winUI.activeEnchantmentsCache[i] = null;
+
+      if (winUI.fallbackItemStats != null)
+      {
+        winUI.fallbackItemStats.text = isBefore
+          ? "<color=#90A4AE>Select a weapon or armor from your bag & click \"Put in\".</color>"
+          : "<color=#90A4AE>View stats increase and materials needed.</color>";
+      }
+    }
+
+    private void SetupEnchantRowHoverTriggers(BlacksmithUpgradeWindowUI winUI)
+    {
+      if (winUI == null || winUI.enchantRows == null) return;
+
+      for (int i = 0; i < winUI.enchantRows.Count; i++)
+      {
+        var row = winUI.enchantRows[i];
+        if (row == null || row.root == null) continue;
+
+        var graphic = row.root.GetComponent<Graphic>();
+        if (graphic == null)
+        {
+          var img = row.root.AddComponent<Image>();
+          img.color = new Color(0f, 0f, 0f, 0f);
+          img.raycastTarget = true;
+        }
+        else
+        {
+          graphic.raycastTarget = true;
+        }
+
+        var trigger = row.root.GetComponent<EnchantRowHoverTrigger>() ?? row.root.AddComponent<EnchantRowHoverTrigger>();
+        int rowIndex = i;
+        trigger.rowIndex = rowIndex;
+        trigger.onHoverEnter = (rIdx) => ShowEnchantHint(winUI, rIdx);
+        trigger.onHoverExit = (rIdx) => HideEnchantHint();
+        row.hoverTrigger = trigger;
+      }
+    }
+
+    private void ShowEnchantHint(BlacksmithUpgradeWindowUI winUI, int rowIndex)
+    {
+      if (winUI == null || rowIndex < 0 || rowIndex >= 3) return;
+      EnchantmentEntry ench = winUI.activeEnchantmentsCache[rowIndex];
+      if (ench == null || enchantHintCanvasGroup == null || enchantHintText == null) return;
+
+      var (eTitle, eDesc) = ItemDetailPopupUI.GetEnchantmentEnglishInfo(ench.enchantType, ench.title, ench.description);
+
+      // Định dạng chuẩn "Tên: Mô tả" (không hiện [+5] hay [Requires+5])
+      string hintText = ench.isUnlocked
+        ? $"<color=#E040FB>{eTitle}:</color> <color=#EEEEEE>{eDesc}</color>"
+        : $"<color=#B0BEC5>{eTitle}:</color> <color=#9E9E9E>{eDesc}</color>";
+
+      enchantHintText.text = hintText;
+      enchantHintText.ForceMeshUpdate();
+
+      float preferredW = enchantHintText.preferredWidth;
+      float targetW = Mathf.Clamp(preferredW + 28f, 160f, 360f);
+      float preferredH = enchantHintText.GetPreferredValues(hintText, targetW - 20f, 0f).y;
+      float targetH = Mathf.Max(36f, preferredH + 14f);
+
+      if (enchantHintRect != null)
+      {
+        if (!enchantHintRect.gameObject.activeSelf)
+        {
+          enchantHintRect.gameObject.SetActive(true);
+        }
+
+        enchantHintRect.SetAsLastSibling();
+        enchantHintRect.sizeDelta = new Vector2(targetW, targetH);
+        enchantHintRect.pivot = new Vector2(0f, 1f); // Top-Left
+
+        RectTransform parentRect = enchantHintRect.parent as RectTransform;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera uiCam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
+
+        Vector2 mouseScreenPos = Mouse.current != null ? Mouse.current.position.ReadValue() : (Vector2)Input.mousePosition;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, mouseScreenPos, uiCam, out Vector2 mouseLocalPos);
+
+        float targetY = mouseLocalPos.y;
+        if (rowIndex < winUI.enchantRows.Count && winUI.enchantRows[rowIndex]?.root != null)
+        {
+          Vector3 rowWorldCenter = winUI.enchantRows[rowIndex].root.transform.position;
+          Vector3 rowLocalPos = parentRect.InverseTransformPoint(rowWorldCenter);
+          RectTransform rRect = winUI.enchantRows[rowIndex].root.transform as RectTransform;
+          float rowHalfH = (rRect != null) ? rRect.rect.height * 0.5f : 20f;
+          targetY = rowLocalPos.y + rowHalfH;
+        }
+
+        float targetX = mouseLocalPos.x;
+        float halfParentW = parentRect != null ? parentRect.rect.width * 0.5f : 500f;
+        float halfParentH = parentRect != null ? parentRect.rect.height * 0.5f : 400f;
+
+        if (targetX + targetW > halfParentW - 10f)
+        {
+          targetX = halfParentW - 10f - targetW;
+        }
+        if (targetX < -halfParentW + 10f)
+        {
+          targetX = -halfParentW + 10f;
+        }
+
+        if (targetY - targetH < -halfParentH + 10f)
+        {
+          targetY = -halfParentH + 10f + targetH;
+        }
+        if (targetY > halfParentH - 10f)
+        {
+          targetY = halfParentH - 10f;
+        }
+
+        enchantHintRect.anchoredPosition = new Vector2(targetX, targetY);
+      }
+
+      if (hintFadeRoutine != null) StopCoroutine(hintFadeRoutine);
+      hintFadeRoutine = StartCoroutine(FadeHintRoutine(1f, 0.08f));
+    }
+
+    private void HideEnchantHint()
+    {
+      if (enchantHintCanvasGroup == null) return;
+      if (hintFadeRoutine != null) StopCoroutine(hintFadeRoutine);
+      hintFadeRoutine = StartCoroutine(FadeHintRoutine(0f, 0.06f));
+    }
+
+    private void HideEnchantHintImmediate()
+    {
+      if (hintFadeRoutine != null)
+      {
+        StopCoroutine(hintFadeRoutine);
+        hintFadeRoutine = null;
+      }
+      if (enchantHintCanvasGroup != null)
+      {
+        enchantHintCanvasGroup.alpha = 0f;
+        enchantHintCanvasGroup.blocksRaycasts = false;
+      }
+      if (enchantHintRect != null)
+      {
+        enchantHintRect.gameObject.SetActive(false);
+      }
+    }
+
+    private IEnumerator FadeHintRoutine(float targetAlpha, float duration)
+    {
+      if (enchantHintCanvasGroup == null) yield break;
+      float startAlpha = enchantHintCanvasGroup.alpha;
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        enchantHintCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+        yield return null;
+      }
+      enchantHintCanvasGroup.alpha = targetAlpha;
+      if (targetAlpha <= 0.01f && enchantHintRect != null)
+      {
+        enchantHintRect.gameObject.SetActive(false);
+      }
+    }
+
+    private IEnumerator AwakenFlashRoutine(EnchantRowUI row)
+    {
+      if (row == null || row.root == null) yield break;
+
+      Transform tr = row.root.transform;
+      Vector3 originalScale = Vector3.one;
+
+      float duration = 0.5f;
+      float elapsed = 0f;
+      tr.localScale = Vector3.one * 1.35f;
+
+      while (elapsed < duration)
+      {
+        elapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        tr.localScale = Vector3.Lerp(Vector3.one * 1.35f, originalScale, t);
+
+        if (row.iconActive != null)
+        {
+          float pingPong = Mathf.PingPong(elapsed * 8f, 1f);
+          row.iconActive.color = Color.Lerp(Color.white, new Color(1f, 0.85f, 0.2f), pingPong);
+        }
+        yield return null;
+      }
+
+      tr.localScale = originalScale;
+      if (row.iconActive != null) row.iconActive.color = Color.white;
+    }
+  }
+
+  /// <summary>
+  /// Cấu trúc hiển thị thông số chi tiết (MainStats, SubStats, Enchantments) cho một cửa sổ Before/After trong Lò Rèn
+  /// </summary>
+  [Serializable]
+  public class BlacksmithUpgradeWindowUI
+  {
+    public Transform windowRoot;
+    public Image itemIcon;
+    public Image rarityBg;
+    public Image rarityBar;
+    public TextMeshProUGUI itemName;
+    public TextMeshProUGUI upgradeLevelText;
+
+    // Cấu trúc MainStats (ItemStatsText/MainStats)
+    public GameObject mainStatsRoot;
+    public TextMeshProUGUI mainStatLabel;
+    public TextMeshProUGUI mainStatValue;
+
+    // Cấu trúc SubStats (ItemStatsText/SubStatsLayout)
+    public GameObject subStatsDivider; // Line (2)
+    public RectTransform subStatsLayoutRoot;
+    public List<SubStatRowUI> subStatRows = new List<SubStatRowUI>();
+
+    // Cấu trúc Phù Phép (ItemEnchantment / EnchantmentLayout)
+    public RectTransform itemEnchantmentContainer;
+    public GameObject enchantmentDivider; // Line (3)
+    public RectTransform enchantmentLayoutRoot;
+    public List<EnchantRowUI> enchantRows = new List<EnchantRowUI>();
+
+    // Fallback cũ nếu có
+    public TextMeshProUGUI fallbackItemStats;
+
+    [NonSerialized] public EnchantmentEntry[] activeEnchantmentsCache = new EnchantmentEntry[3];
+
+    public void AutoFind(Transform root)
+    {
+      windowRoot = root;
+      if (windowRoot == null) return;
+
+      Transform slot = windowRoot.Find("UpgradeSlot") ?? windowRoot.Find("ForgeSlot");
+      if (slot != null)
+      {
+        if (itemIcon == null) itemIcon = slot.Find("ItemIcon")?.GetComponent<Image>();
+        if (rarityBg == null) rarityBg = slot.Find("RarityBG")?.GetComponent<Image>();
+        if (rarityBar == null) rarityBar = slot.Find("RarityBar")?.GetComponent<Image>();
+      }
+
+      if (itemName == null) itemName = windowRoot.Find("ItemName")?.GetComponent<TextMeshProUGUI>();
+      if (upgradeLevelText == null) upgradeLevelText = windowRoot.Find("UpgradeLevel")?.GetComponent<TextMeshProUGUI>();
+      if (fallbackItemStats == null) fallbackItemStats = windowRoot.Find("ItemStats")?.GetComponent<TextMeshProUGUI>();
+
+      // MainStats: tìm trong ItemStatsText hoặc trực tiếp dưới windowRoot
+      Transform statsTextContainer = windowRoot.Find("ItemStatsText");
+      Transform msSearchRoot = statsTextContainer != null ? statsTextContainer : windowRoot;
+
+      Transform msTr = msSearchRoot.Find("MainStats");
+      if (msTr != null)
+      {
+        mainStatsRoot = msTr.gameObject;
+        if (mainStatLabel == null) mainStatLabel = msTr.Find("Text")?.GetComponent<TextMeshProUGUI>() ?? msTr.GetComponent<TextMeshProUGUI>();
+        if (mainStatValue == null) mainStatValue = msTr.Find("Value")?.GetComponent<TextMeshProUGUI>();
+      }
+
+      // SubStats
+      if (subStatsDivider == null)
+      {
+        subStatsDivider = msSearchRoot.Find("Line (2)")?.gameObject ?? windowRoot.Find("Line (2)")?.gameObject;
+      }
+
+      Transform subLayoutTr = msSearchRoot.Find("SubStatsLayout") ?? windowRoot.Find("SubStatsLayout");
+      if (subLayoutTr != null)
+      {
+        subStatsLayoutRoot = subLayoutTr as RectTransform;
+        if (subStatRows == null) subStatRows = new List<SubStatRowUI>();
+        subStatRows.Clear();
+
+        string[] subNames = new string[] { "SubStats", "SubStats (1)", "SubStats (2)", "SubStats (3)" };
+        for (int i = 0; i < subNames.Length; i++)
+        {
+          Transform t = subLayoutTr.Find(subNames[i]);
+          if (t == null && i < subLayoutTr.childCount) t = subLayoutTr.GetChild(i);
+          if (t != null)
+          {
+            var valTmp = t.Find("Value")?.GetComponent<TextMeshProUGUI>();
+            var lblTmp = t.Find("Text")?.GetComponent<TextMeshProUGUI>() ?? t.GetComponent<TextMeshProUGUI>();
+            if (lblTmp == valTmp && lblTmp != null)
+            {
+              var allTmps = t.GetComponentsInChildren<TextMeshProUGUI>(true);
+              foreach (var tmp in allTmps)
+              {
+                if (tmp != valTmp) { lblTmp = tmp; break; }
+              }
+            }
+            var row = new SubStatRowUI
+            {
+              root = t.gameObject,
+              labelText = lblTmp,
+              valueText = valTmp
+            };
+            subStatRows.Add(row);
+          }
+        }
+      }
+
+      // Enchantments
+      Transform enchContainer = windowRoot.Find("ItemEnchantment") ?? windowRoot.Find("ItemEnchantmentContainer");
+      if (enchContainer != null) itemEnchantmentContainer = enchContainer as RectTransform;
+
+      Transform enchSearchRoot = itemEnchantmentContainer != null ? itemEnchantmentContainer.transform : windowRoot;
+      if (enchantmentDivider == null)
+      {
+        enchantmentDivider = enchSearchRoot.Find("Line (3)")?.gameObject ?? windowRoot.Find("Line (3)")?.gameObject;
+      }
+
+      Transform enchLayoutTr = enchSearchRoot.Find("EnchantmentLayout") ?? windowRoot.Find("EnchantmentLayout");
+      if (enchLayoutTr != null)
+      {
+        enchantmentLayoutRoot = enchLayoutTr as RectTransform;
+        if (enchantRows == null) enchantRows = new List<EnchantRowUI>();
+        enchantRows.Clear();
+
+        string[] enchNames = new string[] { "Enchant", "Enchant (1)", "Enchant (2)" };
+        for (int i = 0; i < enchNames.Length; i++)
+        {
+          Transform t = enchLayoutTr.Find(enchNames[i]);
+          if (t == null && i < enchLayoutTr.childCount) t = enchLayoutTr.GetChild(i);
+          if (t != null)
+          {
+            var row = new EnchantRowUI
+            {
+              root = t.gameObject,
+              iconActive = t.Find("IconActive")?.GetComponent<Image>(),
+              iconUnactive = t.Find("IconUnactive")?.GetComponent<Image>(),
+              text = t.Find("EnchantmentText")?.GetComponent<TextMeshProUGUI>() ?? t.Find("Text")?.GetComponent<TextMeshProUGUI>()
+            };
+            enchantRows.Add(row);
+          }
+        }
+      }
     }
   }
 }

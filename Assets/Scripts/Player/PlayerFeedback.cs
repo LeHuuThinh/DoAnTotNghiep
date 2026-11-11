@@ -38,6 +38,14 @@ public class PlayerFeedback : MonoBehaviour
   [Tooltip("Thời gian tự hủy instance VFX (giây) đề phòng nếu VFX không tự hủy")]
   [SerializeField] private float vfxDestroyDelay = 2.0f;
 
+  [Header("Healing Feedback Settings")]
+  [Tooltip("Prefab VFX hiệu ứng hồi máu (Healing.prefab trong Characters/Player/PlayerVFX hoặc Resources)")]
+  [SerializeField] private GameObject healingVfxPrefab;
+  [Tooltip("Thời gian hiển thị VFX hồi máu trước khi tắt hiệu ứng (giây)")]
+  [SerializeField] private float healingVfxDuration = 1.0f;
+  [Tooltip("Độ lệch vị trí VFX so với gốc tọa độ người chơi (Mặc định Y=0.9m ngang hông để effect bao trọn phần thân)")]
+  [SerializeField] private Vector3 healingVfxOffset = new Vector3(0f, 0.9f, 0f);
+
   [Header("Stagger / Knockback")]
   [SerializeField] private float staggerDuration = 0.5f;
   [SerializeField] private float knockbackDuration = 0.15f;
@@ -534,6 +542,79 @@ public class PlayerFeedback : MonoBehaviour
     if (rHand != null) rHand.enabled = false;
 
     Debug.Log("<color=red>[YOU DIED]</color>");
+  }
+
+  // =========================================================================
+  // HEALING VFX FEEDBACK (UỐNG MÁU & CẦU NGUYỆN CHUÔNG LÀNG)
+  // =========================================================================
+
+  private Coroutine healingVfxCoroutine;
+  private GameObject currentHealingVfxInstance;
+
+  /// <summary>
+  /// Kích hoạt hiệu ứng VFX hồi máu (Healing VFX) ngay tại thân người chơi trong khoảng thời gian chỉ định (mặc định 1s).
+  /// Dành cho uống bình máu hoặc cầu nguyện tại Chuông Làng.
+  /// </summary>
+  public void PlayHealingVfx()
+  {
+    if (healingVfxPrefab == null)
+    {
+      healingVfxPrefab = Resources.Load<GameObject>("Healing");
+    }
+
+    if (healingVfxPrefab == null)
+    {
+      Debug.LogWarning("[PlayerFeedback] Không tìm thấy healingVfxPrefab hoặc Resources/Healing!");
+      return;
+    }
+
+    if (healingVfxCoroutine != null)
+    {
+      StopCoroutine(healingVfxCoroutine);
+      if (currentHealingVfxInstance != null)
+      {
+        Destroy(currentHealingVfxInstance);
+        currentHealingVfxInstance = null;
+      }
+    }
+
+    healingVfxCoroutine = StartCoroutine(HealingVfxRoutine());
+  }
+
+  private IEnumerator HealingVfxRoutine()
+  {
+    currentHealingVfxInstance = Instantiate(healingVfxPrefab, transform);
+    currentHealingVfxInstance.transform.localPosition = healingVfxOffset;
+    currentHealingVfxInstance.transform.localRotation = healingVfxPrefab.transform.localRotation;
+    currentHealingVfxInstance.transform.localScale = healingVfxPrefab.transform.localScale;
+
+    // Kích hoạt toàn bộ ParticleSystem con
+    ParticleSystem[] particles = currentHealingVfxInstance.GetComponentsInChildren<ParticleSystem>();
+    foreach (var ps in particles)
+    {
+      ps.Play();
+    }
+
+    yield return new WaitForSeconds(healingVfxDuration);
+
+    // Dừng phát hạt mới để các hạt hiện có tan tự nhiên
+    if (particles != null)
+    {
+      foreach (var ps in particles)
+      {
+        if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+      }
+    }
+
+    yield return new WaitForSeconds(0.4f);
+
+    if (currentHealingVfxInstance != null)
+    {
+      Destroy(currentHealingVfxInstance);
+      currentHealingVfxInstance = null;
+    }
+
+    healingVfxCoroutine = null;
   }
 
   public void EnableHyperArmor() => HasHyperArmor = true;

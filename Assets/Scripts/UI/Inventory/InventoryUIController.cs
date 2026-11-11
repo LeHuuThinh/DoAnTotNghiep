@@ -245,6 +245,7 @@ namespace InfiniteLabyrinth.UI
         InventoryManager.Instance.OnInventoryChanged += HandleInventoryDataChanged;
         InventoryManager.Instance.OnGoldChanged += UpdateGoldDisplay;
         InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChanged;
+        InventoryManager.Instance.OnEquipmentUpgradeChanged += HandleEquipmentUpgradeChanged;
         InventoryManager.Instance.OnUsableChanged += HandleUsableChanged;
       }
 
@@ -301,6 +302,7 @@ namespace InfiniteLabyrinth.UI
         InventoryManager.Instance.OnInventoryChanged -= HandleInventoryDataChanged;
         InventoryManager.Instance.OnGoldChanged -= UpdateGoldDisplay;
         InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChanged;
+        InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
         InventoryManager.Instance.OnUsableChanged -= HandleUsableChanged;
       }
 
@@ -1186,6 +1188,15 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    private void HandleEquipmentUpgradeChanged(ItemType type, int level)
+    {
+      if (IsOpen)
+      {
+        RefreshEquipment();
+        RefreshStats();
+      }
+    }
+
     private void HandleUsableChanged(ItemData item, int count)
     {
       if (IsOpen)
@@ -1193,5 +1204,8 @@ namespace InfiniteLabyrinth.UI
         RefreshEquipment();
       }
     }
+
+    public TMPro.TextMeshProUGUI WeaponUpgradeBadgeText => weaponSlot != null ? weaponSlot.UpgradeBadgeText : null;
+    public TMPro.TextMeshProUGUI ArmorUpgradeBadgeText => armorSlot != null ? armorSlot.UpgradeBadgeText : null;
   }
 }

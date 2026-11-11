@@ -9,10 +9,11 @@ namespace InfiniteLabyrinth.Editor
   /// </summary>
   public static class CombatVfxSetupEditor
   {
-    private const string PLAYER_HIT_VFX_PATH = "Assets/Characters/Player/GetHitVFX.prefab";
+    private const string PLAYER_HIT_VFX_PATH = "Assets/Characters/Player/PlayerVFX/GetHitVFX.prefab";
+    private const string PLAYER_HEAL_VFX_PATH = "Assets/Characters/Player/PlayerVFX/Healing.prefab";
     private const string MONSTER_HIT_VFX_PATH = "Assets/Characters/Monsters/MobsGetHitVFX.prefab";
     private const string PLAYER_PREFAB_PATH = "Assets/Characters/Player/Player.prefab";
-    private const string PREF_KEY = "CombatVfx_AutoSetup_v1";
+    private const string PREF_KEY = "CombatVfx_AutoSetup_v2";
 
     private static readonly string[] MONSTER_PREFABS = new[]
     {
@@ -36,19 +37,25 @@ namespace InfiniteLabyrinth.Editor
       };
     }
 
-    [MenuItem("Infinite Labyrinth/Combat/1. Cấu Hình Hit VFX Cho Player & Quái Vật (1-Click)", false, 1)]
+    [MenuItem("Infinite Labyrinth/Combat/1. Cấu Hình Hit & Healing VFX Cho Player & Quái Vật (1-Click)", false, 1)]
     public static void SetupAllCombatHitVfx()
     {
-      Debug.Log("<color=cyan>=== BẮT ĐẦU CẤU HÌNH HIT VFX CHO PLAYER VÀ MONSTERS ===</color>");
+      Debug.Log("<color=cyan>=== BẮT ĐẦU CẤU HÌNH HIT & HEALING VFX CHO PLAYER VÀ MONSTERS ===</color>");
 
       // 1. Tải Prefab VFX
       GameObject playerVfx = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_HIT_VFX_PATH);
+      GameObject playerHealVfx = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_HEAL_VFX_PATH);
       GameObject monsterVfx = AssetDatabase.LoadAssetAtPath<GameObject>(MONSTER_HIT_VFX_PATH);
 
       if (playerVfx == null)
       {
         Debug.LogError($"[CombatVfxSetup] ❌ Không tìm thấy Player Hit VFX tại: {PLAYER_HIT_VFX_PATH}");
         return;
+      }
+
+      if (playerHealVfx == null)
+      {
+        Debug.LogWarning($"[CombatVfxSetup] ⚠️ Không tìm thấy Player Healing VFX tại: {PLAYER_HEAL_VFX_PATH}");
       }
 
       if (monsterVfx == null)
@@ -60,7 +67,7 @@ namespace InfiniteLabyrinth.Editor
       int successCount = 0;
 
       // 2. Cấu hình Player Prefab
-      if (SetupPlayerPrefab(playerVfx))
+      if (SetupPlayerPrefab(playerVfx, playerHealVfx))
       {
         successCount++;
       }
@@ -75,15 +82,15 @@ namespace InfiniteLabyrinth.Editor
       }
 
       // 4. Cấu hình Scene Instances nếu đang mở Scene
-      SetupSceneInstances(playerVfx, monsterVfx);
+      SetupSceneInstances(playerVfx, playerHealVfx, monsterVfx);
 
       AssetDatabase.SaveAssets();
       AssetDatabase.Refresh();
 
-      Debug.Log($"<color=green>=== HOÀN TẤT CẤU HÌNH HIT VFX! ĐÃ CẬP NHẬT {successCount}/{1 + MONSTER_PREFABS.Length} PREFABS ===</color>");
+      Debug.Log($"<color=green>=== HOÀN TẤT CẤU HÌNH HIT & HEAL VFX! ĐÃ CẬP NHẬT {successCount}/{1 + MONSTER_PREFABS.Length} PREFABS ===</color>");
     }
 
-    private static bool SetupPlayerPrefab(GameObject vfxPrefab)
+    private static bool SetupPlayerPrefab(GameObject vfxPrefab, GameObject healVfxPrefab)
     {
       GameObject playerAsset = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_PREFAB_PATH);
       if (playerAsset == null)
@@ -106,10 +113,23 @@ namespace InfiniteLabyrinth.Editor
         if (prop != null)
         {
           prop.objectReferenceValue = vfxPrefab;
-          so.ApplyModifiedProperties();
-          Debug.Log($"[CombatVfxSetup]  Đã gắn GetHitVFX (đỏ) vào Player.prefab");
-          return true;
         }
+
+        SerializedProperty healProp = so.FindProperty("healingVfxPrefab");
+        if (healProp != null && healVfxPrefab != null)
+        {
+          healProp.objectReferenceValue = healVfxPrefab;
+        }
+
+        SerializedProperty offsetProp = so.FindProperty("healingVfxOffset");
+        if (offsetProp != null)
+        {
+          offsetProp.vector3Value = new Vector3(0f, 0.9f, 0f);
+        }
+
+        so.ApplyModifiedProperties();
+        Debug.Log($"[CombatVfxSetup] ✅ Đã gắn GetHitVFX (đỏ) & Healing VFX (Y=0.9m) vào Player.prefab");
+        return true;
       }
 
       return false;
@@ -147,19 +167,44 @@ namespace InfiniteLabyrinth.Editor
       return false;
     }
 
-    private static void SetupSceneInstances(GameObject playerVfx, GameObject monsterVfx)
+    private static void SetupSceneInstances(GameObject playerVfx, GameObject playerHealVfx, GameObject monsterVfx)
     {
       PlayerFeedback[] playerFeedbacks = Object.FindObjectsByType<PlayerFeedback>(FindObjectsSortMode.None);
       foreach (var pf in playerFeedbacks)
       {
         SerializedObject so = new SerializedObject(pf);
+        bool modified = false;
+
         SerializedProperty prop = so.FindProperty("hitVfxPrefab");
         if (prop != null && prop.objectReferenceValue == null)
         {
           prop.objectReferenceValue = playerVfx;
+          modified = true;
+          Debug.Log($"[CombatVfxSetup] ✅ Đã gắn GetHitVFX (đỏ) vào Scene Player instance: {pf.gameObject.name}");
+        }
+
+        SerializedProperty healProp = so.FindProperty("healingVfxPrefab");
+        if (healProp != null && playerHealVfx != null)
+        {
+          if (healProp.objectReferenceValue == null)
+          {
+            healProp.objectReferenceValue = playerHealVfx;
+            modified = true;
+            Debug.Log($"[CombatVfxSetup] ✅ Đã gắn Healing VFX vào Scene Player instance: {pf.gameObject.name}");
+          }
+        }
+
+        SerializedProperty offsetProp = so.FindProperty("healingVfxOffset");
+        if (offsetProp != null && offsetProp.vector3Value != new Vector3(0f, 0.9f, 0f))
+        {
+          offsetProp.vector3Value = new Vector3(0f, 0.9f, 0f);
+          modified = true;
+        }
+
+        if (modified)
+        {
           so.ApplyModifiedProperties();
           EditorUtility.SetDirty(pf.gameObject);
-          Debug.Log($"[CombatVfxSetup]  Đã gắn GetHitVFX (đỏ) vào Scene Player instance: {pf.gameObject.name}");
         }
       }
 

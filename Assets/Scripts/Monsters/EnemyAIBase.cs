@@ -61,6 +61,11 @@ public abstract class EnemyAIBase : MonoBehaviour
 
   public float EnemyDefense => enemyDefense;
 
+  [Header("Elite / Floor Scaling")]
+  [SerializeField] protected bool isElite = false;
+  public bool IsElite => isElite;
+  protected bool hasScaledForFloor = false;
+
   // Runtime State
   protected NavMeshAgent agent;
   protected Health health;
@@ -170,6 +175,133 @@ public abstract class EnemyAIBase : MonoBehaviour
     if (cachedHealthBarUI == null)
     {
       EnsureHealthBar();
+    }
+
+    // Tự động scale độ khó, máu, sát thương và EXP theo độ sâu Tầng hầm ngục
+    if (!hasScaledForFloor)
+    {
+      hasScaledForFloor = true;
+      int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+      InfiniteLabyrinth.Progression.DungeonDifficultyScaler.ApplyMonsterScaling(this, currentFloor);
+    }
+  }
+
+  /// <summary>
+  /// Áp dụng các chỉ số đã được nhân theo độ sâu tầng hầm ngục và thuộc tính Elite
+  /// </summary>
+  public virtual void ApplyScaledStats(float hpMultiplier, float damageMultiplier, float defenseBonus, int expBonus, bool elite)
+  {
+    isElite = elite;
+
+    if (health != null)
+    {
+      float newMaxHp = Mathf.Round(health.BaseMaxHealth * hpMultiplier);
+      health.SetCustomHealth(newMaxHp);
+      health.SetBaseDefense(health.BaseDefense + defenseBonus);
+    }
+
+    expReward += expBonus;
+    enemyDefense += defenseBonus;
+
+    if (isElite)
+    {
+      SetupEliteVisuals();
+    }
+  }
+
+  /// <summary>
+  /// Thiết lập ngoại hình và hiệu ứng cho Quái Tinh Nhuệ (Elite):
+  /// - Phóng to kích thước 1.3x
+  /// - Đồng bộ NavMeshAgent (radius, height) và tầm đánh AI chống kẹt/hụt đòn
+  /// - Tăng độ lì đòn Poise x1.5 (Super Armor dày hơn)
+  /// - Hỗ trợ dùng riêng prefab EnemyHealthBar_Elite nếu có, hoặc bật viền hoàng kim
+  /// - Kích hoạt hào quang vàng sáng bám theo thân
+  /// - Kích hoạt bonus rơi đồ Vàng x2 trên LootDropper
+  /// </summary>
+  protected virtual void SetupEliteVisuals()
+  {
+    float scale = InfiniteLabyrinth.Progression.DungeonDifficultyScaler.EliteScaleMultiplier;
+    transform.localScale *= scale;
+
+    // 1. Đồng bộ NavMeshAgent theo kích thước 1.3x để không kẹt cửa và không lún tường
+    if (agent != null)
+    {
+      agent.radius *= (1f + (scale - 1f) * 0.75f);
+      agent.height *= scale;
+    }
+
+    // 2. Đồng bộ tầm đánh và cự ly AI theo sải vũ khí dài hơn
+    attackRange *= (1f + (scale - 1f) * 0.85f);
+    preferredDistance *= (1f + (scale - 1f) * 0.7f);
+    combatStanceRange *= (1f + (scale - 1f) * 0.7f);
+
+    // 3. Tăng thanh Poise giúp quái Elite lì đòn hơn
+    var feedback = GetComponent<EnemyFeedback>();
+    if (feedback != null)
+    {
+      feedback.ScalePoise(1.5f);
+    }
+
+    // 4. Thiết lập thanh máu Elite (ưu tiên dùng EnemyHealthBar_Elite nếu có)
+    EnsureEliteHealthBar();
+
+    // 5. Thưởng Loot Vàng x2 cho Elite
+    var dropper = GetComponent<InfiniteLabyrinth.Inventory.LootDropper>();
+    if (dropper != null)
+    {
+      dropper.SetEliteDrop(true);
+    }
+
+    // 6. Sinh Point Light hào quang vàng ấm quanh thân
+    GameObject auraObj = new GameObject("EliteAuraLight");
+    auraObj.transform.SetParent(transform, false);
+    auraObj.transform.localPosition = new Vector3(0f, 0.8f * scale, 0f);
+    Light auraLight = auraObj.AddComponent<Light>();
+    auraLight.type = LightType.Point;
+    auraLight.color = new Color(1.0f, 0.78f, 0.25f);
+    auraLight.range = 3.8f;
+    auraLight.intensity = 1.8f;
+    auraLight.shadows = LightShadows.None;
+  }
+
+  /// <summary>
+  /// Tự động nạp Prefab thanh máu riêng EnemyHealthBar_Elite nếu người dùng tạo trong Resources
+  /// </summary>
+  protected virtual void EnsureEliteHealthBar()
+  {
+    GameObject elitePrefab = Resources.Load<GameObject>("EnemyHealthBar_Elite");
+    if (elitePrefab != null)
+    {
+      if (cachedHealthBarUI != null)
+      {
+        Destroy(cachedHealthBarUI.gameObject);
+        cachedHealthBarUI = null;
+      }
+
+      GameObject barObj = Instantiate(elitePrefab, transform);
+      barObj.name = "EnemyHealthBar_Elite";
+      float offset = 2.15f;
+      if (gameObject.name.Contains("Minion")) offset = 1.95f;
+      else if (gameObject.name.Contains("Mage")) offset = 2.25f;
+
+      RectTransform rt = barObj.GetComponent<RectTransform>();
+      if (rt != null)
+      {
+        rt.localPosition = new Vector3(0f, offset, 0f);
+        rt.localRotation = Quaternion.identity;
+      }
+      cachedHealthBarUI = barObj.GetComponent<InfiniteLabyrinth.UI.EnemyHealthBarUI>();
+      if (cachedHealthBarUI != null)
+      {
+        cachedHealthBarUI.SetElite(true);
+      }
+      return;
+    }
+
+    // Nếu chưa tạo prefab riêng thì tái sử dụng thanh máu hiện tại và bật viền vàng kim
+    if (cachedHealthBarUI != null)
+    {
+      cachedHealthBarUI.SetElite(true);
     }
   }
 

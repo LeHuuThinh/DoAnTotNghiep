@@ -128,6 +128,13 @@ public class IceGolemController : MonoBehaviour
     [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của Boss (Giảm sát thương % theo chuẩn ARPG: Damage * 100 / (100 + Def))")]
     [SerializeField] private float bossDefense = 35f;
     public float BossDefense => bossDefense;
+    [Tooltip("Lượng EXP thưởng cho Player khi hạ gục Boss ở Tầng 1 (Scale +100 EXP mỗi tầng sâu hơn)")]
+    [SerializeField] private int bossExpReward = 350;
+    public int BossExpReward => bossExpReward;
+
+    private bool hasFloorScaled = false;
+    private float baseBossMaxHealth = -1f;
+    private float baseBossDefense = -1f;
     [Tooltip("Thanh chiu don Poise toi da cua Boss (500) - Tieu hao khi bi danh theo do uy luc don danh, ve 0 se gay suy yeu WeakenIG")]
     [SerializeField] private float maxPoise = 500f;
     [Tooltip("Diem Poise chiu don hien tai cua Boss")]
@@ -557,6 +564,35 @@ public class IceGolemController : MonoBehaviour
         onStaminaChanged?.Invoke(currentPoise, maxPoise);
     }
 
+    /// <summary>
+    /// Tự động scale Máu, Giáp và Sát thương kỹ năng của Boss theo độ sâu Tầng hầm ngục
+    /// </summary>
+    public void ApplyFloorScaling(int floor)
+    {
+        if (hasFloorScaled) return;
+        hasFloorScaled = true;
+        if (floor <= 1) return;
+
+        if (baseBossMaxHealth < 0f) baseBossMaxHealth = bossMaxHealth;
+        if (baseBossDefense < 0f) baseBossDefense = bossDefense;
+
+        bossMaxHealth = Mathf.Round(baseBossMaxHealth * InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossHealthMultiplier(floor));
+        bossDefense = baseBossDefense + InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossDefenseBonus(floor);
+
+        float dmgMult = InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossDamageMultiplier(floor);
+        attack1Damage *= dmgMult;
+        gumoSlamDamage *= dmgMult;
+        flameDamagePerTick *= dmgMult;
+        jumpAttackDamage *= dmgMult;
+        jumpDownShockwaveDamage *= dmgMult;
+        runAttackDamage *= dmgMult;
+        attackLTDamage *= dmgMult;
+        attackLTFinalDamage *= dmgMult;
+        iceBallDamage *= dmgMult;
+
+        ApplyBossStats();
+    }
+
     private void SyncHealthToComponent()
     {
         if (health == null)
@@ -682,6 +718,8 @@ public class IceGolemController : MonoBehaviour
         if (health == null) health = GetComponentInParent<Health>();
         bossRenderers = GetComponentsInChildren<Renderer>(true);
         ApplyBossStats();
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        ApplyFloorScaling(currentFloor);
 
         // Tự động tìm & xác thực xương bàn tay và miệng
         FindBones();
@@ -712,6 +750,8 @@ public class IceGolemController : MonoBehaviour
         }
 
         ApplyBossStats();
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        ApplyFloorScaling(currentFloor);
         if (enableBodyAuraLight)
         {
             EnsureBodyAuraLight();
@@ -2166,6 +2206,15 @@ public class IceGolemController : MonoBehaviour
         if (anim != null) anim.speed = 1f;
         OnBossDefeated?.Invoke();
 
+        // Thưởng EXP cho Player khi hạ gục Boss (Scale theo độ sâu tầng)
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        int expToReward = InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossExpReward(currentFloor);
+        if (InfiniteLabyrinth.Progression.PlayerProgression.HasInstance)
+        {
+            InfiniteLabyrinth.Progression.PlayerProgression.Instance.GainExp(expToReward);
+            Debug.Log($"<color=gold>[IceGolem Defeated]</color> 🏆 Người chơi nhận +{expToReward} EXP khi hạ gục Ice Golem (Tầng {currentFloor})!");
+        }
+
         if (activeFlameInstance != null)
         {
             Destroy(activeFlameInstance);
@@ -2215,6 +2264,8 @@ public class IceGolemController : MonoBehaviour
         isDead = false;
         isPhase2 = false;
         ApplyBossStats();
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        ApplyFloorScaling(currentFloor);
         isWeakened = false;
         isCinematicStandby = false;
         if (weakenCoroutine != null)

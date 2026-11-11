@@ -39,6 +39,11 @@ namespace InfiniteLabyrinth.UI.Combat
     /// <summary>
     /// Người chơi bị dính sát thương (Player Damaged) - Màu Đỏ tươi máu (#FF3333) kèm dấu trừ: -X
     /// </summary>
-    PlayerHit
+    PlayerHit,
+
+    /// <summary>
+    /// Sát thương Chảy Máu định kỳ (Bleed DoT Damage) - Màu Đỏ Huyết Sẫm (#D32F2F / #B71C1C) kèm Icon Giọt Máu
+    /// </summary>
+    Bleed
   }
 }

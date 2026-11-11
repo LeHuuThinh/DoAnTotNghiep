@@ -470,10 +470,10 @@ public partial class DungeonPropDecorator
 
       if (roll < barrelSoloChance)
       {
-        // 1. Cụm Solo: 1 thùng đơn lẻ với độ lệch nhẹ
+        // 1. Cụm Solo: 1 thùng đơn lẻ với độ lệch nhẹ (Sinh theo tỷ lệ trọng số loại thùng)
         Vector3 jitter = new Vector3(Random.Range(-0.2f, 0.2f), 0f, Random.Range(-0.2f, 0.2f));
         Quaternion rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-        GameObject prefab = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+        GameObject prefab = GetRandomBreakableBarrel();
         GameObject barrel = Instantiate(prefab, center + jitter, rot, interactablesGroup);
         EnsureNavMeshObstacleModifier(barrel);
       }
@@ -487,8 +487,8 @@ public partial class DungeonPropDecorator
         Vector3 pos1 = center + clusterRot * new Vector3(-spacing, 0f, 0f);
         Vector3 pos2 = center + clusterRot * new Vector3(spacing, 0f, 0f);
 
-        GameObject p1 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
-        GameObject p2 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+        GameObject p1 = GetRandomBreakableBarrel();
+        GameObject p2 = GetRandomBreakableBarrel();
 
         GameObject b1 = Instantiate(p1, pos1, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), interactablesGroup);
         GameObject b2 = Instantiate(p2, pos2, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), interactablesGroup);
@@ -515,7 +515,7 @@ public partial class DungeonPropDecorator
         for (int i = 0; i < offsets.Length; i++)
         {
           Vector3 pos = center + clusterRot * offsets[i];
-          GameObject p = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+          GameObject p = GetRandomBreakableBarrel();
           GameObject barrelObj = Instantiate(p, pos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), interactablesGroup);
           EnsureNavMeshObstacleModifier(barrelObj);
         }

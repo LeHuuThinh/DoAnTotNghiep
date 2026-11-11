@@ -37,6 +37,12 @@ public class SkeletonRogueAI : EnemyAIBase
     if (attackCooldown < 2.0f) attackCooldown = 2.8f;
   }
 
+  public override void ApplyScaledStats(float hpMultiplier, float damageMultiplier, float defenseBonus, int expBonus, bool elite)
+  {
+    base.ApplyScaledStats(hpMultiplier, damageMultiplier, defenseBonus, expBonus, elite);
+    arrowDamage *= damageMultiplier;
+  }
+
   protected override void DetermineState(float distanceToPlayer)
   {
     if (hasAttackToken)

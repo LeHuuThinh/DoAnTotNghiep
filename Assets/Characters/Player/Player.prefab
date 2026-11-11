@@ -1732,6 +1732,10 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+  onBleedStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  bleedVfxPrefab: {fileID: 0}
 --- !u!114 &369121258138334455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1817,6 +1821,9 @@ MonoBehaviour:
   parryTimeScale: 0.05
   hitVfxPrefab: {fileID: 6823200998282874702, guid: 5eb0f2b3596c4364187316482650f753, type: 3}
   vfxDestroyDelay: 2
+  healingVfxPrefab: {fileID: 5169803093150543574, guid: 348899424560e7443a8eebba4ff780a0, type: 3}
+  healingVfxDuration: 1
+  healingVfxOffset: {x: 0, y: 0.9, z: 0}
   staggerDuration: 1
   knockbackDuration: 0.5
   staggerIFrameDuration: 0.35
@@ -2980,7 +2987,7 @@ MonoBehaviour:
   swordLayerIndex: 1
   layerFadeSpeed: 6
   chargeThreshold: 0.35
-  baseCritRate: 5
+  baseCritRate: 10
   baseCritDamage: 150
 --- !u!1 &7843226253183409663
 GameObject:

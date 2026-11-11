@@ -108,6 +108,10 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+  onBleedStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  bleedVfxPrefab: {fileID: 0}
 --- !u!114 &1806789532035792643
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,13 +206,13 @@ MonoBehaviour:
     maxQuantity: 1
   - item: {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
     randomItemPool: []
-    dropChance: 0.2
+    dropChance: 0.06
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
-  goldDropChance: 1
-  minGold: 3
-  maxGold: 8
+  goldDropChance: 0.65
+  minGold: 1
+  maxGold: 3
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_sunblade
   itemName: Radiant Sunblade
-  description: "A glorious sun-forged blade shining with blazing daylight, dispelling the dungeon gloom (+75 Attack, +30 Stamina)."
+  description: "A glorious sun-forged blade shining with blazing daylight, dispelling the dungeon gloom (+75 Attack)."
   icon: {fileID: 21300000, guid: 3f2454cb033b39446bd95417ba837c77, type: 3}
   itemType: 0
   rarity: 4
@@ -23,7 +23,7 @@ MonoBehaviour:
   bonusAttack: 75
   bonusDefense: 0
   bonusHealth: 0
-  bonusStamina: 30
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 8872387370382163227, guid: 971f7d130a15b5f4a8646baf658a7bb7, type: 3}

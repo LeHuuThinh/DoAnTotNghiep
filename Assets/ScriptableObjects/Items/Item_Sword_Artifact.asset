@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_artifact
   itemName: Ancient Artifact Blade
-  description: "A relic excavated from a forgotten epoch, humming with incomprehensible primordial energy (+92 Attack, +70 Max HP, +35 Stamina)."
+  description: "A relic excavated from a forgotten epoch, humming with incomprehensible primordial energy (+92 Attack)."
   icon: {fileID: 21300000, guid: b298b56e60dd9fb4f902ccda9a833dd2, type: 3}
   itemType: 0
   rarity: 4
@@ -22,8 +22,8 @@ MonoBehaviour:
   goldValue: 1800
   bonusAttack: 92
   bonusDefense: 0
-  bonusHealth: 70
-  bonusStamina: 35
+  bonusHealth: 0
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 4566875105500951564, guid: cf59a24b8fb45e14f8da80f548821c5f, type: 3}

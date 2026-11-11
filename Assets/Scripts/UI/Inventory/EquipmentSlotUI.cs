@@ -44,6 +44,9 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Text hiển thị số lượng vật phẩm (cho ô tiêu hao UsableSlot)")]
     [SerializeField] private TMPro.TextMeshProUGUI stackCountText;
 
+    [Tooltip("Text hiển thị cấp cường hóa (+1 .. +5)")]
+    [SerializeField] private TMPro.TextMeshProUGUI upgradeBadgeText;
+
     public int EquippedQuantity { get; private set; } = 1;
 
     public ItemType SlotType => slotType;
@@ -51,6 +54,7 @@ namespace InfiniteLabyrinth.UI
     public int UpgradeLevel => (!InventoryManager.HasInstance) ? 0 : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponUpgradeLevel : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorUpgradeLevel : 0));
     public EquipmentAffixData AffixData => (!InventoryManager.HasInstance) ? null : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponAffix : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorAffix : null));
     public bool IsEmpty => EquippedItem == null;
+    public TMPro.TextMeshProUGUI UpgradeBadgeText => upgradeBadgeText;
 
     public Sprite RarityBgSprite => rarityBg != null ? rarityBg.sprite : null;
     public Sprite RarityBarSprite => rarityBar != null ? rarityBar.sprite : null;
@@ -64,6 +68,40 @@ namespace InfiniteLabyrinth.UI
     private void Awake()
     {
       EnsureInitialized();
+    }
+
+    private void OnEnable()
+    {
+      if (InventoryManager.HasInstance)
+      {
+        InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
+        InventoryManager.Instance.OnEquipmentUpgradeChanged += HandleEquipmentUpgradeChanged;
+      }
+      UpdateUpgradeBadge(UpgradeLevel);
+    }
+
+    private void OnDisable()
+    {
+      if (InventoryManager.HasInstance)
+      {
+        InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
+      }
+    }
+
+    private void OnDestroy()
+    {
+      if (InventoryManager.HasInstance)
+      {
+        InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
+      }
+    }
+
+    private void HandleEquipmentUpgradeChanged(ItemType type, int level)
+    {
+      if (type == slotType)
+      {
+        UpdateUpgradeBadge(level);
+      }
     }
 
     private void EnsureInitialized()
@@ -99,9 +137,14 @@ namespace InfiniteLabyrinth.UI
       {
         selectHighlight.gameObject.SetActive(false);
       }
+
+      if (upgradeBadgeText != null && (EquippedItem == null || UpgradeLevel <= 0))
+      {
+        upgradeBadgeText.gameObject.SetActive(false);
+      }
     }
 
-    private void AutoFindReferences()
+    public void AutoFindReferences()
     {
       if (slotButton == null) slotButton = GetComponent<Button>();
       if (itemIcon == null) itemIcon = transform.Find("ItemIcon")?.GetComponent<Image>();
@@ -113,21 +156,63 @@ namespace InfiniteLabyrinth.UI
       if (cdFillImage != null) cdFillImage.raycastTarget = false;
       if (stackCountText == null) stackCountText = transform.Find("StackCountText")?.GetComponent<TMPro.TextMeshProUGUI>();
 
+      if (upgradeBadgeText == null)
+      {
+        Transform badgeT = transform.Find("UpgradeBadgeText") ?? transform.Find("upgradeBadgeText") ?? transform.Find("UpgradeBadge");
+        if (badgeT != null)
+        {
+          upgradeBadgeText = badgeT.GetComponent<TMPro.TextMeshProUGUI>();
+        }
+      }
+
+      if (upgradeBadgeText == null && (slotType == ItemType.Weapon || slotType == ItemType.Armor))
+      {
+        // Tự động khởi tạo badge cấp độ ở góc trên-phải ô nếu chưa có sẵn (đảm bảo hoạt động trên mọi scene)
+        GameObject badgeObj = new GameObject("UpgradeBadgeText");
+        badgeObj.transform.SetParent(transform, false);
+        var rt = badgeObj.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(0f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(10f, -8f);
+        rt.sizeDelta = new Vector2(40f, 22f);
+
+        upgradeBadgeText = badgeObj.AddComponent<TMPro.TextMeshProUGUI>();
+        upgradeBadgeText.fontSize = 20f;
+        upgradeBadgeText.fontStyle = TMPro.FontStyles.Bold;
+        upgradeBadgeText.alignment = TMPro.TextAlignmentOptions.TopLeft;
+        upgradeBadgeText.color = new Color(1f, 0.84f, 0f, 1f); // #FFD700 Gold
+        upgradeBadgeText.raycastTarget = false;
+        badgeObj.SetActive(false);
+      }
+
       if (gameObject.name.IndexOf("usable", StringComparison.OrdinalIgnoreCase) >= 0)
       {
         slotType = ItemType.Consumable;
       }
     }
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+      AutoFindReferences();
+    }
+#endif
+
     /// <summary>
     /// Gán trang bị và cập nhật hiển thị
     /// </summary>
     public void SetEquippedItem(ItemData item)
     {
-      SetEquippedItem(item, 1);
+      SetEquippedItem(item, 1, UpgradeLevel);
     }
 
     public void SetEquippedItem(ItemData item, int quantity)
+    {
+      SetEquippedItem(item, quantity, UpgradeLevel);
+    }
+
+    public void SetEquippedItem(ItemData item, int quantity, int upgradeLevel)
     {
       EnsureInitialized();
       EquippedItem = item;
@@ -189,6 +274,34 @@ namespace InfiniteLabyrinth.UI
           stackCountText.gameObject.SetActive(false);
         }
       }
+
+      // 5. Cấp cường hóa (+1 đến +5)
+      UpdateUpgradeBadge(upgradeLevel >= 0 ? upgradeLevel : UpgradeLevel);
+    }
+
+    /// <summary>
+    /// Cập nhật hiển thị Badge cấp cường hóa (+1 .. +5)
+    /// </summary>
+    public void UpdateUpgradeBadge(int level)
+    {
+      EnsureInitialized();
+      if (upgradeBadgeText != null)
+      {
+        if (level > 0 && EquippedItem != null && (slotType == ItemType.Weapon || slotType == ItemType.Armor))
+        {
+          upgradeBadgeText.gameObject.SetActive(true);
+          upgradeBadgeText.text = $"+{level}";
+          upgradeBadgeText.transform.SetAsLastSibling();
+          if (!upgradeBadgeText.enableVertexGradient && upgradeBadgeText.color == Color.white)
+          {
+            upgradeBadgeText.color = new Color(1f, 0.84f, 0f, 1f); // #FFD700 Gold
+          }
+        }
+        else
+        {
+          upgradeBadgeText.gameObject.SetActive(false);
+        }
+      }
     }
 
     public void SetCooldownNormalized(float normalized)
@@ -212,6 +325,11 @@ namespace InfiniteLabyrinth.UI
       EnsureInitialized();
       EquippedItem = null;
       EquippedQuantity = 0;
+
+      if (upgradeBadgeText != null)
+      {
+        upgradeBadgeText.gameObject.SetActive(false);
+      }
 
       if (stackCountText != null)
       {

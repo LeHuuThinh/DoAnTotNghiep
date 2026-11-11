@@ -209,7 +209,7 @@ namespace InfiniteLabyrinth.Editor
       headerRect.anchoredPosition = new Vector2(0f, -10f);
       headerRect.sizeDelta = new Vector2(-28f, 44f);
 
-      GameObject titleTextObj = CreateText("Title", headerObj.transform, "⚡ ADMIN CHEAT CONSOLE", 16f, font, new Color(1f, 0.88f, 0.45f), FontStyles.Bold);
+      GameObject titleTextObj = CreateText("Title", headerObj.transform, "ADMIN CHEAT CONSOLE", 16f, font, new Color(1f, 0.88f, 0.45f), FontStyles.Bold);
       RectTransform titleRect = titleTextObj.GetComponent<RectTransform>();
       titleRect.anchorMin = new Vector2(0f, 0.5f);
       titleRect.anchorMax = new Vector2(0.85f, 1f);
@@ -217,7 +217,7 @@ namespace InfiniteLabyrinth.Editor
       titleRect.offsetMax = Vector2.zero;
       titleTextObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
 
-      GameObject sceneIndObj = CreateText("SceneIndicator", headerObj.transform, "📍 Scene: Loading...", 11f, font, new Color(0.7f, 0.85f, 1f));
+      GameObject sceneIndObj = CreateText("SceneIndicator", headerObj.transform, "Scene: Loading...", 11f, font, new Color(0.7f, 0.85f, 1f));
       RectTransform siRect = sceneIndObj.GetComponent<RectTransform>();
       siRect.anchorMin = new Vector2(0f, 0f);
       siRect.anchorMax = new Vector2(0.85f, 0.5f);
@@ -226,7 +226,7 @@ namespace InfiniteLabyrinth.Editor
       sceneIndObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
       so.FindProperty("txtSceneIndicator").objectReferenceValue = sceneIndObj.GetComponent<TextMeshProUGUI>();
 
-      GameObject closeBtnObj = CreateButton("BtnClose", headerObj.transform, new Vector2(30f, 30f), "✕", 15f, buttonSprite, font, new Color(0.7f, 0.2f, 0.2f));
+      GameObject closeBtnObj = CreateButton("BtnClose", headerObj.transform, new Vector2(30f, 30f), "X", 15f, buttonSprite, font, new Color(0.7f, 0.2f, 0.2f));
       RectTransform closeRect = closeBtnObj.GetComponent<RectTransform>();
       closeRect.anchorMin = new Vector2(1f, 0.5f);
       closeRect.anchorMax = new Vector2(1f, 0.5f);
@@ -280,13 +280,13 @@ namespace InfiniteLabyrinth.Editor
       GameObject landTeleObj = CreateContainer("LandTeleportContainer", pTeleport.transform);
       so.FindProperty("landTeleportContainer").objectReferenceValue = landTeleObj;
 
-      var bBell = CreateActionButton("BtnTeleBell", landTeleObj.transform, "🔔 Village Bell (Central Hub)", "Respawn altar & Haven village center", buttonSprite, font, new Color(0.2f, 0.45f, 0.35f));
-      var bPortal = CreateActionButton("BtnTelePortal", landTeleObj.transform, "🚪 Dungeon Portal", "Ancient stone portal leading into Dungeon", buttonSprite, font, new Color(0.2f, 0.35f, 0.55f));
-      var bEqShop = CreateActionButton("BtnTeleEqShop", landTeleObj.transform, "⚔️ Equipment & Armaments Shop", "Weapons & Armor merchant NPC", buttonSprite, font);
-      var bSpShop = CreateActionButton("BtnTeleSpShop", landTeleObj.transform, "🧪 Supplies & Potions Shop", "Dungeon supplies & consumable potions NPC", buttonSprite, font);
-      var bSmithy = CreateActionButton("BtnTeleSmithy", landTeleObj.transform, "🔨 Village Blacksmith", "Weapon upgrade & artifact forge NPC", buttonSprite, font, new Color(0.55f, 0.35f, 0.15f));
-      var bWindmill = CreateActionButton("BtnTeleWindmill", landTeleObj.transform, "💨 Windmill Lookout", "Scenic high cliff overlook of the village", buttonSprite, font);
-      var bFastDun1 = CreateActionButton("BtnFastTravelDungeon1", landTeleObj.transform, "🚀 FAST TRAVEL TO DUNGEON", "Instant scene jump into Dungeon Floor 1", buttonSprite, font, new Color(0.18f, 0.55f, 0.35f));
+      var bBell = CreateActionButton("BtnTeleBell", landTeleObj.transform, "Village Bell (Central Hub)", "Respawn altar & Haven village center", buttonSprite, font, new Color(0.2f, 0.45f, 0.35f));
+      var bPortal = CreateActionButton("BtnTelePortal", landTeleObj.transform, "Dungeon Portal", "Ancient stone portal leading into Dungeon", buttonSprite, font, new Color(0.2f, 0.35f, 0.55f));
+      var bEqShop = CreateActionButton("BtnTeleEqShop", landTeleObj.transform, "Equipment & Armaments Shop", "Weapons & Armor merchant NPC", buttonSprite, font);
+      var bSpShop = CreateActionButton("BtnTeleSpShop", landTeleObj.transform, "Supplies & Potions Shop", "Dungeon supplies & consumable potions NPC", buttonSprite, font);
+      var bSmithy = CreateActionButton("BtnTeleSmithy", landTeleObj.transform, "Village Blacksmith", "Weapon upgrade & artifact forge NPC", buttonSprite, font, new Color(0.55f, 0.35f, 0.15f));
+      var bWindmill = CreateActionButton("BtnTeleWindmill", landTeleObj.transform, "Windmill Lookout", "Scenic high cliff overlook of the village", buttonSprite, font);
+      var bFastDun1 = CreateActionButton("BtnFastTravelDungeon1", landTeleObj.transform, "FAST TRAVEL TO DUNGEON", "Instant scene jump into Dungeon Floor 1", buttonSprite, font, new Color(0.18f, 0.55f, 0.35f));
 
       so.FindProperty("btnTeleVillageBell").objectReferenceValue = bBell.GetComponent<Button>();
       so.FindProperty("btnTeleVillagePortal").objectReferenceValue = bPortal.GetComponent<Button>();
@@ -300,13 +300,13 @@ namespace InfiniteLabyrinth.Editor
       GameObject dunTeleObj = CreateContainer("DungeonTeleportContainer", pTeleport.transform);
       so.FindProperty("dungeonTeleportContainer").objectReferenceValue = dunTeleObj;
 
-      var bDunStart = CreateActionButton("BtnTeleDunStart", dunTeleObj.transform, "📍 Start Room / Entrance", "Safely behind doorway in entrance lobby", buttonSprite, font);
-      var bDunBoss = CreateActionButton("BtnTeleDunBoss", dunTeleObj.transform, "👑 Boss Grand Gate", "Before the avenue grand gate", buttonSprite, font, new Color(0.6f, 0.15f, 0.15f));
-      var bDunArena = CreateActionButton("BtnTeleDunArena", dunTeleObj.transform, "⚔️ Inside Boss Arena (Center)", "Directly inside Ice Golem arena", buttonSprite, font, new Color(0.7f, 0.25f, 0.15f));
-      var bDunKey = CreateActionButton("BtnTeleDunKey", dunTeleObj.transform, "🗝️ Key Shrine Room", "In front of Shrine alter for Boss Key", buttonSprite, font, new Color(0.2f, 0.45f, 0.55f));
-      var bDunTreasure = CreateActionButton("BtnTeleDunTreasure", dunTeleObj.transform, "💰 Treasure Rooms (Cycle)", "Cycle through procedural treasure rooms", buttonSprite, font, new Color(0.55f, 0.45f, 0.15f));
-      var bDunMez = CreateActionButton("BtnTeleDunMez", dunTeleObj.transform, "🏰 2nd Floor Mezzanine (8m)", "Elevated mezzanine floor / balcony stairs", buttonSprite, font, new Color(0.35f, 0.25f, 0.5f));
-      var bFastVil1 = CreateActionButton("BtnFastTravelVillage1", dunTeleObj.transform, "🏡 RETURN TO HAVEN VILLAGE", "Exit dungeon & preserve all inventory loot", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
+      var bDunStart = CreateActionButton("BtnTeleDunStart", dunTeleObj.transform, "Start Room / Entrance", "Safely behind doorway in entrance lobby", buttonSprite, font);
+      var bDunBoss = CreateActionButton("BtnTeleDunBoss", dunTeleObj.transform, "Boss Grand Gate", "Before the avenue grand gate", buttonSprite, font, new Color(0.6f, 0.15f, 0.15f));
+      var bDunArena = CreateActionButton("BtnTeleDunArena", dunTeleObj.transform, "Inside Boss Arena (Center)", "Directly inside Ice Golem arena", buttonSprite, font, new Color(0.7f, 0.25f, 0.15f));
+      var bDunKey = CreateActionButton("BtnTeleDunKey", dunTeleObj.transform, "Key Shrine Room", "In front of Shrine alter for Boss Key", buttonSprite, font, new Color(0.2f, 0.45f, 0.55f));
+      var bDunTreasure = CreateActionButton("BtnTeleDunTreasure", dunTeleObj.transform, "Treasure Rooms (Cycle)", "Cycle through procedural treasure rooms", buttonSprite, font, new Color(0.55f, 0.45f, 0.15f));
+      var bDunMez = CreateActionButton("BtnTeleDunMez", dunTeleObj.transform, "2nd Floor Mezzanine (8m)", "Elevated mezzanine floor / balcony stairs", buttonSprite, font, new Color(0.35f, 0.25f, 0.5f));
+      var bFastVil1 = CreateActionButton("BtnFastTravelVillage1", dunTeleObj.transform, "RETURN TO HAVEN VILLAGE", "Exit dungeon & preserve all inventory loot", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
 
       so.FindProperty("btnTeleDungeonStart").objectReferenceValue = bDunStart.GetComponent<Button>();
       so.FindProperty("btnTeleDungeonBoss").objectReferenceValue = bDunBoss.GetComponent<Button>();
@@ -326,9 +326,9 @@ namespace InfiniteLabyrinth.Editor
       GameObject landWorldObj = CreateContainer("LandWorldContainer", pWorld.transform);
       so.FindProperty("landWorldContainer").objectReferenceValue = landWorldObj;
 
-      var bAdvDay = CreateActionButton("BtnAdvanceDay", landWorldObj.transform, "🌅 Advance To Next Day (Day +1)", "Advance core game loop & refresh village", buttonSprite, font, new Color(0.6f, 0.45f, 0.15f));
-      var bResDay = CreateActionButton("BtnResetDay", landWorldObj.transform, "⏪ Reset To Day 1", "Reset day counter back to Day 1", buttonSprite, font);
-      var bFastDun2 = CreateActionButton("BtnFastTravelDungeon2", landWorldObj.transform, "🚀 Fast Travel To Dungeon", "Instant scene transition to Dungeon Floor 1", buttonSprite, font, new Color(0.2f, 0.45f, 0.6f));
+      var bAdvDay = CreateActionButton("BtnAdvanceDay", landWorldObj.transform, "Advance To Next Day (Day +1)", "Advance core game loop & refresh village", buttonSprite, font, new Color(0.6f, 0.45f, 0.15f));
+      var bResDay = CreateActionButton("BtnResetDay", landWorldObj.transform, "Reset To Day 1", "Reset day counter back to Day 1", buttonSprite, font);
+      var bFastDun2 = CreateActionButton("BtnFastTravelDungeon2", landWorldObj.transform, "Fast Travel To Dungeon", "Instant scene transition to Dungeon Floor 1", buttonSprite, font, new Color(0.2f, 0.45f, 0.6f));
 
       so.FindProperty("btnAdvanceDay").objectReferenceValue = bAdvDay.GetComponent<Button>();
       so.FindProperty("btnResetDay").objectReferenceValue = bResDay.GetComponent<Button>();
@@ -338,12 +338,12 @@ namespace InfiniteLabyrinth.Editor
       GameObject dunWorldObj = CreateContainer("DungeonWorldContainer", pWorld.transform);
       so.FindProperty("dungeonWorldContainer").objectReferenceValue = dunWorldObj;
 
-      var bRegen = CreateActionButton("BtnRegenerate", dunWorldObj.transform, "🔄 REGENERATE DUNGEON (New Seed)", "Wipe old map, generate new seed & rebake NavMesh", buttonSprite, font, new Color(0.18f, 0.55f, 0.35f));
-      var bRevealMap = CreateActionButton("BtnRevealMap", dunWorldObj.transform, "🗺️ REVEAL ENTIRE DUNGEON MAP", "Clear 100% fog of war, show all rooms & corridors", buttonSprite, font, new Color(0.2f, 0.45f, 0.65f));
-      var bUnlockGate = CreateActionButton("BtnUnlockGate", dunWorldObj.transform, "🗝️ Force Unlock Boss Gate", "Open Grand Gate directly without finding key", buttonSprite, font, new Color(0.55f, 0.45f, 0.15f));
-      var bKillRad = CreateActionButton("BtnKillRadius", dunWorldObj.transform, "⚡ Kill Nearby Enemies (25m Radius)", "Eliminate all active monsters around player", buttonSprite, font, new Color(0.6f, 0.3f, 0.15f));
-      var bKillAll = CreateActionButton("BtnKillAll", dunWorldObj.transform, "☠️ Kill All Enemies In Dungeon", "Wipe out all monsters across entire map", buttonSprite, font, new Color(0.65f, 0.15f, 0.15f));
-      var bFastVil2 = CreateActionButton("BtnFastTravelVillage2", dunWorldObj.transform, "🏡 Return To Haven Village", "Exit dungeon & preserve all inventory loot", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
+      var bRegen = CreateActionButton("BtnRegenerate", dunWorldObj.transform, "REGENERATE DUNGEON (New Seed)", "Wipe old map, generate new seed & rebake NavMesh", buttonSprite, font, new Color(0.18f, 0.55f, 0.35f));
+      var bRevealMap = CreateActionButton("BtnRevealMap", dunWorldObj.transform, "REVEAL ENTIRE DUNGEON MAP", "Clear 100% fog of war, show all rooms & corridors", buttonSprite, font, new Color(0.2f, 0.45f, 0.65f));
+      var bUnlockGate = CreateActionButton("BtnUnlockGate", dunWorldObj.transform, "Force Unlock Boss Gate", "Open Grand Gate directly without finding key", buttonSprite, font, new Color(0.55f, 0.45f, 0.15f));
+      var bKillRad = CreateActionButton("BtnKillRadius", dunWorldObj.transform, "Kill Nearby Enemies (25m Radius)", "Eliminate all active monsters around player", buttonSprite, font, new Color(0.6f, 0.3f, 0.15f));
+      var bKillAll = CreateActionButton("BtnKillAll", dunWorldObj.transform, "Kill All Enemies In Dungeon", "Wipe out all monsters across entire map", buttonSprite, font, new Color(0.65f, 0.15f, 0.15f));
+      var bFastVil2 = CreateActionButton("BtnFastTravelVillage2", dunWorldObj.transform, "Return To Haven Village", "Exit dungeon & preserve all inventory loot", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
 
       so.FindProperty("btnRegenerateDungeon").objectReferenceValue = bRegen.GetComponent<Button>();
       so.FindProperty("btnRevealMap").objectReferenceValue = bRevealMap.GetComponent<Button>();
@@ -358,16 +358,16 @@ namespace InfiniteLabyrinth.Editor
       GameObject pPlayer = CreateTabContentPanel("Panel_Player", bodyContainer.transform);
       so.FindProperty("panelPlayer").objectReferenceValue = pPlayer;
 
-      var (bGod, txtGod) = CreateToggleActionButton("BtnGodMode", pPlayer.transform, "🛡️ God Mode (Invulnerable)", "[OFF]", buttonSprite, font);
-      var (bStam, txtStam) = CreateToggleActionButton("BtnInfStamina", pPlayer.transform, "⚡ Infinite Stamina", "[OFF]", buttonSprite, font);
-      var (bSpirit, txtSpirit) = CreateToggleActionButton("BtnInfSpirit", pPlayer.transform, "⭐ Infinite 4 Spirit Stars (200)", "[OFF]", buttonSprite, font);
-      var (bNoCd, txtNoCd) = CreateToggleActionButton("BtnNoCooldown", pPlayer.transform, "⏱️ No Skill Cooldown (0s Delay)", "[OFF]", buttonSprite, font, new Color(0.5f, 0.2f, 0.4f));
-      var bFullRestore = CreateActionButton("BtnFullRestore", pPlayer.transform, "❤️ Full Heal & Restore All", "Restore 100% Health, Stamina & 4 Spirit Stars", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
-      var (bSpeed, txtSpeed) = CreateToggleActionButton("BtnSuperSpeed", pPlayer.transform, "🏃 Move Speed Multiplier", "1.0x", buttonSprite, font);
+      var (bGod, txtGod) = CreateToggleActionButton("BtnGodMode", pPlayer.transform, "God Mode (Invulnerable)", "[OFF]", buttonSprite, font);
+      var (bStam, txtStam) = CreateToggleActionButton("BtnInfStamina", pPlayer.transform, "Infinite Stamina", "[OFF]", buttonSprite, font);
+      var (bSpirit, txtSpirit) = CreateToggleActionButton("BtnInfSpirit", pPlayer.transform, "Infinite 4 Spirit Stars (200)", "[OFF]", buttonSprite, font);
+      var (bNoCd, txtNoCd) = CreateToggleActionButton("BtnNoCooldown", pPlayer.transform, "No Skill Cooldown (0s Delay)", "[OFF]", buttonSprite, font, new Color(0.5f, 0.2f, 0.4f));
+      var bFullRestore = CreateActionButton("BtnFullRestore", pPlayer.transform, "Full Heal & Restore All", "Restore 100% Health, Stamina & 4 Spirit Stars", buttonSprite, font, new Color(0.2f, 0.5f, 0.25f));
+      var (bSpeed, txtSpeed) = CreateToggleActionButton("BtnSuperSpeed", pPlayer.transform, "Move Speed Multiplier", "1.0x", buttonSprite, font);
 
       // Split Progression Rows (Gold / EXP / Points)
-      var (bGold1k, bGold10k) = CreateSplitActionButtons("GoldRow", pPlayer.transform, "💰 +1,000 Gold", "💰 +10,000 Gold", buttonSprite, font);
-      var (bExp500, bPts10) = CreateSplitActionButtons("ProgRow", pPlayer.transform, "📈 +500 EXP", "✨ +10 Stat Points", buttonSprite, font);
+      var (bGold1k, bGold10k) = CreateSplitActionButtons("GoldRow", pPlayer.transform, "+1,000 Gold", "+10,000 Gold", buttonSprite, font);
+      var (bExp500, bPts10) = CreateSplitActionButtons("ProgRow", pPlayer.transform, "+500 EXP", "+10 Stat Points", buttonSprite, font);
 
       so.FindProperty("btnToggleGodMode").objectReferenceValue = bGod.GetComponent<Button>();
       so.FindProperty("txtGodModeStatus").objectReferenceValue = txtGod;
@@ -392,14 +392,14 @@ namespace InfiniteLabyrinth.Editor
       so.FindProperty("panelCombat").objectReferenceValue = pCombat;
 
       // Dummy Target Section
-      var bSpawnDummy = CreateActionButton("BtnSpawnDummy", pCombat.transform, "🎯 SPAWN 10,000 HP DUMMY", "Stationary, No AI, 0 DEF, Pure DMG Test", buttonSprite, font, new Color(0.6f, 0.2f, 0.15f));
-      var (bHealDum, bClearDum) = CreateSplitActionButtons("DummyManageRow", pCombat.transform, "❤️ Heal Dummies (10k)", "🧹 Clear All Dummies", buttonSprite, font, new Color(0.2f, 0.45f, 0.25f), new Color(0.45f, 0.2f, 0.2f));
+      var bSpawnDummy = CreateActionButton("BtnSpawnDummy", pCombat.transform, "SPAWN 10,000 HP DUMMY", "Stationary, No AI, 0 DEF, Pure DMG Test", buttonSprite, font, new Color(0.6f, 0.2f, 0.15f));
+      var (bHealDum, bClearDum) = CreateSplitActionButtons("DummyManageRow", pCombat.transform, "Heal Dummies (10k)", "Clear All Dummies", buttonSprite, font, new Color(0.2f, 0.45f, 0.25f), new Color(0.45f, 0.2f, 0.2f));
 
-      var (bFreeze, txtFreeze) = CreateToggleActionButton("BtnFreezeAI", pCombat.transform, "❄️ Freeze Enemy AI (All Monsters)", "[ACTIVE]", buttonSprite, font, new Color(0.15f, 0.35f, 0.55f));
-      var bSpawnW = CreateActionButton("BtnSpawnWarrior", pCombat.transform, "⚔️ Spawn Skeleton Warrior (Melee)", "Spawn 3.5m ahead on NavMesh", buttonSprite, font);
-      var bSpawnM = CreateActionButton("BtnSpawnMinion", pCombat.transform, "💀 Spawn Skeleton Minion (Swarm)", "Spawn low-health flanker 3.5m ahead", buttonSprite, font);
-      var bSpawnR = CreateActionButton("BtnSpawnRogue", pCombat.transform, "🏹 Spawn Skeleton Rogue (Archer)", "Spawn ranged sniper 3.5m ahead", buttonSprite, font);
-      var bSpawnMg = CreateActionButton("BtnSpawnMage", pCombat.transform, "🔮 Spawn Skeleton Mage (Spellcaster)", "Spawn magic caster 3.5m ahead", buttonSprite, font);
+      var (bFreeze, txtFreeze) = CreateToggleActionButton("BtnFreezeAI", pCombat.transform, "Freeze Enemy AI (All Monsters)", "[ACTIVE]", buttonSprite, font, new Color(0.15f, 0.35f, 0.55f));
+      var bSpawnW = CreateActionButton("BtnSpawnWarrior", pCombat.transform, "Spawn Skeleton Warrior (Melee)", "Spawn 3.5m ahead on NavMesh", buttonSprite, font);
+      var bSpawnM = CreateActionButton("BtnSpawnMinion", pCombat.transform, "Spawn Skeleton Minion (Swarm)", "Spawn low-health flanker 3.5m ahead", buttonSprite, font);
+      var bSpawnR = CreateActionButton("BtnSpawnRogue", pCombat.transform, "Spawn Skeleton Rogue (Archer)", "Spawn ranged sniper 3.5m ahead", buttonSprite, font);
+      var bSpawnMg = CreateActionButton("BtnSpawnMage", pCombat.transform, "Spawn Skeleton Mage (Spellcaster)", "Spawn magic caster 3.5m ahead", buttonSprite, font);
 
       so.FindProperty("btnSpawnDummy").objectReferenceValue = bSpawnDummy.GetComponent<Button>();
       so.FindProperty("btnHealDummies").objectReferenceValue = bHealDum.GetComponent<Button>();
@@ -424,7 +424,7 @@ namespace InfiniteLabyrinth.Editor
       so.FindProperty("panelCreative").objectReferenceValue = pCreative;
 
       // 5.1 Search Input Field
-      GameObject searchObj = CreateInputField("SearchField", pCreative.transform, "🔍 Search 51 items...", buttonSprite, font);
+      GameObject searchObj = CreateInputField("SearchField", pCreative.transform, "Search 51 items...", buttonSprite, font);
       RectTransform sfRt = searchObj.GetComponent<RectTransform>();
       sfRt.anchorMin = new Vector2(0f, 1f);
       sfRt.anchorMax = new Vector2(1f, 1f);

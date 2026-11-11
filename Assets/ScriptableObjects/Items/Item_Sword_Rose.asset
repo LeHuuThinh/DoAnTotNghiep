@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_rose
   itemName: Crimson Rose Rapier
-  description: "An ornate crimson rapier resembling a barbed rose blossom, striking with lethal speed and minimal effort (+49 Attack, +20 Stamina)."
+  description: "An ornate crimson rapier resembling a barbed rose blossom, striking with lethal speed and minimal effort (+49 Attack)."
   icon: {fileID: 21300000, guid: 5e73e8db2dc3838499544a2f97d13b17, type: 3}
   itemType: 0
   rarity: 3
@@ -23,7 +23,7 @@ MonoBehaviour:
   bonusAttack: 49
   bonusDefense: 0
   bonusHealth: 0
-  bonusStamina: 20
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 3265107850920141999, guid: 306cdd80528dbaa40af4262d515fdb8d, type: 3}

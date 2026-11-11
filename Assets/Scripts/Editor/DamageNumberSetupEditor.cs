@@ -40,6 +40,18 @@ namespace InfiniteLabyrinth.Editor
         }
 
         DamageNumberItem item = tempGo.AddComponent<DamageNumberItem>();
+        item.ShowCritIcon = true;
+        item.CritIconScale = 0.085f;
+
+        // Tạo sẵn con CritIcon chuẩn kích thước
+        GameObject critChild = new GameObject("CritIcon");
+        critChild.transform.SetParent(tempGo.transform, false);
+        critChild.transform.localScale = Vector3.one * 0.085f;
+        SpriteRenderer sr = critChild.AddComponent<SpriteRenderer>();
+        sr.sprite = Resources.Load<Sprite>("CritDmg");
+        sr.sortingOrder = 2001;
+        critChild.SetActive(false);
+
         prefabObj = PrefabUtility.SaveAsPrefabAsset(tempGo, prefabPath);
         Object.DestroyImmediate(tempGo);
         Debug.Log($"<color=green>[DamageNumberSetupEditor]</color> ✅ Đã tạo thành công Prefab tại: {prefabPath}");

@@ -41,10 +41,10 @@ namespace InfiniteLabyrinth.Progression
     [SerializeField] private int currentExp = 0;
 
     [Tooltip("Lượng EXP cơ bản cần để lên Cấp 2")]
-    [SerializeField] private int baseExpToLevel2 = 100;
+    [SerializeField] private int baseExpToLevel2 = 150;
 
     [Tooltip("Hệ số tăng trưởng EXP theo cấp độ: ExpCần = BaseExp * (Level ^ ExpGrowthExponent)")]
-    [SerializeField] private float expGrowthExponent = 1.35f;
+    [SerializeField] private float expGrowthExponent = 1.07f;
 
     [Header("=== ĐIỂM TIỀM NĂNG (ATTRIBUTE POINTS) ===")]
     [Tooltip("Số điểm tiềm năng thưởng cho người chơi mỗi khi Lên Cấp")]
@@ -75,7 +75,7 @@ namespace InfiniteLabyrinth.Progression
 
     [Header("=== TẨY ĐIỂM TIỀM NĂNG (RESET STATS) ===")]
     [Tooltip("Chi phí Tiền Vàng cần để Tẩy toàn bộ điểm tiềm năng")]
-    [SerializeField] private int resetCostGold = 100;
+    [SerializeField] private int resetCostGold = 1000;
 
     // Events để UI và các hệ thống khác đăng ký lắng nghe
     public event Action<int, int> OnExpChanged;      // (currentExp, expToNextLevel)

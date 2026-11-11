@@ -35,6 +35,12 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Thanh máu chính hiển thị tức thời (Main Fill)")]
     [SerializeField] private Image mainFillImage;
 
+    [Header("=== HIỆU ỨNG TRẠNG THÁI XUẤT HUYẾT (BLEED) ===")]
+    [Tooltip("Icon Giọt Máu báo hiệu trạng thái Xuất Huyết (BleedIcon)")]
+    [SerializeField] private GameObject bleedIcon;
+    private Coroutine bleedPulseRoutine = null;
+    private Vector3 bleedIconInitialScale = Vector3.one;
+
     [Header("=== CÀI ĐẶT MÀU SẮC ===")]
     [Tooltip("Màu thanh máu chính (được tint vào sprite grayscale)")]
     [SerializeField] private Color mainFillColor = new Color(0.85f, 0.16f, 0.16f, 1f);
@@ -42,6 +48,12 @@ namespace InfiniteLabyrinth.UI
     [SerializeField] private Color ghostFillColor = new Color(0.96f, 0.74f, 0.22f, 0.9f);
     [Tooltip("Màu nền tối phía sau thanh máu")]
     [SerializeField] private Color backgroundColor = new Color(0.08f, 0.08f, 0.08f, 0.85f);
+    [Tooltip("Màu viền hoàng kim cho Quái Tinh Nhuệ (Elite)")]
+    [SerializeField] private Color eliteBorderColor = new Color(1.0f, 0.82f, 0.24f, 1f);
+    [Tooltip("Màu thanh máu cam rực cho Quái Tinh Nhuệ (Elite)")]
+    [SerializeField] private Color eliteFillColor = new Color(0.98f, 0.42f, 0.12f, 1f);
+
+    private bool isElite = false;
 
     [Header("=== BILLBOARD & VỊ TRÍ ===")]
     [Tooltip("Chế độ xoay Billboard")]
@@ -119,6 +131,11 @@ namespace InfiniteLabyrinth.UI
       {
         targetHealth.onHealthChanged.AddListener(OnHealthChanged);
         targetHealth.onDeath.AddListener(OnDeath);
+        targetHealth.onBleedStateChanged.AddListener(OnBleedStateChanged);
+        if (targetHealth.IsBleeding)
+        {
+          OnBleedStateChanged(true);
+        }
       }
     }
 
@@ -128,6 +145,12 @@ namespace InfiniteLabyrinth.UI
       {
         targetHealth.onHealthChanged.RemoveListener(OnHealthChanged);
         targetHealth.onDeath.RemoveListener(OnDeath);
+        targetHealth.onBleedStateChanged.RemoveListener(OnBleedStateChanged);
+      }
+      if (bleedPulseRoutine != null)
+      {
+        StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = null;
       }
     }
 
@@ -333,6 +356,58 @@ namespace InfiniteLabyrinth.UI
       isDying = true;
       targetFill = 0f;
       if (mainFillImage != null) mainFillImage.fillAmount = 0f;
+      if (bleedPulseRoutine != null)
+      {
+        StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = null;
+      }
+      if (bleedIcon != null)
+      {
+        bleedIcon.SetActive(false);
+      }
+    }
+
+    private void OnBleedStateChanged(bool isBleeding)
+    {
+      if (bleedIcon == null) return;
+
+      if (isBleeding && !isDying)
+      {
+        bleedIcon.SetActive(true);
+        SetCanvasActive(true);
+        if (lastHitTimer < visibleDurationAfterHit)
+        {
+          lastHitTimer = visibleDurationAfterHit;
+        }
+
+        if (bleedPulseRoutine != null) StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = StartCoroutine(BleedIconPulseRoutine());
+      }
+      else
+      {
+        if (bleedPulseRoutine != null)
+        {
+          StopCoroutine(bleedPulseRoutine);
+          bleedPulseRoutine = null;
+        }
+        bleedIcon.transform.localScale = bleedIconInitialScale;
+        bleedIcon.SetActive(false);
+      }
+    }
+
+    private IEnumerator BleedIconPulseRoutine()
+    {
+      while (true)
+      {
+        // Hiệu ứng nhịp đập tim (Heartbeat pulse: 1.0 -> 1.35 -> 1.0)
+        float pulseSpeed = 4.5f;
+        float scaleFactor = 1.0f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * pulseSpeed));
+        if (bleedIcon != null)
+        {
+          bleedIcon.transform.localScale = bleedIconInitialScale * scaleFactor;
+        }
+        yield return null;
+      }
     }
 
     private void SetCanvasActive(bool active)
@@ -349,6 +424,16 @@ namespace InfiniteLabyrinth.UI
       if (canvasGroup == null) canvasGroup = GetComponentInChildren<CanvasGroup>(true);
       if (targetHealth == null) targetHealth = GetComponentInParent<Health>();
       if (targetEnemyAI == null) targetEnemyAI = GetComponentInParent<EnemyAIBase>();
+      if (bleedIcon == null)
+      {
+        Transform bIcon = transform.Find("BleedIcon") ?? transform.Find("Border/BleedIcon");
+        if (bIcon != null) bleedIcon = bIcon.gameObject;
+      }
+      if (bleedIcon != null)
+      {
+        bleedIconInitialScale = bleedIcon.transform.localScale;
+        bleedIcon.SetActive(false);
+      }
     }
 
     private void CacheCameraAndPlayer()
@@ -370,9 +455,19 @@ namespace InfiniteLabyrinth.UI
 
     public void ApplyColors()
     {
-      if (mainFillImage != null) mainFillImage.color = mainFillColor;
+      if (mainFillImage != null) mainFillImage.color = isElite ? eliteFillColor : mainFillColor;
       if (ghostFillImage != null) ghostFillImage.color = ghostFillColor;
       if (backgroundImage != null) backgroundImage.color = backgroundColor;
+      if (borderImage != null) borderImage.color = isElite ? eliteBorderColor : Color.white;
+    }
+
+    /// <summary>
+    /// Định hình giao diện thanh máu riêng biệt cho Quái Tinh Nhuệ (Elite): Viền vàng kim, thanh máu cam rực
+    /// </summary>
+    public void SetElite(bool elite)
+    {
+      isElite = elite;
+      ApplyColors();
     }
 
     public void SetupCustomReferences(

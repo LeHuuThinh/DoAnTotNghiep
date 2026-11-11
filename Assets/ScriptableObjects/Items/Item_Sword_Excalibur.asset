@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_excalibur
   itemName: Excalibur Sovereign
-  description: "The sovereign holy blade of ancient monarchs, commanding destiny and overwhelming battlefield authority (+84 Attack, +12 DEF, +60 Max HP)."
+  description: "The sovereign holy blade of ancient monarchs, commanding destiny and overwhelming battlefield authority (+84 Attack)."
   icon: {fileID: 21300000, guid: 41fc7b0d2485afd41b823889dae4dffd, type: 3}
   itemType: 0
   rarity: 4
   maxStack: 1
   goldValue: 1500
   bonusAttack: 84
-  bonusDefense: 12
-  bonusHealth: 60
+  bonusDefense: 0
+  bonusHealth: 0
   bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}

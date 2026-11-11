@@ -12,7 +12,7 @@
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **Giai đoạn 1** | Hoàn Thiện Trải Nghiệm Hầm Ngục (PCG & Combat) | 18 / 18 | ✅ Hoàn thành | **100%** | PCG, Đồ họa, Combat Souls-like, Boss Arena D-02, ARPG Damage & Floating Numbers |
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
-| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 10 / 10 | ✅ **Hoàn thành** | **100%** | **Xong Cửa hàng RPG-07, Lò rèn RPG-08, Ma Trận Rơi Đồ RPG-09 & 51 Items** |
+| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 11 / 11 | ✅ **Hoàn thành** | **100%** | **Cửa hàng RPG-07, Lò rèn RPG-08, Ma trận rơi đồ RPG-09, Cân bằng độ khó RPG-12** |
 | **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 5 / 7 | 🟡 **ĐANG THỰC HIỆN** | **71%** | Xong Ice Golem, Red Ignis, ML Ice Golem; Chờ ML Red Ignis |
 | **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 1 / 3 | ⚪ Chờ thực hiện | **33%** | Xong Bản đồ hầm ngục Fullscreen; Chờ Menu & Audio |
 | **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
@@ -257,6 +257,7 @@
       * **Panel Trái (Hàng của Shop - Chia làm 2 nửa):**
         + Nửa trái: Danh sách mặt hàng đang bày bán (ScrollView danh sách kèm Icon, Tên, Rarity, Giá niêm yết).
         + Nửa phải: Khung chi tiết của item đang chọn trong Shop (Icon lớn, Tên đổi màu Rarity, Thông số Stats, Mô tả) + Bộ chọn số lượng `[-] [N] [+]` cho vật phẩm cộng dồn + Hiển thị Giá Vàng (Đủ tiền: màu vàng/trắng mặc định; Không đủ tiền: đổi sang **màu đỏ** và **tối/vô hiệu hóa nút Mua**) + Nút **"MUA (BUY)"**.
+        + Tinh chỉnh bố cục Shop Supplies: Để trống dòng `MainStats` (không hiện công dụng trên MainStats), đưa toàn bộ thông tin công dụng, hiệu ứng tức thì, thời lượng và số lượng cộng dồn tối đa (`Max Stack`) của Dược liệu/Nguyên liệu xuống cụm `SubStats`. Khắc phục triệt để lỗi tràn dòng đè chữ giữa dòng 2 (`Effect`) và dòng 3 (`Max Stack`) bằng cách tắt `wordWrapping`, bật `enableAutoSizing` (12-20pt) và rút gọn thuật ngữ hiển thị chuẩn RPG (`Instant Restore`, `x10`).
       * **Panel Phải (Túi đồ Player & Thao tác Bán):**
         + Kế thừa chuẩn giao diện Túi đồ từ `InventoryUIController` (Tabs phân loại, Lưới 30 ô đồ, hiển thị số dư Vàng người chơi thời gian thực).
         + Khi click vào 1 item trong túi: Hiện `ItemDetailPopupUI`, ẩn toàn bộ nút Equip/Unequip/Use/Drop, **chỉ hiện nút "BÁN (SELL)"** kèm số tiền vàng nhận được (+40%). Hỗ trợ bộ chọn số lượng khi bán stack vật phẩm.
@@ -275,7 +276,7 @@
   - [x] **RPG-08A: Kiến trúc Dữ liệu Cường Hóa (+1 đến +5) & Công Thức Chế Tạo (`InventorySlot.cs`, `CraftingRecipe.cs`):**
     - Mở rộng `InventorySlot.cs` và `InventoryManager.cs` lưu trữ `upgradeLevel` (0 đến 5) độc lập cho từng instance trang bị (không ghi đè ScriptableObject gốc).
     - Cường hóa Vũ khí (+1 đến +5): Mỗi cấp tăng **+15% Sát thương cơ bản (ATK)** của vũ khí; Giáp tăng +15% DEF.
-    - Hiển thị Badge cấp độ `+1`..`+5` màu vàng kim ở góc icon ô đồ trong kho đồ (`InventorySlotUI.cs`).
+    - Hiển thị Badge cấp độ `+1`..`+5` màu vàng kim ở góc icon ô đồ trong kho đồ (`InventorySlotUI.cs`) và 2 ô trang bị Weapon / Armor (`EquipmentSlotUI.cs`).
     - Công thức nâng cấp:
       * `+1`: 1 Đá Cường Hóa (`mat_upgrade_stone`) + 50 Vàng.
       * `+2`: 2 Đá Cường Hóa + 100 Vàng.
@@ -306,14 +307,14 @@
     - Khi trang bị đạt cấp `+5`, kích hoạt hiệu ứng hào quang vàng kim phát sáng quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
     - Tool `BlacksmithSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp vào Master Dashboard (Ctrl+Alt+D).
 
-- [x] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables & Gems Integration)**
-  - Mở rộng cơ sở dữ liệu lên **51 Items** với 2 vật phẩm đá quý bán lấy Vàng mới:
-    + `Monster Gem` (`mat_monster_gem` - Uncommon): Tinh thể năng lượng kết tinh từ quái vật hầm ngục, giá trị 80 Vàng (bán Shop được 32 Vàng/viên).
-    + `Boss Gem` (`mat_boss_gem` - Epic): Đại ma viên ngọc tỏa hào quang cực phẩm từ Trùm hầm ngục, giá trị 500 Vàng (bán Shop nhận ngay 200 Vàng/viên).
-  - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `LootTableSetupEditor.cs` và lưu trực tiếp vào toàn bộ 10 Prefabs:
-    + 3 Thùng gỗ đập được: Thùng nhỏ (70% Vàng 2-6, 25% Bình máu nhỏ), Thùng vừa (85% Vàng 8-18, 35% Máu/Thể lực, 15% Đá cường hóa), Thùng lớn (100% Vàng 18-35, 40% Máu lớn, 25% 1-2 Đá cường hóa, 5% Thiết kiếm rỉ).
-    + 4 Quái Skeleton: Minion (100% Vàng 3-8, 30% Mảnh xương, **20% Monster Gem**), Warrior (100% Vàng 8-16, 45% Mảnh xương, 20% Huy hiệu, 10% Đá cường hóa, **22% Monster Gem**), Rogue (100% Vàng 10-20, 40% Mũi tên đen, 20% Bình máu, 12% Tiên dược, **22% Monster Gem**), Mage (100% Vàng 16-32, 50% Bụi ma pháp, 25% Đá cường hóa, 8% Giấy da cổ, **25% Monster Gem**).
-    + 3 Cấp độ Rương: Rương thường (100% Vàng 30-75, 100% Máu nhỏ, 40% Đá cường hóa, 25% Đồ Uncommon), Rương hiếm (100% Vàng 80-180, 100% Máu lớn, 100% 2-3 Đá cường hóa, 50% Vũ khí Rare, 30% Thiết giáp sắt), Rương Boss Bục Đá 12m (100% Vàng 180-350, **100% 1 Boss Gem Epic**, 100% Lõi Băng Ice Core, 100% 2-3 Mảnh Cổ Tự, 100% 3-5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ, 100% 3 Máu lớn & 2 Năng lượng, 65% Đồ Epic/Legendary cực phẩm).
+- [x] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables & Balanced Gold Economy)**
+  - Mở rộng cơ sở dữ liệu lên **51 Items** với 2 vật phẩm đá quý bán lấy Vàng:
+    + `Monster Gem` (`mat_monster_gem` - Uncommon): Tinh thể năng lượng kết tinh từ quái vật hầm ngục, giá trị 35 Vàng (bán Shop nhận 14 Vàng/viên - đã cân bằng chống lạm phát).
+    + `Boss Gem` (`mat_boss_gem` - Epic): Đại ma viên ngọc tỏa hào quang cực phẩm từ Trùm hầm ngục, giá trị 400 Vàng (bán Shop nhận 160 Vàng/viên - phần thưởng lớn xứng đáng khi diệt Boss).
+  - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `LootTableSetupEditor.cs` và lưu trực tiếp vào toàn bộ 10 Prefabs (tối ưu cho quy mô trung bình ~100 quái/tầng + 1 boss, tổng thu ~750 - 850 Gold/run chuẩn Roguelite):
+    + 3 Thùng gỗ đập được: Thùng nhỏ (50% Vàng 1-3, 25% Bình máu nhỏ), Thùng vừa (70% Vàng 3-7, 35% Máu/Thể lực, 15% Đá cường hóa), Thùng lớn (100% Vàng 8-15, 40% Máu lớn, 25% 1-2 Đá cường hóa, 5% Thiết kiếm rỉ).
+    + 4 Quái Skeleton: Minion (65% Vàng 1-3, 30% Mảnh xương, **6% Monster Gem**), Warrior (80% Vàng 3-6, 45% Mảnh xương, 20% Huy hiệu, 10% Đá cường hóa, **8% Monster Gem**), Rogue (80% Vàng 4-7, 40% Mũi tên đen, 20% Bình máu, 12% Tiên dược, **8% Monster Gem**), Mage (90% Vàng 7-12, 50% Bụi ma pháp, 25% Đá cường hóa, 8% Giấy da cổ, **12% Monster Gem**).
+    + 3 Cấp độ Rương: Rương thường (100% Vàng 20-40, 100% Máu nhỏ, 40% Đá cường hóa, 25% Đồ Uncommon), Rương hiếm (100% Vàng 50-90, 100% Máu lớn, 100% 2-3 Đá cường hóa, 50% Vũ khí Rare, 30% Thiết giáp sắt), Rương Boss Bục Đá 12m (100% Vàng 150-250, **100% 1 Boss Gem Epic**, 100% Lõi Băng Ice Core, 100% 2-3 Mảnh Cổ Tự, 100% 3-5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ, 100% 3 Máu lớn & 2 Năng lượng, 65% Đồ Epic/Legendary cực phẩm).
   - Tích hợp công cụ 1-Click tự động phát hiện và cập nhật toàn bộ Prefabs lẫn Scene instances (`LootTableSetupEditor.cs`: MenuItem `Infinite Labyrinth -> RPG -> 2. Cấu Hình Ma Trận Rơi Đồ (Full Loot Drop Tables)` và Master Dashboard Ctrl+Alt+D).
 
 - [x] **RPG-10: Nâng Cấp Hệ Thống Chỉ Số Mở Rộng, Cơ Chế Chí Mạng, Hút Máu & Hiển Thị Icon Bạo Kích**
@@ -324,20 +325,34 @@
     + Dòng phụ: Tăng nhẹ $+3\%$ mỗi cấp bảo đảm cân bằng.
   - **Tính toán Chiến Đấu (Combat Integration):**
     + `WeaponHitbox.cs`: Tự động roll Chí Mạng khi va chạm quái, nhân hệ số Crit Damage, kích hoạt Hút Máu (Lifesteal) hồi phục HP người chơi (cap 25 HP/hit).
-    + `PlayerCombat.cs`: Tích hợp Crit & Lifesteal cho cả 6 đòn đánh cơ bản, Skill E (`ProjectileSlash`), Skill Q (`AoeSpell`), và Tuyệt kỹ Ult R (`ExecuteGiganticCleaveHitbox`). Tăng hiệu suất nạp Spirit theo `SpiritGainBonus`.
+    + `PlayerCombat.cs`: Nâng tỷ lệ bạo kích cơ bản `baseCritRate = 10%` (trước là 5%), sát thương bạo kích cơ bản `baseCritDamage = 150%`. Tích hợp Crit & Lifesteal cho cả 6 đòn đánh cơ bản, Skill E (`ProjectileSlash`), Skill Q (`AoeSpell`), và Tuyệt kỹ Ult R (`ExecuteGiganticCleaveHitbox`). Tăng hiệu suất nạp Spirit theo `SpiritGainBonus`.
     + `PlayerStats.cs`: Giảm tiêu hao Spirit chiêu thức E/Q/R theo `SpiritCostReduction` và giảm thể lực Sprint/Roll/Chém theo `StaminaCostReduction`.
     + `PlayerController.cs`: Tăng tốc độ di chuyển, dạt ngang và chạy nước rút mượt mà theo `MoveSpeedBonus`.
   - **Hiển Thị Số Sát Thương Chí Mạng & Icon (`DamageNumberItem.cs`):**
     + Khi kích hoạt Crit: Phóng to số sát thương (Base Scale x1.35, Peak Pop x1.45, búng cao hơn).
     + **Bảo toàn dải màu Gradient đặc trưng của từng loại đòn đánh** (Normal, Charge, Counter, Skill E, Skill Q, Skill R).
     + Tự động kích hoạt icon `CritDmg.png` nằm bên trái con số, nhuộm màu (Color tint) đồng bộ theo màu đòn đánh và đồng bộ làm mờ Alpha fade-out.
-  - **Đồng Bộ Giao Diện:** Cập nhật `ItemDetailPopupUI.cs`, `BlacksmithUIController.cs` và `PlayerStatsPanelUI.cs` hiển thị trực quan các chỉ số mở rộng.
+  - **Đồng Bộ Giao Diện:** Cập nhật `ItemDetailPopupUI.cs`, `BlacksmithUIController.cs` và `PlayerStatsPanelUI.cs` hiển thị trực quan các chỉ số mở rộng (đồng bộ Base Crit Rate 10%).
 
 - [x] **RPG-11: Hệ Thống Dòng Chỉ Số Động Ngẫu Nhiên (Procedural Affixes) & 10 Phù Phép Thức Tỉnh (Enchantment System +1/+3/+5)**
   - **Dữ Liệu Động Cho Từng Trang Bị (`EquipmentAffixData.cs`):**
     + Trang bị trong túi đồ và trên người không còn cố định mà sở hữu thực thể dữ liệu riêng (`InventorySlot.AffixData`).
     + Roll dòng chính ngẫu nhiên (`rolledAttack`, `rolledDefense`, `rolledHealth`) dao động theo Rarity ($\pm 8\%\sim 25\%$).
     + Roll dòng phụ động (`SubStatEntry`): Common (0-1 dòng), Uncommon (1-2 dòng), Rare (2 dòng), Epic (3 dòng), Legendary (4 dòng) từ bộ 11 thuộc tính chiến đấu.
+  - **Cân Bằng Chỉ Số Substats, Chuẩn Hóa Pool & Bốc Thăm Theo Trọng Số (Weighted Procedural Affixes):**
+    + **Chuẩn hóa Substats Pool cho Kiếm (10 chỉ số):** Bổ sung `DefenseBonus`, `HealthBonus`, `MaxStamina` vào `WeaponSubStatPool` kết hợp với `CritRate`, `CritDamage`, `Lifesteal`, `AttackBonus`, `SpiritGainBonus`, `StaminaCostReduction`, `SpiritCostReduction`. Giúp tạo ra độ biến thiên đa dạng: nếu kiếm roll trúng dòng tank/thể lực thì sát thương yếu -> "Đồ dỏm" đem bán Shop lấy Vàng; roll trúng Crit/ATK -> "God Roll".
+    + **Chuẩn hóa Substats Pool cho Giáp (8 chỉ số):** Loại bỏ `Lifesteal` khỏi `ArmorSubStatPool` để bảo toàn bản sắc phòng hộ thuần túy; giữ lại `CritRate`, `CritDamage`, `MoveSpeedBonus`, `MaxStamina`, `StaminaCostReduction`, `SpiritCostReduction`, `DefenseBonus`, `HealthBonus`.
+    + **Thuật toán Bốc Thăm Theo Trọng Số (Weighted Random Roll without Replacement):**
+      * Tier S (God Stats - `CritRate`, `CritDamage`, `Lifesteal`): Trọng số **10** (Hiếm ~10-12%, kích hoạt cảm giác hưng phấn khi nhặt được).
+      * Tier A (Offensive / Mobility - `AttackBonus`, `MoveSpeedBonus`): Trọng số **20** (Khá).
+      * Tier B (Utility - `SpiritGainBonus`, `SpiritCostReduction`, `StaminaCostReduction`, `MaxStamina`): Trọng số **25** (Trung bình).
+      * Tier C (Defensive / Tank Filler - `HealthBonus`, `DefenseBonus`, `MaxStamina` trên Kiếm): Trọng số **40 - 45** (Phổ biến ~40-45%, tạo nguồn trang bị rác cân bằng kinh tế Shop).
+    + **Xóa Bỏ Hoàn Toàn Chỉ Số Tĩnh Ẩn Gốc (Pure Procedural Equips):** Dọn sạch toàn bộ các trường `bonusCritRate`, `bonusCritDamage`, `bonusLifesteal`, `bonusHealth`, `bonusDefense`, `bonusStamina` trên toàn bộ 20 Kiếm và 8 Giáp trong `Assets/ScriptableObjects/Items/`. Trang bị chỉ sở hữu duy nhất Base Stat chính (Kiếm: Attack; Giáp: Defense / Health). Toàn bộ dòng phụ và phù phép 100% đến từ Procedural Roll.
+    + **Đồng Bộ Giao Diện (`ItemDetailPopupUI.cs` & `BlacksmithUIController.cs`):** Loại bỏ hoàn toàn logic chèn thêm các trường static bonus cũ vào danh sách SubStats, đảm bảo dòng phụ hiển thị 100% đồng nhất từ `affix.subStats`.
+    + Cân chỉnh biên độ Roll Substat theo Phẩm cấp:
+      * `CritRate`: Common $2.0\% \sim 3.5\% \to$ Legendary $4.5\% \sim 7.5\%$ (kết hợp Lò rèn +5 đạt tới ~8.6%/món).
+      * `CritDamage`: Common $10.0\% \sim 18.0\% \to$ Legendary $20.0\% \sim 35.0\%$ (kết hợp Lò rèn +5 đạt tới ~40%/món).
+    + Đường cong tiến trình bạo kích (Crit Progression Curve): Khởi đầu 10% $\to$ Giữa game (Rare +3) ~20-25% $\to$ Cuối game (Legendary +5) ~30-45% bạo kích. Đòn Counter Attack đạt tới 50-60% bạo kích.
   - **Hệ Thống Phù Phép Thức Tỉnh Tại Mốc +1, +3, +5 (`EquipmentAffixGenerator.cs`):**
     + Số lượng ô phù phép theo Rarity: Common/Uncommon (1 slot tại +1), Rare (2 slots tại +1, +3), Epic/Legendary (3 slots tại +1, +3, +5).
     + **Bộ 10 Phù Phép Thần Binh Tích Hợp Toàn Diện Chiến Đấu:**
@@ -349,7 +364,7 @@
       6. `TitanCharge` (Kình Lực Titan): Đòn gồng Charge Attack tăng thêm +25% Sát thương.
       7. `ParryStaminaRestore` (Bất Động Như Sơn): Phản đòn Parry thành công hồi ngay 25 Thể Lực.
       8. `SprintWind` (Phong Hành Bộ): Sau khi Lướt/Lăn né tăng 20% Tốc độ di chuyển trong 2.5 giây.
-      9. `CritFrenzy` (Cuồng Trảm): Đòn bạo kích tăng 15% Tốc chạy trong 3.5 giây.
+      9. `CritFrenzy` (Cuồng Trảm): Đòn bạo kích tăng 15% Tốc đánh trong 3.5 giây.
       10. `SoulSiphon` (Thu Hồn Quyết): Tiêu diệt kẻ địch hồi phục ngay 15 Spirit và 15 HP.
   - **Tích Hợp Chiến Đấu & Hiệu Ứng Trạng Thái:**
     + `Health.cs`: Bổ sung cơ chế `ApplyBleed` (DoT damage ticks) và kích hoạt `SoulSiphon` khi Player kết liễu quái/boss.
@@ -368,6 +383,101 @@
       * Nhả chuột hoặc rời con trỏ: Tự động trả về `MainStats`.
     + Đồng bộ gợi ý trực quan bằng tiếng Anh (`HintText`): Chuyển đổi linh hoạt giữa `[Hold to show effect stats]` và `[Release to return]`.
     + Tự động dò tìm (Auto-Resolve) liên kết 100% Text `Value` của cả 2 bảng `MainStats` và `EffectStats` trong hierarchy.
+  - **Khung Chi Tiết Vật Phẩm Động & Dynamic Sizing (`ItemDetailPopupUI.cs` & Prefab - Mục 2 - HOÀN THÀNH):**
+    + Chuyển đổi toàn diện sang Prefab dùng chung cho **Túi đồ (Inventory)**, **Cửa hàng (Shop)** và **Lò rèn (Blacksmith)**.
+    + **Cụm Cấp Cường Hóa (`UpgradeLevel`):** Hiển thị nhãn cấp độ ở góc trên bên phải header (`+1`, `+3`, `+5`), tự động ẩn khi cấp độ bằng 0.
+    + **Phân Tách Rõ Ràng MainStats & SubStats:**
+      * `MainStats`: Chỉ số chính duy nhất nổi bật dành riêng cho Trang bị (Vũ khí: `Attack Damage`; Giáp: `Defense` hoặc `Max Health`). Đối với Vật phẩm tiêu hao / Dược liệu / Nguyên liệu: Để trống dòng MainStats, đưa toàn bộ công dụng, thời lượng, hiệu ứng và số lượng tối đa (`Max Stack`) xuống `SubStatsLayout`.
+      * `SubStatsLayout`: `VerticalLayoutGroup` hiển thị từ 0 đến 4 dòng chỉ số phụ (Trang bị: `EquipmentAffixData.subStats`; Nhu yếu phẩm/Nguyên liệu: HP Recovery, Defense/Attack/Stamina Boost, Duration, Usage, Target, Upgrade Range, Max Stack). Tự động co dãn chiều cao popup linh hoạt (`Dynamic Height Scaling`) theo số lượng dòng thực tế, đồng bộ hoàn hảo với chuẩn ShopUI.
+    + **Phân Khu Phù Phép Thức Tỉnh (`ItemEnchantment`):**
+      * `EnchantmentLayout`: `VerticalLayoutGroup` hiển thị từ 0 đến 3 dòng phù phép.
+      * Mỗi dòng gồm 2 icon trạng thái: `IconActive` (ngôi sao/ấn ký sáng khi đạt mốc level) và `IconUnactive` (sao tối/xám khi chưa đạt mốc level), cùng text tên phù phép và mốc kích hoạt.
+    + **Tooltip Giải Thích Phù Phép Động (`EnchantHint`):**
+      * Tích hợp `CanvasGroup` với `blocksRaycasts = false`, loại bỏ hoàn toàn lỗi flicker chớp giật khi hover chuột.
+      * Bắt sự kiện hover chuột trên từng dòng `Enchant` qua `EnchantRowHoverTrigger`.
+      * Khắc phục triệt để lỗi không hiện trong InventoryUI do override `m_IsActive: 0` trong `Canvas.prefab` bằng lệnh tự động `SetActive(true)` và `SetAsLastSibling()` khi hover.
+      * Tự động co dãn linh hoạt chiều rộng theo độ dài text tooltip (`preferredWidth`).
+      * Định dạng ngắn gọn chuẩn: `"Tên: Mô tả"` (bỏ hẳn tiền tố cấp độ và điều kiện mốc).
+      * Vị trí linh hoạt theo dòng hover: Góc trái trên (`pivot = (0, 1)`) của hint bám theo vị trí chuột và cao độ Y của dòng đang hover, kèm thuật toán clamp biên an toàn 4 cạnh trong popup.
+    + **Thu Gọn & Định Vị Màn Hình Thông Minh (Smart Viewport Clamping & Dynamic Height):**
+      * Đối với vật phẩm thường (Consumable / Material / Currency): Tắt hoàn toàn `ItemEnchantment` và `SubStatsLayout`, co gọn chiều cao popup xuống ~460px.
+      * Đối với trang bị: Tự động tính toán chiều cao nội dung theo số lượng SubStats (0..4) và Enchantments (0..3), đẩy các nút hành động và mô tả ở nửa dưới bám sát lên trên, triệt tiêu mọi khoảng trống thừa.
+      * **Thuật toán định vị 3 trường hợp thông minh (`CalculatePositionNearSlot`):**
+        - Ô ở hàng trên: Mở từ trên xuống dưới (`pivotY = 1.0f`).
+        - Ô ở hàng dưới: Mở từ dưới lên trên (`pivotY = 0.0f`).
+        - Ô ở hàng giữa (hoặc popup dài): Căn giữa theo ô (`pivotY = 0.5f`) và clamp chặt chẽ trong khoảng an toàn của màn hình, triệt tiêu hoàn toàn tình trạng bị lẹm viền trên/dưới.
+      * Toàn bộ văn bản hiển thị chuẩn 100% tiếng Anh.
+  - **Giao Diện Lò Rèn Before / After Windows, Chế Tạo Forge & Hiệu Ứng Thức Tỉnh (`BlacksmithUIController.cs` - Mục 3 - HOÀN THÀNH):**
+    + **Đồng Bộ Cấu Trúc Before / After Giống ItemDetails:**
+      * Cả 2 cửa sổ `BeforeWindow` (hiện trạng) và `AfterWindow` (xem trước mốc kế tiếp) đều được trang bị cấu trúc hiển thị hoàn chỉnh: `MainStats` (Attack / Defense / Max Health), `SubStatsLayout` (0-4 dòng chỉ số phụ kèm hiệu số `+...` xanh lá), và `ItemEnchantment` (0-3 dòng phù phép thức tỉnh).
+      * Khắc phục triệt để lỗi 4 dòng SubStats bị kẹt nhãn mẫu "CRIT RATE" bằng cơ chế Resolve linh hoạt `t.Find("Text") ?? t.GetComponent<TextMeshProUGUI>()`.
+      * **Trạng Thái Tối Đa (Max Level +5):**
+        - Cửa sổ `AfterWindow` giữ nguyên định dạng tên trang bị theo Gradient Rarity (không bị ghi đè "MAX LEVEL").
+        - Nhãn cấp độ hiển thị chữ `<color=#FFD700>MAX</color>` gọn gàng không bị rớt dòng.
+        - `MainStats`, `SubStats` (4 dòng kèm giá trị max) và `Enchantments` (3 dòng tím `#E040FB` kèm 3 icon sao sáng) đồng bộ 100% y hệt bên `BeforeWindow`.
+        - Phía dưới hiển thị nhãn `"Materials Needed"` như bình thường và container nguyên liệu để trống.
+    + **Cửa Sổ Chế Tạo Thần Binh (Forge Window Preview):**
+      * Khi chọn bất kỳ công thức rèn nào từ danh sách bên phải, cửa sổ `ItemForgeWindow` bên trái tự động hiển thị gợi ý thông số có thể sinh ra:
+        - Vũ khí: Dòng chính `Attack` với khoảng biến thiên `x - y` chuẩn xác theo Rarity (Common $\pm 8\%$, Uncommon $\pm 12\%$, Rare $\pm 16\%$, Epic $\pm 20\%$, Legendary $\pm 25\%$).
+        - Giáp: Dòng chính `DEF / HP` (hoặc riêng lẻ `Defense` / `Max Health`) với khoảng biến thiên `x-y / x-y`.
+        - Dòng phụ: Hiển thị đúng số dòng phụ có thể xuất hiện theo Rarity (Common: 1, Uncommon/Rare: 2, Epic: 3, Legendary: 4) với nhãn `"Substat 1"`, `"Substat 2"`... và giá trị `"<color=#90A4AE>Random</color>"`.
+        - Phù phép thức tỉnh: Hiển thị đúng số ô thức tỉnh theo Rarity (Uncommon: 1 ô mốc `+1`; Rare: 2 ô mốc `+1, +3`; Epic/Legendary: 3 ô mốc `+1, +3, +5`) với icon sao xám và nhãn `"[+N] Random Enchantment"`.
+        - Đưa `EnchantHint` làm con trực tiếp của `blacksmithPanel` để chia sẻ dùng chung và hỗ trợ hover tooltip đầy đủ cho cả tab Nâng cấp lẫn tab Rèn.
+    + **Dự Báo & Trực Quan Hóa Mốc Thức Tỉnh (Awakening Milestone Preview):**
+      * Ở cột `AfterWindow`: Dòng phù phép sắp thức tỉnh trong lần nâng cấp này (ví dụ cấp hiện tại là +0 đập lên +1, hoặc +2 lên +3, +4 lên +5) chuyển sang màu vàng kim nổi bật kèm nhãn `<color=#00FFAA>[AWAKEN!]</color>` và tự động thắp sáng ngôi sao `IconActive`.
+      * Ở cột `BeforeWindow`: Hiển thị rõ trạng thái thức tỉnh thực tế (`[+1] Tên Phù Phép` màu tím huyền thoại `#E040FB`) hoặc chưa thức tỉnh (màu xám kèm nhãn `(Locked)`).
+    + **Hoạt Ảnh Thức Tỉnh Phù Phép (Awaken Flash Animation & Game Feel):**
+      * Khi người chơi nhấn nút UPGRADE thành công và đạt mốc thức tỉnh (+1, +3, +5): Dòng phù phép vừa thức tỉnh trong `BeforeWindow` lập tức bung nở hiệu ứng `Punch Scale 1.35x` và nhấp nháy ánh hào quang màu vàng - tím rực rỡ trong 0.5s.
+      * Đồng thời kích hoạt hiệu ứng rung chấn nhẹ (Punch Scale 1.1x) cho toàn bộ khung cửa sổ nâng cấp.
+    + **Tooltip Giải Thích Phù Phép (`EnchantHint`) Tại Lò Rèn:**
+      * Di chuột hover vào bất kỳ dòng phù phép nào ở cả 2 cột Before và After đều lập tức kích hoạt tooltip `EnchantHint` với định dạng chuẩn `"Tên: Mô tả"` bằng tiếng Anh.
+      * Tọa độ Y khớp chuẩn xác với dòng đang hover; Tọa độ X bám theo chuột và tự động clamp trong giới hạn an toàn của bảng nâng cấp.
+      * Cơ chế tự động khởi tạo / nhân bản (Auto-Resolve / Clone): Tự động phát hiện `EnchantHint` trong scene hoặc tự clone từ `ItemDetailPopup`, bảo đảm hoạt động ngay 100% không lo thiếu reference.
+      * Có cơ chế fallback về text cũ nếu scene chưa có đầy đủ element mới, bảo đảm tuyệt đối không gây lỗi null exception.
+  - **Thanh Buff HUD & Cơ Chế Tốc Đánh Frenzy (`PlayerBuffHUD.cs` - Mục 4 - HOÀN THÀNH):**
+    + **Chuyển đổi `CritFrenzy` sang Tốc Đánh (Attack Speed):**
+      * Cập nhật `EquipmentAffixData.cs` và `EquipmentAffixGenerator.cs`: Chém bạo kích tăng **+15% Tốc Đánh** trong 3.5s (thay vì tốc chạy, loại bỏ 100% trùng lặp với `SprintWind`).
+      * `PlayerCombat.cs`: Bổ sung `TriggerAttackSpeedBoost(15f, 3.5f)`, tự động nhân hệ số tốc độ Animator (`animator.speed = 1.15f`) cho toàn bộ chuỗi chém combo 1-2-3 và Charge Attack.
+      * `WeaponHitbox.cs`: Kích hoạt tăng tốc đánh cho PlayerCombat ngay khi tung cú chém Crit có phù phép.
+    + **Hệ Thống Buff Phòng Thủ Tạm Thời (`Health.cs` & `InventoryManager.cs`):**
+      * `Health.cs`: Tích hợp `TriggerTemporaryDefenseBoost(15f, 30f)`, cộng dồn vào `TotalDefense` và đếm ngược an toàn trong `Update()`.
+      * `InventoryManager.cs`: Kích hoạt buff Da Sắt (`IronSkin`) khi sử dụng vật phẩm `potion_ironbark_brew` (+15 DEF trong 30 giây).
+    + **Thanh Buff HUD Động (`PlayerBuffHUD.cs` & `Canvas.prefab`):**
+      * Quản lý `EffectBar` (sử dụng `HorizontalLayoutGroup` tự động dồn hàng sang trái khi bật/tắt buff):
+        - `SpeedEffect` (`SprintWind`): Đếm ngược 2.5s, Fill Amount quét từ $1.0 \to 0.0$.
+        - `AttackEffect` (`CritFrenzy`): Đếm ngược 3.5s, Fill Amount quét từ $1.0 \to 0.0$.
+        - `DefEffect` (`IronSkin`): Đếm ngược 30s, Fill Amount quét từ $1.0 \to 0.0$.
+        - `LifeStealEffect` (`LowHealthBloodthirst`): Tự động bật khi mang phù phép và máu $\le 50\%$ HP, Fill giữ 1.0 kèm hiệu ứng nhịp đập tim (Heartbeat Pulse Scale $1.0 \leftrightarrow 1.18$).
+      * Mặc định ẩn toàn bộ 4 icon khi bắt đầu game, chỉ kích hoạt khi có hiệu ứng.
+      * Tích hợp tự phục hồi Runtime Auto-wire trong `PlayerHUD.cs`.
+  - **Trạng Thái Xuất Huyết & Game Feel Combat (Bleed System & Feedback - Mục 5 - HOÀN THÀNH):**
+    + `Health.cs`: Tích hợp Event-driven `onBleedStateChanged`, tự động nạp `BleedVFX.prefab` từ Resources. Nhịp rút máu DoT chuẩn xác (3 nhịp trong 3 giây), mỗi nhịp vừa trừ máu vừa spawn `BleedVFX` tứa máu tại thân mục tiêu. Chống trùng lặp Coroutine khi bị chém đè Crit liên tục và tự động ngắt/dọn dẹp khi quái chết.
+    + `EnemyHealthBarUI.cs`: Tự động tìm kiếm `BleedIcon` (size 30x30, Y=33 trên đầu quái), lắng nghe `onBleedStateChanged` để bật/tắt đồng bộ, tích hợp hiệu ứng nhịp đập tim (Heartbeat Pulse Scale $1.0 \to 1.35 \to 1.0$) sống động khi quái bị chảy máu.
+    + `BossHUDController.cs`: Tự động tìm `BleedIcon` trên thanh máu Boss (`BossHP`), liên kết với `targetBossHealth` bật/tắt và chạy nhịp đập tim đồng bộ khi Boss bị trúng phù phép `BleedingCrit`.
+    + `DamageNumberManager.cs` & `DamageNumberItem.cs`: Bổ sung kiểu sát thương `DamageNumberType.Bleed`, nạp preset Gradient Đỏ Huyết Sẫm (`Damage_Bleed.asset`), giảm nhẹ lực búng nảy vồng cung, tự động hiển thị Sprite giọt máu `BloodDrop.png` bên cạnh con số sát thương và đồng bộ mờ dần Alpha.
+
+- [x] **RPG-12: Hệ Thống Cân Bằng Độ Khó Hầm Ngục & Cấp Độ Theo Tầng (Dungeon Floor Difficulty & Level Scaling)**
+  - **Chuẩn Hóa Đường Cong Tiến Trình Người Chơi (`PlayerProgression.cs`):**
+    + Công thức luỹ thừa mượt mà: $\text{ExpCần} = 150 \times \text{Level}^{1.07}$.
+    + Tăng trưởng gần như tuyến tính (~180-198 EXP/cấp), triệt tiêu hoàn toàn sự bùng nổ vô lý ở cấp cao (Cấp 50 cần ~9,567 EXP thay vì 20,000+ EXP).
+    + Chi phí tẩy điểm tiềm năng nâng lên `resetCostGold = 1000` (cân bằng kinh tế, tạo sức nặng cho việc đổi hướng xây dựng nhân vật).
+  - **Module Điều Phối Thang Đo Độ Khó Hầm Ngục (`DungeonDifficultyScaler.cs`):**
+    + Tự động đồng bộ với `GameManager.Instance.CurrentFloor`.
+    + **Máu quái thường (HP):** Tăng $+28\%$ mỗi tầng: $\text{BaseHP} \times [1 + 0.28(F - 1)]$, bắt kịp tốc độ tăng tiến sát thương vũ khí và cường hóa Lò rèn (+1 đến +5) của Player.
+    + **Sát thương quái thường (ATK):** Tăng $+12\%$ mỗi tầng: $\text{BaseATK} \times [1 + 0.12(F - 1)]$, tăng thận trọng giữ chuẩn Souls-like, chống one-shot Player.
+    + **Giáp quái thường (DEF):** Tăng $+2\text{ DEF}$ mỗi tầng: $\text{BaseDEF} + 2(F - 1)$.
+    + **EXP quái thường:** Tăng tuyến tính phẳng $+2\text{ EXP}$ mỗi tầng: $\text{BaseEXP} + 2(F - 1)$, khớp chuẩn với đường cong 1.07 của Player.
+  - **Cơ Chế Quái Tinh Nhuệ (Elite / Champion Monsters):**
+    + Xuất hiện ngẫu nhiên từ Tầng 2 trở đi với tỷ lệ $12\% \sim 25\%$: $\text{GetEliteChance}(F)$.
+    + Kích thước scale $\times 1.3$, đồng bộ NavMeshAgent (radius, height), tầm đánh AI và Poise $\times 1.5$ (Super Armor), Máu $\times 1.5$, Sát thương $\times 1.25$, EXP $\times 2.0$.
+    + Viền thanh máu đổi sang Hoàng Kim (`eliteBorderColor`), thanh máu đỏ cam rực rỡ (`eliteFillColor`), tự động nạp prefab `EnemyHealthBar_Elite` nếu có, và hào quang sáng vàng quanh chân (`EliteAuraLight`).
+    + Tích hợp `LootDropper.SetEliteDrop(true)`: Rơi chắc chắn Tiền Vàng nhân đôi ($\times 2.0$) và tăng $50\%$ tỷ lệ rơi nguyên liệu/đá quý.
+  - **Cân Bằng Chỉ Số & Bổ Sung Phần Thưởng EXP Cho Cặp Trùm (Dual Boss Encounters):**
+    + Khắc phục triệt để lỗ hổng Boss cho 0 EXP: Bổ sung `bossExpReward = 350` (Tầng 1) và tăng $+100\text{ EXP}$ mỗi tầng sâu hơn: $350 + 100(F - 1)$.
+    + Khi Boss Ice Golem hoặc Red Ignis ngã gục (`Die()`), tự động thưởng EXP cho Player qua `PlayerProgression.Instance.GainExp(scaledBossExp)`.
+    + Scale Máu Boss theo tầng: $\text{BaseBossHP} \times [1 + 0.32(F - 1)]$ (Tầng 1: 1500 HP $\to$ Tầng 2: 1980 HP $\to$ Tầng 5: 3420 HP).
+    + Scale Giáp Boss: $+3\text{ DEF}$ mỗi tầng; Scale toàn bộ sát thương các chiêu thức của Boss $+14\%$ mỗi tầng.
+    + `BossVictoryDirector.cs`: Lắng nghe đồng bộ sự kiện tử trận của cả `IceGolemController` và `RedIgnisController`.
 
 ---
 
@@ -515,3 +625,13 @@
 - [x] **UI-07: Đồng bộ CanvasGroup cho AdminCheatCanvas & Rarity Visuals cho ItemDetailPopupUI**
   - **AdminCheatUI CanvasGroup Control:** Tự động phát hiện và đồng bộ điều khiển thuộc tính alpha, interactable, blocksRaycasts của rootCanvasGroup khi mở/đóng bằng phím ~ hoặc nút [✕]. Khắc phục triệt để hiện tượng gán CanvasGroup(alpha = 0) lên AdminCheatCanvas khiến menu bị tàng hình khi bật.
   - **ItemDetailPopup Rarity Visuals:** Tự động kết nối RarityBG, RarityBar và container Icon trong ItemDetailPopupUI.cs. Đồng bộ hiển thị dải màu phẩm cấp thời gian thực theo Rarity của vật phẩm đang xem; tự động vô hiệu hóa (SetActive(false)) icon và rarity khi chưa có vật phẩm hoặc khi đóng popup, tránh hiển thị ô vuông trắng rỗng trong Scene.
+
+- [x] **VFX-03: Hiệu Ứng Hồi Máu Healing VFX Khi Uống Máu & Cầu Nguyện Chuông Làng (`PlayerFeedback.cs`, `Healing.prefab`)**
+  - Chuẩn hóa cao độ xuất hiện ngang hông `healingVfxOffset: (0, 0.9, 0)` trong `PlayerFeedback.cs`, `Player.prefab` và `CombatVfxSetupEditor.cs` để hiệu ứng ôm trọn vẹn phần thân trên người chơi (thắt lưng, ngực, vai), thay vì bắt đầu ở sát mặt đất bàn chân.
+  - Tích hợp `PlayHealingVfx()` trên `PlayerFeedback.cs`: Sinh instance bám theo thân Player, phát hiệu ứng hạt 1.0s, tự động ngắt emission mượt mà và tự dọn dẹp sau 1.4s; tự động fallback `Resources/Healing.prefab`.
+  - Kết nối đồng bộ khi người chơi uống bình máu (`InventoryManager.UseItem` / `UseEquippedUsable`) và khi tương tác cầu nguyện hồi phục trước Chuông Thánh Haven (`VillageBellInteractable.OnInteract`).
+
+- [x] **FIX-05: Khắc Phục Lỗi Tháo/Gắn Trang Bị Làm Tăng Máu Hiện Tại (`Health.cs` & `PlayerStats.cs`)**
+  - Khắc phục triệt để bug `currentHealth += (maxHealth - oldMax)` trong `Health.SetBonusMaxHealth`: Khi người chơi tháo/gắn trang bị thay đổi Max Health, máu hiện tại được bảo toàn nguyên vẹn (`currentHealth = Mathf.Min(currentHealth, maxHealth)`).
+  - Triệt tiêu 100% hiện tượng tháo ra gắn vào vài lần để hồi đầy cây máu miễn phí.
+  - Đồng bộ logic bảo toàn thể lực hiện tại trong `PlayerStats.SetBonusMaxStamina`.

@@ -20,11 +20,18 @@ public class PlayerController : MonoBehaviour
 
     private float temporarySpeedBonusTimer = 0f;
     private float temporarySpeedBonusPercent = 0f;
+    private float temporarySpeedBonusMaxDuration = 2.5f;
+
+    public bool HasTemporarySpeedBoost => temporarySpeedBonusTimer > 0f;
+    public float TemporarySpeedBonusTimer => temporarySpeedBonusTimer;
+    public float TemporarySpeedBonusDuration => temporarySpeedBonusMaxDuration > 0f ? temporarySpeedBonusMaxDuration : 2.5f;
+    public float TemporarySpeedBonusPercent => temporarySpeedBonusPercent;
 
     public void TriggerTemporarySpeedBoost(float percent, float duration)
     {
         temporarySpeedBonusPercent = Mathf.Max(temporarySpeedBonusPercent, percent);
         temporarySpeedBonusTimer = Mathf.Max(temporarySpeedBonusTimer, duration);
+        temporarySpeedBonusMaxDuration = Mathf.Max(temporarySpeedBonusMaxDuration, duration);
     }
 
     public float EffectiveSpeedMultiplier

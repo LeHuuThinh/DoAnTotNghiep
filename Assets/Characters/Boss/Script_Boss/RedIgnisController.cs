@@ -14,6 +14,13 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của Red Ignis (Giảm sát thương % theo chuẩn ARPG: Damage * 100 / (100 + Def))")]
     [SerializeField] private float bossDefense = 25f;
     public float BossDefense => bossDefense;
+    [Tooltip("Lượng EXP thưởng cho Player khi hạ gục Red Ignis ở Tầng 1 (Scale +100 EXP mỗi tầng sâu hơn)")]
+    [SerializeField] private int bossExpReward = 350;
+    public int BossExpReward => bossExpReward;
+
+    private bool hasFloorScaled = false;
+    private float baseBossMaxHealth = -1f;
+    private float baseBossDefense = -1f;
     [Tooltip("Thanh sức bền (Poise) tối đa của Red Ignis (Mặc định: 400). Khi cạn về 0 sẽ gây suy yếu (Weaken/Stagger)")]
     [SerializeField] private float maxPoise = 400f;
     [Tooltip("Điểm Poise chịu đòn hiện tại")]
@@ -329,6 +336,9 @@ public class RedIgnisController : MonoBehaviour
     private void Start()
     {
         ApplyBossStats();
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        ApplyFloorScaling(currentFloor);
+
         if (autoFindPlayer && playerTarget == null)
         {
             FindPlayerTarget();
@@ -492,6 +502,30 @@ public class RedIgnisController : MonoBehaviour
         isWeakened = false;
         onPoiseChanged?.Invoke(currentPoise, maxPoise);
         onStaminaChanged?.Invoke(currentPoise, maxPoise);
+    }
+
+    /// <summary>
+    /// Tự động scale Máu, Giáp và Sát thương kiếm của Red Ignis theo độ sâu Tầng hầm ngục
+    /// </summary>
+    public void ApplyFloorScaling(int floor)
+    {
+        if (hasFloorScaled) return;
+        hasFloorScaled = true;
+        if (floor <= 1) return;
+
+        if (baseBossMaxHealth < 0f) baseBossMaxHealth = bossMaxHealth;
+        if (baseBossDefense < 0f) baseBossDefense = bossDefense;
+
+        bossMaxHealth = Mathf.Round(baseBossMaxHealth * InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossHealthMultiplier(floor));
+        bossDefense = baseBossDefense + InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossDefenseBonus(floor);
+
+        float dmgMult = InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossDamageMultiplier(floor);
+        attackSlashDamage *= dmgMult;
+        horizontalSlashDamage *= dmgMult;
+        jumpAttackDamage *= dmgMult;
+        comboHitDamage *= dmgMult;
+
+        ApplyBossStats();
     }
 
     private void SyncHealthToComponent()
@@ -1470,6 +1504,15 @@ public class RedIgnisController : MonoBehaviour
         if (col != null) col.enabled = false;
 
         OnBossDefeated?.Invoke();
+
+        // Thưởng EXP cho Player khi hạ gục Boss (Scale theo độ sâu tầng)
+        int currentFloor = GameManager.HasInstance ? GameManager.Instance.CurrentFloor : 1;
+        int expToReward = InfiniteLabyrinth.Progression.DungeonDifficultyScaler.GetBossExpReward(currentFloor);
+        if (InfiniteLabyrinth.Progression.PlayerProgression.HasInstance)
+        {
+            InfiniteLabyrinth.Progression.PlayerProgression.Instance.GainExp(expToReward);
+            Debug.Log($"<color=gold>[RedIgnis Defeated]</color> 🏆 Người chơi nhận +{expToReward} EXP khi hạ gục Red Ignis (Tầng {currentFloor})!");
+        }
     }
 
     // ==========================================

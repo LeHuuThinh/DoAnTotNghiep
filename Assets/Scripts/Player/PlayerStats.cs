@@ -211,6 +211,7 @@ public class PlayerStats : MonoBehaviour
 
   /// <summary>
   /// Cập nhật Thể lực tối đa kết hợp từ Điểm tiềm năng (Progression) và Trang bị (Equipment).
+  /// Luôn giữ nguyên lượng thể lực hiện tại (chỉ clamp nếu vượt quá Max Stamina mới).
   /// </summary>
   public void SetBonusMaxStamina(float progressionBonus, float equipmentBonus = 0f)
   {
@@ -219,17 +220,8 @@ public class PlayerStats : MonoBehaviour
       baseMaxStamina = maxStamina;
     }
 
-    float oldMax = maxStamina;
     maxStamina = Mathf.Max(10f, baseMaxStamina + progressionBonus + equipmentBonus);
-
-    if (maxStamina > oldMax)
-    {
-      currentStamina += (maxStamina - oldMax);
-    }
-    else
-    {
-      currentStamina = Mathf.Min(currentStamina, maxStamina);
-    }
+    currentStamina = Mathf.Min(currentStamina, maxStamina);
 
     onStaminaChanged?.Invoke(currentStamina, maxStamina);
   }

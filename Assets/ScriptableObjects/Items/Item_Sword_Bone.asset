@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_bone
   itemName: Bonecleaver Blade
-  description: "Carved from dense Skeleton champion bones, heavily eroding the stance and poise of enemy targets (+34 Attack, +15 Stamina)."
+  description: "Carved from dense Skeleton champion bones, heavily eroding the stance and poise of enemy targets (+34 Attack)."
   icon: {fileID: 21300000, guid: b5e294be45aceef4f80cbfedef1d2d7d, type: 3}
   itemType: 0
   rarity: 2
@@ -23,7 +23,7 @@ MonoBehaviour:
   bonusAttack: 34
   bonusDefense: 0
   bonusHealth: 0
-  bonusStamina: 15
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 2668362591727377572, guid: dcfbf50d5365b2a4bbc2a9d91800c6ed, type: 3}

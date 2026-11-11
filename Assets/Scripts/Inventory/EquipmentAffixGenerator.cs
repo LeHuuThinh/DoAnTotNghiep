@@ -15,10 +15,13 @@ namespace InfiniteLabyrinth.Inventory
       SubStatType.CritRate,
       SubStatType.CritDamage,
       SubStatType.Lifesteal,
+      SubStatType.AttackBonus,
       SubStatType.SpiritGainBonus,
       SubStatType.StaminaCostReduction,
       SubStatType.SpiritCostReduction,
-      SubStatType.AttackBonus
+      SubStatType.HealthBonus,
+      SubStatType.DefenseBonus,
+      SubStatType.MaxStamina
     };
 
     private static readonly SubStatType[] ArmorSubStatPool = new[]
@@ -26,11 +29,55 @@ namespace InfiniteLabyrinth.Inventory
       SubStatType.DefenseBonus,
       SubStatType.HealthBonus,
       SubStatType.MaxStamina,
+      SubStatType.CritRate,
+      SubStatType.CritDamage,
       SubStatType.MoveSpeedBonus,
       SubStatType.StaminaCostReduction,
-      SubStatType.SpiritCostReduction,
-      SubStatType.Lifesteal
+      SubStatType.SpiritCostReduction
     };
+
+    /// <summary>
+    /// Trọng số xác suất xuất hiện của từng loại dòng phụ (Weighted Random Roll).
+    /// Tier S (Crit, Lifesteal): Hiếm (10)
+    /// Tier A (Attack, MoveSpeed): Khá (20)
+    /// Tier B (Spirit, Stamina): Trung bình (25)
+    /// Tier C (HP, DEF, Stamina trên vũ khí): Phổ biến / Dễ lệch hệ (40-45)
+    /// </summary>
+    private static int GetSubStatWeight(SubStatType type, ItemType itemType)
+    {
+      if (itemType == ItemType.Weapon)
+      {
+        switch (type)
+        {
+          case SubStatType.CritRate: return 10;
+          case SubStatType.CritDamage: return 10;
+          case SubStatType.Lifesteal: return 10;
+          case SubStatType.AttackBonus: return 20;
+          case SubStatType.SpiritGainBonus: return 25;
+          case SubStatType.SpiritCostReduction: return 25;
+          case SubStatType.StaminaCostReduction: return 25;
+          case SubStatType.HealthBonus: return 40;
+          case SubStatType.DefenseBonus: return 40;
+          case SubStatType.MaxStamina: return 40;
+          default: return 20;
+        }
+      }
+      else // Armor
+      {
+        switch (type)
+        {
+          case SubStatType.CritRate: return 10;
+          case SubStatType.CritDamage: return 10;
+          case SubStatType.MoveSpeedBonus: return 20;
+          case SubStatType.MaxStamina: return 25;
+          case SubStatType.StaminaCostReduction: return 25;
+          case SubStatType.SpiritCostReduction: return 25;
+          case SubStatType.DefenseBonus: return 45;
+          case SubStatType.HealthBonus: return 45;
+          default: return 25;
+        }
+      }
+    }
 
     private struct EnchantmentMeta
     {
@@ -56,7 +103,7 @@ namespace InfiniteLabyrinth.Inventory
       new EnchantmentMeta(EnchantmentType.TitanCharge, "Kình Lực Titan", "Đòn gồng (Charge Attack) gây thêm +25% Sát thương."),
       new EnchantmentMeta(EnchantmentType.ParryStaminaRestore, "Bất Động Như Sơn", "Phản đòn Parry thành công hồi phục ngay 25 Thể Lực (Stamina)."),
       new EnchantmentMeta(EnchantmentType.SprintWind, "Phong Hành Bộ", "Sau khi Lướt hoặc Lăn né, tăng 20% Tốc độ di chuyển trong 2.5 giây."),
-      new EnchantmentMeta(EnchantmentType.CritFrenzy, "Cuồng Trảm", "Đòn đánh Bạo Kích tăng 15% Tốc độ di chuyển trong 3.5 giây."),
+      new EnchantmentMeta(EnchantmentType.CritFrenzy, "Cuồng Trảm", "Đòn đánh Bạo Kích tăng 15% Tốc độ đánh trong 3.5 giây."),
       new EnchantmentMeta(EnchantmentType.SoulSiphon, "Thu Hồn Quyết", "Tiêu diệt kẻ địch hồi phục ngay 15 Spirit và 15 HP.")
     };
 
@@ -102,13 +149,31 @@ namespace InfiniteLabyrinth.Inventory
       }
       else if (item.ItemType == ItemType.Armor)
       {
-        if (item.BonusDefense > 0f)
+        bool hasDef = item.BonusDefense > 0f;
+        bool hasHp = item.BonusHealth > 0f;
+
+        bool chooseDefense;
+        if (hasDef && hasHp)
         {
-          affix.rolledDefense = Mathf.Max(1f, Mathf.Round(item.BonusDefense * mainVariance * 10f) / 10f);
+          // 50% cơ hội ra Defense, 50% cơ hội ra Max Health
+          chooseDefense = UnityEngine.Random.value < 0.5f;
         }
-        if (item.BonusHealth > 0f)
+        else
         {
-          affix.rolledHealth = Mathf.Max(5f, Mathf.Round(item.BonusHealth * mainVariance * 10f) / 10f);
+          chooseDefense = hasDef;
+        }
+
+        if (chooseDefense)
+        {
+          float baseDef = item.BonusDefense > 0f ? item.BonusDefense : 10f;
+          affix.rolledDefense = Mathf.Max(1f, Mathf.Round(baseDef * mainVariance * 10f) / 10f);
+          affix.rolledHealth = 0f;
+        }
+        else
+        {
+          float baseHp = item.BonusHealth > 0f ? item.BonusHealth : 50f;
+          affix.rolledHealth = Mathf.Max(5f, Mathf.Round(baseHp * mainVariance * 10f) / 10f);
+          affix.rolledDefense = 0f;
         }
       }
 
@@ -136,11 +201,39 @@ namespace InfiniteLabyrinth.Inventory
       SubStatType[] pool = (item.ItemType == ItemType.Weapon) ? WeaponSubStatPool : ArmorSubStatPool;
       var availableTypes = new List<SubStatType>(pool);
 
+      // Nếu giáp đã có dòng chính là Defense thì loại bớt DefenseBonus khỏi pool dòng phụ (và tương tự với Health)
+      if (item.ItemType == ItemType.Armor)
+      {
+        if (affix.rolledDefense > 0f) availableTypes.Remove(SubStatType.DefenseBonus);
+        if (affix.rolledHealth > 0f) availableTypes.Remove(SubStatType.HealthBonus);
+      }
+
       for (int i = 0; i < subStatCount && availableTypes.Count > 0; i++)
       {
-        int pickIndex = UnityEngine.Random.Range(0, availableTypes.Count);
-        SubStatType pickedType = availableTypes[pickIndex];
-        availableTypes.RemoveAt(pickIndex);
+        // 1. Tính tổng trọng số của các stat còn lại trong pool
+        int totalWeight = 0;
+        for (int j = 0; j < availableTypes.Count; j++)
+        {
+          totalWeight += GetSubStatWeight(availableTypes[j], item.ItemType);
+        }
+
+        // 2. Bốc ngẫu nhiên theo trọng số (Weighted Random without replacement)
+        int randomVal = UnityEngine.Random.Range(0, totalWeight);
+        int currentSum = 0;
+        int pickedIndex = 0;
+
+        for (int j = 0; j < availableTypes.Count; j++)
+        {
+          currentSum += GetSubStatWeight(availableTypes[j], item.ItemType);
+          if (randomVal < currentSum)
+          {
+            pickedIndex = j;
+            break;
+          }
+        }
+
+        SubStatType pickedType = availableTypes[pickedIndex];
+        availableTypes.RemoveAt(pickedIndex);
 
         float val = RollSubStatValue(pickedType, rarity);
         affix.subStats.Add(new SubStatEntry(pickedType, val));
@@ -186,9 +279,9 @@ namespace InfiniteLabyrinth.Inventory
       switch (type)
       {
         case SubStatType.CritRate:
-          return Mathf.Round(Mathf.Lerp(UnityEngine.Random.Range(1.5f, 3.0f), UnityEngine.Random.Range(3.5f, 6.0f), qualityRatio) * 10f) / 10f;
+          return Mathf.Round(Mathf.Lerp(UnityEngine.Random.Range(2.0f, 3.5f), UnityEngine.Random.Range(4.5f, 7.5f), qualityRatio) * 10f) / 10f;
         case SubStatType.CritDamage:
-          return Mathf.Round(Mathf.Lerp(UnityEngine.Random.Range(8.0f, 15.0f), UnityEngine.Random.Range(16.0f, 25.0f), qualityRatio) * 10f) / 10f;
+          return Mathf.Round(Mathf.Lerp(UnityEngine.Random.Range(10.0f, 18.0f), UnityEngine.Random.Range(20.0f, 35.0f), qualityRatio) * 10f) / 10f;
         case SubStatType.Lifesteal:
           return Mathf.Round(Mathf.Lerp(UnityEngine.Random.Range(1.0f, 2.5f), UnityEngine.Random.Range(2.5f, 4.5f), qualityRatio) * 10f) / 10f;
         case SubStatType.SpiritCostReduction:

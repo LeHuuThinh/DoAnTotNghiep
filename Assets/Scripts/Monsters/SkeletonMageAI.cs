@@ -68,6 +68,16 @@ public class SkeletonMageAI : EnemyAIBase
     }
   }
 
+  public override void ApplyScaledStats(float hpMultiplier, float damageMultiplier, float defenseBonus, int expBonus, bool elite)
+  {
+    base.ApplyScaledStats(hpMultiplier, damageMultiplier, defenseBonus, expBonus, elite);
+    spellDamage *= damageMultiplier;
+    if (elite)
+    {
+      spellRadius *= 1.25f;
+    }
+  }
+
   protected override void DetermineState(float distanceToPlayer)
   {
     if (hasAttackToken)

@@ -176,6 +176,14 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
   2. SkeletonMinion: Quái cận chiến số lượng đông, máu yếu nhưng đánh bọc lót.
   3. SkeletonRogue: Thích khách cơ động, bắn cung tầm xa (Skeleton_Arrow.prefab), biết giữ khoảng cách.
   4. SkeletonMage: Pháp sư bắn đạn ma pháp cầu đuổi (Light Star.prefab), thi triển vùng đất bốc cháy (MageGroundSpell.prefab) và cột sáng trừng phạt (LightPillarSkill.prefab).
+* **Hệ Thống Thang Đo Độ Khó Hầm Ngục & Cân Bằng Cấp Độ Theo Tầng (`DungeonDifficultyScaler.cs`):**
+  * **Đường Cong Cấp Độ Player (`PlayerProgression.cs`):** $\text{ExpCần} = 150 \times \text{Level}^{1.07}$, tăng trưởng gần như tuyến tính ~190 EXP/cấp, triệt tiêu nghẽn cấp cao; Reset điểm tiềm năng 1,000 Vàng.
+  * **Scale Quái Thường Theo Tầng $F$:** Máu $+28\%$/tầng ($[1 + 0.28(F-1)]$), Sát thương $+12\%$/tầng ($[1 + 0.12(F-1)]$), Giáp $+2\text{ DEF}$/tầng, EXP thưởng $+2\text{ EXP}$/tầng.
+  * **Cơ Chế Quái Tinh Nhuệ (Elite Monsters):** Xuất hiện từ Tầng 2+ (tỷ lệ $12\% \sim 25\%$), HP x1.5, ATK x1.25, EXP x2.0, Scale x1.3, đồng bộ NavMeshAgent & tầm đánh AI, Poise x1.5, viền vàng kim Souls-like, hào quang sáng bám thân và rơi x2 Vàng. Hỗ trợ tự động nạp prefab `EnemyHealthBar_Elite`.
+  * **Scale & Thưởng EXP Cho Cặp Trùm Souls-like:**
+    * Thưởng EXP hạ Boss: Tầng 1 thưởng **350 EXP**, tăng $+100\text{ EXP}$ mỗi tầng sâu hơn ($350 + 100(F-1)$).
+    * Máu Boss: $+32\%$/tầng ($[1 + 0.32(F-1)]$). Sát thương Boss: $+14\%$/tầng. Giáp Boss: $+3\text{ DEF}$/tầng.
+    * Tự động đồng bộ và kích hoạt biểu ngữ chiến thắng qua `BossVictoryDirector.cs` cho cả Ice Golem và Red Ignis.
 * **Bộ Đôi Trùm Hầm Ngục & Cặp Đấu Souls-like (Dual Boss Encounters):**
   1. **Trùm Băng: Ice Golem (Boss_IceGolem.prefab - The Frost Juggernaut):**
      * **Chỉ số sinh tồn & Bảng thông số Inspector (=== BANG THONG SO BOSS (CHINH TRUC TIEP TRONG UNITY INSPECTOR) ===):**
@@ -425,7 +433,7 @@ flowchart TD
           - HP = baseHealth * (1 + 0.08 * level) + (12 * level)
           - Dòng phụ: Tăng nhẹ +3% / cấp.
         + **7 Chỉ số mở rộng:** CritRate, CritDamage, Lifesteal (cap 25 HP), SpiritCostReduction (giảm tiêu hao Spirit chiêu E/Q/R), StaminaCostReduction (giảm hao thể lực Dash/Roll/Attack), SpiritGainBonus (tăng Spirit hồi khi đánh trúng hoặc Parry), MoveSpeedBonus.
-        + **Dữ Liệu Động Instance Data & Procedural Roll (EquipmentAffixData.cs, EquipmentAffixGenerator.cs):** Mỗi trang bị rơi ra đất, mua shop hoặc rèn đều roll dòng chính (+-8%~25%), dòng phụ (0-4 dòng theo Rarity) và các ô phù phép độc lập.
+        + **Dữ Liệu Động Instance Data & Procedural Roll (EquipmentAffixData.cs, EquipmentAffixGenerator.cs):** Mỗi trang bị rơi ra đất, mua shop hoặc rèn đều roll dòng chính (+-8%~25%), dòng phụ (0-4 dòng theo Rarity) và các ô phù phép độc lập. Áp dụng cơ chế Bốc Thăm Theo Trọng Số (Weighted Random Roll without replacement): Kiếm sở hữu 10 chỉ số trong pool (bổ sung DEF, HP, Max Stamina với trọng số cao để tạo độ biến thiên ra đồ lệch hệ/dỏm đem bán Shop; dòng CritRate, CritDamage, Lifesteal với trọng số hiếm 10 để tạo cảm giác God Roll); Giáp sở hữu 8 chỉ số (loại bỏ hoàn toàn Lifesteal). Dọn sạch 100% các trường static bonus ẩn gốc trên toàn bộ file .asset của Kiếm và Giáp, đảm bảo toàn bộ dòng phụ đến từ Procedural Generation.
         + **Hệ thống Phù Phép Thức Tỉnh Tại Mốc +1, +3, +5 (Enchantment Awakening):**
           - Mở 1 ô (+1) cho Common/Uncommon, 2 ô (+1, +3) cho Rare, 3 ô (+1, +3, +5) cho Epic/Legendary.
           - 10 Phù phép chuyên sâu: BleedingCrit (gây chảy máu rút 30% dmg qua 3s khi bạo kích), SkillECostReduction (-30% Spirit chiêu E), SkillQCostReduction (-30% Spirit chiêu Q), SkillRCostReduction (-25% Spirit chiêu R), LowHealthBloodthirst (+8% hút máu khi dưới 50% HP), TitanCharge (+25% sát thương đòn gồng), ParryStaminaRestore (hồi 25 thể lực khi parry thành công), SprintWind (+20% tốc chạy sau khi lăn né), CritFrenzy (+15% tốc chạy khi chém crit), SoulSiphon (tiêu diệt mục tiêu hồi 15 Spirit & 15 HP).

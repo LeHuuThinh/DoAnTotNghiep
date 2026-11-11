@@ -228,6 +228,7 @@ namespace InfiniteLabyrinth.UI
       if (InventoryManager.HasInstance)
       {
         InventoryManager.Instance.OnEquipmentChanged += HandleEquipmentChanged;
+        InventoryManager.Instance.OnEquipmentUpgradeChanged += HandleEquipmentUpgradeChanged;
       }
 
       if (PlayerProgression.HasInstance)
@@ -244,6 +245,7 @@ namespace InfiniteLabyrinth.UI
       if (InventoryManager.HasInstance)
       {
         InventoryManager.Instance.OnEquipmentChanged -= HandleEquipmentChanged;
+        InventoryManager.Instance.OnEquipmentUpgradeChanged -= HandleEquipmentUpgradeChanged;
       }
 
       if (PlayerProgression.HasInstance)
@@ -311,6 +313,11 @@ namespace InfiniteLabyrinth.UI
     private void HandleStaminaChanged(float cur, float max) => RefreshStats();
 
     private void HandleEquipmentChanged(ItemType type, ItemData item)
+    {
+      RefreshStats();
+    }
+
+    private void HandleEquipmentUpgradeChanged(ItemType type, int level)
     {
       RefreshStats();
     }
@@ -408,7 +415,7 @@ namespace InfiniteLabyrinth.UI
       float progAtk = PlayerProgression.HasInstance ? PlayerProgression.Instance.BonusAttack : 0f;
       float totalBonusAtk = equipAtk + progAtk;
 
-      float totalDef = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalDefenseBonus() : 0f;
+      float totalDef = cachedPlayerHealth != null ? cachedPlayerHealth.TotalDefense : (InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalDefenseBonus() : 0f);
 
       float equipHp = InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalHealthBonus() : 0f;
       float progHp = PlayerProgression.HasInstance ? PlayerProgression.Instance.BonusHealth : 0f;
@@ -424,14 +431,13 @@ namespace InfiniteLabyrinth.UI
 
       // Attack
       float totalAtk = baseAtk + totalBonusAtk;
-      string atkBonusStr = totalBonusAtk > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusAtk:0.#})</color></size>" : "";
       if (atkValueText != null)
       {
-        atkValueText.text = $"<color=#FFE082>{totalAtk:0.#}</color>{atkBonusStr}";
+        atkValueText.text = $"<color=#FFE082>{totalAtk:0.#}</color>";
       }
       else if (atkText != null)
       {
-        atkText.text = $"Attack: <color=#FFE082>{totalAtk:0.#}</color>{atkBonusStr}";
+        atkText.text = $"Attack: <color=#FFE082>{totalAtk:0.#}</color>";
       }
 
       // Defense
@@ -447,31 +453,29 @@ namespace InfiniteLabyrinth.UI
       // Health
       float totalHp = baseHp + totalBonusHp;
       float curHp = cachedPlayerHealth != null ? cachedPlayerHealth.CurrentHealth : totalHp;
-      string hpBonusStr = totalBonusHp > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusHp:0.#})</color></size>" : "";
       if (hpValueText != null)
       {
-        hpValueText.text = $"<color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>{hpBonusStr}";
+        hpValueText.text = $"<color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>";
       }
       else if (hpText != null)
       {
-        hpText.text = $"Health: <color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>{hpBonusStr}";
+        hpText.text = $"Health: <color=#EF9A9A>{curHp:0.#} / {totalHp:0.#}</color>";
       }
 
       // Stamina
       float totalStam = baseStamina + totalBonusStamina;
       float curStam = cachedPlayerStats != null ? cachedPlayerStats.CurrentStamina : totalStam;
-      string stamBonusStr = totalBonusStamina > 0f ? $" <size=80%><color=#A5D6A7>(+{totalBonusStamina:0.#})</color></size>" : "";
       if (staminaValueText != null)
       {
-        staminaValueText.text = $"<color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>{stamBonusStr}";
+        staminaValueText.text = $"<color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>";
       }
       else if (staminaText != null)
       {
-        staminaText.text = $"Stamina: <color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>{stamBonusStr}";
+        staminaText.text = $"Stamina: <color=#A5D6A7>{curStam:0.#} / {totalStam:0.#}</color>";
       }
 
       // Critical Rate & Critical Damage & Lifesteal
-      float totalCritRate = cachedPlayerCombat != null ? cachedPlayerCombat.TotalCritRate : (5f + (InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalCritRateBonus() : 0f));
+      float totalCritRate = cachedPlayerCombat != null ? cachedPlayerCombat.TotalCritRate : (10f + (InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalCritRateBonus() : 0f));
       float totalCritDmg = cachedPlayerCombat != null ? cachedPlayerCombat.TotalCritDamage : (150f + (InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalCritDamageBonus() : 0f));
       float totalLifesteal = cachedPlayerCombat != null ? cachedPlayerCombat.TotalLifesteal : (InventoryManager.HasInstance ? InventoryManager.Instance.GetTotalLifestealBonus() : 0f);
 

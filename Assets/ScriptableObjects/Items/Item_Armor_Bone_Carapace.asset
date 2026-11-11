@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: armor_bone_carapace
   itemName: Bone Carapace Plate
-  description: "Carapace armor assembled from elite Skeleton bones, endowing the wearer with remarkable resilience (+22 DEF, +110 HP, +20 Stamina)."
+  description: "Carapace armor assembled from elite Skeleton bones, endowing the wearer with remarkable resilience (+22 DEF, +110 HP)."
   icon: {fileID: 21300000, guid: e5905f669446215449e6248807309806, type: 3}
   itemType: 1
   rarity: 2
@@ -23,7 +23,7 @@ MonoBehaviour:
   bonusAttack: 0
   bonusDefense: 22
   bonusHealth: 110
-  bonusStamina: 20
+  bonusStamina: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 0}

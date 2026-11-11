@@ -10,7 +10,7 @@ using InfiniteLabyrinth.Inventory;
 /// <summary>
 /// Controls the Admin / Debug Cheat Console UI.
 /// Features:
-/// 1. Toggled smoothly via hotkey ~ (or F1/F2), and closed via Esc or [✕] button.
+/// 1. Toggled smoothly via hotkey ~ (or F1/F2), and closed via Esc or [X] button.
 /// 2. 5 Functional Tabs: Teleport (Dynamic Scene), World (Scene Loop), Player (Combat & Stats), Monsters (Dummies & AI), Creative Mode (All 51 Items).
 /// 3. Tab buttons maintain crisp WHITE text when selected for high visibility.
 /// 4. Mini Debug Overlay (FPS, Player Position, Current Room, Active Badges) toggles synchronously with the panel.
@@ -351,8 +351,8 @@ public class AdminCheatUI : MonoBehaviour
     if (txtSceneIndicator != null)
     {
       txtSceneIndicator.text = isLand
-        ? "📍 Scene: <color=#81C784>Haven Village Hub (LandScene)</color>"
-        : "📍 Scene: <color=#64B5F6>Procedural Dungeon (DungeonScene)</color>";
+        ? "Scene: <color=#81C784>Haven Village Hub (LandScene)</color>"
+        : "Scene: <color=#64B5F6>Procedural Dungeon (DungeonScene)</color>";
     }
 
     if (landTeleportContainer != null) landTeleportContainer.SetActive(isLand);

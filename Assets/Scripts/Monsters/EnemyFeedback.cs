@@ -67,6 +67,12 @@ public class EnemyFeedback : MonoBehaviour
   private static readonly int DieTriggerHash = Animator.StringToHash("Die");
   private static readonly int DeathTypeHash = Animator.StringToHash("DeathType");
 
+  public void ScalePoise(float multiplier)
+  {
+    maxPoise *= multiplier;
+    currentPoise = maxPoise;
+  }
+
   private void Awake()
   {
     health = GetComponent<Health>();

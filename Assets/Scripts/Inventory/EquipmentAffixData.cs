@@ -83,7 +83,7 @@ namespace InfiniteLabyrinth.Inventory
     TitanCharge,            // Kình Lực Titan: Tăng +25% Sát thương đòn Gồng (Charge)
     ParryStaminaRestore,    // Bất Động Như Sơn: Phản đòn Parry thành công hồi ngay 25 Thể Lực
     SprintWind,             // Phong Hành Bộ: Sau khi Lướt/Lăn né tăng 20% Tốc chạy trong 2.5s
-    CritFrenzy,             // Cuồng Trảm: Đòn bạo kích tăng 15% Tốc chạy trong 3.5s
+    CritFrenzy,             // Cuồng Trảm: Đòn bạo kích tăng 15% Tốc đánh trong 3.5s
     SoulSiphon              // Thu Hồn Quyết: Tiêu diệt kẻ địch hồi 15 Spirit & 15 HP
   }
 
@@ -132,12 +132,20 @@ namespace InfiniteLabyrinth.Inventory
     public List<SubStatEntry> subStats = new List<SubStatEntry>();
     public List<EnchantmentEntry> enchantments = new List<EnchantmentEntry>();
 
-    public float GetSubStatValue(SubStatType type)
+    public float GetSubStatValue(SubStatType type, int upgradeLevel = 0)
     {
       float total = 0f;
       for (int i = 0; i < subStats.Count; i++)
       {
-        if (subStats[i].type == type) total += subStats[i].value;
+        if (subStats[i].type == type)
+        {
+          float val = subStats[i].value;
+          if (upgradeLevel > 0)
+          {
+            val = InfiniteLabyrinth.Blacksmith.BlacksmithUpgradeConfig.CalculateUpgradedSubStat(val, upgradeLevel);
+          }
+          total += val;
+        }
       }
       return total;
     }

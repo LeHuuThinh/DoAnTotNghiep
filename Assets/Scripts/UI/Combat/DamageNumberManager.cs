@@ -70,12 +70,28 @@ namespace InfiniteLabyrinth.UI.Combat
     [Tooltip("Font chữ TextMeshPro (Tự động tải VecnaBold của dự án nếu để trống)")]
     [SerializeField] private TMP_FontAsset fontAsset;
 
-    [Tooltip("Cỡ chữ hiển thị trong không gian 3D thế giới (World Space)")]
-    [SerializeField] private float fontSize = 7.5f;
+    [Tooltip("Cỡ chữ hiển thị trong không gian 3D thế giới (World Space). Thay đổi số này sẽ tự động cập nhật ngay lập tức cho toàn bộ số sát thương (kể cả dùng Prefab)")]
+    [SerializeField] private float fontSize = 4.5f;
 
     [Tooltip("Độ dày đường viền đen của chữ (Outline Width). Mặc định 0.1")]
     [Range(0f, 0.5f)]
     [SerializeField] private float outlineWidth = 0.1f;
+
+    [Header("=== CẤU HÌNH ICON CHÍ MẠNG (CRIT ICON) ===")]
+    [Tooltip("Bật/tắt hiển thị icon Crit bên cạnh số bạo kích trên toàn bộ Pool. Nếu tắt, chỉ phóng to số")]
+    [SerializeField] private bool showCritIcon = true;
+
+    [Tooltip("Tỷ lệ thu nhỏ của Icon Crit (Mặc định 0.085 vừa vặn với cỡ chữ, không che số)")]
+    [Range(0.02f, 0.4f)]
+    [SerializeField] private float critIconScale = 0.085f;
+
+    [Tooltip("Khoảng cách lệch sang trái của Icon Crit so với mép con số")]
+    [Range(0.01f, 0.3f)]
+    [SerializeField] private float critIconOffsetLeft = 0.08f;
+
+    [Tooltip("Hệ số phóng to số sát thương khi bạo kích (Mặc định 1.15x để số không bị quá to che khuất quái)")]
+    [Range(1.0f, 1.6f)]
+    [SerializeField] private float critScaleMultiplier = 1.15f;
 
     [Header("=== BẢNG TÙY CHỈNH KÍCH THƯỚC & GRADIENT TỪNG LOẠI ĐÒN ===")]
     [SerializeField] private DamageStyleSetting normalAttackStyle = new DamageStyleSetting 
@@ -141,6 +157,15 @@ namespace InfiniteLabyrinth.UI.Combat
       fallbackColor = new Color(1.0f, 0.22f, 0.22f) 
     };
 
+    [SerializeField] private DamageStyleSetting bleedStyle = new DamageStyleSetting 
+    { 
+      styleName = "8. Sát Thương Xuất Huyết (Bleed DoT)",
+      baseScale = 0.85f, 
+      peakScale = 1.15f, 
+      duration = 0.65f, 
+      fallbackColor = new Color(0.85f, 0.12f, 0.12f) 
+    };
+
     private readonly Queue<DamageNumberItem> availablePool = new Queue<DamageNumberItem>();
     private readonly List<DamageNumberItem> activeItems = new List<DamageNumberItem>();
     private Transform poolContainer;
@@ -170,27 +195,80 @@ namespace InfiniteLabyrinth.UI.Combat
       InitializePool();
     }
 
+    public float CritIconOffsetLeft
+    {
+      get => critIconOffsetLeft;
+      set => critIconOffsetLeft = value;
+    }
+
     private void OnValidate()
     {
       if (damageNumberMaterial != null)
       {
         damageNumberMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, outlineWidth);
       }
+      foreach (var it in availablePool)
+      {
+        if (it != null)
+        {
+          it.ShowCritIcon = showCritIcon;
+          it.CritIconScale = critIconScale;
+          it.CritIconOffsetLeft = critIconOffsetLeft;
+          it.CritScaleMultiplier = critScaleMultiplier;
+          var tmp = it.GetComponent<TextMeshPro>();
+          if (tmp != null)
+          {
+            tmp.fontSize = fontSize;
+            tmp.alignment = TextAlignmentOptions.Center;
+          }
+        }
+      }
+      foreach (var it in activeItems)
+      {
+        if (it != null)
+        {
+          it.ShowCritIcon = showCritIcon;
+          it.CritIconScale = critIconScale;
+          it.CritIconOffsetLeft = critIconOffsetLeft;
+          it.CritScaleMultiplier = critScaleMultiplier;
+          var tmp = it.GetComponent<TextMeshPro>();
+          if (tmp != null)
+          {
+            tmp.fontSize = fontSize;
+            tmp.alignment = TextAlignmentOptions.Center;
+          }
+        }
+      }
     }
 
     private void InitializePool()
     {
-      if (poolContainer == null)
+      // Dọn dẹp pool cũ nếu có tàn dư từ scene save
+      Transform existing = transform.Find("DamageNumberPool");
+      if (existing != null)
       {
-        GameObject containerGo = new GameObject("DamageNumberPool");
-        containerGo.transform.SetParent(transform);
-        poolContainer = containerGo.transform;
+        Destroy(existing.gameObject);
       }
 
-      // 1. Tự động nạp Font VecnaBold của dự án nếu chưa gán
+      GameObject containerGo = new GameObject("DamageNumberPool");
+      containerGo.transform.SetParent(transform);
+      poolContainer = containerGo.transform;
+
+      // 1. Tự động nạp Font VecnaBold của dự án nếu chưa gán (hoặc lấy từ Prefab nếu có)
       if (fontAsset == null)
       {
-        fontAsset = Resources.Load<TMP_FontAsset>("Color Gradient Presets/VecnaBold-4YY4 SDF");
+        if (damageNumberPrefab != null)
+        {
+          TextMeshPro prefabTmp = damageNumberPrefab.GetComponent<TextMeshPro>();
+          if (prefabTmp != null && prefabTmp.font != null)
+          {
+            fontAsset = prefabTmp.font;
+          }
+        }
+        if (fontAsset == null)
+        {
+          fontAsset = Resources.Load<TMP_FontAsset>("Color Gradient Presets/VecnaBold-4YY4 SDF");
+        }
         if (fontAsset == null)
         {
           fontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
@@ -251,6 +329,8 @@ namespace InfiniteLabyrinth.UI.Combat
         skillRStyle.gradientPreset = Resources.Load<TMP_ColorGradient>("Color Gradient Presets/Damage_SkillR");
       if (playerHitStyle.gradientPreset == null)
         playerHitStyle.gradientPreset = Resources.Load<TMP_ColorGradient>("Color Gradient Presets/Damage_PlayerHit");
+      if (bleedStyle.gradientPreset == null)
+        bleedStyle.gradientPreset = Resources.Load<TMP_ColorGradient>("Color Gradient Presets/Damage_Bleed");
     }
 
     private DamageNumberItem CreateNewPoolItem()
@@ -263,6 +343,17 @@ namespace InfiniteLabyrinth.UI.Combat
         item = Instantiate(damageNumberPrefab, poolContainer);
         itemGo = item.gameObject;
         itemGo.name = $"DamageNumber_{availablePool.Count + activeItems.Count}";
+
+        TextMeshPro tmp = itemGo.GetComponent<TextMeshPro>();
+        if (tmp != null)
+        {
+          if (damageNumberMaterial != null)
+          {
+            tmp.fontSharedMaterial = damageNumberMaterial;
+          }
+          tmp.fontSize = fontSize;
+          tmp.alignment = TextAlignmentOptions.Center;
+        }
       }
       else
       {
@@ -282,6 +373,11 @@ namespace InfiniteLabyrinth.UI.Combat
         item.Setup(fontAsset);
       }
 
+      item.ShowCritIcon = showCritIcon;
+      item.CritIconScale = critIconScale;
+      item.CritIconOffsetLeft = critIconOffsetLeft;
+      item.CritScaleMultiplier = critScaleMultiplier;
+
       itemGo.SetActive(false);
       availablePool.Enqueue(item);
       return item;
@@ -298,6 +394,7 @@ namespace InfiniteLabyrinth.UI.Combat
         case DamageNumberType.SkillQ: return skillQStyle;
         case DamageNumberType.SkillR: return skillRStyle;
         case DamageNumberType.PlayerHit: return playerHitStyle;
+        case DamageNumberType.Bleed: return bleedStyle;
         default: return normalAttackStyle;
       }
     }

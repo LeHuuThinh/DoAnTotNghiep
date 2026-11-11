@@ -679,7 +679,7 @@ namespace InfiniteLabyrinth.UI
         tempStamina = 0;
         if (statusMessageText != null)
         {
-          statusMessageText.text = $"<color=#A5D6A7>✓ Successfully allocated +{addedTotal} points!</color>";
+          statusMessageText.text = $"<color=#A5D6A7>Successfully allocated +{addedTotal} points!</color>";
           StartCoroutine(PunchTextRoutine(statusMessageText, 1.15f, 0.12f));
         }
         RefreshUI();
@@ -694,7 +694,7 @@ namespace InfiniteLabyrinth.UI
       {
         if (statusMessageText != null)
         {
-          statusMessageText.text = "<color=#EF9A9A>✗ Failed to allocate points, please try again!</color>";
+          statusMessageText.text = "<color=#EF9A9A>Failed to allocate points, please try again!</color>";
         }
       }
     }
@@ -707,7 +707,7 @@ namespace InfiniteLabyrinth.UI
       {
         if (statusMessageText != null)
         {
-          statusMessageText.text = $"<color=#EF9A9A>✗ {reason}</color>";
+          statusMessageText.text = $"<color=#EF9A9A>{reason}</color>";
         }
         return;
       }
@@ -721,7 +721,7 @@ namespace InfiniteLabyrinth.UI
         tempStamina = 0;
         if (statusMessageText != null)
         {
-          statusMessageText.text = $"<color=#A5D6A7>✓ Reset stats successful! Refunded {pointsRefunded} points.</color>";
+          statusMessageText.text = $"<color=#A5D6A7>Reset stats successful! Refunded {pointsRefunded} points.</color>";
           StartCoroutine(PunchTextRoutine(statusMessageText, 1.15f, 0.12f));
         }
         RefreshUI();

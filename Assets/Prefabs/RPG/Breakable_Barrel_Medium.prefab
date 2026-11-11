@@ -102,9 +102,9 @@ MonoBehaviour:
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
-  goldDropChance: 0.85
-  minGold: 8
-  maxGold: 18
+  goldDropChance: 0.7
+  minGold: 3
+  maxGold: 7
   minDropRadius: 0.8
   maxDropRadius: 2
   arcHeight: 1.3

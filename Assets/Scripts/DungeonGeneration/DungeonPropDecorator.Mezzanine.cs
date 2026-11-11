@@ -121,7 +121,7 @@ public partial class DungeonPropDecorator
             {
               // Solo
               Vector3 jitter = new Vector3(Random.Range(-0.15f, 0.15f), 0f, Random.Range(-0.15f, 0.15f));
-              GameObject p = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject p = GetRandomBreakableBarrel();
               GameObject bObj = Instantiate(p, center + jitter, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);
               EnsureNavMeshObstacleModifier(bObj);
             }
@@ -134,8 +134,8 @@ public partial class DungeonPropDecorator
               Vector3 pos1 = center + crot * new Vector3(-spacing, 0f, 0f);
               Vector3 pos2 = center + crot * new Vector3(spacing, 0f, 0f);
 
-              GameObject p1 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
-              GameObject p2 = breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+              GameObject p1 = GetRandomBreakableBarrel();
+              GameObject p2 = GetRandomBreakableBarrel();
 
               GameObject b1 = Instantiate(p1, pos1, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);
               GameObject b2 = Instantiate(p2, pos2, Quaternion.Euler(0, Random.Range(0f, 360f), 0), interactablesGroup);

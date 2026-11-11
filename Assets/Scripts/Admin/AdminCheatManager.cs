@@ -602,7 +602,7 @@ public class AdminCheatManager : MonoBehaviour
   public void FastTravelToDungeon()
   {
     if (IsOpen) CloseMenu();
-    NotifySuccess("🚀 Traveling to Dungeon Floor 1...");
+    NotifySuccess("Traveling to Dungeon Floor 1...");
     if (InfiniteLabyrinth.UI.LoadingScreenManager.HasInstance)
     {
       InfiniteLabyrinth.UI.LoadingScreenManager.Instance.LoadScene("DungeonScene", 1);
@@ -616,7 +616,7 @@ public class AdminCheatManager : MonoBehaviour
   public void FastTravelToVillage()
   {
     if (IsOpen) CloseMenu();
-    NotifySuccess("🏡 Returning to Haven Village...");
+    NotifySuccess("Returning to Haven Village...");
     if (GameManager.HasInstance)
     {
       GameManager.Instance.RespawnAtVillage();
@@ -636,7 +636,7 @@ public class AdminCheatManager : MonoBehaviour
     if (GameManager.HasInstance)
     {
       GameManager.Instance.AdvanceDay();
-      NotifySuccess($"🌅 [Day System] Advanced to Day {GameManager.Instance.CurrentDay}!");
+      NotifySuccess($"[Day System] Advanced to Day {GameManager.Instance.CurrentDay}!");
     }
     else
     {
@@ -649,7 +649,7 @@ public class AdminCheatManager : MonoBehaviour
     if (GameManager.HasInstance)
     {
       GameManager.Instance.SetDay(1);
-      NotifySuccess("⏪ [Day System] Reset Day counter back to Day 1!");
+      NotifySuccess("[Day System] Reset Day counter back to Day 1!");
     }
     else
     {
@@ -662,7 +662,7 @@ public class AdminCheatManager : MonoBehaviour
     if (InfiniteLabyrinth.UI.DungeonMapManager.Instance != null)
     {
       InfiniteLabyrinth.UI.DungeonMapManager.Instance.RevealAll();
-      NotifySuccess("🗺️ [Map] Entire Dungeon map revealed! Fog of war cleared.");
+      NotifySuccess("[Map] Entire Dungeon map revealed! Fog of war cleared.");
     }
     else
     {
@@ -675,7 +675,7 @@ public class AdminCheatManager : MonoBehaviour
     if (InfiniteLabyrinth.Interaction.BossGateController.Instance != null)
     {
       InfiniteLabyrinth.Interaction.BossGateController.Instance.ForceOpenGate();
-      NotifySuccess("🗝️ [Boss Gate] Force unlocked Grand Gate into Boss Arena!");
+      NotifySuccess("[Boss Gate] Force unlocked Grand Gate into Boss Arena!");
     }
     else
     {
@@ -684,7 +684,7 @@ public class AdminCheatManager : MonoBehaviour
       if (keyItem != null && InventoryManager.HasInstance)
       {
         InventoryManager.Instance.AddItem(keyItem, 1);
-        NotifySuccess("🗝️ [Boss Gate] Added Boss Key to inventory!");
+        NotifySuccess("[Boss Gate] Added Boss Key to inventory!");
       }
       else
       {
@@ -845,7 +845,7 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     activeDummies.Add(dummy);
-    NotifySuccess($"🎯 [Dummy] Spawned {maxHp:N0} HP Training Dummy! (No AI, 0 DEF, Pure DMG Test)");
+    NotifySuccess($"[Dummy] Spawned {maxHp:N0} HP Training Dummy! (No AI, 0 DEF, Pure DMG Test)");
     return dummy;
   }
 
@@ -861,7 +861,7 @@ public class AdminCheatManager : MonoBehaviour
       }
     }
     activeDummies.Clear();
-    NotifySuccess($"🧹 [Dummy] Cleared {count} Training Dummies!");
+    NotifySuccess($"[Dummy] Cleared {count} Training Dummies!");
   }
 
   public void HealAllDummies(float hp = 10000f)
@@ -879,7 +879,7 @@ public class AdminCheatManager : MonoBehaviour
         }
       }
     }
-    NotifySuccess($"❤️ [Dummy] Restored {count} Dummies back to {hp:N0} HP!");
+    NotifySuccess($"[Dummy] Restored {count} Dummies back to {hp:N0} HP!");
   }
 
   public int KillEnemiesInRadius(float radius = 25f)
@@ -964,8 +964,8 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     NotifySuccess(IsEnemyAIFrozen
-      ? "❄️ [Enemy AI] FROZEN! Enemies are stationary training dummies."
-      : "⚔️ [Enemy AI] RESUMED normal combat AI.");
+      ? "[Enemy AI] FROZEN! Enemies are stationary training dummies."
+      : "[Enemy AI] RESUMED normal combat AI.");
     return IsEnemyAIFrozen;
   }
 
@@ -1038,8 +1038,8 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     NotifySuccess(IsGodMode
-      ? "🛡️ [God Mode] ENABLED! Immune to all damage."
-      : "🛡️ [God Mode] DISABLED. Normal damage taken.");
+      ? "[God Mode] ENABLED! Immune to all damage."
+      : "[God Mode] DISABLED. Normal damage taken.");
     return IsGodMode;
   }
 
@@ -1054,8 +1054,8 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     NotifySuccess(IsInfiniteStamina
-      ? "⚡ [Stamina] INFINITE STAMINA ENABLED!"
-      : "⚡ [Stamina] Normal stamina consumption restored.");
+      ? "[Stamina] INFINITE STAMINA ENABLED!"
+      : "[Stamina] Normal stamina consumption restored.");
     return IsInfiniteStamina;
   }
 
@@ -1070,8 +1070,8 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     NotifySuccess(IsInfiniteSpirit
-      ? "⭐ [Spirit] INFINITE 4 SPIRIT STARS ENABLED! (200/200)"
-      : "⭐ [Spirit] Normal spirit accumulation restored.");
+      ? "[Spirit] INFINITE 4 SPIRIT STARS ENABLED! (200/200)"
+      : "[Spirit] Normal spirit accumulation restored.");
     return IsInfiniteSpirit;
   }
 
@@ -1079,8 +1079,8 @@ public class AdminCheatManager : MonoBehaviour
   {
     IsNoCooldown = !IsNoCooldown;
     NotifySuccess(IsNoCooldown
-      ? "⏱️ [No Cooldown] NO COOLDOWN ENABLED! Skills E, Q, R & Usables spam ready."
-      : "⏱️ [No Cooldown] Normal cooldowns restored.");
+      ? "[No Cooldown] NO COOLDOWN ENABLED! Skills E, Q, R & Usables spam ready."
+      : "[No Cooldown] Normal cooldowns restored.");
     return IsNoCooldown;
   }
 
@@ -1099,7 +1099,7 @@ public class AdminCheatManager : MonoBehaviour
       cachedPlayerStats.GainSpirit(cachedPlayerStats.MaxSpirit);
     }
 
-    NotifySuccess("❤️ [Restored] Full Health, Stamina and 4 Spirit Stars restored!");
+    NotifySuccess("[Restored] Full Health, Stamina and 4 Spirit Stars restored!");
   }
 
   public float CycleSuperSpeed()
@@ -1111,7 +1111,7 @@ public class AdminCheatManager : MonoBehaviour
     float nextSpeed = speedOptions[currentSpeedIndex];
     cachedPlayerController.SpeedMultiplier = nextSpeed;
 
-    NotifySuccess($"🏃 [Speed] Move speed multiplier set to: {nextSpeed:F1}x!");
+    NotifySuccess($"[Speed] Move speed multiplier set to: {nextSpeed:F1}x!");
     return nextSpeed;
   }
 
@@ -1136,7 +1136,7 @@ public class AdminCheatManager : MonoBehaviour
     bool res = InventoryManager.Instance.AddItem(item, count);
     if (res)
     {
-      NotifySuccess($"🎒 [Creative] Added {item.ItemName} x{count} to Inventory!");
+      NotifySuccess($"[Creative] Added {item.ItemName} x{count} to Inventory!");
     }
     else
     {
@@ -1154,7 +1154,7 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     InventoryManager.Instance.AddGold(amount);
-    NotifySuccess($"💰 [Economy] Added +{amount:N0} Gold! Total: {InventoryManager.Instance.CurrentGold:N0} Gold");
+    NotifySuccess($"[Economy] Added +{amount:N0} Gold! Total: {InventoryManager.Instance.CurrentGold:N0} Gold");
   }
 
   public void AddExp(int amount = 500)
@@ -1166,7 +1166,7 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     PlayerProgression.Instance.GainExp(amount);
-    NotifySuccess($"📈 [Progression] Added +{amount} EXP! Current Level: {PlayerProgression.Instance.CurrentLevel}");
+    NotifySuccess($"[Progression] Added +{amount} EXP! Current Level: {PlayerProgression.Instance.CurrentLevel}");
   }
 
   public void AddAttributePoints(int points = 10)
@@ -1178,7 +1178,7 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     PlayerProgression.Instance.AddUnallocatedPoints(points);
-    NotifySuccess($"✨ [Attributes] Gained +{points} Attribute Points! Available: {PlayerProgression.Instance.UnallocatedPoints}");
+    NotifySuccess($"[Attributes] Gained +{points} Attribute Points! Available: {PlayerProgression.Instance.UnallocatedPoints}");
   }
 
   #endregion
@@ -1194,7 +1194,7 @@ public class AdminCheatManager : MonoBehaviour
   private void NotifyWarning(string message)
   {
     Debug.LogWarning($"<color=#FFAA00>[Admin Manager]</color> {message}");
-    OnCheatExecuted?.Invoke($"⚠️ {message}");
+    OnCheatExecuted?.Invoke($"[Notice] {message}");
   }
 
   #endregion

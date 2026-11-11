@@ -189,17 +189,17 @@ namespace InfiniteLabyrinth.Editor
         worldPrefab: worldPickup, visualPrefab: null);
 
       // ==========================================
-      // 3B. ĐÁ QUÝ QUÁI VẬT & TRÙM (GEMS - 2 ITEMS - TASK RPG-09)
+      // 3B. ĐÁ QUÝ QUÁI VẬT & TRÙM (GEMS - 2 ITEMS - TASK RPG-09 CÂN BẰNG KINH TẾ)
       // ==========================================
       CreateOrUpdateItem("Item_Mat_Monster_Gem", "mat_monster_gem", "Monster Gem",
         "A crystallized energy gem dropped by labyrinth monsters. Emits a faint glow of condensed magic. Highly valued by Haven merchants for a good amount of gold.",
-        LoadItemIcon("MonsterGem.png"), ItemType.Material, ItemRarity.Uncommon, maxStack: 99, goldValue: 80,
+        LoadItemIcon("MonsterGem.png"), ItemType.Material, ItemRarity.Uncommon, maxStack: 99, goldValue: 35,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Mat_Boss_Gem", "mat_boss_gem", "Boss Gem",
         "A colossal, radiant gemstone containing condensed primal essence extracted from a labyrinth boss. Dazzling with epic power, Haven merchants will pay an extraordinary fortune of gold for it.",
-        LoadItemIcon("BossGem.png"), ItemType.Material, ItemRarity.Epic, maxStack: 99, goldValue: 500,
+        LoadItemIcon("BossGem.png"), ItemType.Material, ItemRarity.Epic, maxStack: 99, goldValue: 400,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
@@ -245,11 +245,11 @@ namespace InfiniteLabyrinth.Editor
         spiritCostRed: 15f);
 
       CreateOrUpdateItem("Item_Armor_Crimson_Scale", "armor_crimson_scale", "Crimson Dragon Scale",
-        "Impenetrable battle armor reinforced with crimson dragon scales, offering absolute defense against lethal strikes (+45 DEF, +240 HP, +30 Stamina, +3% Lifesteal, +20% Crit DMG).",
+        "Impenetrable battle armor reinforced with crimson dragon scales, offering absolute defense against lethal strikes (+45 DEF, +240 HP, +30 Stamina, +8% Crit Rate, +25% Crit DMG, +3% Lifesteal).",
         LoadItemIcon("CrimsonScale.png"), ItemType.Armor, ItemRarity.Legendary, maxStack: 1, goldValue: 950,
         bonusAtk: 0, bonusDef: 45f, bonusHp: 240f, bonusStamina: 30f, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null,
-        lifesteal: 3f, critDmg: 20f);
+        critRate: 8f, critDmg: 25f, lifesteal: 3f);
 
       CreateOrUpdateItem("Item_Armor_Void_Shroud", "armor_void_shroud", "Voidwalker Mantle",
         "Ethereal mantle woven from the deep cosmic void, warping mortal strikes away from the bearer (+58 DEF, +320 HP, +40 Stamina, -20% Spirit Cost, -15% Stamina Cost, +8% Move Speed).",

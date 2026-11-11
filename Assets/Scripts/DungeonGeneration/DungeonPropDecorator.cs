@@ -284,6 +284,19 @@ public partial class DungeonPropDecorator : MonoBehaviour
   [Tooltip("Bán kính cụm 3 thùng hình tam giác đều (Trio). Mặc định 0.70m giúp 3 thùng cách nhau ~1.2m thoáng đãng)")]
   public float barrelTrioRadius = 0.70f;
 
+  [Header("10.2B. Tỷ Lệ Xuất Hiện Thùng Gỗ Theo Loại (Weighted Barrel Spawning)")]
+  [Range(0f, 1f)]
+  [Tooltip("Tỷ lệ xuất hiện thùng gỗ nhỏ (Chiếm đa số, mặc định 0.58 = 58%)")]
+  public float barrelSmallWeight = 0.58f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỷ lệ xuất hiện thùng gỗ vừa (Mặc định 0.30 = 30%)")]
+  public float barrelMediumWeight = 0.30f;
+
+  [Range(0f, 1f)]
+  [Tooltip("Tỷ lệ xuất hiện thùng gỗ lớn (Hiếm - Jackpot, mặc định 0.12 = 12%)")]
+  public float barrelLargeWeight = 0.12f;
+
   [Header("10.3. Rương Báu Trong Phòng (Chests Tầng 1 & Tầng 2)")]
   [Tooltip("Bật/Tắt sinh rương báu trong phòng")]
   public bool enableChests = true;
@@ -503,6 +516,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
     breakableBarrelPrefabs.Clear();
     regularChestPrefab = null;
     goldChestPrefab = null;
+    hasCachedBarrelVariants = false;
 
     string[] rpgGuids = UnityEditor.AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/RPG" });
     if (rpgGuids != null && rpgGuids.Length > 0)
@@ -1306,5 +1320,71 @@ public partial class DungeonPropDecorator : MonoBehaviour
     }
     return null;
   }
+
+  #region Barrel Variant Selection (Weighted Spawning)
+  [System.NonSerialized] private GameObject cachedBarrelSmall;
+  [System.NonSerialized] private GameObject cachedBarrelMedium;
+  [System.NonSerialized] private GameObject cachedBarrelLarge;
+  [System.NonSerialized] private bool hasCachedBarrelVariants = false;
+
+  private void EnsureCachedBarrelVariants()
+  {
+    if (hasCachedBarrelVariants && cachedBarrelSmall != null) return;
+    cachedBarrelSmall = null;
+    cachedBarrelMedium = null;
+    cachedBarrelLarge = null;
+
+    if (breakableBarrelPrefabs != null)
+    {
+      foreach (var go in breakableBarrelPrefabs)
+      {
+        if (go == null) continue;
+        string n = go.name;
+        if (n.IndexOf("Small", System.StringComparison.OrdinalIgnoreCase) >= 0) cachedBarrelSmall = go;
+        else if (n.IndexOf("Medium", System.StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Med", System.StringComparison.OrdinalIgnoreCase) >= 0) cachedBarrelMedium = go;
+        else if (n.IndexOf("Large", System.StringComparison.OrdinalIgnoreCase) >= 0) cachedBarrelLarge = go;
+      }
+    }
+
+    // Fallback an toàn nếu thiếu biến thể
+    if (cachedBarrelSmall == null && breakableBarrelPrefabs != null && breakableBarrelPrefabs.Count > 0)
+      cachedBarrelSmall = breakableBarrelPrefabs[0];
+    if (cachedBarrelMedium == null) cachedBarrelMedium = cachedBarrelSmall;
+    if (cachedBarrelLarge == null) cachedBarrelLarge = cachedBarrelMedium;
+
+    hasCachedBarrelVariants = true;
+  }
+
+  /// <summary>
+  /// Lấy ngẫu nhiên prefab thùng gỗ theo tỷ lệ trọng số cấu hình (Small ~58%, Medium ~30%, Large ~12%)
+  /// </summary>
+  public GameObject GetRandomBreakableBarrel()
+  {
+    if (breakableBarrelPrefabs == null || breakableBarrelPrefabs.Count == 0) return null;
+
+    EnsureCachedBarrelVariants();
+
+    float totalWeight = barrelSmallWeight + barrelMediumWeight + barrelLargeWeight;
+    if (totalWeight <= 0f)
+    {
+      return breakableBarrelPrefabs[Random.Range(0, breakableBarrelPrefabs.Count)];
+    }
+
+    float roll = Random.value * totalWeight;
+
+    if (roll < barrelSmallWeight)
+    {
+      return cachedBarrelSmall ?? breakableBarrelPrefabs[0];
+    }
+    else if (roll < barrelSmallWeight + barrelMediumWeight)
+    {
+      return cachedBarrelMedium ?? breakableBarrelPrefabs[0];
+    }
+    else
+    {
+      return cachedBarrelLarge ?? breakableBarrelPrefabs[0];
+    }
+  }
+  #endregion
 
 }

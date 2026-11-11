@@ -39,6 +39,12 @@ namespace InfiniteLabyrinth.UI
     [Tooltip("Màu xanh băng giá cho thanh máu Boss Ice Golem")]
     [SerializeField] private Color frostHpColor = new Color(0.25f, 0.82f, 1.0f, 1.0f);
 
+    [Header("=== HIỆU ỨNG TRẠNG THÁI XUẤT HUYẾT (BLEED) ===")]
+    [Tooltip("Icon Giọt Máu báo hiệu trạng thái Xuất Huyết của Boss (BleedIcon)")]
+    [SerializeField] private GameObject bleedIcon;
+    private Coroutine bleedPulseRoutine = null;
+    private Vector3 bleedIconInitialScale = Vector3.one;
+
     [Header("=== CÀI ĐẶT BANNER TÊN XUẤT HIỆN BÊN PHẢI (RULE OF THIRDS) ===")]
     [Tooltip("Tọa độ xuất hiện ban đầu của Banner Tên ở nửa PHẢI màn hình (X dương = lệch phải; mặc định 420px lệch sang phải đối trọng với Boss bên trái)")]
     [SerializeField] private Vector2 bannerIntroAnchoredPos = new Vector2(420f, -540f);
@@ -134,6 +140,11 @@ namespace InfiniteLabyrinth.UI
           Transform border = bossHPRoot.Find("Border");
           if (border != null) hpBorderImage = border.GetComponent<Image>();
         }
+        if (bleedIcon == null)
+        {
+          Transform bIcon = bossHPRoot.Find("BleedIcon");
+          if (bIcon != null) bleedIcon = bIcon.gameObject;
+        }
       }
 
       if (nameGroupRoot == null)
@@ -223,6 +234,12 @@ namespace InfiniteLabyrinth.UI
       {
         hpFillImage.color = frostHpColor;
         hpFillImage.fillAmount = 1.0f;
+      }
+
+      if (bleedIcon != null)
+      {
+        bleedIconInitialScale = bleedIcon.transform.localScale;
+        bleedIcon.SetActive(false);
       }
 
       isNameAnchoredOnBar = false;
@@ -355,6 +372,7 @@ namespace InfiniteLabyrinth.UI
       {
         targetBossHealth.onHealthChanged.RemoveListener(OnBossHealthChanged);
         targetBossHealth.onDeath.RemoveListener(OnBossDefeated);
+        targetBossHealth.onBleedStateChanged.RemoveListener(OnBossBleedStateChanged);
       }
 
       targetBossHealth = bossHealth;
@@ -363,9 +381,51 @@ namespace InfiniteLabyrinth.UI
       {
         targetBossHealth.onHealthChanged.AddListener(OnBossHealthChanged);
         targetBossHealth.onDeath.AddListener(OnBossDefeated);
+        targetBossHealth.onBleedStateChanged.AddListener(OnBossBleedStateChanged);
+
+        if (targetBossHealth.IsBleeding)
+        {
+          OnBossBleedStateChanged(true);
+        }
 
         OnBossHealthChanged(targetBossHealth.CurrentHealth, targetBossHealth.MaxHealth);
         Debug.Log($"<color=cyan>[BossHUDController]</color> 🩸 Đã liên kết Boss Health ({targetBossHealth.CurrentHealth}/{targetBossHealth.MaxHealth} HP)");
+      }
+    }
+
+    private void OnBossBleedStateChanged(bool isBleeding)
+    {
+      if (bleedIcon == null) return;
+
+      if (isBleeding)
+      {
+        bleedIcon.SetActive(true);
+        if (bleedPulseRoutine != null) StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = StartCoroutine(BleedIconPulseRoutine());
+      }
+      else
+      {
+        if (bleedPulseRoutine != null)
+        {
+          StopCoroutine(bleedPulseRoutine);
+          bleedPulseRoutine = null;
+        }
+        bleedIcon.transform.localScale = bleedIconInitialScale;
+        bleedIcon.SetActive(false);
+      }
+    }
+
+    private IEnumerator BleedIconPulseRoutine()
+    {
+      while (true)
+      {
+        float pulseSpeed = 4.5f;
+        float scaleFactor = 1.0f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * pulseSpeed));
+        if (bleedIcon != null)
+        {
+          bleedIcon.transform.localScale = bleedIconInitialScale * scaleFactor;
+        }
+        yield return null;
       }
     }
 
@@ -396,6 +456,15 @@ namespace InfiniteLabyrinth.UI
 
     private void OnBossDefeated()
     {
+      if (bleedPulseRoutine != null)
+      {
+        StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = null;
+      }
+      if (bleedIcon != null)
+      {
+        bleedIcon.SetActive(false);
+      }
       StartCoroutine(FadeOutOnDeathRoutine());
     }
 
@@ -421,10 +490,16 @@ namespace InfiniteLabyrinth.UI
 
     private void OnDestroy()
     {
+      if (bleedPulseRoutine != null)
+      {
+        StopCoroutine(bleedPulseRoutine);
+        bleedPulseRoutine = null;
+      }
       if (targetBossHealth != null)
       {
         targetBossHealth.onHealthChanged.RemoveListener(OnBossHealthChanged);
         targetBossHealth.onDeath.RemoveListener(OnBossDefeated);
+        targetBossHealth.onBleedStateChanged.RemoveListener(OnBossBleedStateChanged);
       }
     }
   }

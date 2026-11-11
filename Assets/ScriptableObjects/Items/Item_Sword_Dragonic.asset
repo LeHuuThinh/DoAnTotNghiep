@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_dragonic
   itemName: Dragonfire Apocalypse
-  description: "The ultimate apocalyptic blade harboring a dragon soul, consuming all adversaries in scorching inferno (+105 Attack, +80 Max HP, +40 Stamina)."
+  description: "The ultimate apocalyptic blade harboring a dragon soul, consuming all adversaries in scorching inferno (+105 Attack)."
   icon: {fileID: 21300000, guid: e6acb36b2edd9584d9e02aa4fa223b3e, type: 3}
   itemType: 0
   rarity: 4
@@ -22,8 +22,15 @@ MonoBehaviour:
   goldValue: 2200
   bonusAttack: 105
   bonusDefense: 0
-  bonusHealth: 80
-  bonusStamina: 40
+  bonusHealth: 0
+  bonusStamina: 0
+  bonusCritRate: 0
+  bonusCritDamage: 0
+  bonusLifesteal: 0
+  spiritCostReduction: 0
+  staminaCostReduction: 0
+  spiritGainBonus: 0
+  moveSpeedBonus: 0
   healAmount: 0
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 4237316022004271442, guid: 6f7ef10c1202a884796dff132af3f915, type: 3}
