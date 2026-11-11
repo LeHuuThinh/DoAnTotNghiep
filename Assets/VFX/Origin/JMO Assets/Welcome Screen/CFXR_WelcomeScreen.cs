@@ -27,7 +27,7 @@ namespace CartoonFX
             };
         }
 
-        [MenuItem("Tools/Cartoon FX Remaster FREE - Welcome Screen")]
+        // [MenuItem("Tools/Cartoon FX Remaster FREE - Welcome Screen")]
         static void Open()
         {
             var window = GetWindow<CFXR_WelcomeScreen>(true, "Cartoon FX Remaster FREE", true);

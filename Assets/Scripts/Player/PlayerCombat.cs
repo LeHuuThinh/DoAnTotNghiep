@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -350,17 +350,19 @@ public class PlayerCombat : MonoBehaviour
   {
     if (playerStats == null) return;
 
+    float spiritGainMultiplier = 1f + (TotalSpiritGainBonus / 100f);
+
     if (isCounterAttackActive)
     {
-      playerStats.GainSpirit(playerStats.SpiritGainOnCounterHit);
+      playerStats.GainSpirit(playerStats.SpiritGainOnCounterHit * spiritGainMultiplier);
     }
     else if (isChargeAttackActive)
     {
-      playerStats.GainSpirit(playerStats.SpiritGainOnChargeHit);
+      playerStats.GainSpirit(playerStats.SpiritGainOnChargeHit * spiritGainMultiplier);
     }
     else
     {
-      playerStats.GainSpirit(playerStats.SpiritGainOnLightHit);
+      playerStats.GainSpirit(playerStats.SpiritGainOnLightHit * spiritGainMultiplier);
     }
   }
 
@@ -419,9 +421,18 @@ public class PlayerCombat : MonoBehaviour
     }
 
     // Đếm ngược Cooldown của Kỹ năng
-    if (skillETimer > 0f) skillETimer -= Time.deltaTime;
-    if (skillQTimer > 0f) skillQTimer -= Time.deltaTime;
-    if (skillRTimer > 0f) skillRTimer -= Time.deltaTime;
+    if (AdminCheatManager.IsNoCooldown)
+    {
+      skillETimer = 0f;
+      skillQTimer = 0f;
+      skillRTimer = 0f;
+    }
+    else
+    {
+      if (skillETimer > 0f) skillETimer -= Time.deltaTime;
+      if (skillQTimer > 0f) skillQTimer -= Time.deltaTime;
+      if (skillRTimer > 0f) skillRTimer -= Time.deltaTime;
+    }
 
   }
 
@@ -577,7 +588,13 @@ public class PlayerCombat : MonoBehaviour
     if (playerStats != null)
     {
       playerStats.RestoreStamina(playerStats.ParryWhiffCost);
-      playerStats.GainSpirit(playerStats.SpiritGainOnParrySuccess);
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.ParryStaminaRestore))
+      {
+        playerStats.RestoreStamina(25f);
+      }
+      float spiritGainMultiplier = 1f + (TotalSpiritGainBonus / 100f);
+      playerStats.GainSpirit(playerStats.SpiritGainOnParrySuccess * spiritGainMultiplier);
     }
 
     // Mở cửa sổ phản đòn
@@ -812,7 +829,7 @@ public class PlayerCombat : MonoBehaviour
   public bool TryCastSkillE()
   {
     if (!hasWeapon) return false;
-    if (skillETimer > 0f) return false;
+    if (!AdminCheatManager.IsNoCooldown && skillETimer > 0f) return false;
     if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillECost))
     {
       Debug.Log("<color=cyan>[Skill E]</color> Không đủ Spirit! Cần: " + playerStats.SkillECost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
@@ -831,7 +848,7 @@ public class PlayerCombat : MonoBehaviour
   public bool TryCastSkillQ()
   {
     if (!hasWeapon) return false;
-    if (skillQTimer > 0f) return false;
+    if (!AdminCheatManager.IsNoCooldown && skillQTimer > 0f) return false;
     if (playerStats != null && !playerStats.HasSpirit(playerStats.SkillQCost))
     {
       Debug.Log("<color=cyan>[Skill Q]</color> Không đủ Spirit! Cần: " + playerStats.SkillQCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
@@ -851,7 +868,7 @@ public class PlayerCombat : MonoBehaviour
   {
     if (!hasWeapon) return false;
     float rCost = playerStats != null ? playerStats.SkillRCost : 200f;
-    if (skillRTimer > 0f) return false;
+    if (!AdminCheatManager.IsNoCooldown && skillRTimer > 0f) return false;
     if (playerStats != null && !playerStats.HasSpirit(rCost))
     {
       Debug.Log("<color=red>[Skill Ult]</color> Chưa đủ Spirit để tung Tuyệt Kỹ! Cần: " + rCost + " (Hiện có: " + playerStats.CurrentSpirit + ")");
@@ -917,7 +934,7 @@ public class PlayerCombat : MonoBehaviour
     if (slash != null)
     {
       float bonus = TotalAttackBonus * skillEScalingMultiplier;
-      slash.Launch(transform.root, launchDir, bonus);
+      slash.Launch(transform.root, launchDir, bonus, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     }
   }
 
@@ -934,7 +951,7 @@ public class PlayerCombat : MonoBehaviour
     if (spell != null)
     {
       float bonus = TotalAttackBonus * skillQScalingMultiplier;
-      spell.Initialize(transform.root, bonus);
+      spell.Initialize(transform.root, bonus, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     }
   }
 
@@ -1195,7 +1212,37 @@ public class PlayerCombat : MonoBehaviour
         }
 
         // 3. Gây sát thương và đẩy văng (Knockback mạnh)
-        damageable.TakeDamage(totalDamage, hitPoint, hitDirection, ultKnockback, root, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillR);
+        bool isCrit = UnityEngine.Random.Range(0f, 100f) < (TotalCritRate + 25f);
+        float finalUltDmg = totalDamage * (isCrit ? (TotalCritDamage / 100f) : 1f);
+        damageable.TakeDamage(finalUltDmg, hitPoint, hitDirection, ultKnockback, root, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillR, isCrit);
+
+        if (isCrit && root != null)
+        {
+          if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+              InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.BleedingCrit))
+          {
+            if (targetHealth != null && !targetHealth.IsDead)
+            {
+              targetHealth.ApplyBleed(finalUltDmg * 0.3f, 3f, 3, root);
+            }
+          }
+          if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+              InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
+          {
+            var pc = root.GetComponent<PlayerController>();
+            if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+          }
+        }
+
+        if (TotalLifesteal > 0f)
+        {
+          Health playerHealth = root.GetComponent<Health>();
+          if (playerHealth != null && !playerHealth.IsDead)
+          {
+            float healAmount = Mathf.Min(finalUltDmg * (TotalLifesteal / 100f), 35f);
+            if (healAmount > 0.5f) playerHealth.Heal(healAmount);
+          }
+        }
       }
     }
 
@@ -1255,6 +1302,32 @@ public class PlayerCombat : MonoBehaviour
     ? InfiniteLabyrinth.Progression.PlayerProgression.Instance.BonusAttack
     : 0f;
 
+  [Header("=== CRITICAL & COMBAT STATS ===")]
+  [Tooltip("Tỷ lệ bạo kích cơ bản (%)")]
+  [SerializeField] private float baseCritRate = 5f;
+  [Tooltip("Sát thương bạo kích cơ bản (%): 150 = x1.5")]
+  [SerializeField] private float baseCritDamage = 150f;
+
+  public float TotalCritRate => baseCritRate + (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalCritRateBonus() : 0f);
+  public float TotalCritDamage => baseCritDamage + (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalCritDamageBonus() : 0f);
+  public float TotalLifesteal
+  {
+    get
+    {
+      float total = InfiniteLabyrinth.Inventory.InventoryManager.HasInstance ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalLifestealBonus() : 0f;
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.LowHealthBloodthirst))
+      {
+        if (health != null && health.MaxHealth > 0f && (health.CurrentHealth / health.MaxHealth) <= 0.5f)
+        {
+          total += 8f;
+        }
+      }
+      return total;
+    }
+  }
+  public float TotalSpiritGainBonus => InfiniteLabyrinth.Inventory.InventoryManager.HasInstance ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalSpiritGainBonus() : 0f;
+
   private float TotalAttackBonus => AttackBonus + ProgressionAttackBonus;
 
   // =========================================================================
@@ -1264,42 +1337,54 @@ public class PlayerCombat : MonoBehaviour
   // Đòn 1: Nhanh, mượt
   public void EnableAttack1Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
+    weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack1);
   }
 
   // Đòn 2: Nhanh, dứt khoát
   public void EnableAttack2Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
+    weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack2);
   }
 
   // Đòn 3: Đòn kết đầm tay
   public void EnableAttack3Hitbox()
   {
-    weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal);
+    weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack3);
   }
 
   // Charge Attack - Hit 1: Chém mở màn
   public void EnableChargeHit1Hitbox()
   {
-    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge);
+    float chargeDmg = chargeAttackDamage + TotalAttackBonus;
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+        InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.TitanCharge))
+    {
+      chargeDmg *= 1.25f;
+    }
+    weaponHitbox?.EnableHitbox(chargeDmg * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
   }
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm
   public void EnableChargeHit2Hitbox()
   {
-    weaponHitbox?.EnableHitbox((chargeAttackDamage + TotalAttackBonus) * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge);
+    float chargeDmg = chargeAttackDamage + TotalAttackBonus;
+    if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+        InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.TitanCharge))
+    {
+      chargeDmg *= 1.25f;
+    }
+    weaponHitbox?.EnableHitbox(chargeDmg * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
   }
 
   // Counter Attack: Nhát chém trừng phạt cực nặng
   public void EnableCounterAttackHitbox()
   {
-    weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Counter);
+    weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Counter, TotalCritRate + 15f, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
   }
 

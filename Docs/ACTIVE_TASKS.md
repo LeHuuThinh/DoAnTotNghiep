@@ -12,33 +12,33 @@
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **Giai đoạn 1** | Hoàn Thiện Trải Nghiệm Hầm Ngục (PCG & Combat) | 18 / 18 | ✅ Hoàn thành | **100%** | PCG, Đồ họa, Combat Souls-like, Boss Arena D-02, ARPG Damage & Floating Numbers |
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
-| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 9 / 10 | 🟡 **ĐANG THỰC HIỆN** | **90%** | **Xong Lò Rèn Haven RPG-08; Chuẩn bị làm Ma Trận Rơi Đồ RPG-09** |
-| **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 5 / 7 | 🟡 Đang hoàn thiện | **71%** | Xong Ice Golem, Red Ignis, ML Ice Golem; Chờ ML Red Ignis |
+| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 10 / 10 | ✅ **Hoàn thành** | **100%** | **Xong Cửa hàng RPG-07, Lò rèn RPG-08, Ma Trận Rơi Đồ RPG-09 & 51 Items** |
+| **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 5 / 7 | 🟡 **ĐANG THỰC HIỆN** | **71%** | Xong Ice Golem, Red Ignis, ML Ice Golem; Chờ ML Red Ignis |
 | **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 1 / 3 | ⚪ Chờ thực hiện | **33%** | Xong Bản đồ hầm ngục Fullscreen; Chờ Menu & Audio |
 | **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
 | **Giai đoạn 7** | Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng | 3 / 3 | ✅ Hoàn thành | **100%** | UsableSlot, Drag & Drop, Punch scale, Sửa lỗi Scene Cleanup |
 
 > **🔥 TRỌNG TÂM HIỆN TẠI (CURRENT FOCUS):**  
-> 1. **`Task RPG-08`:** Lò rèn Haven & Hệ thống Cường hóa / Chế tạo Thần binh (Blacksmith NPC) - ✅ **Hoàn thành**.  
-> 2. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện (Drop Tables từ Quái, Rương, Thùng).
+> 1. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện & 2 Đá Quý MonsterGem, BossGem - ✅ **Hoàn thành**.  
+> 2. **`Task BOSS-02 / ML-02`:** Hoàn thiện Huấn Luyện Học Máy Tăng Cường Cho Kiếm Sĩ Red Ignis (ML-Agents).
 
 ---
 
 ## 🚩 GIAI ĐOẠN 1: Hoàn Thiện Trải Nghiệm Chơi Hầm Ngục (Dungeon Playability)
 
 - [x] **CH-01: Commit Git Checkpoint hiện tại**
-  - Đã lưu các commit: `e6ec005` (feat: Add template for generation and Game optimization), `1dff1c6` (feat: Add random props and lighting), `929ce8b` (feat: Add second floor generation).
+  - Đã lưu các commit: e6ec005 (feat: Add template for generation and Game optimization), 1dff1c6 (feat: Add random props and lighting), 929ce8b (feat: Add second floor generation).
 
 - [x] **PCG-01: Hệ thống Templates kiến trúc tàn tích (8 Wall) & Tiểu cảnh đạo cụ (5 Props)**
-  - Tự động tính toán Bounding Box footprint của Prefabs template (`GetPrefabLocalBounds`).
+  - Tự động tính toán Bounding Box footprint của Prefabs template (GetPrefabLocalBounds).
   - Xoay 4 hướng (0, 90, 180, 270) và kiểm tra an toàn đường đi (tránh cửa, hành lang, chân cầu thang).
-  - Tự động đánh dấu diện tích chiếm dụng vào `forbiddenTiles` để props thường không bao giờ sinh đè lên.
-  - Tách toàn bộ `Light` và `ParticleSystem` (khói, lửa) sang nhóm `Lights` để không bị xóa khi gộp mesh.
+  - Tự động đánh dấu diện tích chiếm dụng vào forbiddenTiles để props thường không bao giờ sinh đè lên.
+  - Tách toàn bộ Light và ParticleSystem (khói, lửa) sang nhóm Lights để không bị xóa khi gộp mesh.
 
 - [x] **PCG-02: Trang trí Gác lửng Tầng 2 & Hệ thống Đuốc sàn tự do**
-  - Khớp chuẩn 100% cao độ tầng 2 (`mY = 8.0m`), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
-  - Cờ hiệu treo tường ngẫu nhiên cao thấp (`minBannerHeight = 2.2m`, `maxBannerHeight = 3.2m`).
-  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung `floorTorchYOffset = 0.5f` chống lún chân đế.
+  - Khớp chuẩn 100% cao độ tầng 2 (mY = 8.0m), triệt tiêu hoàn toàn lỗi đồ vật lơ lửng giữa 2 tầng.
+  - Cờ hiệu treo tường ngẫu nhiên cao thấp (minBannerHeight = 2.2m, maxBannerHeight = 3.2m).
+  - Đuốc sàn tự do trên cả sàn tầng 1 và tầng 2, bổ sung floorTorchYOffset = 0.5f chống lún chân đế.
   - Gộp Mesh tĩnh (Mesh Combine) theo từng nhóm Material thành 1 Draw Call duy nhất, lọc bỏ MeshCollider thừa cho cờ vải/thủy tinh.
 
 - [x] **REF-01: Tái cấu trúc phân rã `DungeonPropDecorator.cs` (1.700 dòng -> Clean Sub-modules)**
@@ -78,9 +78,9 @@
 
 - [x] **OPT-01: Tối ưu hóa hiệu năng URP & Hệ thống Ánh sáng (Phục hồi 40 FPS -> 110+ FPS)**
   - Triệt tiêu Shadow Caster Pass của Directional Light cường độ 0 (giải phóng 4 cascades 2048x2048 vô ích, tiết kiệm 4-6ms GPU).
-  - Viết lại `DungeonLightOptimizer.cs`: Culling kép cả `Light` lẫn `ParticleSystem` (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
+  - Viết lại DungeonLightOptimizer.cs: Culling kép cả Light lẫn ParticleSystem (khói & lửa của đuốc) khi ở xa, giải phóng hơn 160 emitter hạt.
   - Bổ sung cơ chế **Hysteresis Buffer (đệm 6m)** chống nhấp nháy đèn ở ranh giới.
-  - Mở rộng thanh trượt `Light Culling Distance` (10m - 150m, mặc định 80m) và đồng bộ `Camera Far Clip Plane` (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
+  - Mở rộng thanh trượt Light Culling Distance (10m - 150m, mặc định 80m) và đồng bộ Camera Far Clip Plane (200m) phù hợp hoàn hảo với hầm ngục quy mô lớn 300m x 322m.
 
 - [x] **OPT-02: Tối ưu hóa hiệu năng LandScene (Ngôi Làng Haven Village Hub - Nâng FPS từ ~65 lên 110+ FPS)**
   - Tối ưu hóa Địa hình: Kích hoạt GPU Instancing cho bề mặt địa hình (`drawInstanced = true`), cắt giảm cự ly render cây cối xuống `treeDistance = 200m` và billboard xuống 120m, nâng `heightmapPixelError = 10`, tắt `shadowCastingMode = Off` cho Terrain.
@@ -306,12 +306,68 @@
     - Khi trang bị đạt cấp `+5`, kích hoạt hiệu ứng hào quang vàng kim phát sáng quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
     - Tool `BlacksmithSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp vào Master Dashboard (Ctrl+Alt+D).
 
-- [ ] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables)**
-  - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `ChestInteractable.cs`, `BreakableProp.cs`, và `EnemyAIBase.cs`:
-    + 3 Thùng gỗ đập được: Thùng nhỏ (Vàng, Bình máu nhỏ), Thùng vừa (Vàng, Máu, Thể lực, Đá cường hóa), Thùng lớn (Vàng lớn, Máu lớn, Đá cường hóa, Thiết kiếm rỉ).
-    + 4 Quái Skeleton: Minion (Mảnh xương, Vàng), Warrior (Mảnh xương, Huy hiệu chiến binh, Đá cường hóa), Rogue (Mũi tên đen, Bình máu, Tiên dược thể lực), Mage (Bụi ma pháp, Đá cường hóa, Giấy da cổ).
-    + 3 Cấp độ Rương: Rương thường (Vàng, Máu nhỏ, Đá cường hóa, Đồ Uncommon), Rương hiếm (Vàng nhiều, Máu lớn, Đá cường hóa, Vũ khí Rare, Giáp sắt), Rương Boss (180-350 Vàng, Lõi Boss 100%, Mảnh cổ tự, Đá & Tinh thể, Đồ Epic/Legendary cực phẩm).
-  - Tích hợp công cụ 1-Click cập nhật toàn bộ Loot Tables trên scene và prefabs.
+- [x] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables & Gems Integration)**
+  - Mở rộng cơ sở dữ liệu lên **51 Items** với 2 vật phẩm đá quý bán lấy Vàng mới:
+    + `Monster Gem` (`mat_monster_gem` - Uncommon): Tinh thể năng lượng kết tinh từ quái vật hầm ngục, giá trị 80 Vàng (bán Shop được 32 Vàng/viên).
+    + `Boss Gem` (`mat_boss_gem` - Epic): Đại ma viên ngọc tỏa hào quang cực phẩm từ Trùm hầm ngục, giá trị 500 Vàng (bán Shop nhận ngay 200 Vàng/viên).
+  - Cập nhật tỷ lệ rơi đồ chuẩn xác theo tài liệu `ITEM_SYSTEM_DESIGN.md` vào `LootDropper.cs`, `LootTableSetupEditor.cs` và lưu trực tiếp vào toàn bộ 10 Prefabs:
+    + 3 Thùng gỗ đập được: Thùng nhỏ (70% Vàng 2-6, 25% Bình máu nhỏ), Thùng vừa (85% Vàng 8-18, 35% Máu/Thể lực, 15% Đá cường hóa), Thùng lớn (100% Vàng 18-35, 40% Máu lớn, 25% 1-2 Đá cường hóa, 5% Thiết kiếm rỉ).
+    + 4 Quái Skeleton: Minion (100% Vàng 3-8, 30% Mảnh xương, **20% Monster Gem**), Warrior (100% Vàng 8-16, 45% Mảnh xương, 20% Huy hiệu, 10% Đá cường hóa, **22% Monster Gem**), Rogue (100% Vàng 10-20, 40% Mũi tên đen, 20% Bình máu, 12% Tiên dược, **22% Monster Gem**), Mage (100% Vàng 16-32, 50% Bụi ma pháp, 25% Đá cường hóa, 8% Giấy da cổ, **25% Monster Gem**).
+    + 3 Cấp độ Rương: Rương thường (100% Vàng 30-75, 100% Máu nhỏ, 40% Đá cường hóa, 25% Đồ Uncommon), Rương hiếm (100% Vàng 80-180, 100% Máu lớn, 100% 2-3 Đá cường hóa, 50% Vũ khí Rare, 30% Thiết giáp sắt), Rương Boss Bục Đá 12m (100% Vàng 180-350, **100% 1 Boss Gem Epic**, 100% Lõi Băng Ice Core, 100% 2-3 Mảnh Cổ Tự, 100% 3-5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ, 100% 3 Máu lớn & 2 Năng lượng, 65% Đồ Epic/Legendary cực phẩm).
+  - Tích hợp công cụ 1-Click tự động phát hiện và cập nhật toàn bộ Prefabs lẫn Scene instances (`LootTableSetupEditor.cs`: MenuItem `Infinite Labyrinth -> RPG -> 2. Cấu Hình Ma Trận Rơi Đồ (Full Loot Drop Tables)` và Master Dashboard Ctrl+Alt+D).
+
+- [x] **RPG-10: Nâng Cấp Hệ Thống Chỉ Số Mở Rộng, Cơ Chế Chí Mạng, Hút Máu & Hiển Thị Icon Bạo Kích**
+  - **Mở rộng 7 chỉ số chiến đấu & tiện ích:** Bổ sung `CritRate`, `CritDamage`, `Lifesteal`, `SpiritCostReduction`, `StaminaCostReduction`, `SpiritGainBonus`, `MoveSpeedBonus` vào `ItemData.cs` và tổng hợp trong `InventoryManager.cs`.
+  - **Công thức Cường hóa Mới (Flat + %):** Cập nhật `BlacksmithUpgradeConfig.cs` sang công thức kết hợp:
+    + ATK Vũ khí: $+8\% \text{ ATK} + 4\text{ Flat ATK}$ mỗi cấp (Kiếm gỗ +1 tăng từ 10 -> 15 ATK, +5 đạt 34 ATK).
+    + DEF Giáp: $+8\% \text{ DEF} + 2\text{ Flat DEF}$; HP Giáp: $+8\% \text{ HP} + 12\text{ Flat HP}$ mỗi cấp.
+    + Dòng phụ: Tăng nhẹ $+3\%$ mỗi cấp bảo đảm cân bằng.
+  - **Tính toán Chiến Đấu (Combat Integration):**
+    + `WeaponHitbox.cs`: Tự động roll Chí Mạng khi va chạm quái, nhân hệ số Crit Damage, kích hoạt Hút Máu (Lifesteal) hồi phục HP người chơi (cap 25 HP/hit).
+    + `PlayerCombat.cs`: Tích hợp Crit & Lifesteal cho cả 6 đòn đánh cơ bản, Skill E (`ProjectileSlash`), Skill Q (`AoeSpell`), và Tuyệt kỹ Ult R (`ExecuteGiganticCleaveHitbox`). Tăng hiệu suất nạp Spirit theo `SpiritGainBonus`.
+    + `PlayerStats.cs`: Giảm tiêu hao Spirit chiêu thức E/Q/R theo `SpiritCostReduction` và giảm thể lực Sprint/Roll/Chém theo `StaminaCostReduction`.
+    + `PlayerController.cs`: Tăng tốc độ di chuyển, dạt ngang và chạy nước rút mượt mà theo `MoveSpeedBonus`.
+  - **Hiển Thị Số Sát Thương Chí Mạng & Icon (`DamageNumberItem.cs`):**
+    + Khi kích hoạt Crit: Phóng to số sát thương (Base Scale x1.35, Peak Pop x1.45, búng cao hơn).
+    + **Bảo toàn dải màu Gradient đặc trưng của từng loại đòn đánh** (Normal, Charge, Counter, Skill E, Skill Q, Skill R).
+    + Tự động kích hoạt icon `CritDmg.png` nằm bên trái con số, nhuộm màu (Color tint) đồng bộ theo màu đòn đánh và đồng bộ làm mờ Alpha fade-out.
+  - **Đồng Bộ Giao Diện:** Cập nhật `ItemDetailPopupUI.cs`, `BlacksmithUIController.cs` và `PlayerStatsPanelUI.cs` hiển thị trực quan các chỉ số mở rộng.
+
+- [x] **RPG-11: Hệ Thống Dòng Chỉ Số Động Ngẫu Nhiên (Procedural Affixes) & 10 Phù Phép Thức Tỉnh (Enchantment System +1/+3/+5)**
+  - **Dữ Liệu Động Cho Từng Trang Bị (`EquipmentAffixData.cs`):**
+    + Trang bị trong túi đồ và trên người không còn cố định mà sở hữu thực thể dữ liệu riêng (`InventorySlot.AffixData`).
+    + Roll dòng chính ngẫu nhiên (`rolledAttack`, `rolledDefense`, `rolledHealth`) dao động theo Rarity ($\pm 8\%\sim 25\%$).
+    + Roll dòng phụ động (`SubStatEntry`): Common (0-1 dòng), Uncommon (1-2 dòng), Rare (2 dòng), Epic (3 dòng), Legendary (4 dòng) từ bộ 11 thuộc tính chiến đấu.
+  - **Hệ Thống Phù Phép Thức Tỉnh Tại Mốc +1, +3, +5 (`EquipmentAffixGenerator.cs`):**
+    + Số lượng ô phù phép theo Rarity: Common/Uncommon (1 slot tại +1), Rare (2 slots tại +1, +3), Epic/Legendary (3 slots tại +1, +3, +5).
+    + **Bộ 10 Phù Phép Thần Binh Tích Hợp Toàn Diện Chiến Đấu:**
+      1. `BleedingCrit` (Xuất Huyết Bạo Kích): Đòn bạo kích gây chảy máu rút thêm 30% sát thương qua 3 giây.
+      2. `SkillECostReduction` (Tật Phong Trảm): Giảm thêm 30% Spirit riêng cho Kiếm Khí E.
+      3. `SkillQCostReduction` (Cuồng Lôi Bão): Giảm thêm 30% Spirit riêng cho Lốc Xoáy Q.
+      4. `SkillRCostReduction` (Diệt Thế Thần Uy): Giảm thêm 25% Spirit riêng cho Trảm Kích R.
+      5. `LowHealthBloodthirst` (Khát Máu Cuồng Nộ): Tăng thêm +8% Hút Máu khi HP dưới 50%.
+      6. `TitanCharge` (Kình Lực Titan): Đòn gồng Charge Attack tăng thêm +25% Sát thương.
+      7. `ParryStaminaRestore` (Bất Động Như Sơn): Phản đòn Parry thành công hồi ngay 25 Thể Lực.
+      8. `SprintWind` (Phong Hành Bộ): Sau khi Lướt/Lăn né tăng 20% Tốc độ di chuyển trong 2.5 giây.
+      9. `CritFrenzy` (Cuồng Trảm): Đòn bạo kích tăng 15% Tốc chạy trong 3.5 giây.
+      10. `SoulSiphon` (Thu Hồn Quyết): Tiêu diệt kẻ địch hồi phục ngay 15 Spirit và 15 HP.
+  - **Tích Hợp Chiến Đấu & Hiệu Ứng Trạng Thái:**
+    + `Health.cs`: Bổ sung cơ chế `ApplyBleed` (DoT damage ticks) và kích hoạt `SoulSiphon` khi Player kết liễu quái/boss.
+    + `PlayerController.cs`: Bổ sung động cơ `TriggerTemporarySpeedBoost` phục vụ `SprintWind` và `CritFrenzy`.
+    + `PlayerStats.cs`: Tự động nhận diện phù phép giảm Spirit cho từng kỹ năng riêng biệt.
+    + `WeaponHitbox.cs`, `ProjectileSlash.cs`, `AoeSpell.cs`, `PlayerCombat.cs`: Kích hoạt Bleed, Frenzy, Titan Charge, Bloodthirst theo thời gian thực.
+  - **Đồng Bộ Nguồn Thu Thập & Lò Rèn:**
+    + `WorldItemPickup.cs` & `LootDropper.cs`: Bảo lưu cấp cường hóa và dòng ngẫu nhiên khi vứt ra đất hoặc quái rơi đồ.
+    + `ShopUIController.cs`: Tự động roll thuộc tính ngẫu nhiên khi mua trang bị tại Cửa hàng.
+    + `BlacksmithUIController.cs`: Nâng cấp bảo lưu dòng phụ, tự động kích hoạt thức tỉnh phù phép khi đạt mốc +1, +3, +5.
+    + `ItemDetailPopupUI.cs`: Hiển thị phân khu Dòng Phụ và Phù Phép trực quan với mã màu tím huyền thoại (`#E040FB`), hiển thị rõ trạng thái Thức tỉnh / Khóa mốc cấp độ.
+  - **Giao Diện Bảng Chỉ Số Nhân Vật Hold-To-Peek (`PlayerStatsPanelUI.cs` - Mục 1):**
+    + Triển khai cơ chế Đè Chuột Soi Nhanh (Hold-to-Peek) qua `IPointerDownHandler`, `IPointerUpHandler`, `IPointerExitHandler`:
+      * Mặc định: Hiển thị `MainStats` (7 chỉ số: Attack, Defense, Max Health, Stamina, Crit Rate, Crit DMG, Lifesteal).
+      * Nhấp giữ chuột trên StatsPanel: Tự động chuyển sang `EffectStats` (4 chỉ số phụ trợ: Move Speed, Spirit Gain, Spirit Reduce, Stamina Reduce).
+      * Nhả chuột hoặc rời con trỏ: Tự động trả về `MainStats`.
+    + Đồng bộ gợi ý trực quan bằng tiếng Anh (`HintText`): Chuyển đổi linh hoạt giữa `[Hold to show effect stats]` và `[Release to return]`.
+    + Tự động dò tìm (Auto-Resolve) liên kết 100% Text `Value` của cả 2 bảng `MainStats` và `EffectStats` trong hierarchy.
 
 ---
 
@@ -342,6 +398,28 @@
   - Trọn bộ 4 kỹ năng chiến đấu (Phím 1-4): `AttackSlashRI` (chém dọc phóng đạn kiếm 90 độ), `HorizontalSlashRI` (chém ngang phóng đạn kiếm bay ngang), `JumpAttackRI` (nhảy tới dậm đất nổ lan AOE), `ComboAttackRI` (chém liên hoàn 4 nhát lướt kiếm).
   - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường, không can thiệp thư mục VFX gốc.
   - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Tool 1-Click cấu hình Prefab và Animator.
+
+- [x] **BOSS-04: Hệ Thống Vệt Kiếm IgnisSwordTrail.cs, Chuẩn Hóa Combo 4 Nhát & Cơ Chế Gồng Kiếm Lửa Phase 2** *(HOÀN THÀNH)*
+  - **Hệ Thống Vệt Kiếm Độc Quyền Trực Tiếp Trên Kiếm (IgnisSwordTrail.cs):**
+    + Loại bỏ cách spawn vệt particle tách rời ngoài không gian; thay vào đó gắn trực tiếp bộ tạo Mesh Trail động (Dynamic Ribbon Mesh) trên lưỡi kiếm (Ignis_Sword_Flame.prefab) với 2 điểm neo `tipTransform` (mũi kiếm) và `baseTransform` (gốc kiếm).
+    + Sử dụng thuật toán nội suy Catmull-Rom Spline (3 subdivisions), khử hiện tượng gãy khúc khi Boss vung kiếm ở tốc độ cao.
+    + Tích hợp bộ lọc khử giật rung lắc (`verticalJitterDamping` = 0.35f) và làm mượt chuyển động tay (motionSmoothing = 0.45f).
+    + Bảng màu Gradient đỏ thẫm/đen khói (Dark Crimson to Deep Red/Black), độ mờ dần và tan nhanh trong 0.16s (`trailDuration` = 0.16s), hòa trộn Alpha Blended chuẩn URP.
+    + Tự động kích hoạt vệt kiếm ngay từ đầu nhịp vung kiếm ở cả 4 kỹ năng (Skill 1..4), tự động thu hồi/tắt khi kết thúc chiêu hoặc khi Boss rơi vào trạng thái suy yếu (Weaken) / tử trận (Dead).
+  - **Chuẩn Hóa Hoạt Ảnh & Động Học Combo 4 Nhát (ComboAttackRI.anim & RedIgnisController.cs):**
+    + *Khắc phục lỗi lệch hướng Root Motion Yaw:* Sửa triệt để góc xoay ban đầu trong ComboAttackRI.anim bị lệch trái +57.3° đến +70.7°. Reset các keyframes góc quay về 0.0° ở đầu hoạt ảnh (t = 0.0s -> 0.40s) và cuối hoạt ảnh (t = 3.10s -> 3.63s).
+    + *Cơ chế Snap & Bám mục tiêu mượt mà:* Ngay khi kích hoạt đòn đánh, Boss lập tức hướng về phía Player qua Quaternion.LookRotation, đồng thời duy trì xoay bám theo Player mượt mà trong nhịp lấy đà.
+    + *Kiểm soát khoảng cách lướt (comboLungeDistance):* Bổ sung tham số tùy chỉnh khoảng cách lướt tới, mặc định comboLungeDistance = 0.0f để Boss đứng yên chém tại chỗ theo yêu cầu, loại bỏ hiện tượng bước chân trôi giật hoặc bị giật lùi vị trí sau khi chém.
+    + *Đồng bộ 4 nhịp gây sát thương:* Chuẩn hóa mảng comboHitTimers = { 0.40f, 0.95f, 1.55f, 2.20f } khớp tuyệt đối với 4 nhát chém kiếm trên khung hình hoạt ảnh, sát thương mỗi nhát 35 HP.
+  - **Cơ Chế Gồng Kiếm Lửa Thức Tỉnh Phase 2 (IgnisSwordFlame.cs & SwordCastingRI.anim):**
+    + Khi máu Boss tụt xuống dưới 50% (swordCastingHealthThreshold = 0.50f), Boss tạm ngưng di chuyển và kích hoạt hoạt ảnh gồng kiếm niệm hoả SwordCastingRI (2.0s).
+    + Kích hoạt hệ thống hiệu ứng ngọn lửa ma thuật IgnisSwordFlame.cs rực cháy dọc theo sống kiếm đến mũi kiếm (đã dọn sạch quầng lửa thô ở chuôi).
+    + Gia tăng vĩnh viễn +10 sát thương cuồng nộ (swordEnrageBonusDamage = 10.0f) cho toàn bộ các đòn đánh sau đó đến hết trận đấu.
+
+- [x] **BOSS-05: Tối Ưu Hóa Bộ Công Cụ Setup Editor & Bảo Toàn Thông Số Inspector Tùy Chỉnh (Non-Destructive Tooling)** *(HOÀN THÀNH)*
+  - **Triệt tiêu tự động chạy ngầm đè thông số ([InitializeOnLoadMethod]):** Gỡ bỏ thuộc tính [InitializeOnLoadMethod] khỏi SetupRedIgnisAnimatorAndPrefabs.cs và InspectAndFixRedIgnis.cs. Chỉ thực thi khi người dùng chủ động click menu trên thanh công cụ Unity.
+  - **Bảo toàn dữ liệu Inspector người dùng tùy chỉnh (SetDefaultFloatIfUnset):** Thay thế toàn bộ các lệnh gán cứng (như `attackSlashDelay` = 0.42f) bằng cơ chế kiểm tra giá trị hiện tại. Nếu người dùng đã điều chỉnh bất kỳ thông số nào (`attackSlashDelay`, comboLungeDistance, damage, cooldown...), script sẽ bảo toàn 100% giá trị tùy chỉnh, không bao giờ tự ý khôi phục về giá trị mặc định.
+  - **Khắc phục lỗi biên dịch CS0136:** Sửa triệt để lỗi khai báo biến cục bộ trùng tên clipSwordCasting và stateSwordCasting, bảo đảm dự án 100% sạch lỗi biên dịch và sẵn sàng vào Play Mode.
 
 - [x] **ML-01: Tích hợp Unity ML-Agents Package & Môi Trường Huấn Luyện**
   - Tích hợp gói chính thức `com.unity.ml-agents: 4.1.0` (khớp Unity 6 và Unity AI Inference 2.6.1).
@@ -385,22 +463,25 @@
 
 - [x] **ADM-01: Lập trình Bộ Não Điều Hành Cheat, Safe Teleport & ReGenerate Hầm Ngục (`AdminCheatManager.cs`)**
   - Singleton `AdminCheatManager.Instance` hỗ trợ toàn cục, tự phục hồi xuyên cảnh (`EnsureInstance()`).
-  - Ma trận Dịch chuyển tức thời an toàn (Safe Teleport Matrix): Teleport về Start Room, Đấu trường Boss, Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng tầng 2; Fallback thông minh sang địa danh Làng Haven khi ở `LandScene`.
-  - Tái sinh Hầm ngục tức thời trong Play Mode (`RegenerateDungeon`) dọn sạch map cũ sinh seed mới; Diệt quái bán kính 25m hoặc toàn bản đồ.
+  - Ma trận Dịch chuyển tức thời thích ứng Scene động (Dynamic Scene Awareness):
+    + **LandScene (Làng Haven):** Teleport về Chuông Làng (`bell`), Cổng Hầm Ngục (`Portal`), Tiệm Binh Khí (`EquipmentShop`), Tiệm Dược Liệu (`SuppliesShop`), Lò Rèn Haven (`BlackSmith`), Cối Xay Gió (`windmill`); Nút Fast Travel sang Hầm Ngục Tầng 1.
+    + **DungeonScene (Hầm Ngục PCG):** Teleport về Start Room, Đại Môn Boss, Đấu Trường Boss (Center), Key Shrine, Phòng Kho Báu (xoay vòng), Gác lửng tầng 2; Nút Về Làng Haven bảo toàn kho đồ.
+  - Quản lý Vòng Lặp & Bản Đồ: Quản lý Ngày (`AdvanceDay()` -> Day +1, `ResetDayTo1()`), Mở khóa 100% sương mù Bản đồ hầm ngục (`RevealDungeonMap()`), Mở toang Đại Môn Boss tức thì (`UnlockBossGate()`), Tái sinh hầm ngục trong Play Mode (`RegenerateDungeon`).
 
-- [x] **ADM-02: Bộ Cheats Chiến Đấu, Sinh Tồn & Tiến Trình RPG**
-  - Player God Mode (bất tử 100% trong `Health.cs`), Vô hạn Thể lực Stamina, Vô hạn Spirit nạp 4 sao kỹ năng, Hồi phục toàn diện Máu/Stamina/Spirit trong 1 click.
-  - Tăng tốc độ di chuyển siêu tốc (1.0x -> 1.8x -> 2.5x -> 3.5x); Đóng băng AI quái vật thành bia tập đánh; Sinh quái thử nghiệm 1v1.
-  - Bơm Vàng (+1.000 / +10.000), Bơm EXP (+500), Bơm Điểm Tiềm Năng (+10), Thêm Chìa Khóa Boss, Bình Máu, Hỏa Long Kiếm Legendary.
+- [x] **ADM-02: Bộ Cheats Chiến Đấu, Sinh Tồn & Bia Tập Đánh (Damage Dummy 10,000 HP)**
+  - Player God Mode (bất tử 100%), Vô hạn Thể lực Stamina, Vô hạn Spirit (4 sao năng lượng / 200 Spirit), Hồi phục toàn diện Máu/Stamina/Spirit.
+  - **No Cooldown Cheat (Hồi Chiêu 0s):** Ép timer hồi chiêu kỹ năng E, Q, R và bình máu UsableSlot về 0s, xả chiêu liên hoàn không độ trễ.
+  - **Bia Tập Đánh Thử Sát Thương (Damage Dummy 10,000 HP):** Sinh quái đứng yên trước mặt, tắt hoàn toàn AI (`EnemyAIBase.enabled = false`), khóa NavMeshAgent, cài đặt 10.000 HP & 0 DEF để test combo, sát thương và Floating Numbers; Nút hồi đầy máu bia và xóa sạch toàn bộ bia.
+  - Tăng tốc độ di chuyển siêu tốc (1.0x -> 1.8x -> 2.5x -> 3.5x); Đóng băng toàn bộ AI quái vật; Sinh quái thử nghiệm 1v1.
 
-- [x] **ADM-03: Giao Diện Người Dùng Admin Console UI (`AdminCheatUI.cs`) & Bật/Tắt Phím `~` / `F1` / `F2`**
-  - Chuẩn hóa 100% giao diện tiếng Anh, phong cách Dark RPG bán trong suốt (460x620px) với 5 Tab: Teleport, Dungeon, Player, Monsters, RPG & Loot.
+- [x] **ADM-03: Giao Diện Người Dùng Admin Console UI (`AdminCheatUI.cs`) & Chế Độ Sáng Tạo (Creative Mode 51 Items)**
+  - Chuẩn hóa 100% giao diện Dark RPG sang trọng (500x660px) với 5 Tab: Teleport (Scene-aware), World (Day & Cheats), Player (Stats & No CD), Monsters (10k Dummy & AI), Creative (Kho Sáng Tạo).
+  - **Cửa Sổ Sáng Tạo (Creative Mode - Toàn bộ 51 Items Game):** Ô tìm kiếm thời gian thực (`TMP_InputField`), 6 nút lọc phân loại nhanh (`ALL`, `WEAPON`, `ARMOR`, `POTION`, `MATERIAL`, `KEY/GOLD`), danh sách ScrollView hiển thị toàn bộ 51 items (bao gồm cả `MonsterGem` và `BossGem` mới thêm) kèm Icon, Tên theo màu Rarity, chỉ số, nút `[ +1 ]` và `[ +Max ]` nhận đồ thẳng vào túi.
   - Mở/đóng đồng bộ với Mini Debug Overlay góc trên-phải (FPS, tọa độ, location, cheat badges), Toast Notifications phản hồi tức thì.
-  - Tọa độ an toàn: Dịch chuyển lùi trước cửa phòng khởi đầu 4.5m và đứng trước Đại Môn Boss 5.5m nhìn thẳng cổng vòm.
 
 - [x] **ADM-04: Công Cụ Tự Động Hóa 1-Click Unity Editor & Đóng Gói Prefab**
   - MenuItem: `Infinite Labyrinth -> Admin -> 1. Setup Admin Cheat Console (Hotkey ~)`.
-  - Tự động dựng toàn bộ Canvas UI, cài đặt EventSystem, nối dây 100% nút bấm và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
+  - Tự động dựng toàn bộ Canvas UI, cài đặt EventSystem, nối dây 100% nút bấm, tự động nạp danh mục 51 items và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
 
 - [x] **DEV-01: Tái Cấu Trúc Toàn Diện Hệ Thống Editor & Master Control Center (`ProjectDashboardEditor.cs`)**
   - Gom toàn bộ công cụ phát triển, setup 1-click vào một cửa sổ trung tâm duy nhất: `ProjectDashboardEditor` (phím tắt `Ctrl + Alt + D` hoặc menu `Infinite Labyrinth -> 🚀 Master Control Center (Dashboard)`).

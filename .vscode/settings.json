@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "DoAnTotNghiep.slnx"
+    "dotnet.defaultSolution": "Infinite Labyrinth.slnx"
 }

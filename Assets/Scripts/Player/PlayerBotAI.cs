@@ -992,16 +992,16 @@ public class PlayerBotAI : MonoBehaviour
         {
             string hpText = (playerHealth != null) ? $"{playerHealth.CurrentHealth:0}/{playerHealth.MaxHealth:0} HP" : "200/200 HP";
             GUI.color = new Color(0.2f, 1f, 0.4f, 0.95f);
-            GUI.Box(new Rect(20, 20, 460, 55), 
+            GUI.Box(new Rect(20, 20, 480, 55), 
                 $"🤖 [BOT PLAYER ĐANG TỰ ĐÁNH (SPARRING)] - Máu: {hpText}\n" +
-                $"Trạng thái: {currentState} | [B]: TẮT BOT | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
+                $"Trạng thái: {currentState} | [B]: TẮT BOT | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
         }
         else
         {
             string hpText = (playerHealth != null) ? $"{playerHealth.CurrentHealth:0}/{playerHealth.MaxHealth:0} HP" : "200/200 HP";
             GUI.color = new Color(1f, 1f, 1f, 0.85f);
-            GUI.Box(new Rect(20, 20, 420, 36), 
-                $"🎮 Thủ công ({hpText}) | [B]: Bật Bot | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
+            GUI.Box(new Rect(20, 20, 440, 36), 
+                $"🎮 Thủ công ({hpText}) | [B]: Bật Bot | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
         }
 
         GUI.color = Color.white;

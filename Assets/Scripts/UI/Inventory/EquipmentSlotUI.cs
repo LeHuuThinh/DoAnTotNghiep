@@ -11,7 +11,8 @@ namespace InfiniteLabyrinth.UI
   /// Quản lý ô trang bị (Vũ khí / Giáp) ở cửa sổ bên trái
   /// </summary>
   public class EquipmentSlotUI : MonoBehaviour,
-                                 IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+                                 IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler,
+                                 IPointerClickHandler
   {
     [Header("=== CẤU HÌNH LOẠI Ô ===")]
     [Tooltip("Loại trang bị của ô này (Weapon hoặc Armor)")]
@@ -47,6 +48,8 @@ namespace InfiniteLabyrinth.UI
 
     public ItemType SlotType => slotType;
     public ItemData EquippedItem { get; private set; }
+    public int UpgradeLevel => (!InventoryManager.HasInstance) ? 0 : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponUpgradeLevel : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorUpgradeLevel : 0));
+    public EquipmentAffixData AffixData => (!InventoryManager.HasInstance) ? null : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponAffix : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorAffix : null));
     public bool IsEmpty => EquippedItem == null;
 
     public Sprite RarityBgSprite => rarityBg != null ? rarityBg.sprite : null;
@@ -54,6 +57,7 @@ namespace InfiniteLabyrinth.UI
     public Sprite BorderSprite => transform.Find("Border")?.GetComponent<Image>()?.sprite;
 
     public event Action<EquipmentSlotUI> OnClicked;
+    public event Action<EquipmentSlotUI> OnRightClicked;
 
     private bool isInitialized = false;
 
@@ -270,8 +274,17 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+      if (eventData.button == PointerEventData.InputButton.Right)
+      {
+        OnRightClicked?.Invoke(this);
+      }
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
+      if (eventData.button != PointerEventData.InputButton.Left) return;
       if (IsEmpty) return;
       InventoryDragDropController.Instance?.StartDrag(this, eventData);
     }

@@ -52,19 +52,19 @@ public class IceGolemController : MonoBehaviour
 
     [Header("=== THỜI GIAN HỒI CHIÊU (COOLDOWNS) ===")]
     [Tooltip("Thời gian hồi chiêu Attack 1 (đấm thường)")]
-    [SerializeField] private float attack1Cooldown = 15.0f;
+    [SerializeField] private float attack1Cooldown = 1.8f;
     [Tooltip("Thời gian hồi chiêu GumoGumo (đấm đất liên hoàn)")]
-    [SerializeField] private float gumoGumoCooldown = 15.0f;
+    [SerializeField] private float gumoGumoCooldown = 10.0f;
     [Tooltip("Thời gian hồi chiêu Flame Breath (thổi lửa)")]
-    [SerializeField] private float flameBreathCooldown = 15.0f;
+    [SerializeField] private float flameBreathCooldown = 14.0f;
     [Tooltip("Thời gian hồi chiêu Jump Attack (nhảy bổ vồ tới)")]
-    [SerializeField] private float jumpAttackCooldown = 15.0f;
+    [SerializeField] private float jumpAttackCooldown = 12.0f;
     [Tooltip("Thời gian hồi chiêu Run Attack (chạy húc tới - Nút 5)")]
-    [SerializeField] private float runAttackCooldown = 15.0f;
+    [SerializeField] private float runAttackCooldown = 9.0f;
     [Tooltip("Thời gian hồi chiêu AttackLT (combo 3 đòn - Nút 6)")]
-    [SerializeField] private float attackLTCooldown = 15.0f;
+    [SerializeField] private float attackLTCooldown = 5.0f;
     [Tooltip("Thời gian hồi chiêu Ice Ball (ném cầu tím - Nút 7)")]
-    [SerializeField] private float iceBallCooldown = 15.0f;
+    [SerializeField] private float iceBallCooldown = 14.0f;
     [Tooltip("Khoảng cách giãn cách tối thiểu giữa 2 kỹ năng lớn liên tiếp (giây) - Tránh spam chiêu")]
     [SerializeField] private float specialSkillGlobalCooldown = 3.0f;
 

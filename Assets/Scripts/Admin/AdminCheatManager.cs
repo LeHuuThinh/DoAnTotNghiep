@@ -1,19 +1,21 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using InfiniteLabyrinth.Inventory;
 using InfiniteLabyrinth.Progression;
 
 /// <summary>
 /// Central Developer Cheat & Admin Management Service.
 /// Provides instant access to:
-/// 1. Safe Teleport Matrix (Start Entrance, Boss Arena Gate, Key Shrine, Treasure Rooms, Mezzanine 8m)
-/// 2. Real-time Procedural Dungeon ReGeneration in Play Mode
-/// 3. Combat & Monster Manipulation (Kill Radius, Kill All, Freeze AI Dummies, 1v1 Spawner)
-/// 4. Player God Mode & Cheats (Invulnerability, Infinite Stamina, Infinite Spirit, Full Restore, Super Speed)
-/// 5. RPG Progression & Economy (Boss Key, Gold, EXP, Attribute Points, Potions, Legendary Weapons)
+/// 1. Safe Teleport Matrix (Dynamic LandScene Village Hub & DungeonScene PCG Landmarks)
+/// 2. Scene Controls & Progression (Day System, Fast Travel, Map Reveal, Boss Gate Unlock, ReGen Dungeon)
+/// 3. Combat, Dummies & Monster Manipulation (10,000 HP Damage Dummy, Freeze AI, Kill Radius, 1v1 Spawner)
+/// 4. Player God Mode & Cheats (God Mode, Inf Stamina, Inf Spirit, No Cooldown, Full Restore, Super Speed)
+/// 5. Creative Mode (All 51 Game Items, Gold, EXP, Attribute Points)
 /// </summary>
 public class AdminCheatManager : MonoBehaviour
 {
@@ -60,9 +62,14 @@ public class AdminCheatManager : MonoBehaviour
   public static bool IsInfiniteStamina { get; set; } = false;
 
   /// <summary>
-  /// Infinite Spirit flag. 3 Spirit Stars (150/150) remain full to spam skills E and Q.
+  /// Infinite Spirit flag. 4 Spirit Stars (200/200) remain full to spam skills E, Q and Ult R.
   /// </summary>
   public static bool IsInfiniteSpirit { get; set; } = false;
+
+  /// <summary>
+  /// No Cooldown flag. Skills E, Q, R and quick-slot items have 0 cooldown and can be used continuously.
+  /// </summary>
+  public static bool IsNoCooldown { get; set; } = false;
 
   /// <summary>
   /// Freeze Enemy AI flag. Turns all enemies into stationary training dummies.
@@ -70,15 +77,11 @@ public class AdminCheatManager : MonoBehaviour
   public static bool IsEnemyAIFrozen { get; set; } = false;
 
   [Header("Hotkey Settings")]
-  [Tooltip("Listen for ~ (Backquote) or F1 to toggle the Admin Console")]
+  [Tooltip("Listen for ~ (Backquote), F1, or F2 to toggle the Admin Console")]
   public bool enableHotkeys = true;
 
-  [Header("Item Data References (Auto-loaded from ScriptableObjects/Items)")]
-  public ItemData dungeonKeyItem;
-  public ItemData healthPotionItem;
-  public ItemData dragonicSwordItem;
-  public ItemData leatherArmorItem;
-  public ItemData upgradeStoneItem;
+  [Header("All 51 Game Items Database (Creative Mode)")]
+  public List<ItemData> allGameItems = new List<ItemData>();
 
   [Header("Monster Test Prefabs")]
   public GameObject skeletonWarriorPrefab;
@@ -93,6 +96,9 @@ public class AdminCheatManager : MonoBehaviour
   [SerializeField] private PlayerStats cachedPlayerStats;
   [SerializeField] private Transform cachedPlayerTransform;
 
+  // Active spawned damage test dummies
+  private readonly List<GameObject> activeDummies = new List<GameObject>();
+
   // Events for UI and Notification Feed
   public event Action<bool> OnMenuToggled;
   public event Action<string> OnCheatExecuted;
@@ -101,6 +107,17 @@ public class AdminCheatManager : MonoBehaviour
   private int currentMezzanineIndex = 0;
   private readonly float[] speedOptions = new float[] { 1.0f, 1.8f, 2.5f, 3.5f };
   private int currentSpeedIndex = 0;
+
+  public bool IsLandScene
+  {
+    get
+    {
+      string sceneName = SceneManager.GetActiveScene().name;
+      return sceneName == "LandScene";
+    }
+  }
+
+  public bool IsDungeonScene => !IsLandScene;
 
   private void Awake()
   {
@@ -205,7 +222,7 @@ public class AdminCheatManager : MonoBehaviour
 
   #endregion
 
-  #region Auto References
+  #region Auto References & Database Population
 
   public bool EnsurePlayerReferences()
   {
@@ -235,17 +252,7 @@ public class AdminCheatManager : MonoBehaviour
   public void EnsureItemAndEnemyPrefabs()
   {
 #if UNITY_EDITOR
-    if (dungeonKeyItem == null || dungeonKeyItem.Icon == null || dungeonKeyItem.Icon.name == "Spirit_Filled")
-      dungeonKeyItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Key_Dungeon.asset");
-    if (healthPotionItem == null)
-      healthPotionItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Potion_Health.asset");
-    if (dragonicSwordItem == null)
-      dragonicSwordItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Sword_Dragonic.asset");
-    if (leatherArmorItem == null)
-      leatherArmorItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Armor_Leather.asset");
-    if (upgradeStoneItem == null)
-      upgradeStoneItem = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>("Assets/ScriptableObjects/Items/Item_Stone_Upgrade.asset");
-
+    // 1. Load monster test prefabs
     if (skeletonWarriorPrefab == null)
       skeletonWarriorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Monsters/SkeletonWarrior.prefab");
     if (skeletonMinionPrefab == null)
@@ -254,6 +261,30 @@ public class AdminCheatManager : MonoBehaviour
       skeletonRoguePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Monsters/SkeletonRogue.prefab");
     if (skeletonMagePrefab == null)
       skeletonMagePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Monsters/SkeletonMage.prefab");
+
+    // 2. Load all 51 items into Creative Mode database
+    if (allGameItems == null || allGameItems.Count == 0)
+    {
+      allGameItems = new List<ItemData>();
+      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData", new[] { "Assets/ScriptableObjects/Items" });
+      foreach (var guid in guids)
+      {
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+        var item = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
+        if (item != null && !allGameItems.Contains(item))
+        {
+          allGameItems.Add(item);
+        }
+      }
+      allGameItems.Sort((a, b) =>
+      {
+        int typeComp = a.ItemType.CompareTo(b.ItemType);
+        if (typeComp != 0) return typeComp;
+        int rareComp = b.Rarity.CompareTo(a.Rarity);
+        if (rareComp != 0) return rareComp;
+        return string.Compare(a.ItemName, b.ItemName, StringComparison.Ordinal);
+      });
+    }
 #endif
 
     // Fallback to ProceduralEnemySpawner if available
@@ -269,7 +300,7 @@ public class AdminCheatManager : MonoBehaviour
 
   #endregion
 
-  #region 1. SAFE TELEPORT MATRIX
+  #region 1. SAFE TELEPORT MATRIX (LANDSCENE & DUNGEONSCENE)
 
   /// <summary>
   /// Teleports player safely: samples closest NavMesh floor point, temporarily disables CharacterController, and applies rotation.
@@ -308,25 +339,92 @@ public class AdminCheatManager : MonoBehaviour
     return true;
   }
 
-  /// <summary>
-  /// Teleports player slightly behind the Start Doorway (inside the entrance lobby, facing through the door into the dungeon).
-  /// In LandScene / Village Hub, teleports to the Village Bell (Central Respawn point).
-  /// </summary>
+  // ==========================================
+  // A. LANDSCENE (VILLAGE HAVEN) TELEPORTS
+  // ==========================================
+
+  public bool TeleportToVillageBell()
+  {
+    GameObject bellObj = GameObject.Find("bell") ?? GameObject.Find("Bell");
+    if (bellObj != null)
+    {
+      return TeleportPlayer(bellObj.transform.position + Vector3.back * 2.5f, "Village Bell (Central Respawn)");
+    }
+    NotifyWarning("Village Bell not found in current scene!");
+    return false;
+  }
+
+  public bool TeleportToVillagePortal()
+  {
+    GameObject portalObj = GameObject.Find("Portal") ?? GameObject.Find("portal");
+    if (portalObj == null)
+    {
+      var pc = FindFirstObjectByType<PortalController>();
+      if (pc != null) portalObj = pc.gameObject;
+    }
+    if (portalObj != null)
+    {
+      return TeleportPlayer(portalObj.transform.position + Vector3.back * 3.5f, "Village Dungeon Portal");
+    }
+    NotifyWarning("Village Portal not found in current scene!");
+    return false;
+  }
+
+  public bool TeleportToEquipmentShop()
+  {
+    GameObject shopObj = GameObject.Find("EquipmentShop") ?? GameObject.Find("weapons_shop");
+    if (shopObj != null)
+    {
+      return TeleportPlayer(shopObj.transform.position + Vector3.back * 3.5f, "Equipment & Armaments Shop");
+    }
+    NotifyWarning("Equipment Shop not found in current scene!");
+    return false;
+  }
+
+  public bool TeleportToSuppliesShop()
+  {
+    GameObject shopObj = GameObject.Find("SuppliesShop") ?? GameObject.Find("potion_shop");
+    if (shopObj != null)
+    {
+      return TeleportPlayer(shopObj.transform.position + Vector3.back * 3.5f, "Supplies & Potions Shop");
+    }
+    NotifyWarning("Supplies Shop not found in current scene!");
+    return false;
+  }
+
+  public bool TeleportToBlacksmith()
+  {
+    GameObject smithyObj = GameObject.Find("BlackSmith") ?? GameObject.Find("smithy");
+    if (smithyObj != null)
+    {
+      return TeleportPlayer(smithyObj.transform.position + Vector3.forward * 4.5f, "Village Blacksmith (Forge & Upgrade)");
+    }
+    NotifyWarning("Blacksmith not found in current scene!");
+    return false;
+  }
+
+  public bool TeleportToWindmill()
+  {
+    GameObject windmillObj = GameObject.Find("windmill") ?? GameObject.Find("Windmill");
+    if (windmillObj != null)
+    {
+      return TeleportPlayer(windmillObj.transform.position + Vector3.up * 7.5f + Vector3.forward * 3.5f, "Windmill Lookout (Scenic)");
+    }
+    NotifyWarning("Windmill not found in current scene!");
+    return false;
+  }
+
+  // ==========================================
+  // B. DUNGEONSCENE PCG TELEPORTS
+  // ==========================================
+
   public bool TeleportToStartRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      // Fallback for LandScene: Village Bell
-      GameObject bellObj = GameObject.Find("bell");
-      if (bellObj != null)
-      {
-        return TeleportPlayer(bellObj.transform.position + Vector3.back * 2.5f, "Village Bell (Central Hub)");
-      }
-      NotifyWarning("Start Room location not found (Dungeon data not initialized)!");
-      return false;
+      return TeleportToVillageBell();
     }
 
-    // 1. If startDoorMarker is available, position player 4.5m behind the doorway facing into the door
     if (DungeonManager.Instance.generator != null && DungeonManager.Instance.generator.startDoorMarker != null)
     {
       Transform marker = DungeonManager.Instance.generator.startDoorMarker;
@@ -334,7 +432,6 @@ public class AdminCheatManager : MonoBehaviour
       return TeleportPlayer(spawnBehindDoor, "Start Room Entrance (Behind Door)", marker.rotation);
     }
 
-    // 2. Fallback to startRoom bounds
     var data = DungeonManager.Instance.currentData;
     float tSize = (DungeonManager.Instance.generator != null) ? DungeonManager.Instance.generator.tileSize : 2f;
     if (data.startRoom != null)
@@ -351,22 +448,11 @@ public class AdminCheatManager : MonoBehaviour
     return false;
   }
 
-  /// <summary>
-  /// Teleports player slightly behind the Boss Gate (5.5m South on the Avenue, facing North towards the Grand Gate).
-  /// In LandScene / Village Hub, teleports to the Village Portal.
-  /// </summary>
   public bool TeleportToBossRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      // Fallback for LandScene: Village Portal
-      GameObject portalObj = GameObject.Find("Portal");
-      if (portalObj != null)
-      {
-        return TeleportPlayer(portalObj.transform.position + Vector3.back * 3.5f, "Village Portal");
-      }
-      NotifyWarning("Boss Room not found (Dungeon data not initialized)!");
-      return false;
+      return TeleportToVillagePortal();
     }
 
     var data = DungeonManager.Instance.currentData;
@@ -374,38 +460,48 @@ public class AdminCheatManager : MonoBehaviour
 
     if (data.bossRoom != null)
     {
-      // Boss Grand Gate is at South edge of boss arena:
-      // X = avenue center, Z = bossRoom.bounds.y * tileSize.
       float gateX = (data.bossCorridor.width > 0)
         ? (data.bossCorridor.x + data.bossCorridor.width / 2f) * tSize
         : (data.bossRoom.bounds.x + data.bossRoom.bounds.width / 2f) * tSize;
       float gateZ = data.bossRoom.bounds.y * tSize;
 
-      // Position 5.5m behind the gate on the Avenue, facing North towards the gate
       Vector3 spawnBehindGate = new Vector3(gateX, 0.5f, gateZ - 5.5f);
-      return TeleportPlayer(spawnBehindGate, $"Boss Arena (Before Grand Gate)", Quaternion.identity);
+      return TeleportPlayer(spawnBehindGate, "Boss Arena (Before Grand Gate)", Quaternion.identity);
     }
 
     NotifyWarning("Boss Room not found in current dungeon!");
     return false;
   }
 
-  /// <summary>
-  /// Teleports player right in front of the Key Shrine in the dead-end shrine room.
-  /// In LandScene / Village Hub, teleports to the Weapons Shop.
-  /// </summary>
+  public bool TeleportInsideBossArena()
+  {
+    if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
+    {
+      NotifyWarning("Boss Room not found (Dungeon data not initialized)!");
+      return false;
+    }
+
+    var data = DungeonManager.Instance.currentData;
+    if (data.bossRoom != null)
+    {
+      float tSize = (DungeonManager.Instance.generator != null) ? DungeonManager.Instance.generator.tileSize : 2f;
+      Vector3 center = new Vector3(
+        (data.bossRoom.bounds.x + data.bossRoom.bounds.width / 2f) * tSize,
+        0.5f,
+        (data.bossRoom.bounds.y + data.bossRoom.bounds.height / 2f) * tSize
+      );
+      return TeleportPlayer(center, "Inside Boss Arena (Center)");
+    }
+
+    NotifyWarning("Boss Room not found in current dungeon!");
+    return false;
+  }
+
   public bool TeleportToKeyRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      // Fallback for LandScene: Weapons Shop
-      GameObject shopObj = GameObject.Find("weapons_shop");
-      if (shopObj != null)
-      {
-        return TeleportPlayer(shopObj.transform.position + Vector3.back * 3.5f, "Weapons Shop");
-      }
-      NotifyWarning("Key Shrine Room not found in dungeon!");
-      return false;
+      return TeleportToEquipmentShop();
     }
 
     var data = DungeonManager.Instance.currentData;
@@ -431,22 +527,11 @@ public class AdminCheatManager : MonoBehaviour
     return false;
   }
 
-  /// <summary>
-  /// Cycles teleportation through each procedural Treasure Room.
-  /// In LandScene / Village Hub, teleports to the Village Smithy (Blacksmith).
-  /// </summary>
   public bool TeleportToTreasureRoom()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      // Fallback for LandScene: Village Smithy (Blacksmith)
-      GameObject smithyObj = GameObject.Find("smithy");
-      if (smithyObj != null)
-      {
-        return TeleportPlayer(smithyObj.transform.position + Vector3.forward * 4.5f, "Village Smithy (Blacksmith)");
-      }
-      NotifyWarning("Treasure Room not found in current dungeon!");
-      return false;
+      return TeleportToBlacksmith();
     }
 
     var data = DungeonManager.Instance.currentData;
@@ -476,22 +561,11 @@ public class AdminCheatManager : MonoBehaviour
     return TeleportPlayer(center, $"Treasure Room #{target.id} ({currentTreasureIndex + 1}/{treasureRooms.Count})");
   }
 
-  /// <summary>
-  /// Cycles teleportation onto the 2nd Floor Mezzanines (height 8m).
-  /// In LandScene / Village Hub, teleports to the Windmill Lookout.
-  /// </summary>
   public bool TeleportToMezzanine()
   {
     if (DungeonManager.Instance == null || DungeonManager.Instance.currentData == null)
     {
-      // Fallback for LandScene: Windmill Lookout
-      GameObject windmillObj = GameObject.Find("windmill");
-      if (windmillObj != null)
-      {
-        return TeleportPlayer(windmillObj.transform.position + Vector3.up * 7.5f + Vector3.forward * 3.5f, "Windmill Lookout (Elevated)");
-      }
-      NotifyWarning("Mezzanine not found in current dungeon!");
-      return false;
+      return TeleportToWindmill();
     }
 
     var data = DungeonManager.Instance.currentData;
@@ -523,7 +597,101 @@ public class AdminCheatManager : MonoBehaviour
 
   #endregion
 
-  #region 2. RUNTIME DUNGEON REGENERATION
+  #region 2. SCENE CONTROLS & PROGRESSION CHEATS
+
+  public void FastTravelToDungeon()
+  {
+    if (IsOpen) CloseMenu();
+    NotifySuccess("🚀 Traveling to Dungeon Floor 1...");
+    if (InfiniteLabyrinth.UI.LoadingScreenManager.HasInstance)
+    {
+      InfiniteLabyrinth.UI.LoadingScreenManager.Instance.LoadScene("DungeonScene", 1);
+    }
+    else
+    {
+      SceneManager.LoadScene("DungeonScene");
+    }
+  }
+
+  public void FastTravelToVillage()
+  {
+    if (IsOpen) CloseMenu();
+    NotifySuccess("🏡 Returning to Haven Village...");
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.RespawnAtVillage();
+    }
+    else if (InfiniteLabyrinth.UI.LoadingScreenManager.HasInstance)
+    {
+      InfiniteLabyrinth.UI.LoadingScreenManager.Instance.LoadScene("LandScene", 1);
+    }
+    else
+    {
+      SceneManager.LoadScene("LandScene");
+    }
+  }
+
+  public void AdvanceDay()
+  {
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.AdvanceDay();
+      NotifySuccess($"🌅 [Day System] Advanced to Day {GameManager.Instance.CurrentDay}!");
+    }
+    else
+    {
+      NotifyWarning("GameManager not found in scene!");
+    }
+  }
+
+  public void ResetDayTo1()
+  {
+    if (GameManager.HasInstance)
+    {
+      GameManager.Instance.SetDay(1);
+      NotifySuccess("⏪ [Day System] Reset Day counter back to Day 1!");
+    }
+    else
+    {
+      NotifyWarning("GameManager not found in scene!");
+    }
+  }
+
+  public void RevealDungeonMap()
+  {
+    if (InfiniteLabyrinth.UI.DungeonMapManager.Instance != null)
+    {
+      InfiniteLabyrinth.UI.DungeonMapManager.Instance.RevealAll();
+      NotifySuccess("🗺️ [Map] Entire Dungeon map revealed! Fog of war cleared.");
+    }
+    else
+    {
+      NotifyWarning("DungeonMapManager not found in scene!");
+    }
+  }
+
+  public void UnlockBossGate()
+  {
+    if (InfiniteLabyrinth.Interaction.BossGateController.Instance != null)
+    {
+      InfiniteLabyrinth.Interaction.BossGateController.Instance.ForceOpenGate();
+      NotifySuccess("🗝️ [Boss Gate] Force unlocked Grand Gate into Boss Arena!");
+    }
+    else
+    {
+      // Fallback: Add Boss Key to inventory
+      ItemData keyItem = allGameItems.Find(i => i.Id == "dungeon_key" || i.ItemType == ItemType.Key);
+      if (keyItem != null && InventoryManager.HasInstance)
+      {
+        InventoryManager.Instance.AddItem(keyItem, 1);
+        NotifySuccess("🗝️ [Boss Gate] Added Boss Key to inventory!");
+      }
+      else
+      {
+        NotifyWarning("BossGateController not found in current scene!");
+      }
+    }
+  }
 
   public bool RegenerateDungeon(bool keepSeed = false)
   {
@@ -533,15 +701,9 @@ public class AdminCheatManager : MonoBehaviour
       return false;
     }
 
-    // Đóng Admin Console để người chơi chiêm ngưỡng trọn vẹn màn hình Loading
-    if (IsOpen)
-    {
-      CloseMenu();
-    }
-
+    if (IsOpen) CloseMenu();
     NotifySuccess("Regenerating Dungeon with Loading Screen... Please wait!");
 
-    // Ưu tiên nạp qua LoadingScreenManager với hiệu ứng chuyển cảnh mượt mà
     if (InfiniteLabyrinth.UI.LoadingScreenManager.Instance != null)
     {
       InfiniteLabyrinth.UI.LoadingScreenManager.Instance.RunInSceneLoading(
@@ -553,26 +715,22 @@ public class AdminCheatManager : MonoBehaviour
       return true;
     }
 
-    // Fallback đồng bộ nếu không có LoadingScreenManager
     ExecuteSyncRegeneration(keepSeed);
     return true;
   }
 
-  private System.Collections.IEnumerator RegenerateDungeonRoutine(bool keepSeed, Action<float> reportProgress)
+  private IEnumerator RegenerateDungeonRoutine(bool keepSeed, Action<float> reportProgress)
   {
-    // 1. Di chuyển Player an toàn ra khu vực chờ trước khi xóa Mesh cũ
     if (DungeonManager.Instance.generator != null && DungeonManager.Instance.generator.startDoorMarker != null)
     {
       TeleportPlayer(DungeonManager.Instance.generator.startDoorMarker.position, "Holding Area");
     }
 
-    // 2. Dọn sạch quái vật cũ
     if (DungeonManager.Instance.enemySpawner != null)
     {
       DungeonManager.Instance.enemySpawner.ClearEnemies();
     }
 
-    // 3. Đổi Seed ngẫu nhiên nếu không giữ nguyên seed
     if (!keepSeed)
     {
       UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
@@ -581,22 +739,18 @@ public class AdminCheatManager : MonoBehaviour
     reportProgress?.Invoke(0.08f);
     yield return null;
 
-    // 4. Sinh hầm ngục theo từng chặng thông qua GenerateWorldRoutine
     yield return StartCoroutine(DungeonManager.Instance.GenerateWorldRoutine(p =>
     {
       reportProgress?.Invoke(Mathf.Lerp(0.08f, 0.95f, p));
     }));
 
-    // 5. Làm mới bộ tối ưu ánh sáng
     var lightOptimizer = FindFirstObjectByType<DungeonLightOptimizer>();
     if (lightOptimizer != null)
     {
       lightOptimizer.RefreshLights();
     }
 
-    // 6. Đưa Player trở lại phòng xuất phát an toàn
     TeleportToStartRoom();
-
     reportProgress?.Invoke(1.0f);
     yield return null;
   }
@@ -632,7 +786,101 @@ public class AdminCheatManager : MonoBehaviour
 
   #endregion
 
-  #region 3. COMBAT, FREEZE AI & MONSTER SPAWNING
+  #region 3. COMBAT, DUMMY TARGET & MONSTER CHEATS
+
+  /// <summary>
+  /// Spawns a stationary, zero-AI, 10,000 HP training dummy right in front of the player.
+  /// Perfect for combo testing, DPS calculation, and damage number inspection.
+  /// </summary>
+  public GameObject SpawnDamageDummy(float maxHp = 10000f)
+  {
+    if (!EnsurePlayerReferences())
+    {
+      NotifyWarning("Player not found!");
+      return null;
+    }
+
+    EnsureItemAndEnemyPrefabs();
+    GameObject prefabToSpawn = skeletonMinionPrefab != null ? skeletonMinionPrefab : skeletonWarriorPrefab;
+    if (prefabToSpawn == null)
+    {
+      NotifyWarning("Monster prefab not assigned!");
+      return null;
+    }
+
+    Vector3 spawnPos = cachedPlayerTransform.position + cachedPlayerTransform.forward * 3.5f;
+    if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 4f, NavMesh.AllAreas))
+    {
+      spawnPos = hit.position;
+    }
+
+    Quaternion rot = Quaternion.LookRotation(-cachedPlayerTransform.forward);
+    GameObject dummy = Instantiate(prefabToSpawn, spawnPos, rot);
+    dummy.name = $"Dummy_Target_10k_{Time.frameCount}";
+
+    // 1. Disable EnemyAIBase so it has zero behavior
+    var ai = dummy.GetComponent<EnemyAIBase>();
+    if (ai != null) ai.enabled = false;
+
+    // 2. Stop and freeze NavMeshAgent
+    var agent = dummy.GetComponent<NavMeshAgent>();
+    if (agent != null && agent.isOnNavMesh)
+    {
+      agent.isStopped = true;
+      agent.updatePosition = false;
+      agent.updateRotation = false;
+    }
+
+    // 3. Configure Health to 10,000 HP with 0 DEF for clean testing
+    var health = dummy.GetComponent<Health>();
+    if (health != null)
+    {
+      health.SetBaseDefense(0f);
+      health.SetCustomHealth(maxHp);
+    }
+
+    if (DungeonManager.Instance != null && DungeonManager.Instance.enemySpawner != null)
+    {
+      DungeonManager.Instance.enemySpawner.activeEnemies.Add(dummy);
+    }
+
+    activeDummies.Add(dummy);
+    NotifySuccess($"🎯 [Dummy] Spawned {maxHp:N0} HP Training Dummy! (No AI, 0 DEF, Pure DMG Test)");
+    return dummy;
+  }
+
+  public void ClearAllDummies()
+  {
+    int count = 0;
+    for (int i = activeDummies.Count - 1; i >= 0; i--)
+    {
+      if (activeDummies[i] != null)
+      {
+        Destroy(activeDummies[i]);
+        count++;
+      }
+    }
+    activeDummies.Clear();
+    NotifySuccess($"🧹 [Dummy] Cleared {count} Training Dummies!");
+  }
+
+  public void HealAllDummies(float hp = 10000f)
+  {
+    int count = 0;
+    for (int i = 0; i < activeDummies.Count; i++)
+    {
+      if (activeDummies[i] != null)
+      {
+        var h = activeDummies[i].GetComponent<Health>();
+        if (h != null)
+        {
+          h.SetCustomHealth(hp);
+          count++;
+        }
+      }
+    }
+    NotifySuccess($"❤️ [Dummy] Restored {count} Dummies back to {hp:N0} HP!");
+  }
 
   public int KillEnemiesInRadius(float radius = 25f)
   {
@@ -691,7 +939,6 @@ public class AdminCheatManager : MonoBehaviour
   {
     IsEnemyAIFrozen = !IsEnemyAIFrozen;
 
-    // 1. Normal monsters (EnemyAIBase)
     EnemyAIBase[] enemies = FindObjectsByType<EnemyAIBase>(FindObjectsSortMode.None);
     for (int i = 0; i < enemies.Length; i++)
     {
@@ -705,7 +952,6 @@ public class AdminCheatManager : MonoBehaviour
       }
     }
 
-    // 2. Boss Ice Golem (IceGolemController)
     var bossCtrl = FindFirstObjectByType<IceGolemController>();
     if (bossCtrl != null)
     {
@@ -824,9 +1070,18 @@ public class AdminCheatManager : MonoBehaviour
     }
 
     NotifySuccess(IsInfiniteSpirit
-      ? "⭐ [Spirit] INFINITE 3 SPIRIT STARS ENABLED! (150/150)"
+      ? "⭐ [Spirit] INFINITE 4 SPIRIT STARS ENABLED! (200/200)"
       : "⭐ [Spirit] Normal spirit accumulation restored.");
     return IsInfiniteSpirit;
+  }
+
+  public bool ToggleNoCooldown()
+  {
+    IsNoCooldown = !IsNoCooldown;
+    NotifySuccess(IsNoCooldown
+      ? "⏱️ [No Cooldown] NO COOLDOWN ENABLED! Skills E, Q, R & Usables spam ready."
+      : "⏱️ [No Cooldown] Normal cooldowns restored.");
+    return IsNoCooldown;
   }
 
   public void FullHealAndRestore()
@@ -844,7 +1099,7 @@ public class AdminCheatManager : MonoBehaviour
       cachedPlayerStats.GainSpirit(cachedPlayerStats.MaxSpirit);
     }
 
-    NotifySuccess("❤️ [Restored] Full Health, Stamina and 3 Spirit Stars restored!");
+    NotifySuccess("❤️ [Restored] Full Health, Stamina and 4 Spirit Stars restored!");
   }
 
   public float CycleSuperSpeed()
@@ -867,33 +1122,27 @@ public class AdminCheatManager : MonoBehaviour
 
   #endregion
 
-  #region 5. RPG PROGRESSION & INVENTORY CHEATS
+  #region 5. CREATIVE MODE & PROGRESSION CHEATS
 
-  public bool AddBossKey()
+  public bool GiveItem(ItemData item, int count = 1)
   {
-    EnsureItemAndEnemyPrefabs();
-    if (dungeonKeyItem == null)
-    {
-      NotifyWarning("Item_Key_Dungeon.asset not found!");
-      return false;
-    }
-
+    if (item == null) return false;
     if (!InventoryManager.HasInstance)
     {
       NotifyWarning("InventoryManager not initialized!");
       return false;
     }
 
-    bool success = InventoryManager.Instance.AddItem(dungeonKeyItem, 1);
-    if (success)
+    bool res = InventoryManager.Instance.AddItem(item, count);
+    if (res)
     {
-      NotifySuccess("🗝️ [Inventory] Added 1 Dungeon Boss Key to inventory!");
+      NotifySuccess($"🎒 [Creative] Added {item.ItemName} x{count} to Inventory!");
     }
     else
     {
-      NotifyWarning("Inventory is full, could not add Boss Key!");
+      NotifyWarning("Inventory is full, could not add item!");
     }
-    return success;
+    return res;
   }
 
   public void AddGold(int amount = 1000)
@@ -930,36 +1179,6 @@ public class AdminCheatManager : MonoBehaviour
 
     PlayerProgression.Instance.AddUnallocatedPoints(points);
     NotifySuccess($"✨ [Attributes] Gained +{points} Attribute Points! Available: {PlayerProgression.Instance.UnallocatedPoints}");
-  }
-
-  public bool AddHealthPotions(int count = 5)
-  {
-    EnsureItemAndEnemyPrefabs();
-    if (healthPotionItem == null || !InventoryManager.HasInstance) return false;
-
-    bool res = InventoryManager.Instance.AddItem(healthPotionItem, count);
-    if (res) NotifySuccess($"🧪 [Inventory] Added {count} Health Potions to inventory!");
-    return res;
-  }
-
-  public bool AddLegendarySword()
-  {
-    EnsureItemAndEnemyPrefabs();
-    if (dragonicSwordItem == null || !InventoryManager.HasInstance) return false;
-
-    bool res = InventoryManager.Instance.AddItem(dragonicSwordItem, 1);
-    if (res) NotifySuccess("🔥 [Inventory] Added Dragonic Sword (Legendary) to inventory!");
-    return res;
-  }
-
-  public bool AddUpgradeStones(int count = 10)
-  {
-    EnsureItemAndEnemyPrefabs();
-    if (upgradeStoneItem == null || !InventoryManager.HasInstance) return false;
-
-    bool res = InventoryManager.Instance.AddItem(upgradeStoneItem, count);
-    if (res) NotifySuccess($"💎 [Inventory] Added {count} Upgrade Stones to inventory!");
-    return res;
   }
 
   #endregion

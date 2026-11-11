@@ -1296,6 +1296,26 @@ namespace InfiniteLabyrinth.UI
     }
 
     /// <summary>
+    /// Mở khóa và hiển thị toàn bộ bản đồ hầm ngục (Dành cho Admin/Developer Debug)
+    /// </summary>
+    public void RevealAll()
+    {
+      foreach (var kvp in roomNodes)
+      {
+        kvp.Value.state = MapDiscoveryState.Explored;
+      }
+      foreach (var c in corridorNodes)
+      {
+        c.state = MapDiscoveryState.Explored;
+      }
+      foreach (var j in junctionNodes)
+      {
+        j.state = MapDiscoveryState.Explored;
+      }
+      RefreshAllVisuals();
+    }
+
+    /// <summary>
     /// Cập nhật màu sắc cho tất cả các phòng và hành lang theo đúng Inspector Theme
     /// </summary>
     public void RefreshAllVisuals()

@@ -34,6 +34,9 @@ public class WeaponHitbox : MonoBehaviour
   private float currentHitlag = 0f; // Biến lưu thời gian hitlag của nhát chém
   private float currentLethalHitlag = 0.18f; // Biến lưu thời gian hitlag khi kết liễu
   private float currentPoiseDamage = -1f; // Biến lưu sát thương Poise (làm mất thăng bằng) của nhát chém
+  private float currentCritRate = 0f;
+  private float currentCritDamageMultiplier = 1.5f;
+  private float currentLifestealPercent = 0f;
   private InfiniteLabyrinth.UI.Combat.DamageNumberType currentDamageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal;
   private Transform attacker;
 
@@ -64,14 +67,28 @@ public class WeaponHitbox : MonoBehaviour
   /// hitlag = 0f làm mặc định để quái vật dùng chung không bị ảnh hưởng.
   /// lethalHitlag = -1f để tự động kế thừa hoặc dùng defaultLethalHitlag.
   /// poiseDamage = -1f để dùng mặc định nếu không truyền từ đòn đánh.
+  /// critRate, critDamageMultiplier, lifestealPercent phục vụ hệ thống chỉ số mở rộng của Player.
   /// </summary>
-  public void EnableHitbox(float damage, float knockback, float hitlag = 0f, float lethalHitlag = -1f, float poiseDamage = -1f, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal)
+  public void EnableHitbox(
+    float damage, 
+    float knockback, 
+    float hitlag = 0f, 
+    float lethalHitlag = -1f, 
+    float poiseDamage = -1f, 
+    InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal,
+    float critRate = 0f,
+    float critDamageMultiplier = 1.5f,
+    float lifestealPercent = 0f)
   {
     currentDamage = damage;
     currentKnockback = knockback;
     currentHitlag = hitlag;
     currentPoiseDamage = poiseDamage;
     currentDamageType = damageType;
+    currentCritRate = critRate;
+    currentCritDamageMultiplier = critDamageMultiplier > 0f ? critDamageMultiplier : 1.5f;
+    currentLifestealPercent = lifestealPercent;
+
     if (lethalHitlag >= 0f)
     {
       currentLethalHitlag = lethalHitlag;
@@ -125,9 +142,47 @@ public class WeaponHitbox : MonoBehaviour
         targetHealth.SetIncomingPoiseDamage(currentPoiseDamage);
       }
 
-      // Gây sát thương (kèm tham chiếu attacker để hệ thống Parry nhận diện chính xác kẻ tấn công)
-      damageable.TakeDamage(currentDamage, hitPoint, hitDirection, currentKnockback, attacker, currentDamageType);
-      OnHitTarget?.Invoke(damageable, currentDamage);
+      // Tính toán Chí Mạng (Critical Hit)
+      bool isCrit = currentCritRate > 0f && UnityEngine.Random.Range(0f, 100f) < currentCritRate;
+      float finalDamage = isCrit ? (currentDamage * currentCritDamageMultiplier) : currentDamage;
+
+      // Gây sát thương (kèm tham chiếu attacker và cờ isCrit)
+      damageable.TakeDamage(finalDamage, hitPoint, hitDirection, currentKnockback, attacker, currentDamageType, isCrit);
+      OnHitTarget?.Invoke(damageable, finalDamage);
+
+      // Kích hoạt Phù Phép khi Bạo Kích (Bleed & Frenzy)
+      if (isCrit && attacker != null)
+      {
+        if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+            InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.BleedingCrit))
+        {
+          if (targetHealth != null && !targetHealth.IsDead)
+          {
+            targetHealth.ApplyBleed(finalDamage * 0.3f, 3f, 3, attacker);
+          }
+        }
+
+        if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+            InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
+        {
+          var pc = attacker.GetComponent<PlayerController>();
+          if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+        }
+      }
+
+      // Xử lý Hút Máu (Lifesteal)
+      if (currentLifestealPercent > 0f && attacker != null)
+      {
+        Health attackerHealth = attacker.GetComponent<Health>();
+        if (attackerHealth != null && !attackerHealth.IsDead)
+        {
+          float healAmount = Mathf.Min(finalDamage * (currentLifestealPercent / 100f), 25f);
+          if (healAmount > 0.5f)
+          {
+            attackerHealth.Heal(healAmount);
+          }
+        }
+      }
 
       // Nhận diện đòn đánh có phải là đòn kết liễu hạ gục mục tiêu không
       bool isLethalHit = wasAlive && targetHealth != null && targetHealth.IsDead;

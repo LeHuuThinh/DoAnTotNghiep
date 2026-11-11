@@ -12,7 +12,8 @@ namespace InfiniteLabyrinth.UI
   /// Quản lý hiển thị và tương tác của 1 ô trong lưới túi đồ 30 ô
   /// </summary>
   public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
-                                 IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+                                 IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler,
+                                 IPointerClickHandler
   {
     [Header("=== THÀNH PHẦN UI ===")]
     [Tooltip("Icon hiển thị ảnh đại diện của vật phẩm")]
@@ -44,6 +45,7 @@ namespace InfiniteLabyrinth.UI
     public ItemData CurrentItem { get; private set; }
     public int CurrentQuantity { get; private set; }
     public int UpgradeLevel { get; private set; } = 0;
+    public EquipmentAffixData AffixData => (InventoryManager.HasInstance && ActualBagIndex >= 0 && ActualBagIndex < InventoryManager.Instance.Slots.Count) ? InventoryManager.Instance.Slots[ActualBagIndex].AffixData : null;
     public bool IsEmpty => CurrentItem == null;
 
     public Sprite RarityBgSprite => rarityBg != null ? rarityBg.sprite : null;
@@ -51,6 +53,7 @@ namespace InfiniteLabyrinth.UI
     public Sprite BorderSprite => transform.Find("Border")?.GetComponent<Image>()?.sprite;
 
     public event Action<InventorySlotUI> OnClicked;
+    public event Action<InventorySlotUI> OnRightClicked;
 
     private bool isInitialized = false;
 
@@ -314,8 +317,17 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+      if (eventData.button == PointerEventData.InputButton.Right)
+      {
+        OnRightClicked?.Invoke(this);
+      }
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
+      if (eventData.button != PointerEventData.InputButton.Left) return;
       if (IsEmpty) return;
       InventoryDragDropController.Instance?.StartDrag(this, eventData);
     }

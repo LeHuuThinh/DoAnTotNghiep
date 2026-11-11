@@ -74,6 +74,23 @@ namespace InfiniteLabyrinth.EditorTools
         }
       }
 
+      // Cấu hình ô UpgradeSlot trong BeforeWindow (hỗ trợ kéo thả đe rèn)
+      Transform beforeWindowTr = canvasObj.transform.Find("BlackSmithPanel/UpgradePanel/BeforeWindow");
+      if (beforeWindowTr != null)
+      {
+        Transform slotTr = beforeWindowTr.Find("UpgradeSlot");
+        if (slotTr != null)
+        {
+          var upSlotUI = slotTr.GetComponent<BlacksmithUpgradeSlotUI>();
+          if (upSlotUI == null)
+          {
+            upSlotUI = slotTr.gameObject.AddComponent<BlacksmithUpgradeSlotUI>();
+            Undo.RegisterCreatedObjectUndo(upSlotUI, "Add BlacksmithUpgradeSlotUI");
+          }
+          upSlotUI.AutoFindReferences();
+        }
+      }
+
       // Cấu hình ItemDetailPopup
       Transform popupTr = canvasObj.transform.Find("ItemDetailPopup");
       if (popupTr != null)

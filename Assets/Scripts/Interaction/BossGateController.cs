@@ -198,6 +198,15 @@ namespace InfiniteLabyrinth.Interaction
       doorCoroutine = StartCoroutine(OpenGateRoutine());
     }
 
+    /// <summary>
+    /// Mở toang Đại Môn Boss ngay lập tức không cần chìa khóa (Dành cho Admin Cheat)
+    /// </summary>
+    public void ForceOpenGate()
+    {
+      if (doorCoroutine != null) StopCoroutine(doorCoroutine);
+      doorCoroutine = StartCoroutine(OpenGateRoutine());
+    }
+
     private IEnumerator OpenGateRoutine()
     {
       isTransitioning = true;

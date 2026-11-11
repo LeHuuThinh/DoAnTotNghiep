@@ -24,10 +24,48 @@ namespace InfiniteLabyrinth.UI.Combat
     private Action<DamageNumberItem> onFinishedCallback;
     private bool isRunning = false;
     private DamageStyleSetting currentStyle;
+    private SpriteRenderer critIconRenderer;
+    private Color critIconColor = Color.white;
+    private bool currentIsCrit = false;
+    private static Sprite s_CachedCritSprite;
 
     private void Awake()
     {
       EnsureTextMeshPro();
+      EnsureCritIcon();
+    }
+
+    private void EnsureCritIcon()
+    {
+      if (critIconRenderer == null)
+      {
+        Transform child = transform.Find("CritIcon");
+        if (child == null)
+        {
+          GameObject go = new GameObject("CritIcon");
+          go.transform.SetParent(transform, false);
+          child = go.transform;
+        }
+        critIconRenderer = child.GetComponent<SpriteRenderer>();
+        if (critIconRenderer == null)
+        {
+          critIconRenderer = child.gameObject.AddComponent<SpriteRenderer>();
+        }
+      }
+
+      if (critIconRenderer.sprite == null)
+      {
+        if (s_CachedCritSprite == null)
+        {
+          s_CachedCritSprite = Resources.Load<Sprite>("CritDmg");
+        }
+        critIconRenderer.sprite = s_CachedCritSprite;
+      }
+
+      if (tmpText != null && critIconRenderer != null)
+      {
+        critIconRenderer.sortingOrder = tmpText.sortingOrder + 1;
+      }
     }
 
     private void EnsureTextMeshPro()
@@ -58,14 +96,16 @@ namespace InfiniteLabyrinth.UI.Combat
     /// <summary>
     /// Kích hoạt số sát thương bay ra tại vị trí va chạm với cấu hình kích cỡ & màu sắc riêng biệt
     /// </summary>
-    public void Spawn(float amount, Vector3 worldPosition, DamageNumberType type, DamageStyleSetting style, Camera cam, Action<DamageNumberItem> onFinished)
+    public void Spawn(float amount, Vector3 worldPosition, DamageNumberType type, DamageStyleSetting style, Camera cam, Action<DamageNumberItem> onFinished, bool isCrit = false)
     {
       EnsureTextMeshPro();
+      EnsureCritIcon();
       targetCamera = cam != null ? cam : (Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>());
       onFinishedCallback = onFinished;
       timer = 0f;
       isRunning = true;
       currentStyle = style;
+      currentIsCrit = isCrit;
       gameObject.SetActive(true);
 
       // 1. Định dạng chuỗi hiển thị
@@ -104,6 +144,32 @@ namespace InfiniteLabyrinth.UI.Combat
         tmpText.color = mainColor;
       }
 
+      // Xử lý hiệu ứng Chí Mạng (Critical Hit): Phóng to số + hiện Icon Crit bên trái, giữ nguyên màu Gradient của đòn đánh
+      if (isCrit)
+      {
+        baseScale *= 1.35f;
+        peakScale *= 1.45f;
+
+        if (critIconRenderer != null)
+        {
+          critIconColor = (style != null && style.fallbackColor != Color.clear) ? style.fallbackColor : Color.white;
+          critIconRenderer.color = critIconColor;
+          critIconRenderer.gameObject.SetActive(true);
+
+          tmpText.ForceMeshUpdate();
+          float textHalfWidth = Mathf.Max(0.2f, tmpText.bounds.extents.x);
+          critIconRenderer.transform.localScale = Vector3.one * 0.45f;
+          critIconRenderer.transform.localPosition = new Vector3(-textHalfWidth - 0.28f, 0.04f, 0f);
+        }
+      }
+      else
+      {
+        if (critIconRenderer != null)
+        {
+          critIconRenderer.gameObject.SetActive(false);
+        }
+      }
+
       // 3. Vị trí xuất phát:
       // Offset lên cao (+0.65m) và kéo nhẹ về phía Camera (+0.35m) để số luôn nằm ở mặt tiền mục tiêu, không bị chìm trong mesh
       Vector3 camRight = targetCamera != null ? targetCamera.transform.right : Vector3.right;
@@ -118,6 +184,10 @@ namespace InfiniteLabyrinth.UI.Combat
       if (type == DamageNumberType.SkillR)
       {
         upwardSpeed = 5.2f; // Ult uy lực cực mạnh nên búng cao hơn
+      }
+      if (isCrit)
+      {
+        upwardSpeed += 0.8f; // Crit búng vọt cao hơn
       }
       currentVelocity = Vector3.up * upwardSpeed + camRight * lateralSpeed;
 
@@ -170,6 +240,12 @@ namespace InfiniteLabyrinth.UI.Combat
       // tmpText.alpha tự động nhân mờ đồng đều cho cả Gradient 4 góc lẫn màu phẳng
       tmpText.alpha = alpha;
 
+      // Đồng bộ độ mờ alpha cho cả icon Crit
+      if (currentIsCrit && critIconRenderer != null)
+      {
+        critIconRenderer.color = new Color(critIconColor.r, critIconColor.g, critIconColor.b, alpha);
+      }
+
       // 4. Luôn quay mặt chữ về mắt nhìn camera (Billboard)
       UpdateBillboard();
 
@@ -177,6 +253,7 @@ namespace InfiniteLabyrinth.UI.Combat
       if (timer >= totalDuration)
       {
         isRunning = false;
+        if (critIconRenderer != null) critIconRenderer.gameObject.SetActive(false);
         gameObject.SetActive(false);
         onFinishedCallback?.Invoke(this);
       }

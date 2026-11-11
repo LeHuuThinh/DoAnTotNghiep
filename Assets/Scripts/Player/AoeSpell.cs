@@ -21,11 +21,17 @@ public class AoeSpell : MonoBehaviour
 
   private Transform attacker;
   private float bonusDamage = 0f;
+  private float critRate = 0f;
+  private float critDamageMultiplier = 1.5f;
+  private float lifestealPercent = 0f;
 
-  public void Initialize(Transform attackerRoot, float additionalBonusDamage = 0f)
+  public void Initialize(Transform attackerRoot, float additionalBonusDamage = 0f, float critRate = 0f, float critDamageMultiplier = 1.5f, float lifesteal = 0f)
   {
     attacker = attackerRoot;
     bonusDamage = additionalBonusDamage;
+    this.critRate = critRate;
+    this.critDamageMultiplier = critDamageMultiplier > 0f ? critDamageMultiplier : 1.5f;
+    this.lifestealPercent = lifesteal;
 
     // Kích hoạt tất cả Particle System con của cụm AOE
     ParticleSystem[] particles = GetComponentsInChildren<ParticleSystem>();
@@ -58,8 +64,40 @@ public class AoeSpell : MonoBehaviour
         Vector3 knockbackDir = (col.transform.position - transform.position).normalized;
         knockbackDir.y = 0.25f; // Hất quái hơi văng bổng lên
 
-        float finalDamage = Mathf.Max(1f, damage + bonusDamage);
-        damageable.TakeDamage(finalDamage, hitPoint, knockbackDir, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillQ);
+        bool isCrit = critRate > 0f && UnityEngine.Random.Range(0f, 100f) < critRate;
+        float rawDamage = Mathf.Max(1f, damage + bonusDamage);
+        float finalDamage = isCrit ? (rawDamage * critDamageMultiplier) : rawDamage;
+        damageable.TakeDamage(finalDamage, hitPoint, knockbackDir, knockback, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.SkillQ, isCrit);
+
+        if (isCrit && attacker != null)
+        {
+          if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+              InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.BleedingCrit))
+          {
+            Health targetHealth = damageable as Health ?? (damageable as Component)?.GetComponentInParent<Health>();
+            if (targetHealth != null && !targetHealth.IsDead)
+            {
+              targetHealth.ApplyBleed(finalDamage * 0.3f, 3f, 3, attacker);
+            }
+          }
+
+          if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+              InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.CritFrenzy))
+          {
+            var pc = attacker.GetComponent<PlayerController>();
+            if (pc != null) pc.TriggerTemporarySpeedBoost(15f, 3.5f);
+          }
+        }
+
+        if (lifestealPercent > 0f && attacker != null)
+        {
+          Health attackerHealth = attacker.GetComponent<Health>();
+          if (attackerHealth != null && !attackerHealth.IsDead)
+          {
+            float healAmount = Mathf.Min(finalDamage * (lifestealPercent / 100f), 25f);
+            if (healAmount > 0.5f) attackerHealth.Heal(healAmount);
+          }
+        }
       }
     }
 

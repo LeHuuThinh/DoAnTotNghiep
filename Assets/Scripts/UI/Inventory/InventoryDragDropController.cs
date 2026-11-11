@@ -37,6 +37,7 @@ namespace InfiniteLabyrinth.UI
     public bool IsDragging { get; private set; } = false;
     public InventorySlotUI SourceBagSlot { get; private set; }
     public EquipmentSlotUI SourceEquipSlot { get; private set; }
+    public BlacksmithUpgradeSlotUI SourceUpgradeSlot { get; private set; }
     public ItemData DraggedItem { get; private set; }
     public int DraggedQuantity { get; private set; }
 
@@ -180,6 +181,7 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void StartDrag(InventorySlotUI bagSlot, PointerEventData eventData)
     {
+      if (eventData != null && eventData.button != PointerEventData.InputButton.Left) return;
       if (bagSlot == null || bagSlot.IsEmpty) return;
 
       // Đảm bảo Ghost luôn nằm trên đúng Canvas của ô đang được kéo (ShopCanvas hoặc Main Canvas)
@@ -228,6 +230,7 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void StartDrag(EquipmentSlotUI equipSlot, PointerEventData eventData)
     {
+      if (eventData != null && eventData.button != PointerEventData.InputButton.Left) return;
       if (equipSlot == null || equipSlot.IsEmpty) return;
 
       Canvas slotCanvas = equipSlot.GetComponentInParent<Canvas>();
@@ -258,6 +261,52 @@ namespace InfiniteLabyrinth.UI
       equipSlot.SetGhostFade(true);
 
       SetupGhostVisual(equipSlot.RarityBgSprite, equipSlot.RarityBarSprite, equipSlot.BorderSprite);
+      UpdateGhostPosition(eventData);
+
+      if (ghostRoot != null)
+      {
+        ghostRoot.transform.SetAsLastSibling();
+        ghostRoot.SetActive(true);
+      }
+    }
+
+    /// <summary>
+    /// Bắt đầu kéo từ ô Đe Rèn (BlacksmithUpgradeSlotUI)
+    /// </summary>
+    public void StartDrag(BlacksmithUpgradeSlotUI upgradeSlot, PointerEventData eventData)
+    {
+      if (eventData != null && eventData.button != PointerEventData.InputButton.Left) return;
+      if (upgradeSlot == null || upgradeSlot.IsEmpty) return;
+
+      Canvas slotCanvas = upgradeSlot.GetComponentInParent<Canvas>();
+      if (slotCanvas != null)
+      {
+        rootCanvas = slotCanvas.rootCanvas;
+        if (ghostRoot != null && ghostRoot.transform.parent != rootCanvas.transform)
+        {
+          ghostRoot.transform.SetParent(rootCanvas.transform, false);
+        }
+      }
+
+      IsDragging = true;
+      SourceBagSlot = null;
+      SourceEquipSlot = null;
+      SourceUpgradeSlot = upgradeSlot;
+      DraggedItem = upgradeSlot.Item;
+      DraggedQuantity = 1;
+
+      if (InventoryUIController.Instance != null)
+      {
+        InventoryUIController.Instance.CloseDetailPopup();
+      }
+      if (ShopUIController.Instance != null && ShopUIController.IsOpen)
+      {
+        ShopUIController.Instance.CloseDetailPopup();
+      }
+
+      upgradeSlot.SetGhostFade(true);
+
+      SetupGhostVisual(upgradeSlot.RarityBgSprite, upgradeSlot.RarityBarSprite, null);
       UpdateGhostPosition(eventData);
 
       if (ghostRoot != null)
@@ -369,6 +418,10 @@ namespace InfiniteLabyrinth.UI
       {
         SourceEquipSlot.SetGhostFade(false);
       }
+      if (SourceUpgradeSlot != null)
+      {
+        SourceUpgradeSlot.SetGhostFade(false);
+      }
 
       if (ghostRoot != null)
       {
@@ -378,6 +431,7 @@ namespace InfiniteLabyrinth.UI
       IsDragging = false;
       SourceBagSlot = null;
       SourceEquipSlot = null;
+      SourceUpgradeSlot = null;
       DraggedItem = null;
       DraggedQuantity = 0;
     }
@@ -424,6 +478,20 @@ namespace InfiniteLabyrinth.UI
         if (toIdx >= 0)
         {
           InventoryManager.Instance.UnequipToSlot(SourceEquipSlot.SlotType, toIdx);
+        }
+      }
+      // 3. Kéo từ UpgradeSlot -> BagSlot (Tháo trang bị từ đe rèn thả vào ô túi đồ đích)
+      else if (SourceUpgradeSlot != null)
+      {
+        int toIdx = targetBagSlot.ActualBagIndex;
+        if (toIdx == -1)
+        {
+          toIdx = FindFirstEmptyBagIndex();
+        }
+
+        if (BlacksmithUIController.Instance != null)
+        {
+          BlacksmithUIController.Instance.TakeOutUpgradeItem(toIdx);
         }
       }
     }

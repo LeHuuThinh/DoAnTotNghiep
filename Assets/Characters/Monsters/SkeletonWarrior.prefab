@@ -70,6 +70,7 @@ MonoBehaviour:
   patrolWaitTime: 5
   attackAnimationSpeed: 1.3
   expReward: 15
+  enemyDefense: 10
   weaponHitbox: {fileID: 2550425182332717077}
   attackDamage: 15
   attackKnockback: 0.5
@@ -97,6 +98,7 @@ MonoBehaviour:
   maxHealth: 150
   currentHealth: 0
   isInvulnerable: 0
+  baseDefense: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -206,6 +208,11 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
     randomItemPool: []
     dropChance: 0.1
+    minQuantity: 1
+    maxQuantity: 1
+  - item: {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
+    randomItemPool: []
+    dropChance: 0.22
     minQuantity: 1
     maxQuantity: 1
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}

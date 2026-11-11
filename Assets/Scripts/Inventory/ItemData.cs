@@ -36,6 +36,22 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Thể lực tối đa cộng thêm")]
     [SerializeField] private float bonusStamina = 0f;
 
+    [Header("=== CHỈ SỐ MỞ RỘNG (CRIT / LIFESTEAL / TIỆN ÍCH) ===")]
+    [Tooltip("Tỷ lệ chí mạng cộng thêm (%)")]
+    [SerializeField] private float bonusCritRate = 0f;
+    [Tooltip("Sát thương chí mạng cộng thêm (%)")]
+    [SerializeField] private float bonusCritDamage = 0f;
+    [Tooltip("Tỷ lệ hút máu theo % sát thương gây ra")]
+    [SerializeField] private float bonusLifesteal = 0f;
+    [Tooltip("Giảm tiêu hao Spirit của chiêu thức (%)")]
+    [SerializeField] private float spiritCostReduction = 0f;
+    [Tooltip("Giảm tiêu hao Thể lực khi lăn né/chạy/đánh (%)")]
+    [SerializeField] private float staminaCostReduction = 0f;
+    [Tooltip("Tăng Spirit nhận được khi combat (%)")]
+    [SerializeField] private float spiritGainBonus = 0f;
+    [Tooltip("Tốc độ di chuyển cộng thêm (%)")]
+    [SerializeField] private float moveSpeedBonus = 0f;
+
     [Header("=== TIÊU HAO (CHO BÌNH MÁU / THUỐC) ===")]
     [Tooltip("Lượng máu hồi phục ngay lập tức khi dùng")]
     [SerializeField] private float healAmount = 0f;
@@ -62,6 +78,15 @@ namespace InfiniteLabyrinth.Inventory
     public float BonusDefense => bonusDefense;
     public float BonusHealth => bonusHealth;
     public float BonusStamina => bonusStamina;
+
+    public float BonusCritRate => bonusCritRate;
+    public float BonusCritDamage => bonusCritDamage;
+    public float BonusLifesteal => bonusLifesteal;
+    public float SpiritCostReduction => spiritCostReduction;
+    public float StaminaCostReduction => staminaCostReduction;
+    public float SpiritGainBonus => spiritGainBonus;
+    public float MoveSpeedBonus => moveSpeedBonus;
+
     public float HealAmount => healAmount;
 
     public GameObject WorldModelPrefab => worldModelPrefab;

@@ -57,8 +57,9 @@ namespace InfiniteLabyrinth.Player
 
     private void Update()
     {
-      // 1. Nếu đang mở túi đồ hoặc cửa hàng thì hủy tương tác ngay lập tức
-      if (InventoryUIController.IsOpen || ShopUIController.IsOpen)
+      // 1. Nếu đang mở túi đồ, cửa hàng hoặc lò rèn (hoặc vừa đóng cùng frame) thì hủy tương tác ngay lập tức
+      if (InventoryUIController.IsOpen || ShopUIController.IsOpen || BlacksmithUIController.IsOpen ||
+          Time.frameCount == ShopUIController.LastClosedFrame || Time.frameCount == BlacksmithUIController.LastClosedFrame)
       {
         ClearAllTargets();
         return;

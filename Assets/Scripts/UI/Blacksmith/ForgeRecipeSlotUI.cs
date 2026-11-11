@@ -91,12 +91,7 @@ namespace InfiniteLabyrinth.UI
       ItemData item = recipe.ResultItem;
 
       // 1. Icon & Phẩm cấp
-      if (iconImage != null)
-      {
-        iconImage.sprite = item.Icon;
-        iconImage.enabled = item.Icon != null;
-        iconImage.color = Color.white;
-      }
+      SafeSetIcon(iconImage, item.Icon);
 
       Color rColor = item.Rarity.GetRarityColor();
       if (rarityBgImage != null)
@@ -110,7 +105,7 @@ namespace InfiniteLabyrinth.UI
         rarityBarImage.color = rColor;
       }
 
-      // 2. Tên & Mô tả
+      // 2. Tên & Mô tả (giới hạn tối đa 2 dòng kèm ellipsis)
       if (nameText != null)
       {
         nameText.text = item.Rarity.FormatWithGradient(recipe.RecipeName);
@@ -118,10 +113,35 @@ namespace InfiniteLabyrinth.UI
 
       if (descText != null)
       {
-        descText.text = recipe.Description;
+        descText.enableWordWrapping = true;
+        descText.maxVisibleLines = 2;
+        descText.overflowMode = TextOverflowModes.Ellipsis;
+        descText.text = TruncateDescription(recipe.Description, 72);
       }
 
       UpdateVisualStates();
+    }
+
+    private void SafeSetIcon(Image img, Sprite icon)
+    {
+      if (img == null) return;
+      bool hasIcon = icon != null;
+      img.gameObject.SetActive(hasIcon);
+      if (img.transform.parent != null && img.transform.parent.name.Contains("Icon"))
+      {
+        img.transform.parent.gameObject.SetActive(true);
+      }
+      img.sprite = icon;
+      img.enabled = hasIcon;
+      img.color = Color.white;
+    }
+
+    private string TruncateDescription(string desc, int maxChars = 72)
+    {
+      if (string.IsNullOrEmpty(desc)) return "";
+      desc = desc.Trim();
+      if (desc.Length <= maxChars) return desc;
+      return desc.Substring(0, maxChars).TrimEnd() + "...";
     }
 
     public void SetSelected(bool selected)

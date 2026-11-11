@@ -53,8 +53,8 @@ namespace InfiniteLabyrinth.Interaction
     public bool CanInteract(GameObject player)
     {
       if (!enabled || !gameObject.activeInHierarchy || shopData == null) return false;
-      // Không cho phép tương tác nếu Shop hoặc Túi đồ đang mở sẵn
-      if (ShopUIController.IsOpen || InventoryUIController.IsOpen) return false;
+      // Không cho phép tương tác nếu Shop, Blacksmith hoặc Túi đồ đang mở sẵn
+      if (ShopUIController.IsOpen || BlacksmithUIController.IsOpen || InventoryUIController.IsOpen) return false;
       return true;
     }
 

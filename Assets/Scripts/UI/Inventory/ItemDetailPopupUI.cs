@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using TMPro;
 using InfiniteLabyrinth.Inventory;
+using InfiniteLabyrinth.Blacksmith;
 
 namespace InfiniteLabyrinth.UI
 {
@@ -95,7 +96,12 @@ namespace InfiniteLabyrinth.UI
     // Chế độ Lò Rèn (Blacksmith Mode)
     private bool isBlacksmithMode = false;
     public bool IsBlacksmithMode => isBlacksmithMode;
-    public void SetBlacksmithMode(bool enable) { isBlacksmithMode = enable; isShopSellMode = false; }
+    public void SetBlacksmithMode(bool enable) { isBlacksmithMode = enable; isShopSellMode = false; isPreviewMode = false; }
+
+    // Chế độ Xem Trước Chỉ Đọc (Preview Mode: ẩn toàn bộ nút tương tác)
+    private bool isPreviewMode = false;
+    public bool IsPreviewMode => isPreviewMode;
+    public void SetPreviewMode(bool enable) { isPreviewMode = enable; }
 
     // Callback thông báo lại cho InventoryUIController
     public event Action OnActionCompleted;
@@ -296,9 +302,10 @@ namespace InfiniteLabyrinth.UI
           GameObject hitObj = raycastResults[i].gameObject;
           if (hitObj == null) continue;
 
-          // Nếu click trúng bất kỳ ô đồ nào (túi đồ hoặc trang bị) -> Để sự kiện Click của ô đó tự xử lý (chuyển item hoặc toggle)
+          // Nếu click trúng bất kỳ ô đồ nào (túi đồ, trang bị hoặc ô ForgeSlot) -> Để sự kiện Click của ô đó tự xử lý (chuyển item hoặc toggle)
           if (hitObj.GetComponentInParent<InventorySlotUI>() != null ||
-              hitObj.GetComponentInParent<EquipmentSlotUI>() != null)
+              hitObj.GetComponentInParent<EquipmentSlotUI>() != null ||
+              hitObj.name == "ForgeSlot" || hitObj.transform.parent?.name == "ForgeSlot")
           {
             return;
           }
@@ -330,6 +337,7 @@ namespace InfiniteLabyrinth.UI
       currentEquipSlot = null;
       currentItem = slot.CurrentItem;
       isEquippedTarget = false;
+      isPreviewMode = false;
 
       currentBagSlot.SetSelected(true);
       UpdateUIContent();
@@ -358,11 +366,54 @@ namespace InfiniteLabyrinth.UI
       currentBagSlot = null;
       currentItem = eqSlot.EquippedItem;
       isEquippedTarget = true;
+      isPreviewMode = false;
 
       currentEquipSlot.SetSelected(true);
       UpdateUIContent();
       lastOpenedFrame = Time.frameCount;
       ShowNearSlotAnimated(eqSlot.transform as RectTransform);
+    }
+
+    private EquipmentAffixData previewAffix = null;
+
+    /// <summary>
+    /// Hiển thị popup xem trước thông tin vật phẩm (chế độ chỉ đọc, ẩn toàn bộ nút tương tác phía dưới)
+    /// </summary>
+    public void ShowPreview(ItemData item, RectTransform slotRect, EquipmentAffixData affix = null)
+    {
+      EnsureInitialized();
+
+      if (item == null)
+      {
+        Hide();
+        return;
+      }
+
+      // Nếu đang mở đúng item preview này -> Toggle đóng popup
+      if (gameObject.activeSelf && popupCanvasGroup != null && popupCanvasGroup.alpha > 0.1f && isPreviewMode && currentItem == item)
+      {
+        Hide();
+        return;
+      }
+
+      // Bỏ chọn các ô cũ
+      if (currentBagSlot != null) currentBagSlot.SetSelected(false);
+      if (currentEquipSlot != null) currentEquipSlot.SetSelected(false);
+
+      currentBagSlot = null;
+      currentEquipSlot = null;
+      currentItem = item;
+      previewAffix = affix;
+      isEquippedTarget = false;
+      isPreviewMode = true;
+
+      UpdateUIContent();
+      lastOpenedFrame = Time.frameCount;
+
+      if (slotRect != null)
+      {
+        ShowNearSlotAnimated(slotRect);
+      }
     }
 
     /// <summary>
@@ -622,7 +673,19 @@ namespace InfiniteLabyrinth.UI
       // 6. Thống kê chỉ số (Stats)
       if (itemStatsText != null)
       {
-        itemStatsText.text = BuildStatsString(currentItem);
+        int upgradeLvl = 0;
+        EquipmentAffixData affix = previewAffix;
+        if (currentBagSlot != null)
+        {
+          upgradeLvl = currentBagSlot.UpgradeLevel;
+          affix = currentBagSlot.AffixData;
+        }
+        else if (currentEquipSlot != null)
+        {
+          upgradeLvl = currentEquipSlot.UpgradeLevel;
+          affix = currentEquipSlot.AffixData;
+        }
+        itemStatsText.text = BuildStatsString(currentItem, upgradeLvl, affix);
       }
 
       // 7. Cấu hình trạng thái 4 nút hành động
@@ -631,6 +694,18 @@ namespace InfiniteLabyrinth.UI
 
     private void ConfigureActionButtons()
     {
+      if (isPreviewMode)
+      {
+        // Chế độ Xem Trước (Preview): Ẩn toàn bộ nút tương tác phía dưới
+        if (btnEquip != null) btnEquip.gameObject.SetActive(false);
+        if (btnUnequip != null) btnUnequip.gameObject.SetActive(false);
+        if (btnUse != null) btnUse.gameObject.SetActive(false);
+        if (btnDrop != null) btnDrop.gameObject.SetActive(false);
+        if (btnSell != null) btnSell.gameObject.SetActive(false);
+        if (btnPutIn != null) btnPutIn.gameObject.SetActive(false);
+        return;
+      }
+
       if (isShopSellMode)
       {
         // Chế độ Bán trong Cửa Hàng: Ẩn toàn bộ nút Equip/Unequip/Use/Drop, chỉ hiện duy nhất nút Bán
@@ -722,28 +797,109 @@ namespace InfiniteLabyrinth.UI
       }
     }
 
-    private string BuildStatsString(ItemData item)
+    private string BuildStatsString(ItemData item, int upgradeLevel = 0, EquipmentAffixData affix = null)
     {
       var sb = new StringBuilder();
 
-      if (item.BonusAttack > 0f)
+      // 1. DÒNG CHÍNH (MAIN STATS)
+      float baseAtk = (affix != null && affix.rolledAttack > 0f) ? affix.rolledAttack : item.BonusAttack;
+      if (baseAtk > 0f)
       {
-        sb.AppendLine($"<color=#FFD54F>+ {item.BonusAttack} Attack Damage</color>");
+        float atk = BlacksmithUpgradeConfig.CalculateUpgradedAttack(baseAtk, upgradeLevel);
+        string upgStr = upgradeLevel > 0 ? $" <size=85%><color=#77FF77>(+{upgradeLevel})</color></size>" : "";
+        sb.AppendLine($"<color=#FFD54F>+ {atk:0.#} Attack Damage</color>{upgStr}");
       }
 
-      if (item.BonusDefense > 0f)
+      float baseDef = (affix != null && affix.rolledDefense > 0f) ? affix.rolledDefense : item.BonusDefense;
+      if (baseDef > 0f)
       {
-        sb.AppendLine($"<color=#81D4FA>+ {item.BonusDefense} Defense</color>");
+        float def = BlacksmithUpgradeConfig.CalculateUpgradedDefense(baseDef, upgradeLevel);
+        string upgStr = upgradeLevel > 0 ? $" <size=85%><color=#77FF77>(+{upgradeLevel})</color></size>" : "";
+        sb.AppendLine($"<color=#81D4FA>+ {def:0.#} Defense</color>{upgStr}");
       }
 
-      if (item.BonusHealth > 0f)
+      float baseHp = (affix != null && affix.rolledHealth > 0f) ? affix.rolledHealth : item.BonusHealth;
+      if (baseHp > 0f)
       {
-        sb.AppendLine($"<color=#EF5350>+ {item.BonusHealth} Max Health</color>");
+        float hp = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, upgradeLevel);
+        string upgStr = upgradeLevel > 0 ? $" <size=85%><color=#77FF77>(+{upgradeLevel})</color></size>" : "";
+        sb.AppendLine($"<color=#EF5350>+ {hp:0.#} Max Health</color>{upgStr}");
       }
 
       if (item.BonusStamina > 0f)
       {
-        sb.AppendLine($"<color=#66BB6A>+ {item.BonusStamina} Max Stamina</color>");
+        sb.AppendLine($"<color=#66BB6A>+ {item.BonusStamina:0.#} Max Stamina</color>");
+      }
+
+      // 2. DÒNG PHỤ THẦN BINH (SUB-STATS)
+      if (affix != null && affix.subStats.Count > 0)
+      {
+        sb.AppendLine("\n<color=#B0BEC5>─── DÒNG PHỤ THẦN BINH ───</color>");
+        for (int i = 0; i < affix.subStats.Count; i++)
+        {
+          var sub = affix.subStats[i];
+          float upVal = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(sub.value, upgradeLevel);
+          sb.AppendLine(new SubStatEntry(sub.type, upVal).GetFormattedString());
+        }
+      }
+      else
+      {
+        if (item.BonusCritRate > 0f)
+        {
+          float cr = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritRate, upgradeLevel);
+          sb.AppendLine($"<color=#FFB74D>+ {cr:0.#}% Critical Rate</color>");
+        }
+
+        if (item.BonusCritDamage > 0f)
+        {
+          float cd = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusCritDamage, upgradeLevel);
+          sb.AppendLine($"<color=#FFA726>+ {cd:0.#}% Critical Damage</color>");
+        }
+
+        if (item.BonusLifesteal > 0f)
+        {
+          float ls = BlacksmithUpgradeConfig.CalculateUpgradedSubStat(item.BonusLifesteal, upgradeLevel);
+          sb.AppendLine($"<color=#E57373>+ {ls:0.#}% Lifesteal</color>");
+        }
+
+        if (item.SpiritCostReduction > 0f)
+        {
+          sb.AppendLine($"<color=#4DD0E1>- {item.SpiritCostReduction:0.#}% Spirit Cost</color>");
+        }
+
+        if (item.StaminaCostReduction > 0f)
+        {
+          sb.AppendLine($"<color=#81C784>- {item.StaminaCostReduction:0.#}% Stamina Cost</color>");
+        }
+
+        if (item.SpiritGainBonus > 0f)
+        {
+          sb.AppendLine($"<color=#BA68C8>+ {item.SpiritGainBonus:0.#}% Spirit Gain</color>");
+        }
+
+        if (item.MoveSpeedBonus > 0f)
+        {
+          sb.AppendLine($"<color=#FFF176>+ {item.MoveSpeedBonus:0.#}% Movement Speed</color>");
+        }
+      }
+
+      // 3. PHÙ PHÉP THỨC TỈNH (ENCHANTMENTS)
+      if (affix != null && affix.enchantments.Count > 0)
+      {
+        sb.AppendLine("\n<color=#CE93D8>─── PHÙ PHÉP THỨC TỈNH ───</color>");
+        for (int i = 0; i < affix.enchantments.Count; i++)
+        {
+          var ench = affix.enchantments[i];
+          bool isUnlocked = upgradeLevel >= ench.milestoneLevel;
+          if (isUnlocked)
+          {
+            sb.AppendLine($"<color=#E040FB>✦ [+{ench.milestoneLevel}] {ench.title}:</color> <color=#EEEEEE>{ench.description}</color>");
+          }
+          else
+          {
+            sb.AppendLine($"<color=#757575>✧ [+{ench.milestoneLevel}] {ench.title} (Khóa - Cần đạt +{ench.milestoneLevel})</color>");
+          }
+        }
       }
 
       if (item.HealAmount > 0f)
@@ -894,6 +1050,7 @@ namespace InfiniteLabyrinth.UI
       }
 
       currentItem = null;
+      isPreviewMode = false;
 
       if (activeTransitionRoutine != null)
       {
@@ -929,6 +1086,7 @@ namespace InfiniteLabyrinth.UI
       }
 
       currentItem = null;
+      isPreviewMode = false;
 
       if (activeTransitionRoutine != null)
       {

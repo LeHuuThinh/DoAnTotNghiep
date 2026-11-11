@@ -94,6 +94,18 @@ public class Health : MonoBehaviour, IDamageable
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
+  /// <summary>
+  /// Cài đặt lượng máu tối đa và hiện tại theo giá trị tùy chỉnh (Dành cho Dummy bia tập đánh hoặc Admin)
+  /// </summary>
+  public void SetCustomHealth(float newMaxHealth)
+  {
+    baseMaxHealth = newMaxHealth;
+    maxHealth = newMaxHealth;
+    currentHealth = newMaxHealth;
+    isDead = false;
+    onHealthChanged?.Invoke(currentHealth, maxHealth);
+  }
+
   private void Awake()
   {
     baseMaxHealth = maxHealth;
@@ -170,7 +182,7 @@ public class Health : MonoBehaviour, IDamageable
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
-  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal)
+  public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float knockbackDistance = 0f, Transform attacker = null, InfiniteLabyrinth.UI.Combat.DamageNumberType damageType = InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, bool isCrit = false)
   {
     if (isDead || isInvulnerable || damage <= 0f) return;
 
@@ -204,14 +216,14 @@ public class Health : MonoBehaviour, IDamageable
       s_PersistentPlayerHealth = currentHealth;
       if (GameManager.HasInstance) GameManager.Instance.SavePlayerHealth(currentHealth);
     }
-    Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
+    Debug.Log($"[Trúng đòn!] Mục tiêu dính {actualDamage} (gốc: {damage}) sát thương{(isCrit ? " [CRITICAL!]" : "")}. Máu còn lại: {currentHealth}/{maxHealth}");
 
     // 4. Kích hoạt số sát thương bay lên (Floating Damage Number)
     Vector3 spawnPos = (hitPoint != Vector3.zero) ? hitPoint : (transform.position + Vector3.up * 1.1f);
     InfiniteLabyrinth.UI.Combat.DamageNumberType effectiveType = CompareTag("Player") 
       ? InfiniteLabyrinth.UI.Combat.DamageNumberType.PlayerHit 
       : damageType;
-    InfiniteLabyrinth.UI.Combat.DamageNumberManager.Instance.SpawnDamage(actualDamage, spawnPos, effectiveType);
+    InfiniteLabyrinth.UI.Combat.DamageNumberManager.Instance.SpawnDamage(actualDamage, spawnPos, effectiveType, isCrit);
 
     // Kích hoạt sự kiện nhận đòn
     onHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -252,10 +264,44 @@ public class Health : MonoBehaviour, IDamageable
     onHealthChanged?.Invoke(currentHealth, maxHealth);
   }
 
+  public void ApplyBleed(float totalDamage, float duration = 3f, int ticks = 3, Transform attacker = null)
+  {
+    if (isDead || totalDamage <= 0f) return;
+    StartCoroutine(BleedRoutine(totalDamage, duration, ticks, attacker));
+  }
+
+  private System.Collections.IEnumerator BleedRoutine(float totalDamage, float duration, int ticks, Transform attacker)
+  {
+    float tickInterval = duration / Mathf.Max(1, ticks);
+    float tickDamage = totalDamage / Mathf.Max(1, ticks);
+
+    for (int i = 0; i < ticks; i++)
+    {
+      yield return new WaitForSeconds(tickInterval);
+      if (isDead) yield break;
+
+      TakeDamage(tickDamage, transform.position + Vector3.up * 0.5f, Vector3.up, 0f, attacker, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, false);
+    }
+  }
+
   private void Die()
   {
     if (isDead) return;
     isDead = true;
+
+    // Kích hoạt Phù Phép Soul Siphon (Hồi phục HP & Spirit cho Player khi tiêu diệt mục tiêu)
+    if (LastAttacker != null && LastAttacker.CompareTag("Player") && !CompareTag("Player"))
+    {
+      if (InfiniteLabyrinth.Inventory.InventoryManager.HasInstance &&
+          InfiniteLabyrinth.Inventory.InventoryManager.Instance.HasEnchantment(InfiniteLabyrinth.Inventory.EnchantmentType.SoulSiphon))
+      {
+        var pHealth = LastAttacker.GetComponent<Health>();
+        if (pHealth != null && !pHealth.IsDead) pHealth.Heal(15f);
+
+        var pStats = LastAttacker.GetComponent<PlayerStats>();
+        if (pStats != null) pStats.GainSpirit(15f);
+      }
+    }
 
     onDeath?.Invoke();
   }

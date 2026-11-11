@@ -189,6 +189,19 @@ namespace InfiniteLabyrinth.Editor
             }
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            // Card 4: Monster AI & Attack Director
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🎯 Đạo Diễn Lượt Đánh Quái (Attack Token Director)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("Quản lý Token Pool chống quái spam hội đồng, phân bổ lượt tấn công nhịp nhàng chuẩn Souls-like.", MessageType.None);
+
+            if (GUILayout.Button("🛡️ Tạo / Kiểm Tra Attack Token Director Trong Scene", GUILayout.Height(30)))
+            {
+                AttackTokenDirector.CreateDirectorInScene();
+            }
+            EditorGUILayout.EndVertical();
         }
 
         #endregion
@@ -257,11 +270,22 @@ namespace InfiniteLabyrinth.Editor
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("5. Cấu Hình ML-Agents (1-Click)", GUILayout.Height(28)))
+            if (GUILayout.Button("5. Phục Hồi WeakenFrontRI Từ FBX", GUILayout.Height(28)))
+            {
+                SetupRedIgnisAnimatorAndPrefabs.RestoreWeakenFrontFromFBX();
+            }
+            if (GUILayout.Button("6. Cấu Hình Hoạt Ảnh Weaken 2 Pha", GUILayout.Height(28)))
+            {
+                SetupRedIgnisAnimatorAndPrefabs.MenuSetupWeakenAnimationAndStates();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("7. Cấu Hình ML-Agents (1-Click)", GUILayout.Height(28)))
             {
                 RedIgnisSetupEditor.SetupMLAgentsForBoss(true);
             }
-            if (GUILayout.Button("6. Thiết Lập Đấu Trường Arena", GUILayout.Height(28)))
+            if (GUILayout.Button("8. Thiết Lập Đấu Trường Arena", GUILayout.Height(28)))
             {
                 RedIgnisSetupEditor.SetupBattleArena(true);
             }
@@ -300,12 +324,12 @@ namespace InfiniteLabyrinth.Editor
         {
             DrawSectionHeader("🎒 KINH TẾ, TIẾN TRÌNH RPG & NGÔI LÀNG HAVEN");
 
-            // Card 1: 49 Items Database
+            // Card 1: 51 Items Database
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("📦 Cơ Sở Dữ Liệu 49 Vật Phẩm (Items Database)", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("20 Vũ khí, 8 Giáp trụ, 13 Nguyên liệu/Lõi Boss, 6 Dược phẩm, 2 Tiền & Khóa. Đồng bộ mô hình kiếm 3D lên tay nhân vật.", MessageType.None);
+            EditorGUILayout.LabelField("📦 Cơ Sở Dữ Liệu 51 Vật Phẩm (Items Database)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("20 Vũ khí, 8 Giáp trụ, 15 Nguyên liệu/Đá Quý/Lõi Boss, 6 Dược phẩm, 2 Tiền & Khóa. Đồng bộ mô hình kiếm 3D lên tay nhân vật.", MessageType.None);
 
-            if (GUILayout.Button("💎 1. Khởi Tạo / Cập Nhật Toàn Bộ 49 Items ScriptableObjects", GUILayout.Height(30)))
+            if (GUILayout.Button("💎 1. Khởi Tạo / Cập Nhật Toàn Bộ 51 Items ScriptableObjects", GUILayout.Height(30)))
             {
                 ItemDatabaseGenerator.GenerateDefaultItems();
             }
