@@ -147,7 +147,20 @@ public class PlayerBotAI : MonoBehaviour
     private void Start()
     {
         FindBossReferences();
+        EnsureWeaponEquipped();
+        if (playerStats != null) playerStats.RefillSpiritToFull();
         ApplyBotState(botEnabled);
+    }
+
+    /// <summary>
+    /// Đảm bảo vũ khí trên tay Player luôn được kích hoạt sẵn sàng chiến đấu (đặc biệt trong các Scene Arena không có InventoryManager)
+    /// </summary>
+    public void EnsureWeaponEquipped()
+    {
+        if (playerCombat != null && !playerCombat.HasWeapon)
+        {
+            playerCombat.SetWeaponEquipped(true);
+        }
     }
 
     private void FindBossReferences()
@@ -246,8 +259,17 @@ public class PlayerBotAI : MonoBehaviour
             Debug.Log($"<color=yellow>[Player Bot AI]</color> ⏩ Tốc độ game Time.timeScale = {Time.timeScale:0.#}x (Phím T)");
         }
 
-        // Nếu Bot đang tắt -> Ngủ đông hoàn toàn, nhường 100% quyền cho người chơi
-        if (!botEnabled) return;
+        // Nếu Bot đang tắt -> Ngủ đông, nhường 100% quyền điều khiển thủ công cho người chơi
+        if (!botEnabled)
+        {
+            EnsureWeaponEquipped();
+            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            return;
+        }
 
         if (bossTransform == null || !bossTransform.gameObject.activeInHierarchy)
         {
@@ -394,6 +416,12 @@ public class PlayerBotAI : MonoBehaviour
         {
             playerHealth.SetInvulnerable(false);
         }
+
+        if (playerStats != null)
+        {
+            playerStats.RestoreStamina(playerStats.MaxStamina);
+            playerStats.RefillSpiritToFull();
+        }
     }
 
     private void ApplyBotState(bool isBotOn)
@@ -409,15 +437,26 @@ public class PlayerBotAI : MonoBehaviour
             }
         }
 
+        // Đảm bảo vũ khí luôn được trang bị sẵn sàng cho người chơi tự đánh
+        EnsureWeaponEquipped();
+
         // Đảm bảo không bị kẹt bất tử
         if (playerHealth != null)
         {
             playerHealth.SetInvulnerable(false);
         }
 
+        if (playerStats != null)
+        {
+            playerStats.RestoreStamina(playerStats.MaxStamina);
+            playerStats.RefillSpiritToFull();
+        }
+
         if (!isBotOn && playerCombat != null)
         {
             playerCombat.ForceResetCombat();
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
     }
 
@@ -441,14 +480,14 @@ public class PlayerBotAI : MonoBehaviour
                     Vector3 dodgeDir = (Random.value > 0.5f) ? -transform.right : transform.right;
                     if (Random.value > 0.6f) dodgeDir = -transform.forward; // Lăn lùi
                     TriggerBotRoll(dodgeDir);
-                    rollCooldown = Random.Range(1.5f, 2.8f);
+                    rollCooldown = Random.Range(1.2f, 2.2f);
                     return;
                 }
                 // 15% Tỉ lệ: Giơ kiếm Parry nếu đứng gần (< 4.5m)
                 else if (rand < 0.85f && distToBoss < 4.5f)
                 {
                     TriggerBotParry();
-                    rollCooldown = 2.0f;
+                    rollCooldown = 1.8f;
                     return;
                 }
                 // 15% Tỉ lệ: Cố tình không né hoặc lăn chậm (tạo cơ hội cho Boss bắt bài Roll-Catch / trúng đòn)
@@ -458,9 +497,11 @@ public class PlayerBotAI : MonoBehaviour
 
     private void UpdateFSM(float distToBoss)
     {
-        // Kiểm tra cơ hội hồi máu (Heal-Punish test khi máu thấp)
-        if (playerHealth != null && playerHealth.CurrentHealth < playerHealth.MaxHealth * 0.45f 
-            && healCooldown <= 0f && currentState != BotState.Healing && !isDrinkingPotion && !isBotRolling)
+        // Kiểm tra cơ hội hồi máu (Heal-Punish test khi máu thấp):
+        // Mô phỏng người chơi thật: tận dụng lúc Boss đang trong nhịp nghỉ 5s hoặc lùi xa (> 5.5m) để uống máu
+        bool lowHealth = playerHealth != null && playerHealth.CurrentHealth < playerHealth.MaxHealth * 0.50f;
+        bool safeHealWindow = lowHealth && (distToBoss > 5.5f || !IsBossBusy());
+        if (safeHealWindow && healCooldown <= 0f && currentState != BotState.Healing && !isDrinkingPotion && !isBotRolling)
         {
             if (attackRoutine != null)
             {
@@ -476,9 +517,17 @@ public class PlayerBotAI : MonoBehaviour
         {
             case BotState.Idle:
                 SetSpeedAnimation(0f);
-                if (stateTimer > 0.4f)
+                if (stateTimer > 0.35f)
                 {
-                    currentState = (distToBoss > attackRange) ? BotState.Approaching : BotState.Attacking;
+                    // Quản lý thể lực (Stamina Management): Nếu thể lực cạn kiệt (< 25f), ưu tiên lùi lại hồi Stamina
+                    if (playerStats != null && !playerStats.HasStamina(25f))
+                    {
+                        currentState = BotState.Retreating;
+                    }
+                    else
+                    {
+                        currentState = (distToBoss > attackRange) ? BotState.Approaching : BotState.Attacking;
+                    }
                     stateTimer = 0f;
                 }
                 break;
@@ -516,13 +565,21 @@ public class PlayerBotAI : MonoBehaviour
                 MoveInDirection(strafeVec.normalized, 2.8f);
                 SetSpeedAnimation(0.5f);
 
-                // Thời gian vờn quanh hợp lý (1.5s - 2.8s)
+                // Thời gian vờn quanh hợp lý (1.5s - 2.8s) khớp với nhịp nghỉ 5.0s của Boss
                 if (stateTimer > Random.Range(1.5f, 2.8f))
                 {
                     strafeDirection *= -1f; // Đổi hướng lượn dạt
-                    // 80% Tỉ lệ: Mở đợt tấn công áp sát chém liên hoàn!
-                    // 20% Tỉ lệ: Lùi lại hồi phục thêm
-                    currentState = (Random.value < 0.80f) ? BotState.Approaching : BotState.Retreating;
+                    // Nếu thể lực thấp (< 25f), ưu tiên lùi lại hồi Stamina
+                    if (playerStats != null && !playerStats.HasStamina(25f))
+                    {
+                        currentState = BotState.Retreating;
+                    }
+                    else
+                    {
+                        // 75% Tỉ lệ: Mở đợt tấn công áp sát chém liên hoàn!
+                        // 25% Tỉ lệ: Lùi lại hồi phục thêm
+                        currentState = (Random.value < 0.75f) ? BotState.Approaching : BotState.Retreating;
+                    }
                     stateTimer = 0f;
                 }
                 break;
@@ -673,11 +730,12 @@ public class PlayerBotAI : MonoBehaviour
         isDrinkingPotion = true;
         SetSpeedAnimation(0f);
 
-        // Hồi 35 HP (Kích thích Boss tung chiêu Heal-Punish)
+        // Hồi máu theo tỷ lệ chuẩn (khoảng 35% Max HP = 70 HP khi Player có 200 HP)
         if (playerHealth != null)
         {
-            playerHealth.Heal(35f);
-            Debug.Log("<color=cyan>[Player Bot AI]</color> 🧪 Player vừa uống máu! (Kích hoạt cửa sổ Heal-Punish cho Boss)");
+            float healAmount = (playerHealth.MaxHealth > 0f) ? playerHealth.MaxHealth * 0.35f : 70f;
+            playerHealth.Heal(healAmount);
+            Debug.Log($"<color=cyan>[Player Bot AI]</color> 🧪 Player vừa uống máu (+{healAmount:0} HP, hiện có {playerHealth.CurrentHealth:0}/{playerHealth.MaxHealth:0} HP)! (Kích hoạt cửa sổ Heal-Punish cho Boss)");
         }
 
         // Cửa sổ sơ hở (Heal Vulnerability Window - 1.2s):
@@ -932,16 +990,18 @@ public class PlayerBotAI : MonoBehaviour
 
         if (botEnabled)
         {
+            string hpText = (playerHealth != null) ? $"{playerHealth.CurrentHealth:0}/{playerHealth.MaxHealth:0} HP" : "200/200 HP";
             GUI.color = new Color(0.2f, 1f, 0.4f, 0.95f);
-            GUI.Box(new Rect(20, 20, 440, 55), 
-                $"🤖 [BOT PLAYER ĐANG TỰ ĐÁNH (SPARRING)]\n" +
-                $"Trạng thái: {currentState} | [B]: TẮT BOT | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
+            GUI.Box(new Rect(20, 20, 460, 55), 
+                $"🤖 [BOT PLAYER ĐANG TỰ ĐÁNH (SPARRING)] - Máu: {hpText}\n" +
+                $"Trạng thái: {currentState} | [B]: TẮT BOT | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
         }
         else
         {
+            string hpText = (playerHealth != null) ? $"{playerHealth.CurrentHealth:0}/{playerHealth.MaxHealth:0} HP" : "200/200 HP";
             GUI.color = new Color(1f, 1f, 1f, 0.85f);
-GUI.Box(new Rect(20, 20, 380, 36), 
-                $"🎮 Thủ công | [B]: Bật Bot | [[ / ]]: Tốc Độ ({Time.timeScale:0.0#}x)", cachedBoxStyle);
+            GUI.Box(new Rect(20, 20, 420, 36), 
+                $"🎮 Thủ công ({hpText}) | [B]: Bật Bot | [T]: Tốc Độ ({Time.timeScale:0.#}x)", cachedBoxStyle);
         }
 
         GUI.color = Color.white;
@@ -961,6 +1021,12 @@ GUI.Box(new Rect(20, 20, 380, 36),
         if (playerHealth != null)
         {
             playerHealth.SetInvulnerable(false);
+        }
+
+        if (playerStats != null)
+        {
+            playerStats.RestoreStamina(playerStats.MaxStamina);
+            playerStats.RefillSpiritToFull();
         }
 
         if (playerController != null)

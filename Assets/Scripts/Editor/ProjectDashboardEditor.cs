@@ -255,6 +255,17 @@ namespace InfiniteLabyrinth.Editor
                 InspectAndFixRedIgnis.RunInspectionAndFix();
             }
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("5. Cấu Hình ML-Agents (1-Click)", GUILayout.Height(28)))
+            {
+                RedIgnisSetupEditor.SetupMLAgentsForBoss(true);
+            }
+            if (GUILayout.Button("6. Thiết Lập Đấu Trường Arena", GUILayout.Height(28)))
+            {
+                RedIgnisSetupEditor.SetupBattleArena(true);
+            }
+            EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(6);

@@ -99,7 +99,7 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Sát thương sóng kiếm dọc")]
     [SerializeField] private float attackSlashDamage = 65f;
     [Tooltip("Thời gian hồi chiêu (giây)")]
-    [SerializeField] private float attackSlashCooldown = 3.0f;
+    [SerializeField] private float attackSlashCooldown = 6.0f;
     [Tooltip("Độ trễ vung kiếm trước khi phóng sóng kiếm (giây). Mặc định: 0.42s")]
     [SerializeField] private float attackSlashDelay = 0.42f;
     [Tooltip("Tốc độ bay của sóng kiếm dọc (m/s)")]
@@ -122,7 +122,7 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Sát thương sóng kiếm ngang")]
     [SerializeField] private float horizontalSlashDamage = 50f;
     [Tooltip("Thời gian hồi chiêu (giây)")]
-    [SerializeField] private float horizontalSlashCooldown = 3.5f;
+    [SerializeField] private float horizontalSlashCooldown = 7.0f;
     [Tooltip("Độ trễ vung kiếm trước khi phóng sóng kiếm (giây). Mặc định: 0.40s")]
     [SerializeField] private float horizontalSlashDelay = 0.40f;
     [Tooltip("Tốc độ bay của sóng kiếm ngang (m/s)")]
@@ -141,7 +141,7 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Sát thương nổ lan khi dậm đất")]
     [SerializeField] private float jumpAttackDamage = 80f;
     [Tooltip("Thời gian hồi chiêu (giây)")]
-    [SerializeField] private float jumpAttackCooldown = 5.0f;
+    [SerializeField] private float jumpAttackCooldown = 10.0f;
     [Tooltip("Độ trễ nhún người trước khi bật nhảy (giây). Mặc định: 0.25s")]
     [SerializeField] private float jumpAttackWindupDelay = 0.25f;
     [Tooltip("Thời gian bay trên không lướt tới điểm rơi (giây). Mặc định: 0.55s")]
@@ -164,7 +164,7 @@ public class RedIgnisController : MonoBehaviour
     [Tooltip("Sát thương mỗi nhát chém")]
     [SerializeField] private float comboHitDamage = 35f;
     [Tooltip("Thời gian hồi chiêu (giây)")]
-    [SerializeField] private float comboAttackCooldown = 6.0f;
+    [SerializeField] private float comboAttackCooldown = 12.0f;
     [Tooltip("Mốc thời gian (giây) của từng nhát chém 1, 2, 3, 4 trong clip animation")]
     [SerializeField] private float[] comboHitTimers = new float[] { 0.40f, 0.95f, 1.55f, 2.20f };
     [Tooltip("Khoảng cách nhích lướt tới ở mỗi nhát chém (m).")]
@@ -175,6 +175,14 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float comboVfxHeightOffset = 0f;
     [Tooltip("Thời gian hồi phục sau khi kết thúc 4 nhát chém (giây)")]
     [SerializeField] private float comboRecoveryDuration = 0.90f;
+
+    [Space(10)]
+    [Header("=== NHỊP NGHỈ CHIẾN ĐẤU (COMBAT PACING - TRÁNH SPAM CHIÊU) ===")]
+    [Tooltip("Khoảng thời gian giãn cách tối thiểu giữa 2 lần tung chiêu liên tiếp (giây) - Ép Boss lùi lại vờn cự ly")]
+    [SerializeField] private float attackPacingInterval = 5.0f;
+
+    private float nextAttackAllowedTime = 0f;
+    private int lastUsedSkillIndex = -1; // Chống lặp chiêu: Lưu chiêu vừa sử dụng để không dùng 2 lần liên tiếp
 
     [Header("=== PHẢN HỒI NHẬN ĐÒN & CHỚP ĐỎ ===")]
     [SerializeField] private float hitFlashDuration = 0.12f;
@@ -772,6 +780,7 @@ public class RedIgnisController : MonoBehaviour
         if (IsBusy()) return;
         if (!CanCastAttack(attackIndex)) return;
 
+        lastUsedSkillIndex = attackIndex; // Ghi nhớ chiêu vừa dùng để khóa không cho dùng lặp lại liên tiếp
         SyncCooldownMax();
         skillCooldownTimers[attackIndex] = skillCooldownMax[attackIndex];
 
@@ -830,9 +839,7 @@ public class RedIgnisController : MonoBehaviour
         float remainingDuration = Mathf.Max(0.05f, attackSlashTotalDuration - attackSlashDelay - activeSwingDuration);
         yield return new WaitForSeconds(remainingDuration);
 
-        isAttacking = false;
-        if (!isSwordBuffActive && !previewFlameAlwaysOn && weaponFlame != null) weaponFlame.Extinguish();
-        currentAttackRoutine = null;
+        FinishAttack();
     }
 
     // ==========================================
@@ -871,9 +878,7 @@ public class RedIgnisController : MonoBehaviour
         float remainingDuration = Mathf.Max(0.05f, horizontalSlashTotalDuration - horizontalSlashDelay - activeSwingDuration);
         yield return new WaitForSeconds(remainingDuration);
 
-        isAttacking = false;
-        if (!isSwordBuffActive && !previewFlameAlwaysOn && weaponFlame != null) weaponFlame.Extinguish();
-        currentAttackRoutine = null;
+        FinishAttack();
     }
 
     private void SpawnSwordSwingArc(GameObject swingPrefab, float tiltAngle, float heightOffset = 0f)
@@ -1015,9 +1020,7 @@ public class RedIgnisController : MonoBehaviour
 
         yield return new WaitForSeconds(jumpAttackRecoveryDuration);
 
-        isAttacking = false;
-        if (!isSwordBuffActive && !previewFlameAlwaysOn && weaponFlame != null) weaponFlame.Extinguish();
-        currentAttackRoutine = null;
+        FinishAttack();
     }
 
     // ==========================================
@@ -1098,9 +1101,18 @@ public class RedIgnisController : MonoBehaviour
         float remainingDuration = Mathf.Max(comboRecoveryDuration, 3.633f - lastTime);
         yield return new WaitForSeconds(remainingDuration);
 
+        FinishAttack();
+    }
+
+    /// <summary>
+    /// Kết thúc chuỗi đòn tấn công và kích hoạt Nhịp nghỉ Combat Pacing (3.5s)
+    /// </summary>
+    private void FinishAttack()
+    {
         isAttacking = false;
         if (!isSwordBuffActive && !previewFlameAlwaysOn && weaponFlame != null) weaponFlame.Extinguish();
         currentAttackRoutine = null;
+        nextAttackAllowedTime = Time.time + attackPacingInterval;
     }
 
     private void DealAreaDamage(Vector3 center, float radius, float dmg, float knock)
@@ -1472,6 +1484,96 @@ public class RedIgnisController : MonoBehaviour
         OnBossDefeated?.Invoke();
     }
 
+    /// <summary>
+    /// Hồi sinh Boss để bắt đầu hiệp đấu mới (Reset trạng thái chết, bật lại Collider/CharacterController, reset Animation và Cooldowns)
+    /// </summary>
+    public void Revive()
+    {
+        isDead = false;
+        isAttacking = false;
+        isWeakened = false;
+        isCastingSword = false;
+        hasTriggeredSwordCasting = false;
+        isSwordBuffActive = false;
+
+        if (currentAttackRoutine != null)
+        {
+            StopCoroutine(currentAttackRoutine);
+            currentAttackRoutine = null;
+        }
+        if (weakenRoutine != null)
+        {
+            StopCoroutine(weakenRoutine);
+            weakenRoutine = null;
+        }
+        if (swordCastingRoutine != null)
+        {
+            StopCoroutine(swordCastingRoutine);
+            swordCastingRoutine = null;
+        }
+
+        if (weaponFlame != null) weaponFlame.Extinguish(instant: true);
+        SetSwordTrailActive(false);
+        if (weaponTrail != null) weaponTrail.ClearTrail();
+
+        // Khôi phục Collider & CharacterController
+        if (characterController != null) characterController.enabled = true;
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = true;
+
+        // Reset Animator
+        if (anim != null)
+        {
+            anim.ResetTrigger(DeadHash);
+            anim.ResetTrigger(WeakenHash);
+            anim.ResetTrigger(SwordCastingHash);
+            anim.ResetTrigger(AttackSlashHash);
+            anim.ResetTrigger(HorizontalSlashHash);
+            anim.ResetTrigger(JumpAttackHash);
+            anim.ResetTrigger(ComboAttackHash);
+            anim.SetFloat(SpeedHash, 0f);
+            anim.SetInteger(MoveTypeHash, 0);
+            anim.Play("IdleRI", 0, 0f);
+        }
+
+        // Hồi phục Máu và Poise
+        ApplyBossStats();
+        if (health != null) health.Revive(bossMaxHealth);
+
+        ResetAllCooldowns();
+        CleanupResidualProjectiles();
+    }
+
+    /// <summary>
+    /// Đặt lại toàn bộ thời gian hồi chiêu và nhịp nghỉ về 0 cho hiệp đấu mới
+    /// </summary>
+    public void ResetAllCooldowns()
+    {
+        if (skillCooldownTimers != null)
+        {
+            for (int i = 0; i < skillCooldownTimers.Length; i++)
+            {
+                skillCooldownTimers[i] = 0f;
+            }
+        }
+        nextAttackAllowedTime = 0f;
+        lastUsedSkillIndex = -1; // Reset trạng thái chống lặp chiêu cho hiệp mới
+    }
+
+    /// <summary>
+    /// Dọn sạch các projectile kiếm bay còn tồn đọng trên sàn đấu
+    /// </summary>
+    public void CleanupResidualProjectiles()
+    {
+        RedIgnisSlashProjectile[] projectiles = FindObjectsByType<RedIgnisSlashProjectile>(FindObjectsSortMode.None);
+        foreach (var p in projectiles)
+        {
+            if (p != null) Destroy(p.gameObject);
+        }
+    }
+
+    public bool IsPhase2 => isSwordBuffActive;
+
     // ==========================================
     // TIỆN ÍCH & TRỢ GIÚP
     // ==========================================
@@ -1483,14 +1585,24 @@ public class RedIgnisController : MonoBehaviour
     public bool CanCastAttack(int index)
     {
         if (index < 0 || index >= skillCooldownTimers.Length) return false;
+        // 1. Kiểm tra nhịp nghỉ Combat Pacing (5.0s giữa các lần tung chiêu)
+        if (Time.time < nextAttackAllowedTime) return false;
+        // 2. Chống lặp chiêu: Tuyệt đối không được dùng cùng 1 chiêu 2 lần liên tiếp
+        if (index == lastUsedSkillIndex) return false;
+        // 3. Kiểm tra Cooldown riêng của chiêu
         return skillCooldownTimers[index] <= 0.01f;
     }
 
     public float GetCooldownNormalized(int index)
     {
         if (index < 0 || index >= skillCooldownTimers.Length) return 0f;
+        // Nếu vừa dùng chiêu này -> Bị khóa chống lặp chiêu liên tiếp (trả về 1.0f cho Observation)
+        if (index == lastUsedSkillIndex) return 1.0f;
         if (skillCooldownMax[index] <= 0f) return 0f;
-        return Mathf.Clamp01(skillCooldownTimers[index] / skillCooldownMax[index]);
+        float skillCdNorm = Mathf.Clamp01(skillCooldownTimers[index] / skillCooldownMax[index]);
+        float pacingRemaining = Mathf.Max(0f, nextAttackAllowedTime - Time.time);
+        float pacingNorm = (attackPacingInterval > 0f) ? Mathf.Clamp01(pacingRemaining / attackPacingInterval) : 0f;
+        return Mathf.Max(skillCdNorm, pacingNorm);
     }
 
     public Transform GetPlayerTarget()

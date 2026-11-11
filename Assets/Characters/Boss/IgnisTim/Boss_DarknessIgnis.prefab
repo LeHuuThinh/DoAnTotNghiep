@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7960512452402231492}
   m_Layer: 0
-  m_Name: Boss_DarkIgnis
+  m_Name: Boss_DarknessIgnis
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
