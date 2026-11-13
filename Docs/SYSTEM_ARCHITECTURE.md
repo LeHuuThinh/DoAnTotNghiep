@@ -19,7 +19,7 @@ flowchart TD
     Explore -->|Player Chết| DieState["Kết thúc Run: Qua Day N+1<br/>Respawn tại Chuông Trung Tâm Làng"]
     DieState --> Spawn
     
-    Explore --> BossFight["Phòng Trùm: Đấu Boss Ice Golem (ML-Agents AI)"]
+    Explore --> BossFight["Phòng Trùm: Đấu Boss Ice Golem / Red Ignis (ML-Agents AI)"]
     BossFight -->|Chiến Thắng| VictoryChoice{"Lựa chọn sau khi diệt Boss"}
     
     VictoryChoice -->|Về Làng| ReturnVillage["Về Làng cất đồ & Qua Day N+1"]
@@ -193,6 +193,10 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * IceBallIG *(Phím 7)*: Gồng tụ quả cầu ma lực tím Purple Orb lơ lửng chính giữa hai bàn tay trên trời (GetBetweenHandsPosition()), bám theo tay vươn cao và phình to dần từ 0.4 lên 2.2, sau đó bổ hai tay ném thẳng về phía Player với vận tốc 16m/s và phát nổ diện rộng khi va chạm.
        * JumpDown *(Mở màn duy nhất 1 lần khi phát hiện Player / One-Time Intro Cutscene)*: Đáp đất mở màn ấn tượng từ trên cao 12-16m kèm shockwave rền vang lan tỏa từ chân Boss. Tự động kích hoạt khi lần đầu phát hiện Player trong tầm 35m và khóa vĩnh viễn sau cú đáp đất đầu tiên (hasTriggeredJumpDown = true), không cho phép dùng đi dùng lại trong trận đấu (đã gỡ bỏ phím Space để tránh spam).
      * **Hệ thống Chiếu sáng Tự Thân & Đạo Diễn Cutscene Intro Bục Đá:**
+     * **Cơ Chế Khựng Hoạt Ảnh Lấy Đà (Timing Mixup / Hold Wind-up - Kiểu 2 Souls-like):**
+       * Tích hợp trực tiếp vào 5 kỹ năng: Attack 1 (đấm), GumoGumo Slam (đập đất), Flame Breath (ngửa cổ lấy hơi), Run Attack (vào thế phi nước đại), AttackLT_IG (vung combo 3 đòn). **Loại trừ hoàn toàn Chiêu 4 (JumpAttack) và Chiêu 7 (IceBall)**.
+       * Bảng thông số Inspector trực quan: `enableTimingMixup` (bật/tắt), `timingMixupChance` (tỷ lệ kích hoạt, mặc định 1.0 = 100%), `windupWaitTime` (0.2s lên đỉnh lấy đà), `minHoldDuration` (0.5s) đến `maxHoldDuration` (0.8s), `holdAnimationSpeed` (0.02f nén cơ siêu chậm).
+       * Đồng bộ tuyệt đối: Hitbox và timeline gây sát thương tự động lùi khớp với thời gian khựng, bảo đảm đòn giáng xuống chạm đích đúng frame tiếp xúc thực tế và trừng phạt triệt để nhịp lăn né hoảng loạn (Roll-Catching).
        * **Hào quang băng giá (Boss_Aura_Light):** Tự sinh point light xanh băng rực rỡ (bodyAuraColor, range 16m, intensity 3.0) bám theo ngực Boss cao 2.5m, giúp Boss nổi bật ấn tượng trong bóng tối hầm ngục.
        * **Chế độ Standby trên Bục Đá (SetStandbyOnPedestal):** Cố định Boss trên bục đá, đóng băng Rigidbody kinematic chờ Cutscene mở màn.
        * **Nhảy từ bục đá & Phun băng chào sân:** Hỗ trợ PlayIntroJumpDownFromPedestal (nhảy vòng cung từ bục xuống sàn đấu) và PlayIntroBreath (phun lửa nón chào sân).
@@ -211,29 +215,25 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * **Vô hiệu hóa Reset Episode ML-Agents:** Khóa cờ respawnBossOnDeath = false trên IceGolemAgent.cs và Boss_IceGolem.prefab, bảo đảm Boss nằm gục vĩnh viễn trên sàn khi tử trận và không vô tình reset episode khiến Boss quay lại bục hay Player bị dịch chuyển về phòng khởi đầu.
 
   2. **Trùm Lửa: Red Ignis (Boss_RedIgnis.prefab - The Crimson Duelist / True Flame Ignis):**
-     * **Định vị chiến đấu:** Kiếm sĩ tốc độ cao, phản xạ chớp nhoáng (facePlayerSpeed = 280 deg/s), áp sát và vờn đối thủ ở cự ly trung bình (4-6m), sở hữu thanh kiếm ma thuật rực lửa.
-     * **Chỉ số sinh tồn & Bảng thông số Inspector (RedIgnisController.cs):**
-       * **Máu tối đa (bossMaxHealth = 1200 HP):** Máu độc lập cho mỗi Phase (Phase 1: 1200 HP, Phase 2: Hồi sinh đầy 100% = 1200 HP).
-       * **Thanh chịu đòn Poise (maxPoise = 400 điểm):** Độc lập với sát thương máu, không tự hồi phục trong trận đấu. Bị bào mòn bởi đòn đánh Player (Chém thường: 25-35, Chém 3 / Charge 1: 50, Charge 2 / Skill E: 70, Counter / Skill Q: 100).
-       * **Cơ chế Suy yếu (Poise Break / Weaken):** Khi Poise về 0, kích hoạt trạng thái choáng vỡ thế (Weaken) khựng lại 2.2s mở ra cửa sổ cho Player phản công dồn sát thương.
-       * **Vận tốc di chuyển:** Tốc độ bước thường moveSpeed = 4.2m/s (Phase 1) ➔ 5.5m/s (Phase 2, tăng +30%); Tốc độ dạt ngang strafeSpeed = 3.2m/s.
-     * **Cơ Chế 2 Pha Đột Biến (Two-Phase Boss - Rebirth on Death with New Appearance):**
-       * **Phase 1 (The Crimson Duelist):** Thanh kiếm đơn, dáng đứng thanh thoát, di chuyển vờn (strafing) ở cự ly 4-6m, chém nhanh, lướt sườn bọc lót.
-       * **Thời Khắc Chuyển Pha (Phase Transition on Death):** Khi thanh máu Phase 1 tụt về 0, Boss **không chết ngay** mà kích hoạt chuỗi Tái Sinh (Resurrection):
-         - Quỵ gối rơi vào trạng thái bất tử tạm thời (invulnerable = true).
-         - Bùng nổ vụ nổ sóng nhiệt (Heat Wave Explosion) đẩy lùi Player ra xa.
-         - **LỘT XÁC DIỆN MẠO MỚI (New Appearance Transformation):** Hoán đổi Mesh/Model hoặc kích hoạt hào quang lửa rực cháy (Flaming Wings / Dark Flame Aura), vũ khí bao phủ bởi ngọn lửa cuồng nộ (Blazing Blade), phục hồi 100% thanh máu với danh xưng mới.
-       * **Phase 2 (True Flame Ignis - The Awakened):** Tốc độ di chuyển tăng 30%, nhịp vung kiếm dồn dập, mở khóa 2 chiêu thức tối thượng (Lướt chém để lại vệt lửa rực cháy mặt sàn và Bão lửa cuồng nộ AOE).
-     * **Bộ Chiêu Thức Hoàn Chỉnh & Trạng Thái Gồng Kiếm trên RedIgnisController.cs:**
-       * Skill 1: Attack Slash (Chém Dọc Xoay Người) *(Phím 1)*: Đòn vung kiếm chém dọc từ trên xuống (cooldown 3.0s, damage 65, delay lấy đà `attackSlashDelay` = 0.42s), phóng đạn kiếm dọc xoay 90° bay cắm sàn (Ignis_Slash_Vertical.prefab, vận tốc 22m/s, tầm quét 25m), kích hoạt dải vệt kiếm đỏ thẫm IgnisSwordTrail.cs bám sát đường cong lưỡi kiếm.
-       * Skill 2: Horizontal Slash (Chém Ngang Quét Rộng) *(Phím 2)*: Đòn chém quét ngang thân người uy lực (cooldown 3.5s, damage 50, delay lấy đà horizontalSlashDelay = 0.40s), phóng sóng kiếm ngang bay là mặt sàn (Ignis_Slash_Horizontal.prefab, vận tốc 20m/s), đục thủng thế phòng thủ ở cự ly tầm trung.
-       * Skill 3: Jump Attack (Nhảy Dậm Nổ Đất AoE) *(Phím 3)*: Boss nhún đà (windup 0.25s) rồi phóng mình bay bổ tới trước cự ly 7.5m (apex height 1.8m), giáng kiếm xuống sàn đấu trường kích nổ chấn động AoE bán kính 4.0m (damage 80, cooldown 5.0s, rung chấn camera), kỹ năng chủ lực thu hẹp cự ly và trừng phạt Player khi lùi xa uống máu (*Heal-Punish*).
-       * Skill 4: Combo Attack (Chém 4 Nhát Liên Hoàn) *(Phím 4)*: Chuỗi combo 4 nhát chém biến ảo (ComboAttackRI.anim, cooldown 6.0s, damage 35 mỗi nhát, bán kính chém 3.2m):
-         - *Khắc phục lỗi Root Yaw:* Sửa triệt để góc lệch trái +57.3° -> 0.0° ở đầu và cuối animation clip.
-         - *Snap & Tracking:* Tự động hướng mặt về Player qua Quaternion.LookRotation ngay khi xuất chiêu và xoay mượt bám sát đối thủ trong nhịp vung đòn.
-         - *Kiểm soát bước chân:* Tích hợp tham số comboLungeDistance (mặc định 0m chém tại chỗ theo ý người chơi, chống hiện tượng trôi lùi hoặc giật vị trí sau khi dứt chiêu).
-         - *Đồng bộ 4 nhịp sát thương:* Mảng comboHitTimers = { 0.40s, 0.95s, 1.55s, 2.20s } khớp tuyệt đối với 4 đường kiếm vung ra.
-       * Trạng Thái Gồng Kiếm Cuồng Nộ Phase 2 (Sword Casting): Khi máu tụt xuống dưới 50% (swordCastingHealthThreshold = 0.50f), Boss kích hoạt state SwordCastingRI (2.0s), bùng cháy ngọn lửa hắc hoả trên sống kiếm (IgnisSwordFlame.cs) và gia tăng vĩnh viễn +10 sát thương (swordEnrageBonusDamage = 10.0f) cho toàn bộ các đòn đánh sau đó đến hết trận.
+     * **Định vị chiến đấu:** Kiếm sĩ Duelist tốc độ cao, xoay mặt theo Player mượt mà (`facePlayerSpeed = 110 deg/s` mặc định; tăng 1.5x khi lấy đà), chủ động áp sát và vờn đối thủ ở cự ly gần (`optimalDistanceMin..Max = 1.0 - 2.0m`), sở hữu thanh kiếm ma thuật rực lửa.
+     * **Chỉ số sinh tồn & Bảng thông số Inspector (`RedIgnisController.cs` & `Boss_RedIgnis.prefab`):**
+       * **Máu tối đa (`bossMaxHealth = 1200 HP`):** Máu chuẩn đồng bộ tự động vào component `Health` và khi hồi sinh hiệp đấu (`Revive()`).
+       * **Giáp & Thanh chịu đòn Poise:** `bossDefense = 25`, `maxPoise = 400` (mặc định script; `Boss_RedIgnis.prefab` đặt `500`), độc lập với sát thương máu, không tự hồi phục trong trận. Bị bào mòn bởi các đòn đánh Player; khi Poise về 0 kích hoạt trạng thái suy yếu `Weaken` (`weakenFrontDuration` / `weakenBackDuration`) mở cửa sổ phản công.
+       * **Vận tốc di chuyển tách hướng:** Tốc độ tiến tới `moveSpeed = 4.2m/s`, **tốc độ đi lùi riêng biệt `backwardSpeed = 1.8m/s`** (chậm hơn đi tới để Player dễ áp sát đổi đòn và không bị boss lùi câu giờ), tốc độ dạt ngang giảm còn `strafeSpeed = 1.9m/s` giúp dáng bước ngang đầm chắc và đồng bộ `WalkSpeed` theo tốc độ thực tế (`referenceSpeed`: tiến `3.8`, lùi `2.4`, ngang `2.2`, clamp `0.60..1.55`).
+     * **Cơ Chế Gồng Kiếm Thức Tỉnh Phase 2 (`SwordCastingRI` tại 50% Máu):**
+       * Khi máu Boss tụt xuống dưới 50% (`swordCastingHealthThreshold = 0.50f`), Boss tạm ngưng di chuyển và kích hoạt hoạt ảnh gồng kiếm `SwordCastingRI` (`swordCastingTotalDuration = 2.0s`, bật lửa ở `0.85s`).
+       * Thắp sáng hiệu ứng ngọn lửa ma thuật dọc sống kiếm (`IgnisSwordFlame.cs`), bật cờ `IsPhase2` cho hệ thống AI (`RedIgnisAgent`), và cộng thêm vĩnh viễn `+10` sát thương (`swordEnrageBonusDamage = 10.0f`) cho toàn bộ chiêu thức đến hết trận.
+     * **Bộ Chiêu Thức Hoàn Chỉnh & Thông Số Tầm Bay Inspector (`RedIgnisController.cs`):**
+       * Skill 1: Attack Slash (Chém Dọc) *(Phím 1)*: Đòn vung kiếm chém dọc phóng đạn kiếm xoay 90° (`Ignis_Slash_Vertical.prefab`, tốc độ `22m/s`, script default damage `65` / Prefab `30`, delay `0.42s` / Prefab `1.4s`). Tầm bay tối đa chỉnh trực tiếp qua **`attackSlashMaxDistance` (mặc định `18.0m`)** và được thực thi bởi `RedIgnisSlashProjectile.cs` (`maxDistance`).
+       * Skill 2: Horizontal Slash (Chém Ngang) *(Phím 2)*: Đòn chém quét ngang phóng sóng kiếm bay là mặt sàn (`Ignis_Slash_Horizontal.prefab`, tốc độ `20m/s`, script default damage `50` / Prefab `30`, delay `0.40s` / Prefab `1.2s`). Tầm bay tối đa chỉnh trực tiếp qua **`horizontalSlashMaxDistance` (mặc định `16.0m`)**.
+       * Skill 3: Jump Attack (Nhảy Áp Sát Dậm Đất AoE) *(Phím 3)*: Boss nhún đà (`windup 0.25s`) rồi bay parabol (`apexHeight = 1.8m`) thẳng tới ngay trước mặt Player và giáng kiếm nổ AoE bán kính `4.5m` (script default damage `80` / Prefab `30`, cooldown `10s` / Prefab `5s`). Tích hợp đầy đủ 4 thông số Inspector: **`jumpLeapDistance` (`25.0m`)**, **`jumpStopOffset` (`1.3m` — đáp & đặt điểm nổ `slamPoint` ngay trước mặt Player)**, **`jumpLeapSpeed` (`12.0m/s`)**, và **`jumpAttackLeapDuration` (`0.85s` — thời gian bay tối thiểu giúp người chơi quan sát và né đòn)**.
+       * Skill 4: Combo Attack (Chém 4 Nhát Liên Hoàn) *(Phím 4)*: Chuỗi combo 4 nhát (`ComboAttackRI.anim`, script default cooldown `12.0s` / Prefab `6.0s`, damage `35` / Prefab `15` mỗi nhát, `comboHitRadius` script `3.2m` / Prefab `2.0m`, `comboLungeDistance` script `0.55m` / Prefab `1.0m`), đồng bộ 4 nhịp `comboHitTimers = { 0.40s, 0.95s, 1.55s, 2.20s }`, sửa triệt để Root Yaw lệch `+57.3° -> 0.0°`.
+     * **Cơ Chế Khựng Hoạt Ảnh Lấy Đà (Timing Mixup / Hold Wind-up - Kiểu 2 Souls-like):**
+       * Tích hợp trực tiếp vào 3 kỹ năng: Skill 2 (Horizontal Slash - quét kiếm ngang), Skill 3 (Jump Attack - nhún chân gồng thế dưới sàn), Skill 4 (Combo Attack - vung nhát đầu tiên). **Loại trừ hoàn toàn Chiêu 1 (AttackSlash - chém dọc)** theo đúng yêu cầu thiết kế.
+       * Bảng thông số Inspector trực quan (`RedIgnisController.cs`): `enableTimingMixup` (bật/tắt), `timingMixupChance` (tỷ lệ kích hoạt, mặc định 1.0 = 100%), `windupWaitTime` (0.2s lấy đà lên đỉnh thế), `minHoldDuration` (0.5s) đến `maxHoldDuration` (0.8s), `holdAnimationSpeed` (0.02f nén cơ siêu chậm).
+       * Đồng bộ chính xác: Hitbox và timeline gây sát thương (kể cả nhát chém đầu combo và cú dậm đất) tự động lùi khớp với thời gian khựng, xoay mặt theo Player (`facePlayerSpeed * 1.5x`) để khóa góc đánh, trừng phạt phản xạ lăn né sớm (Panic Roll-Catching).
+     * **Hệ thống Scene View Gizmos (`OnDrawGizmosSelected` & `DrawGroundCircle`):**
+       * Hiển thị trực quan ngay trong Scene View khi chọn Boss: đường ngắm tới Player (màu hồng), tầm bay tối đa chiêu 1 & 2 (vàng cam / cam đỏ), đường nhảy tối đa + vòng nổ AoE JumpAttack (vàng) & dự đoán điểm đáp live vào Player (cam đỏ), cùng quãng lướt/hitbox 4 nhát ComboAttack (xanh cyan). Mọi vòng Gizmos tự động co giãn theo số chỉnh trong Inspector.
      * **Hệ Thống Vệt Kiếm Độc Quyền Trực Tiếp Trên Kiếm (IgnisSwordTrail.cs):**
        * Gắn trực tiếp trên prefab vũ khí Ignis_Sword_Flame.prefab tại 2 điểm neo mũi kiếm (`tipTransform`) và gốc kiếm (`baseTransform`).
        * Dựng Dynamic Ribbon Mesh mượt mà với thuật toán nội suy Catmull-Rom Spline (3 subdivisions), triệt tiêu hoàn toàn góc gãy khi vung kiếm tốc độ cao.
@@ -244,10 +244,13 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * Gỡ bỏ hoàn toàn [InitializeOnLoadMethod] trong SetupRedIgnisAnimatorAndPrefabs.cs và InspectAndFixRedIgnis.cs, loại bỏ hiện tượng tự chạy ngầm đè thông số mỗi khi Unity compile/reload domain.
        * Hàm SetDefaultFloatIfUnset bảo toàn 100% dữ liệu tùy chỉnh của người dùng trong Inspector (như `attackSlashDelay`, comboLungeDistance, v.v.), không bao giờ tự ý khôi phục về giá trị mặc định.
        * Sửa lỗi xung đột biến cục bộ CS0136, bảo đảm 0 lỗi biên dịch trong toàn bộ dự án.
-     * **Hệ thống Vật lý Áo choàng (UnityChanSpringBone):**
-       * Quản lý bằng SpringManager.cs và SpringBone.cs đã được vá mã nguồn triệt tiêu 100% lỗi NullReferenceException.
-       * Tối ưu hóa chuỗi 12 xương hợp lệ (loại bỏ 4 xương ngọn leaf bones Bone.013, Bone.025, Bone.035, Bone.037 để triệt tiêu lỗi quẹo 90 độ; dọn sạch 7 ô null trong mảng).
-       * Tắt Enable Angle Limits và Collide With Ground để tà áo buông rủ mềm mại theo trọng lực tự nhiên, tối ưu stiffnessForce = 50, dragForce = 0.4.
+     * **Hệ thống Vật lý Tóc Đuôi Mũ & Áo Choàng 3 Dải (`UnityChanSpringBone` + `RedIgnisClothMotion.cs`):**
+       * Giữ cố định đốt gốc tóc đưa ra khỏi mũ (`Bone`) và 4 leaf bones (`Bone.013`, `Bone.037`, `Bone.025`, `Bone.035`); mô phỏng **14 `SpringBone` tắt dần tới hạn** cho Tóc (`Bone.002 -> Bone.004 -> Bone.006`: `stiffnessForce` `24→10`, `dragForce` `0.30→0.60`) và Áo choàng 3 dải Trái (`Bone.014 -> Bone.015 -> Bone.016 -> Bone.018`), Giữa (`Bone.021 -> Bone.022 -> Bone.023`), Phải (`Bone.026 -> Bone.028 -> Bone.030 -> Bone.034`).
+       * Thông số rũ mượt chống xoắn vai/văng cánh (`gravity = (0, -22, 0)`, `friction = 1.0`, tắt `enableAngleLimits` và `enableLengthLimits`): 3 dải áo dùng `stiffnessForce` thấp (`5.0→1.5`, dải giữa `5.0→2.0`) và `dragForce` tăng dần về vạt (`0.25→0.70`) để miễn nhiễm với các pha xoay vai Mixamo mạnh mà không kéo chéo `lengthLimitTargets`.
+       * Gắn **16 Collider giải phẫu** chống xuyên thân thể/tay/chân (4 Sphere: `CapeCol_Head`, `CapeCol_Neck`, `CapeCol_Left/RightShoulder`; 9 Capsule: `CapeCol_UpperChest`, `CapeCol_Torso`, `CapeCol_Hips`, `CapeCol_Left/RightArm`, `CapeCol_Left/RightThigh`, `CapeCol_Left/RightShin`; và 3 Back Panel: `CapeCol_HeadBackPanel`, `CapeCol_TorsoBackPanel`, `CapeCol_PelvisBackPanel` bù trừ scale qua `cachedBackPanels`) kết hợp giới hạn mặt sàn `groundClearanceOffset = 0.04m`.
+       * **`RedIgnisClothMotion.cs` (`ForceProvider`, `[DefaultExecutionOrder(-50)]`):** Bước Verlet cố định `60Hz` (nhận `Time.timeScale`, tự reset pose khi dịch chuyển >= `1.5m` hoặc hồi sinh, tự phục hồi cấu trúc qua `NeedsRuntimeAutoHeal`); chặn lộn ngược lên vai/đầu (`ClampUpwardDrape`), kiểm tra va chạm đa điểm dọc thân xương & vạt lá (`EnforcePostStepSegmentCollisions`, `PropagateParentRotationToDescendants`, `ClampRelativeVerletSpeed` `0.060m`), tăng drag tạm thời khi xoay gắt/đi ngang/đáp đất (`ApplyDynamicTurnDamping`).
+       * **Dáng áo choàng chữ A & Chú thích Inspector tiếng Việt:** Tạo độ xòe nhẹ tăng tiến ở vạt dưới 2 dải trái/phải (`capeHemFlare = 0.85f + 5.15f * chainT`), mở rộng thêm khi chạy thẳng (`wingSpreadStrength = 1.65f`, tự hãm khi đi ngang), và đồng bộ sóng bước chân theo `WalkSpeed` trên 4 state `Walk*RI`. Toàn bộ 4 nhóm (`Mô phỏng vật lý`, `Chống xuyên sàn`, `Chuyển động áo choàng & tóc`, `Hãm rung khi xoay & đi ngang`) và 17 thông số trên Inspector đều có `[Header]` và `[Tooltip]` tiếng Việt chi tiết.
+       * Menu `Infinite Labyrinth -> Boss -> Red Ignis -> Tự Động Sửa Lỗi Áo Choàng (Auto Fix Cape)` (`SpringManagerHelper.cs`) tự động cấu hình trực tiếp lên `Boss_RedIgnis.prefab` lẫn instance trong Scene.
      * **Chuẩn Hóa Khung Xương Humanoid & Animation:**
        * Sửa lỗi gốc tự động map nhầm Hips -> Armature trong RedIgnis.fbx, trỏ chuẩn xác về mixamorig:Hips.
        * Chuẩn hóa hoạt ảnh bước đi Ignis_Walk.fbx với Based Upon = Feet / Center of Mass, nâng Offset cao độ chống hiện tượng lún đất hoặc co ngắn chiều cao thân thể.
@@ -259,8 +262,8 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
          + localRotation: Euler(-0.953, -53.529, 83.786) (quaternion: x: -0.306, y: -0.330, z: 0.593, w: 0.667)
          + localScale: (0.8, 0.8, 1.0) (Bảo toàn 100% tỷ lệ kiếm mỹ thuật do người dùng cấu hình).
      * **Kiến Trúc Điều Khiển & Giao Tiếp Học Máy (Brain - Body):**
-       * **Body (RedIgnisController.cs):** Quản lý 6 chiêu thức, hoạt ảnh, hệ thống hồi chiêu độc lập, thanh máu, Poise, chuỗi Tái Sinh Phase 2, và bộ phím nóng thử nghiệm thủ công (Phím 1..6 và phím Mũi Tên di chuyển 4 hướng).
-       * **Brain (RedIgnisAgent.cs):** Bộ não học máy kế thừa Unity.MLAgents.Agent, giao tiếp với Body qua các hàm công khai Move(h, v), CastAttack(skillIndex), CanCastAttack(skillIndex), GetCooldownNormalized(skillIndex), và cờ trạng thái isPhase2.
+       * **Body (`RedIgnisController.cs`):** Quản lý 4 chiêu thức, hoạt ảnh, hệ thống hồi chiêu độc lập, thanh máu 1200 HP, Poise, trạng thái thức tỉnh kiếm lửa Phase 2 (`SwordCastingRI`), hồi sinh hiệp đấu (`Revive()`) và bộ phím nóng thử nghiệm thủ công (Phím 1..4 và phím Mũi Tên di chuyển 4 hướng).
+       * **Brain (`RedIgnisAgent.cs`) & Đấu trường (`RedIgnisBattleArena.cs`):** Bộ não ML-Agents (27 Vector Observations, Action Space `[5, 5, 2]`), giao tiếp với Body qua `Move(h, v)`, `CastAttack(skillIndex)`, `CanCastAttack(skillIndex)`, `GetCooldownNormalized(skillIndex)`, `IsPhase2` và `GetSkillEffectiveMaxRange(skillIdx)`; phối hợp trọng tài `isManagedByArena` với `RedIgnisBattleArena` để tránh trùng lặp reset/thưởng kép khi train liên hoàn.
 
 ---
 
@@ -291,9 +294,9 @@ flowchart TD
 2. **Nhịp Thở & Vờn Đối Thủ (Pacing & Circling/Strafing):** Boss không cắm đầu chạy thẳng. Boss biết **bước dạt ngang (Strafe Left / Right)** vòng quanh người chơi ở cự ly trung bình, quan sát thể lực và thế thủ của người chơi để tạo áp lực tâm lý như một kẻ săn mồi.
 3. **Bắt Nhịp Lộn Hoảng Loạn (Roll-Catching):** Khi Player hoảng loạn bấm Lăn né liên tục (Panic Roll), AI học được cách **giữ đòn trễ nhịp (Delayed Attack / Tracking Swing)** để vung đòn trúng ngay khoảnh khắc Player vừa chạm đất hết thời gian bất tử (I-frames).
 4. **Trừng Phạt Khi Dùng Bình Máu (Heal-Punish / Input Reading):** Khi phát hiện Player lùi xa uống máu (isHealing = true), Boss lập tức kích hoạt chiêu áp sát nhanh (JumpAttack của Golem hoặc Lướt kiếm của Ignis) để trừng phạt sơ hở.
-5. **Phân Định Cơ Chế Giai Đoạn (Phase 2 Cuồng Nộ vs Two-Phase Rebirth):**
+5. **Phân Định Cơ Chế Giai Đoạn (Phase 2 Cuồng Nộ & Kiếm Lửa Thức Tỉnh tại 50% HP):**
    * **Ice Golem (Phase 2 Cuồng Nộ - Enrage Sequence tại 50% HP):** Trận đánh chia làm 2 giai đoạn: Giai đoạn 1 (HP > 50%) rình rập, đánh đòn chuẩn nhịp; Giai đoạn 2 (HP <= 50% / 750 HP) bùng nổ chuỗi chuyển pha Cuồng nộ (chao đảo 50%HP, sóng đẩy lùi người chơi, gầm thét phun lửa AttackRoaring, xả 3 cầu tím ma thuật dồn dập, và rút ngắn nhịp thở combat pacing từ 6-7s xuống 4-5s tạo sức ép áp đảo). Đồng thời sở hữu thanh Poise (500 điểm) độc lập gây trạng thái Suy yếu WeakenIG 1 lần duy nhất.
-   * **Red Ignis (2 Pha - Tái Sinh Khi Chết & Lột Xác Diện Mạo Mới):** Sở hữu cơ chế 2 Pha kinh điển Souls-like (*Malenia, Sister Friede*). Khi thanh máu Phase 1 về 0, Boss quỵ ngã -> bùng nổ ngọn lửa địa ngục đẩy lùi người chơi -> hồi sinh 100% máu và **lột xác sang diện mạo mới** (New Appearance Model / Flaming VFX / Blazing Sword), kích hoạt bộ não AI Phase 2 với nhịp độ áp sát và combo hủy diệt.
+   * **Red Ignis (Thức Tỉnh Kiếm Lửa Phase 2 tại 50% HP):** Khi máu tụt xuống dưới `50%` (`600 HP`), Boss kích hoạt động tác gồng kiếm `SwordCastingRI` (2.0s), thắp sáng ngọn lửa trên lưỡi kiếm (`IgnisSwordFlame.cs`), bật cờ `IsPhase2` truyền cho mạng nơ-ron `RedIgnisAgent` và gia tăng vĩnh viễn `+10` sát thương (`swordEnrageBonusDamage`) cho toàn bộ chiêu thức về sau.
 
 ---
 
@@ -352,8 +355,15 @@ flowchart TD
 
 * **Quy Trình Đào Tạo Đa Sàn Đấu (Multi-Arena Parallel Training):**
   * Trong Scene huấn luyện, nhân bản **8 hoặc 16 sàn đấu Arena** chạy song song.
-  * Huấn luyện thông qua mlagents-learn với thuật toán PPO trên môi trường Python ảo (venv), xuất ra file **.onnx** (ví dụ IceGolem_SoulsAI.onnx và RedIgnis_SoulsAI.onnx).
+  * Huấn luyện thông qua `mlagents-learn` với thuật toán PPO (`IceGolem_PPO.yaml` và `RedIgnis_PPO.yaml`) trên môi trường Python ảo (venv), xuất ra file **.onnx** (`IceGolemSoulsAI-12955.onnx`, `RedIgnis_Run03/RedIgnisSoulsAI-33411.onnx`).
   * Nạp file .onnx vào component Behavior Parameters (chế độ Inference Only) để chạy mượt mà 100% thời gian thực trong game cuối cùng mà người chơi không cần cài Python hay PyTorch.
+
+* **Kiến Trúc ML-Agents Riêng Cho Kiếm Sĩ Red Ignis (`RedIgnisAgent.cs`, `RedIgnisBattleArena.cs` & `RedIgnis_PPO.yaml`):**
+  * **Vector Observations (27 floats):** Gồm tọa độ phẳng tới Player (2), cự ly (1), góc mặt cos/sin (2), máu Boss (1), `IsBusy` (1), cooldown 4 kỹ năng (4), cờ `IsPhase2` (1), máu & Stamina Player (2), 5 trạng thái Player (`IsAttacking`, `IsBlockingOrParrying`, `IsRolling`, `isPlayerInRollRecovery` 0.4s, `IsGrounded`), vận tốc tương đối Player (2), 4 tia raycast tường tầm `12m` (4) và tọa độ tới tâm Arena (2).
+  * **Action Space (`[5, 5, 2]`):** Branch 0 di chuyển 5 lựa chọn (tích hợp `movePersistenceTime = 0.6s`, `minStrafeDistance = 2.2m`), Branch 1 chọn 4 kỹ năng chiến đấu (Skill 0..3), Branch 2 Timing Mixup (0 = đánh ngay, 1 = hoãn `0.35s` bắt bài roll).
+  * **Chống Đi Lùi Câu Giờ & Đồng Bộ Tầm Chiêu:** Giữ cự ly áp sát `optimalDistanceMin = 1.0m` – `optimalDistanceMax = 2.0m`, khóa lùi từ ngưỡng `backwardLockDistance = 1.5m` ở cả `WriteDiscreteActionMask`, `OnActionReceived` và `Update`, phối hợp `backwardSpeed = 1.8m/s` trên Controller. Hàm `GetSkillEffectiveMaxRange(skillIdx)` đọc trực tiếp `AttackSlashMaxDistance`, `HorizontalSlashMaxDistance`, `JumpLeapDistance + JumpStopOffset` (cận dưới `3.5m`) và `3.8m` (Combo) để khóa và thưởng chiêu khớp tuyệt đối với thông số Inspector.
+  * **Điều Phối Đấu Trường Hiệp Đấu Liên Hoàn (`RedIgnisBattleArena.cs`):** Gắn cờ `isManagedByArena = true` để Arena làm trọng tài duy nhất cho EndEpisode/Reward kết thúc hiệp, tránh reset kép với Agent; hồi đúng `BossMaxHealth` (`1200 HP`) thay vì cố định sai, hồi 100% HP/Stamina/Spirit Player và reset toàn bộ cooldown/animation Boss.
+  * **Gizmos Debug AI (`OnDrawGizmosSelected`):** Vẽ vòng `optimalDistanceMin` (`1m` đỏ), `backwardLockDistance` (`1.5m` vàng), `optimalDistanceMax` (`2m` xanh lá), `arenaRadius` (`25m` xanh dương) và 4 tia raycast cảm biến tường (`12m`) trong Scene View.
 
 * **Bot Đối Luyện Tự Động Cho Player (PlayerBotAI.cs - Sparring Partner):**
   * **Vai trò:** Cung cấp đối thủ giả lập có trí khôn và phản xạ chuẩn Souls-like để huấn luyện mạng nơ-ron Boss AI tự động mà không cần người chơi phải ngồi bấm máy thủ công hàng giờ.

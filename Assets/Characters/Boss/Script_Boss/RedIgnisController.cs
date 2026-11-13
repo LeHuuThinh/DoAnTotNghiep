@@ -29,10 +29,12 @@ public class RedIgnisController : MonoBehaviour
     public UnityEvent<float, float> onHealthChanged; // (currentHealth, maxHealth)
 
     [Header("=== DI CHUYỂN & LOCOMOTION ENGINE ===")]
-    [Tooltip("Tốc độ đi bộ tới / lùi (m/s)")]
+    [Tooltip("Tốc độ đi bộ tới (m/s)")]
     [SerializeField] private float moveSpeed = 4.2f;
+    [Tooltip("Tốc độ đi bộ lùi (m/s) - Chậm hơn đi tới để Player dễ áp sát đổi đòn")]
+    [SerializeField] private float backwardSpeed = 1.8f;
     [Tooltip("Tốc độ di chuyển ngang (strafe) trái / phải (m/s)")]
-    [SerializeField] private float strafeSpeed = 3.2f;
+    [SerializeField] private float strafeSpeed = 1.9f;
     [Tooltip("Gia tốc tăng tốc khi bắt đầu di chuyển")]
     [SerializeField] private float moveAcceleration = 9.0f;
     [Tooltip("Gia tốc giảm tốc khi dừng")]
@@ -88,6 +90,23 @@ public class RedIgnisController : MonoBehaviour
     private static readonly int SwordCastingHash = Animator.StringToHash("SwordCasting");
 
     [Space(10)]
+    [Header("=== TIMING MIXUP / KHỰNG HOẠT ẢNH LẤY ĐÀ (HOLD WIND-UP) ===")]
+    [Tooltip("Bật/tắt cơ chế giữ nhịp đòn lấy đà (Timing Mixup / Hold Wind-up) - Áp dụng cho chiêu 2, 3, 4 (loại trừ chiêu 1)")]
+    [SerializeField] private bool enableTimingMixup = true;
+    [Tooltip("Tỷ lệ kích hoạt giữ nhịp đòn lấy đà (0.5 = 50% ngẫu nhiên lúc có lúc không, 1.0 = luôn luôn giữ nhịp, 0 = tắt)")]
+    [Range(0f, 1f)]
+    [SerializeField] private float timingMixupChance = 0.5f;
+    [Tooltip("Thời gian hoạt ảnh chạy tự nhiên trước khi khựng giữ nhịp (giây, mặc định 0.20s để vung kiếm lên đỉnh)")]
+    [SerializeField] private float windupWaitTime = 0.20f;
+    [Tooltip("Thời gian dừng/khựng tối thiểu (giây) - Mặc định 0.5s")]
+    [SerializeField] private float minHoldDuration = 0.5f;
+    [Tooltip("Thời gian dừng/khựng tối đa (giây) - Mặc định 0.8s")]
+    [SerializeField] private float maxHoldDuration = 0.8f;
+    [Tooltip("Tốc độ hoạt ảnh trong lúc khựng (0 = đóng băng 100%, 0.02 = nén cơ siêu chậm)")]
+    [Range(0f, 0.2f)]
+    [SerializeField] private float holdAnimationSpeed = 0.02f;
+
+    [Space(10)]
     [Header("=== KỸ NĂNG 1: ATTACK SLASH (CHÉM DỌC - PHÍM 1) ===")]
     [Tooltip("Prefab hiệu ứng vung kiếm dọc trên tay (Ignis_Combo_Slash)")]
     [SerializeField] private GameObject attackSlashSwingVfxPrefab;
@@ -104,6 +123,8 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float attackSlashDelay = 0.42f;
     [Tooltip("Tốc độ bay của sóng kiếm dọc (m/s)")]
     [SerializeField] private float attackSlashProjectileSpeed = 22f;
+    [Tooltip("Khoảng cách bay tối đa của sóng kiếm dọc (m)")]
+    [SerializeField] private float attackSlashMaxDistance = 18.0f;
     [Tooltip("Góc nghiêng sóng kiếm (độ): 90 = chém dọc đứng (có thể chỉnh 90 hoặc -90, 0 = ngang)")]
     [SerializeField] private float attackSlashTiltAngle = 90f;
     [Tooltip("Bù độ cao xuất phát của sóng kiếm dọc (mét: + là nâng cao lên, - là hạ thấp xuống)")]
@@ -127,6 +148,8 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float horizontalSlashDelay = 0.40f;
     [Tooltip("Tốc độ bay của sóng kiếm ngang (m/s)")]
     [SerializeField] private float horizontalSlashProjectileSpeed = 20f;
+    [Tooltip("Khoảng cách bay tối đa của sóng kiếm ngang (m)")]
+    [SerializeField] private float horizontalSlashMaxDistance = 16.0f;
     [Tooltip("Góc nghiêng sóng kiếm (độ): 0 = chém ngang")]
     [SerializeField] private float horizontalSlashTiltAngle = 0f;
     [Tooltip("Bù độ cao xuất phát của sóng kiếm ngang (mét: + là nâng cao lên, - là hạ thấp xuống)")]
@@ -144,10 +167,14 @@ public class RedIgnisController : MonoBehaviour
     [SerializeField] private float jumpAttackCooldown = 10.0f;
     [Tooltip("Độ trễ nhún người trước khi bật nhảy (giây). Mặc định: 0.25s")]
     [SerializeField] private float jumpAttackWindupDelay = 0.25f;
-    [Tooltip("Thời gian bay trên không lướt tới điểm rơi (giây). Mặc định: 0.55s")]
-    [SerializeField] private float jumpAttackLeapDuration = 0.55f;
-    [Tooltip("Cự ly nhảy tới tối đa (m).")]
-    [SerializeField] private float jumpLeapDistance = 20.0f;
+    [Tooltip("Thời gian bay tối thiểu trên không (giây). Mặc định: 0.85s")]
+    [SerializeField] private float jumpAttackLeapDuration = 0.85f;
+    [Tooltip("Tốc độ bay khi nhảy tới áp sát Player (m/s). Số nhỏ hơn giúp Boss bay chậm, dễ quan sát và né")]
+    [SerializeField] private float jumpLeapSpeed = 12.0f;
+    [Tooltip("Khoảng cách nhảy tới tối đa (m)")]
+    [SerializeField] private float jumpLeapDistance = 25.0f;
+    [Tooltip("Khoảng dừng ngay trước mặt Player khi tiếp đất (m)")]
+    [SerializeField] private float jumpStopOffset = 1.3f;
     [Tooltip("Độ cao nhấc bổng nhảy parabol (m). Đã cân chỉnh cho boss scale 2.0")]
     [SerializeField] private float jumpAttackApexHeight = 1.8f;
     [Tooltip("Bán kính nổ sát thương AoE khi dậm đất (m)")]
@@ -192,6 +219,7 @@ public class RedIgnisController : MonoBehaviour
     private Animator anim;
     private CharacterController characterController;
     private Health health;
+    private RedIgnisClothMotion clothMotion;
     private Renderer[] allRenderers;
     private List<Material> flashMaterials = new List<Material>();
     private List<Color> originalColors = new List<Color>();
@@ -216,6 +244,7 @@ public class RedIgnisController : MonoBehaviour
     // Animator Hashes
     private static readonly int MoveTypeHash = Animator.StringToHash("MoveType");
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int WalkSpeedHash = Animator.StringToHash("WalkSpeed");
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveZHash = Animator.StringToHash("MoveZ");
     private static readonly int AttackSlashHash = Animator.StringToHash("AttackSlash");
@@ -236,6 +265,10 @@ public class RedIgnisController : MonoBehaviour
     public bool IsSwordBuffActive => isSwordBuffActive;
     public bool IsCastingSword => isCastingSword;
     public float SwordEnrageBonusDamage => swordEnrageBonusDamage;
+    public float AttackSlashMaxDistance => attackSlashMaxDistance;
+    public float HorizontalSlashMaxDistance => horizontalSlashMaxDistance;
+    public float JumpLeapDistance => jumpLeapDistance;
+    public float JumpStopOffset => jumpStopOffset;
 
     private void Awake()
     {
@@ -271,6 +304,7 @@ public class RedIgnisController : MonoBehaviour
 
         characterController = GetComponent<CharacterController>();
         health = GetComponent<Health>();
+        clothMotion = GetComponentInChildren<RedIgnisClothMotion>(true);
         if (health == null) health = GetComponentInParent<Health>();
 
         SyncCooldownMax();
@@ -658,6 +692,7 @@ public class RedIgnisController : MonoBehaviour
             currentSmoothSpeed = 0f;
             currentActiveMoveType = 0;
             anim.SetFloat(SpeedHash, 0f, locomotionDampTime, dt);
+            anim.SetFloat(WalkSpeedHash, 1f);
             anim.SetInteger(MoveTypeHash, 0);
             anim.SetFloat(MoveXHash, 0f, locomotionDampTime, dt);
             anim.SetFloat(MoveZHash, 0f, locomotionDampTime, dt);
@@ -692,7 +727,8 @@ public class RedIgnisController : MonoBehaviour
         Vector3 horizontalMove = Vector3.zero;
         if (currentSmoothSpeed > 0.02f)
         {
-            Vector3 forwardMove = transform.forward * currentSmoothMoveInput.y * moveSpeed;
+            float verticalSpeed = (currentSmoothMoveInput.y >= 0f) ? moveSpeed : backwardSpeed;
+            Vector3 forwardMove = transform.forward * currentSmoothMoveInput.y * verticalSpeed;
             Vector3 strafeMove = transform.right * currentSmoothMoveInput.x * strafeSpeed;
             horizontalMove = (forwardMove + strafeMove);
         }
@@ -728,6 +764,21 @@ public class RedIgnisController : MonoBehaviour
             currentActiveMoveType = newMoveType;
             anim.SetInteger(MoveTypeHash, currentActiveMoveType);
         }
+
+        // Đồng bộ nhịp bước chân Animator với tốc độ dịch chuyển thực tế theo từng hướng
+        float targetWalkSpeed = 1f;
+        if (currentActiveMoveType != 0)
+        {
+            float horizontalSpeed = new Vector2(horizontalMove.x, horizontalMove.z).magnitude;
+            float referenceSpeed = currentActiveMoveType switch
+            {
+                1 => 3.8f, // WalkT_RI
+                2 => 2.4f, // WalkBackRI
+                _ => 2.2f  // WalkLeftRI / WalkRightRI
+            };
+            targetWalkSpeed = Mathf.Clamp(horizontalSpeed / referenceSpeed, 0.60f, 1.55f);
+        }
+        anim.SetFloat(WalkSpeedHash, targetWalkSpeed, locomotionDampTime, dt);
     }
 
     private void ApplyMovementAndGravity(Vector3 horizontalVelocity, float dt)
@@ -775,10 +826,19 @@ public class RedIgnisController : MonoBehaviour
         }
     }
 
+    private bool? pendingForceTimingMixup = null;
+
     public void CastAttack(int attackIndex)
+    {
+        CastAttack(attackIndex, null);
+    }
+
+    public void CastAttack(int attackIndex, bool? forceTimingMixup)
     {
         if (IsBusy()) return;
         if (!CanCastAttack(attackIndex)) return;
+
+        pendingForceTimingMixup = forceTimingMixup;
 
         lastUsedSkillIndex = attackIndex; // Ghi nhớ chiêu vừa dùng để khóa không cho dùng lặp lại liên tiếp
         SyncCooldownMax();
@@ -798,6 +858,75 @@ public class RedIgnisController : MonoBehaviour
             case 3:
                 currentAttackRoutine = StartCoroutine(ComboAttackRoutine());
                 break;
+        }
+
+        pendingForceTimingMixup = null;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem chiêu thức hiện tại có kích hoạt Timing Mixup (giữ nhịp đòn lấy đà) hay không.
+    /// Loại trừ hoàn toàn Chiêu 1 (AttackSlash - index 0).
+    /// </summary>
+    public bool ShouldApplyTimingMixup(int attackIndex)
+    {
+        // Loại trừ hoàn toàn Chiêu 1 (Attack Slash - index 0) theo yêu cầu!
+        if (attackIndex == 0) return false;
+        if (!enableTimingMixup) return false;
+        if (timingMixupChance <= 0f) return false;
+
+        // Nếu Agent chọn đánh thường tức thì (forceMixup = false)
+        if (pendingForceTimingMixup.HasValue && !pendingForceTimingMixup.Value)
+        {
+            return false;
+        }
+
+        // Random ngẫu nhiên lúc có lúc không theo tỷ lệ cài đặt Inspector (mặc định 0.5 = 50%)
+        return Random.value <= timingMixupChance;
+    }
+
+    /// <summary>
+    /// Sinh thời gian khựng giữ nhịp ngẫu nhiên trong khoảng [minHoldDuration, maxHoldDuration] (mặc định 0.5s - 0.8s)
+    /// </summary>
+    public float GetRandomHoldDuration(int attackIndex)
+    {
+        if (!ShouldApplyTimingMixup(attackIndex)) return 0f;
+        return Random.Range(minHoldDuration, maxHoldDuration);
+    }
+
+    /// <summary>
+    /// Coroutine hỗ trợ giữ nhịp lấy đà: chạy tự nhiên windupWaitTime rồi khựng lại trong holdTime, sau đó trả tốc độ về 1.0f.
+    /// </summary>
+    private IEnumerator HoldWindupRoutine(float holdTime)
+    {
+        if (holdTime <= 0f) yield break;
+
+        // 1. Chờ hoạt ảnh chạy tự nhiên để vung kiếm lên đỉnh lấy đà
+        if (windupWaitTime > 0f)
+        {
+            yield return new WaitForSeconds(windupWaitTime);
+        }
+
+        try
+        {
+            // 2. Khựng lại giữ thế (đóng băng hoặc chạy siêu chậm)
+            if (anim != null) anim.speed = holdAnimationSpeed;
+
+            float timer = 0f;
+            while (timer < holdTime)
+            {
+                timer += Time.deltaTime;
+                Transform t = GetPlayerTarget();
+                if (t != null)
+                {
+                    SmoothFaceTarget(t, facePlayerSpeed * 1.5f);
+                }
+                yield return null;
+            }
+        }
+        finally
+        {
+            // 3. Luôn bảo đảm trả lại tốc độ 1.0f bình thường
+            if (anim != null) anim.speed = 1.0f;
         }
     }
 
@@ -827,7 +956,7 @@ public class RedIgnisController : MonoBehaviour
         // 2. Phóng đường kiếm bay dọc (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu)
         GameObject impactToUse = (attackSlashImpactVfxPrefab != null) ? attackSlashImpactVfxPrefab : slashImpactVfxPrefab;
         float finalDmg = attackSlashDamage + (isSwordBuffActive ? swordEnrageBonusDamage : 0f);
-        SpawnFlyingSlash(verticalSlashPrefab, attackSlashTiltAngle, finalDmg, attackSlashProjectileSpeed, impactToUse, attackSlashHeightOffset);
+        SpawnFlyingSlash(verticalSlashPrefab, attackSlashTiltAngle, finalDmg, attackSlashProjectileSpeed, impactToUse, attackSlashHeightOffset, attackSlashMaxDistance);
 
         // Giai đoạn vung kiếm bổ chạm đất
         float activeSwingDuration = 0.45f;
@@ -855,9 +984,17 @@ public class RedIgnisController : MonoBehaviour
         // 1. NGAY TỪ ĐẦU CHIÊU: BẬT VỆT KIẾM TỨC THÌ
         SetSwordTrailActive(true);
 
+        // Timing Mixup (Khựng lấy đà 0.5s - 0.8s cho Chiêu 2)
+        float holdTime = GetRandomHoldDuration(1);
+        if (holdTime > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(holdTime));
+        }
+
         Transform target = GetPlayerTarget();
         float elapsed = 0f;
-        while (elapsed < horizontalSlashDelay)
+        float remainingDelay = Mathf.Max(0f, horizontalSlashDelay - (holdTime > 0f ? windupWaitTime : 0f));
+        while (elapsed < remainingDelay)
         {
             elapsed += Time.deltaTime;
             if (target != null) SmoothFaceTarget(target, facePlayerSpeed * 1.5f);
@@ -867,7 +1004,7 @@ public class RedIgnisController : MonoBehaviour
         // 2. Phóng đường kiếm bay ngang (+10 sát thương nếu đã thức tỉnh kiếm lửa sau 50% máu)
         GameObject impactToUse = (horizontalSlashImpactVfxPrefab != null) ? horizontalSlashImpactVfxPrefab : slashImpactVfxPrefab;
         float finalDmg = horizontalSlashDamage + (isSwordBuffActive ? swordEnrageBonusDamage : 0f);
-        SpawnFlyingSlash(horizontalSlashPrefab, horizontalSlashTiltAngle, finalDmg, horizontalSlashProjectileSpeed, impactToUse, horizontalSlashHeightOffset);
+        SpawnFlyingSlash(horizontalSlashPrefab, horizontalSlashTiltAngle, finalDmg, horizontalSlashProjectileSpeed, impactToUse, horizontalSlashHeightOffset, horizontalSlashMaxDistance);
 
         float activeSwingDuration = 0.45f;
         yield return new WaitForSeconds(activeSwingDuration);
@@ -894,7 +1031,7 @@ public class RedIgnisController : MonoBehaviour
         Destroy(arc, 1.5f);
     }
 
-    private void SpawnFlyingSlash(GameObject projectilePrefab, float tiltAngle, float slashDmg, float projSpeed, GameObject impactPrefab, float heightOffset = 0f)
+    private void SpawnFlyingSlash(GameObject projectilePrefab, float tiltAngle, float slashDmg, float projSpeed, GameObject impactPrefab, float heightOffset = 0f, float maxDistance = 0f)
     {
         if (projectilePrefab == null) return;
 
@@ -922,8 +1059,15 @@ public class RedIgnisController : MonoBehaviour
         {
             slash.Damage = slashDmg;
             if (impactPrefab != null) slash.HitVfxPrefab = impactPrefab;
-            slash.Launch(transform, fireDirection, projSpeed, tiltAngle);
+            slash.Launch(transform, fireDirection, projSpeed, tiltAngle, maxDistance);
         }
+    }
+
+    private float ComputeJumpDistanceToTarget(float targetDist)
+    {
+        float stopOffset = Mathf.Max(0.5f, jumpStopOffset);
+        float maxLeap = Mathf.Max(0f, jumpLeapDistance);
+        return (targetDist > stopOffset) ? Mathf.Min(targetDist - stopOffset, maxLeap) : 0f;
     }
 
     // ==========================================
@@ -939,9 +1083,17 @@ public class RedIgnisController : MonoBehaviour
         // 1. NGAY TỪ ĐẦU CHIÊU NHẢY: BẬT VỆT KIẾM TỨC THÌ
         SetSwordTrailActive(true);
 
+        // Timing Mixup (Khựng thế nhún chân trên sàn 0.5s - 0.8s cho Chiêu 3 trước khi bật nhảy)
+        float jumpHold = GetRandomHoldDuration(2);
+        if (jumpHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(jumpHold));
+        }
+
         // Giai đoạn nhún người lấy đà (Windup): Boss liên tục xoay mặt theo sát hướng Player
         float windupTimer = 0f;
-        while (windupTimer < jumpAttackWindupDelay)
+        float remainingWindup = Mathf.Max(0f, jumpAttackWindupDelay - (jumpHold > 0f ? windupWaitTime : 0f));
+        while (windupTimer < remainingWindup)
         {
             windupTimer += Time.deltaTime;
             Transform p = GetPlayerTarget();
@@ -950,9 +1102,11 @@ public class RedIgnisController : MonoBehaviour
         }
 
         // 2. KHOẢNH KHẮC BẬT NHẢY RỜI SÀN:
-        // Đo lường chính xác vị trí thời gian thực của Player để phóng thẳng tới mục tiêu
+        // Đo lường chính xác vị trí thời gian thực của Player để bay thẳng tới ngay trước mặt theo jumpStopOffset
+        float stopOffset = Mathf.Max(0.5f, jumpStopOffset);
+        float maxLeap = Mathf.Max(0f, jumpLeapDistance);
         Vector3 startPos = transform.position;
-        Vector3 targetLandingPos = startPos + transform.forward * jumpLeapDistance;
+        Vector3 targetLandingPos = startPos + transform.forward * maxLeap;
 
         Transform liveTarget = GetPlayerTarget();
         if (liveTarget != null)
@@ -960,13 +1114,12 @@ public class RedIgnisController : MonoBehaviour
             Vector3 toTarget = (liveTarget.position - startPos);
             toTarget.y = 0f;
             float dist = toTarget.magnitude;
-
-            // Dừng trước Player 1.3m để đại kiếm bổ sập ngay trước mặt, không cắm vào tâm hoặc dẫm lên đầu
-            float stopOffset = 1.3f;
-            float maxLeap = Mathf.Max(jumpLeapDistance, 25.0f);
-            float leapDist = (dist > stopOffset) ? Mathf.Min(dist - stopOffset, maxLeap) : 0f;
-            targetLandingPos = startPos + toTarget.normalized * leapDist;
-            SmoothFaceTarget(liveTarget, 1000f);
+            float leapDist = ComputeJumpDistanceToTarget(dist);
+            if (dist > 0.05f)
+            {
+                targetLandingPos = startPos + toTarget.normalized * leapDist;
+                SmoothFaceTarget(liveTarget, 1000f);
+            }
         }
 
         // Lấy cao độ mặt sàn thực tế tại điểm rơi và điểm xuất phát
@@ -976,8 +1129,12 @@ public class RedIgnisController : MonoBehaviour
         // Tạm thời tắt CharacterController để chuyển động parabol bay mượt mà, không va cấn Player trên không
         if (characterController != null) characterController.enabled = false;
 
-        // Giai đoạn bay trên không lướt tới điểm rơi theo jumpAttackLeapDuration
-        float leapDuration = Mathf.Max(0.1f, jumpAttackLeapDuration);
+        // Tính thời gian bay theo tốc độ jumpLeapSpeed (m/s) và tối thiểu jumpAttackLeapDuration để bay đầm hơn, dễ quan sát né
+        float horizontalFlightDist = Vector2.Distance(
+            new Vector2(startPos.x, startPos.z),
+            new Vector2(targetLandingPos.x, targetLandingPos.z));
+        float speedDuration = (jumpLeapSpeed > 0.1f) ? (horizontalFlightDist / jumpLeapSpeed) : jumpAttackLeapDuration;
+        float leapDuration = Mathf.Max(0.1f, jumpAttackLeapDuration, speedDuration);
         float leapTimer = 0f;
         while (leapTimer < leapDuration)
         {
@@ -1002,8 +1159,8 @@ public class RedIgnisController : MonoBehaviour
         }
         verticalVelocity = groundedGravity;
 
-        // Điểm nổ dậm kiếm nằm ở phía trước mặt Boss 1.3m (ngay vị trí lưỡi kiếm cắm xuống đất)
-        Vector3 slamPoint = transform.position + transform.forward * 1.3f + Vector3.up * jumpImpactHeightOffset;
+        // Điểm nổ dậm kiếm nằm ngay trước mặt Boss theo jumpStopOffset (ngay vị trí lưỡi kiếm cắm xuống mặt Player)
+        Vector3 slamPoint = transform.position + transform.forward * stopOffset + Vector3.up * jumpImpactHeightOffset;
 
         // Spawn VFX dậm đất nổ lan
         if (jumpImpactVfxPrefab != null)
@@ -1049,6 +1206,13 @@ public class RedIgnisController : MonoBehaviour
         // 2. NGAY TỪ ĐẦU CHUỖI COMBO: BẬT VỆT KIẾM TỨC THÌ CHO TOÀN BỘ CHUỖI VUNG CHÉM
         SetSwordTrailActive(true);
 
+        // Timing Mixup (Khựng nhát chém đầu tiên 0.5s - 0.8s cho Chiêu 4)
+        float comboHold = GetRandomHoldDuration(3);
+        if (comboHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(comboHold));
+        }
+
         if (comboHitTimers == null || comboHitTimers.Length == 0)
         {
             comboHitTimers = new float[] { 0.40f, 0.95f, 1.55f, 2.20f };
@@ -1060,7 +1224,9 @@ public class RedIgnisController : MonoBehaviour
         for (int hit = 0; hit < comboHitTimers.Length; hit++)
         {
             float targetTime = comboHitTimers[hit];
-            float waitDelta = Mathf.Max(0.01f, targetTime - lastTime);
+            float waitDelta = (hit == 0 && comboHold > 0f)
+                ? Mathf.Max(0.01f, targetTime - windupWaitTime)
+                : Mathf.Max(0.01f, targetTime - lastTime);
             lastTime = targetTime;
 
             // Vừa xoay mặt bám theo Player vừa bước lướt tới trước mượt mà theo từng nhát chém
@@ -1532,9 +1698,13 @@ public class RedIgnisController : MonoBehaviour
             anim.ResetTrigger(JumpAttackHash);
             anim.ResetTrigger(ComboAttackHash);
             anim.SetFloat(SpeedHash, 0f);
+            anim.SetFloat(WalkSpeedHash, 1f);
             anim.SetInteger(MoveTypeHash, 0);
             anim.Play("IdleRI", 0, 0f);
         }
+
+        // Reset Verlet cloth history để tránh giật bung áo khi hồi sinh / dịch chuyển
+        clothMotion?.ResetClothPose();
 
         // Hồi phục Máu và Poise
         ApplyBossStats();
@@ -1682,5 +1852,126 @@ public class RedIgnisController : MonoBehaviour
         }
 
         return pos;
+    }
+
+    // ==========================================
+    // GIZMOS HIỂN THỊ PHẠM VI SKILL (SCENE VIEW)
+    // ==========================================
+
+    /// <summary>
+    /// Vẽ vòng tròn phẳng trên mặt đất XZ trong Scene View để dễ quan sát phạm vi chiêu và cự ly AI.
+    /// </summary>
+    public static void DrawGroundCircle(Vector3 center, float radius, int segments = 48)
+    {
+        if (radius <= 0.01f || segments < 3) return;
+        float step = (Mathf.PI * 2f) / segments;
+        Vector3 prev = center + new Vector3(radius, 0f, 0f);
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = i * step;
+            Vector3 next = center + new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            Gizmos.DrawLine(prev, next);
+            prev = next;
+        }
+    }
+
+    private void DrawFlyingSlashGizmo(Vector3 baseSpawnPos, Vector3 fireDir, float heightOffset, float maxRange, float widthSpan, Color color)
+    {
+        Vector3 spawnPos = baseSpawnPos + Vector3.up * heightOffset;
+        Vector3 endPos = spawnPos + fireDir * maxRange;
+
+        Gizmos.color = color;
+        Gizmos.DrawWireSphere(spawnPos, 0.18f);
+        Gizmos.DrawLine(spawnPos, endPos);
+        Gizmos.DrawWireSphere(endPos, 0.35f);
+
+        if (widthSpan > 0.01f)
+        {
+            Vector3 right = Vector3.Cross(Vector3.up, fireDir).normalized * (widthSpan * 0.5f);
+            Gizmos.DrawLine(spawnPos - right, spawnPos + right);
+            Gizmos.DrawLine(endPos - right, endPos + right);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Vector3 start = transform.position;
+        Vector3 groundCenter = start + Vector3.up * 0.08f;
+
+        // 0. Đường ngắm khóa mục tiêu Player (Màu Tím Hồng / Magenta - chỉ đọc an toàn trong Edit Mode)
+        Transform target = playerTarget;
+        if (target == null && autoFindPlayer)
+        {
+            GameObject pObj = GameObject.FindWithTag("Player");
+            if (pObj != null) target = pObj.transform;
+        }
+
+        if (target != null)
+        {
+            Gizmos.color = new Color(1f, 0.1f, 0.8f, 0.9f);
+            Gizmos.DrawLine(start + Vector3.up * 1.5f, target.position + Vector3.up * 1.0f);
+            Gizmos.DrawWireSphere(target.position + Vector3.up * 1.0f, 0.45f);
+        }
+
+        // 1. Kỹ năng 1 & 2: Sóng kiếm dọc (Vàng Cam) & Sóng kiếm ngang (Cam Đỏ)
+        Vector3 baseSpawnPos = (slashSpawnPoint != null)
+            ? slashSpawnPoint.position
+            : start + transform.forward * 1.4f + Vector3.up * 1.5f;
+
+        Vector3 fireDir = transform.forward;
+        if (target != null)
+        {
+            Vector3 toTarget = target.position - baseSpawnPos;
+            toTarget.y = 0f;
+            if (toTarget.sqrMagnitude > 0.05f) fireDir = toTarget.normalized;
+        }
+
+        DrawFlyingSlashGizmo(baseSpawnPos, fireDir, attackSlashHeightOffset, Mathf.Max(0f, attackSlashMaxDistance), 0f, new Color(1f, 0.55f, 0f, 0.9f));
+        DrawFlyingSlashGizmo(baseSpawnPos, fireDir, horizontalSlashHeightOffset, Mathf.Max(0f, horizontalSlashMaxDistance), 2.5f, new Color(1f, 0.25f, 0.1f, 0.9f));
+
+        // 2. Kỹ năng 3: JumpAttack (Đường nhảy Vàng & Vòng nổ AoE Đỏ)
+        float maxLeap = Mathf.Max(0f, jumpLeapDistance);
+        float stopOffset = Mathf.Max(0.5f, jumpStopOffset);
+
+        Gizmos.color = Color.yellow;
+        Vector3 jumpLandingMax = start + transform.forward * maxLeap;
+        Gizmos.DrawLine(groundCenter, jumpLandingMax + Vector3.up * 0.08f);
+        Gizmos.DrawWireSphere(jumpLandingMax, 0.45f);
+
+        Vector3 slamMax = jumpLandingMax + transform.forward * stopOffset + Vector3.up * jumpImpactHeightOffset;
+        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.4f);
+        Gizmos.DrawWireSphere(slamMax, jumpAttackRadius);
+        DrawGroundCircle(new Vector3(slamMax.x, groundCenter.y, slamMax.z), jumpAttackRadius);
+
+        if (target != null)
+        {
+            Vector3 toTarget = target.position - start;
+            toTarget.y = 0f;
+            float dist = toTarget.magnitude;
+            Vector3 dir = (dist > 0.05f) ? toTarget / dist : transform.forward;
+            float leapDist = ComputeJumpDistanceToTarget(dist);
+            Vector3 liveLanding = start + dir * leapDist;
+            Vector3 liveSlam = liveLanding + dir * stopOffset + Vector3.up * jumpImpactHeightOffset;
+
+            Gizmos.color = new Color(1f, 0.35f, 0.1f, 0.85f);
+            Gizmos.DrawLine(start + Vector3.up * 0.15f, liveLanding + Vector3.up * 0.15f);
+            Gizmos.DrawWireSphere(liveSlam, jumpAttackRadius);
+            DrawGroundCircle(new Vector3(liveSlam.x, groundCenter.y, liveSlam.z), jumpAttackRadius);
+        }
+
+        // 3. Kỹ năng 4: ComboAttack 4 nhát (Quãng lướt & Hitbox màu Xanh Cyan)
+        float lungePerHit = (comboLungeDistance > 0.01f) ? comboLungeDistance : 0.55f;
+        int hitCount = (comboHitTimers != null && comboHitTimers.Length > 0) ? comboHitTimers.Length : 4;
+        Vector3 comboTotalEnd = start + transform.forward * (lungePerHit * hitCount);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(groundCenter, comboTotalEnd + Vector3.up * 0.08f);
+
+        Gizmos.color = new Color(0.1f, 0.9f, 1f, 0.45f);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Vector3 hitCenter = start + transform.forward * (lungePerHit * (i + 1) + 1.5f) + Vector3.up * 1.0f;
+            Gizmos.DrawWireSphere(hitCenter, comboHitRadius);
+        }
     }
 }

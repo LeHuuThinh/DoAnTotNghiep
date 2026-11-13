@@ -247,20 +247,25 @@ MonoBehaviour:
   bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
   bodyAuraRange: 16
   bodyAuraIntensity: 3
-  attack1Cooldown: 1.5
-  gumoGumoCooldown: 6
-  flameBreathCooldown: 8
-  jumpAttackCooldown: 7
-  runAttackCooldown: 6
-  attackLTCooldown: 5
-  iceBallCooldown: 7
+  attack1Cooldown: 15
+  gumoGumoCooldown: 15
+  flameBreathCooldown: 15
+  jumpAttackCooldown: 15
+  runAttackCooldown: 15
+  attackLTCooldown: 15
+  iceBallCooldown: 15
   specialSkillGlobalCooldown: 3
-  runAttackSpeed: 12
-  runAttackDuration: 1.25
+  preventConsecutiveSkillSpam: 1
+  runAttackDistance: 15
+  runAttackSpeed: 22
+  runAttackInitialSpeed: 6
+  runAttackAccelerationDistance: 5
+  runAttackDuration: 1.5
   runAttackDamage: 35
   runAttackKnockback: 5
   runAttackHitRadius: 2.2
   runAuraVfxPrefab: {fileID: 0}
+  runAuraZOffset: 0
   handAuraVfxPrefab: {fileID: 0}
   attackLTDamage: 20
   attackLTFinalDamage: 30
@@ -295,7 +300,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   hitFlashDuration: 0.12
-  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  hitFlashColor: {r: 1, g: 0.7754717, b: 0.7754717, a: 1}
   playerTarget: {fileID: 0}
   autoFindPlayer: 1
   alwaysFacePlayer: 1
@@ -359,6 +364,12 @@ MonoBehaviour:
   jumpAttackDamage: 40
   jumpAttackKnockback: 3.5
   jumpAttackShockwaveColor: {r: 0.15, g: 0.85, b: 1, a: 0.95}
+  enableTimingMixup: 1
+  timingMixupChance: 0.5
+  windupWaitTime: 0.2
+  minHoldDuration: 0.5
+  maxHoldDuration: 0.8
+  holdAnimationSpeed: 0.02
   attack1Damage: 25
   attack1Knockback: 2.5
   attack1HitDistance: 2.4
@@ -415,10 +426,10 @@ MonoBehaviour:
   jumpDownShockwaveVfx: {fileID: 0}
   jumpAttackShockwaveVfx: {fileID: 0}
   gumoShockwaveVfx: {fileID: 0}
-  phase1PacingMin: 6
-  phase1PacingMax: 7
-  phase2PacingMin: 4
-  phase2PacingMax: 5
+  phase1PacingMin: 4
+  phase1PacingMax: 4.5
+  phase2PacingMin: 3
+  phase2PacingMax: 3.5
   phase2StaggerStateName: 50%HP
   phase2StaggerDuration: 4.2
   phase2PushRadius: 5
@@ -464,7 +475,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 00fb66ea57057c34aae5e9287d552a77, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: aa667ccf6bf968d4784d2526a1f0765e, type: 3}
   m_InferenceDevice: 0
   m_BehaviorType: 0
   m_BehaviorName: IceGolemSoulsAI
@@ -516,6 +527,7 @@ MonoBehaviour:
   movePersistenceTime: 0.5
   minStrafeDistance: 2.5
   minStrafeDuration: 1.2
+  isManagedByArena: 0
 --- !u!114 &7629390967331010991
 MonoBehaviour:
   m_ObjectHideFlags: 0

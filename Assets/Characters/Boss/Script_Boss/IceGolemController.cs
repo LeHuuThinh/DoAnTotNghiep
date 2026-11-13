@@ -52,35 +52,45 @@ public class IceGolemController : MonoBehaviour
 
     [Header("=== THỜI GIAN HỒI CHIÊU (COOLDOWNS) ===")]
     [Tooltip("Thời gian hồi chiêu Attack 1 (đấm thường)")]
-    [SerializeField] private float attack1Cooldown = 1.8f;
+    [SerializeField] private float attack1Cooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu GumoGumo (đấm đất liên hoàn)")]
-    [SerializeField] private float gumoGumoCooldown = 10.0f;
+    [SerializeField] private float gumoGumoCooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu Flame Breath (thổi lửa)")]
-    [SerializeField] private float flameBreathCooldown = 14.0f;
+    [SerializeField] private float flameBreathCooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu Jump Attack (nhảy bổ vồ tới)")]
-    [SerializeField] private float jumpAttackCooldown = 12.0f;
+    [SerializeField] private float jumpAttackCooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu Run Attack (chạy húc tới - Nút 5)")]
-    [SerializeField] private float runAttackCooldown = 9.0f;
+    [SerializeField] private float runAttackCooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu AttackLT (combo 3 đòn - Nút 6)")]
-    [SerializeField] private float attackLTCooldown = 5.0f;
+    [SerializeField] private float attackLTCooldown = 15.0f;
     [Tooltip("Thời gian hồi chiêu Ice Ball (ném cầu tím - Nút 7)")]
-    [SerializeField] private float iceBallCooldown = 14.0f;
+    [SerializeField] private float iceBallCooldown = 15.0f;
     [Tooltip("Khoảng cách giãn cách tối thiểu giữa 2 kỹ năng lớn liên tiếp (giây) - Tránh spam chiêu")]
     [SerializeField] private float specialSkillGlobalCooldown = 3.0f;
+    [Tooltip("Không cho phép Boss dùng 1 chiêu 2 lần liên tục (phải dùng xen kẽ chiêu khác)")]
+    [SerializeField] private bool preventConsecutiveSkillSpam = true;
 
     [Header("=== CÀI ĐẶT RUN ATTACK (NÚT 5 - CHẠY HÚC & VÒNG SÁNG TOẢ RA) ===")]
+    [Tooltip("Quãng đường cố định Boss lao thẳng khi RunAttack (mét)")]
+    [SerializeField] private float runAttackDistance = 15.0f;
     [Tooltip("Tốc độ chạy lao về phía trước khi RunAttack (mét/giây)")]
-    [SerializeField] private float runAttackSpeed = 12.0f;
-    [Tooltip("Thời gian duy trì cú chạy húc (giây, khớp với hoạt ảnh 1.3s)")]
-    [SerializeField] private float runAttackDuration = 1.25f;
+    [SerializeField] private float runAttackSpeed = 22.0f;
+    [Tooltip("Tốc độ chạy khởi điểm khi vừa kích hoạt Chiêu 5 (mét/giây)")]
+    [SerializeField] private float runAttackInitialSpeed = 6.0f;
+    [Tooltip("Quãng đường Boss tăng tốc từ từ trước khi đạt tốc độ tối đa (mét)")]
+    [SerializeField] private float runAttackAccelerationDistance = 5.0f;
+    [Tooltip("Thời gian tối đa dự phòng cho cú chạy húc (giây)")]
+    [SerializeField] private float runAttackDuration = 1.5f;
     [Tooltip("Sát thương khi húc trúng Player")]
     [SerializeField] private float runAttackDamage = 35f;
     [Tooltip("Lực đẩy văng Player khi bị húc trúng")]
     [SerializeField] private float runAttackKnockback = 5.0f;
     [Tooltip("Bán kính vùng quét va chạm khi đang chạy húc (mét)")]
     [SerializeField] private float runAttackHitRadius = 2.2f;
-    [Tooltip("TỰ CHỌN: Kéo thả Prefab VFX màu xanh dương bao quanh thân Boss khi chạy húc. Để trống = Không sinh hiệu ứng/vệt xanh")]
+    [Tooltip("TỰ CHỌN: Kéo thả Prefab VFX màu xanh dương thay thế nếu muốn. Để trống = Tự động sinh hào quang thiên thạch xanh dương & vệt gió")]
     [SerializeField] private GameObject runAuraVfxPrefab;
+    [Tooltip("Độ dời trục Z của hiệu ứng RunAttack (âm = lùi về sau khớp thân Boss, dương = tiến ra trước)")]
+    [SerializeField] private float runAuraZOffset = 0.0f;
 
     [Header("=== CÀI ĐẶT ATTACK LT (NÚT 6 - 3 ĐÒN LIÊN HOÀN) ===")]
     [Tooltip("TỰ CHỌN: Kéo thả Prefab VFX bao quanh 2 bàn tay khi đánh 3 đòn liên tiếp. Để trống = Không sinh hiệu ứng/vòng khói")]
@@ -255,6 +265,22 @@ public class IceGolemController : MonoBehaviour
     [Tooltip("Màu sắc vòng xoáy JumpAttack")]
     [SerializeField] private Color jumpAttackShockwaveColor = new Color(0.15f, 0.85f, 1f, 0.95f);
 
+    [Header("=== TIMING MIXUP / KHỰNG HOẠT ẢNH LẤY ĐÀ (HOLD WIND-UP) ===")]
+    [Tooltip("Bật/tắt cơ chế giữ nhịp đòn lấy đà (Timing Mixup / Hold Wind-up) - Áp dụng cho các chiêu 1, 2, 3, 5, 6 (trừ chiêu 4 và 7)")]
+    [SerializeField] private bool enableTimingMixup = true;
+    [Tooltip("Tỷ lệ kích hoạt giữ nhịp đòn lấy đà (0.5 = 50% ngẫu nhiên lúc có lúc không, 1.0 = luôn luôn giữ nhịp, 0 = tắt)")]
+    [Range(0f, 1f)]
+    [SerializeField] private float timingMixupChance = 0.5f;
+    [Tooltip("Thời gian hoạt ảnh chạy tự nhiên trước khi khựng giữ nhịp (giây, mặc định 0.20s để vung tay lên đỉnh)")]
+    [SerializeField] private float windupWaitTime = 0.20f;
+    [Tooltip("Thời gian dừng/khựng tối thiểu (giây) - Mặc định 0.5s")]
+    [SerializeField] private float minHoldDuration = 0.5f;
+    [Tooltip("Thời gian dừng/khựng tối đa (giây) - Mặc định 0.8s")]
+    [SerializeField] private float maxHoldDuration = 0.8f;
+    [Tooltip("Tốc độ hoạt ảnh trong lúc khựng (0 = đóng băng 100%, 0.02 = nén cơ siêu chậm)")]
+    [Range(0f, 0.2f)]
+    [SerializeField] private float holdAnimationSpeed = 0.02f;
+
     [Header("=== CÀI ĐẶT ATTACK 1 - CÚ ĐÁNH CƠ BẢN (BASIC ATTACK) ===")]
     [Tooltip("Sát thương cú đánh thường của Boss")]
     [SerializeField] private float attack1Damage = 25f;
@@ -398,14 +424,14 @@ public class IceGolemController : MonoBehaviour
     [SerializeField] private GameObject gumoShockwaveVfx;
 
     [Header("=== GIAI ĐOẠN 2 CUỒNG NỘ (50% HP) & NHỊP THỞ COMBAT PACING ===")]
-    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 1 (Máu > 50%): 6.0 giây")]
-    [SerializeField] private float phase1PacingMin = 6.0f;
-    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 1 (Máu > 50%): 7.0 giây")]
-    [SerializeField] private float phase1PacingMax = 7.0f;
-    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 4.0 giây")]
-    [SerializeField] private float phase2PacingMin = 4.0f;
-    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 5.0 giây")]
-    [SerializeField] private float phase2PacingMax = 5.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 1 (Máu > 50%): 4.0 giây")]
+    [SerializeField] private float phase1PacingMin = 4.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 1 (Máu > 50%): 4.5 giây")]
+    [SerializeField] private float phase1PacingMax = 4.5f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối thiểu giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 3.0 giây")]
+    [SerializeField] private float phase2PacingMin = 3.0f;
+    [Tooltip("Khoảng nghỉ ngẫu nhiên tối đa giữa các chiêu ở Phase 2 (Máu <= 50% Cuồng Nộ): 3.5 giây")]
+    [SerializeField] private float phase2PacingMax = 3.5f;
     [Tooltip("Tên State hoạt cảnh chao đảo khi chạm 50% HP")]
     [SerializeField] private string phase2StaggerStateName = "50%HP";
     [Tooltip("Thời lượng hoạt cảnh chao đảo 50% HP (giây) trước khi hất văng và phun lửa")]
@@ -492,12 +518,18 @@ public class IceGolemController : MonoBehaviour
     private float lastAttackLTTime = -999f;
     private float lastIceBallTime = -999f;
     private float lastSpecialSkillTime = -999f;
+    private int lastCastAttackIndex = -1;
+    public int LastCastAttackIndex => lastCastAttackIndex;
+    public bool PreventConsecutiveSkillSpam => preventConsecutiveSkillSpam;
 
     private GameObject activeLeftHandAura;
     private GameObject activeRightHandAura;
     private GameObject activeFlameInstance;
     private GameObject activeRunAuraInstance;
     private GameObject activeIceBallChargeInstance;
+    private static Texture2D cachedMeteorGlowTexture;
+    private static Material cachedMeteorParticleMaterial;
+    private static Material cachedMeteorTrailMaterial;
     private int cachedBoneAxisIndex = -1;
     private float cachedInitialMouthHeightOffset = -1f;
 
@@ -1621,6 +1653,8 @@ public class IceGolemController : MonoBehaviour
 
         DisableHandAuras();
         DisableRunAura();
+        RestoreRunAttackPhysicsState();
+        if (anim != null) anim.speed = 1f;
     }
 
     private IEnumerator PushPlayerBackRoutine(Transform playerTf, Vector3 pushDir, float distance, float duration)
@@ -1676,7 +1710,13 @@ public class IceGolemController : MonoBehaviour
             return false;
         }
 
-        // Kiểm tra nhịp nghỉ Combat Pacing (6-7s ở Phase 1, 4-5s ở Phase 2):
+        // Không cho phép dùng 1 chiêu 2 lần liên tục (buộc phải dùng xen kẽ chiêu khác):
+        if (preventConsecutiveSkillSpam && attackIndex == lastCastAttackIndex)
+        {
+            return false;
+        }
+
+        // Kiểm tra nhịp nghỉ Combat Pacing (4.0-4.5s ở Phase 1, 3.0-3.5s ở Phase 2):
         if (Time.time < nextAttackAllowedTime)
         {
             return false;
@@ -1751,6 +1791,7 @@ public class IceGolemController : MonoBehaviour
 
     private void TriggerAttackCooldown(int attackIndex)
     {
+        lastCastAttackIndex = attackIndex;
         bool isSpecial = (attackIndex == 1 || attackIndex == 2 || attackIndex == 3 || attackIndex == 4 || attackIndex == 6);
         if (isSpecial)
         {
@@ -1782,6 +1823,8 @@ public class IceGolemController : MonoBehaviour
         lastAttackLTTime = -999f;
         lastIceBallTime = -999f;
         lastSpecialSkillTime = -999f;
+        lastCastAttackIndex = -1;
+        nextAttackAllowedTime = 0f;
     }
 
     // ==========================================
@@ -1862,7 +1905,31 @@ public class IceGolemController : MonoBehaviour
             Vector3 moveDir = (transform.forward * currentSmoothMoveInput.y + transform.right * currentSmoothMoveInput.x);
             if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
 
-            Vector3 nextPos = transform.position + moveDir * (moveSpeed * currentSmoothSpeed) * dt;
+            float moveDist = (moveSpeed * currentSmoothSpeed) * dt;
+
+            // Kiểm tra va chạm vật cản/tường arena trước khi cập nhật vị trí
+            LayerMask mask = obstacleLayer;
+            int obstacleNamedLayer = LayerMask.NameToLayer("Obstacle");
+            if (obstacleNamedLayer != -1) mask |= (1 << obstacleNamedLayer);
+
+            Vector3 rayOrigin = transform.position + Vector3.up * 1.5f;
+            float checkDist = moveDist + 0.8f;
+            if (Physics.SphereCast(rayOrigin, 0.8f, moveDir, out RaycastHit wallHit, checkDist, mask, QueryTriggerInteraction.Ignore))
+            {
+                // Trượt dọc theo mặt phẳng tường thay vì xuyên tường hay đứng khựng
+                Vector3 slideDir = Vector3.ProjectOnPlane(moveDir, wallHit.normal);
+                slideDir.y = 0f;
+                if (slideDir.sqrMagnitude > 0.01f)
+                {
+                    moveDir = slideDir.normalized;
+                }
+                else
+                {
+                    moveDist = 0f;
+                }
+            }
+
+            Vector3 nextPos = transform.position + moveDir * moveDist;
 
             // Bám sát cao độ mặt sàn an toàn để chân không bị lún hay lơ lửng
             Vector3 groundPos = GetGroundPosition(nextPos, false);
@@ -1901,10 +1968,19 @@ public class IceGolemController : MonoBehaviour
         }
     }
 
+    private bool? pendingForceTimingMixup = null;
+
     public void CastAttack(int attackIndex)
+    {
+        CastAttack(attackIndex, null);
+    }
+
+    public void CastAttack(int attackIndex, bool? forceTimingMixup)
     {
         if (IsBusy()) return;
         if (!CanCastAttack(attackIndex)) return;
+
+        pendingForceTimingMixup = forceTimingMixup;
 
         switch (attackIndex)
         {
@@ -1915,6 +1991,73 @@ public class IceGolemController : MonoBehaviour
             case 4: PlayRunAttack(); break;
             case 5: PlayAttackLT(); break;
             case 6: PlayIceBall(); break;
+        }
+
+        pendingForceTimingMixup = null;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem chiêu thức hiện tại có kích hoạt Timing Mixup (giữ nhịp đòn lấy đà) hay không.
+    /// Loại trừ hoàn toàn Chiêu 4 (Jump Attack - index 3) và Chiêu 7 (Ice Ball - index 6).
+    /// </summary>
+    public bool ShouldApplyTimingMixup(int attackIndex)
+    {
+        if (attackIndex == 3 || attackIndex == 6) return false;
+        if (!enableTimingMixup) return false;
+        if (timingMixupChance <= 0f) return false;
+
+        // Nếu Agent chọn đánh thường tức thì (forceMixup = false)
+        if (pendingForceTimingMixup.HasValue && !pendingForceTimingMixup.Value)
+        {
+            return false;
+        }
+
+        // Random ngẫu nhiên lúc có lúc không theo tỷ lệ cài đặt Inspector (mặc định 0.5 = 50%)
+        return Random.value <= timingMixupChance;
+    }
+
+    /// <summary>
+    /// Sinh thời gian khựng giữ nhịp ngẫu nhiên trong khoảng [minHoldDuration, maxHoldDuration] (mặc định 0.5s - 0.8s)
+    /// </summary>
+    public float GetRandomHoldDuration(int attackIndex)
+    {
+        if (!ShouldApplyTimingMixup(attackIndex)) return 0f;
+        return Random.Range(minHoldDuration, maxHoldDuration);
+    }
+
+    /// <summary>
+    /// Coroutine hỗ trợ giữ nhịp lấy đà: chạy tự nhiên windupWaitTime rồi khựng lại trong holdTime, sau đó trả tốc độ về 1.0f.
+    /// </summary>
+    private IEnumerator HoldWindupRoutine(float holdTime)
+    {
+        if (holdTime <= 0f) yield break;
+
+        // 1. Chờ hoạt ảnh chạy tự nhiên để giơ tay/vũ khí lên đỉnh lấy đà
+        if (windupWaitTime > 0f)
+        {
+            yield return new WaitForSeconds(windupWaitTime);
+        }
+
+        try
+        {
+            // 2. Khựng lại giữ thế (đóng băng hoặc chạy siêu chậm)
+            if (anim != null) anim.speed = holdAnimationSpeed;
+
+            float timer = 0f;
+            while (timer < holdTime)
+            {
+                timer += Time.deltaTime;
+                if (facePlayerOnAttack)
+                {
+                    SmoothFaceTarget(GetPlayerTarget(), facePlayerSpeed * 0.5f);
+                }
+                yield return null;
+            }
+        }
+        finally
+        {
+            // 3. Luôn bảo đảm trả lại tốc độ 1.0f bình thường
+            if (anim != null) anim.speed = 1.0f;
         }
     }
 
@@ -1941,10 +2084,24 @@ public class IceGolemController : MonoBehaviour
 
         anim.SetTrigger(AttackHash);
 
-        // 1. Chờ đến đúng thời điểm cánh tay vung tới mục tiêu (Hit Delay)
-        if (attack1HitDelay > 0f)
+        // Timing Mixup (Khựng lấy đà 0.5s - 0.8s)
+        float holdTime = GetRandomHoldDuration(0);
+        if (holdTime > 0f)
         {
-            yield return new WaitForSeconds(attack1HitDelay);
+            yield return StartCoroutine(HoldWindupRoutine(holdTime));
+            float remainingHitDelay = Mathf.Max(0f, attack1HitDelay - windupWaitTime);
+            if (remainingHitDelay > 0f)
+            {
+                yield return new WaitForSeconds(remainingHitDelay);
+            }
+        }
+        else
+        {
+            // 1. Chờ đến đúng thời điểm cánh tay vung tới mục tiêu (Hit Delay chuẩn)
+            if (attack1HitDelay > 0f)
+            {
+                yield return new WaitForSeconds(attack1HitDelay);
+            }
         }
 
         // 2. Thực hiện quét va chạm và gây sát thương / sinh hiệu ứng Impact
@@ -2323,9 +2480,17 @@ public class IceGolemController : MonoBehaviour
             anim.CrossFadeInFixedTime("AttackRoaring", 0.15f);
         }
 
+        // Timing Mixup (Khựng lấy hơi gồng ngực 0.5s - 0.8s)
+        float flameHold = GetRandomHoldDuration(2);
+        if (flameHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(flameHold));
+        }
+
         // 2. Chờ giai đoạn Boss ngửa người lấy hơi trước khi thổi lửa
+        float remainingFlamePrep = Mathf.Max(0f, flameStartTime - (flameHold > 0f ? windupWaitTime : 0f));
         float prepTimer = 0f;
-        while (prepTimer < flameStartTime)
+        while (prepTimer < remainingFlamePrep)
         {
             prepTimer += Time.deltaTime;
             yield return null;
@@ -2443,71 +2608,286 @@ public class IceGolemController : MonoBehaviour
     // COROUTINE RUN ATTACK (NÚT 5 - CHẠY LAO TỚI HÚC VÀ VÒNG SÁNG TOẢ RA)
     // =========================================================================
 
+    private bool hasSavedRunAttackRbState;
+    private bool runAttackOriginalKinematic;
+    private bool runAttackOriginalGravity;
+    private RigidbodyInterpolation runAttackOriginalInterpolation;
+
+    private void RestoreRunAttackPhysicsState()
+    {
+        if (!hasSavedRunAttackRbState) return;
+        hasSavedRunAttackRbState = false;
+
+        if (rb != null)
+        {
+            rb.position = transform.position;
+            rb.interpolation = runAttackOriginalInterpolation;
+            rb.isKinematic = runAttackOriginalKinematic;
+            rb.useGravity = runAttackOriginalGravity;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+        }
+        Physics.SyncTransforms();
+    }
+
+    private LayerMask GetRunAttackObstacleMask()
+    {
+        LayerMask mask = obstacleLayer;
+        int obstacleNamedLayer = LayerMask.NameToLayer("Obstacle");
+        if (obstacleNamedLayer != -1)
+        {
+            mask |= (1 << obstacleNamedLayer);
+        }
+
+        int playerNamedLayer = LayerMask.NameToLayer("Player");
+        if (playerNamedLayer != -1)
+        {
+            mask &= ~(1 << playerNamedLayer);
+        }
+
+        mask &= ~(1 << gameObject.layer);
+        return mask;
+    }
+
+    private bool IsPlayerOrSelfCollider(Collider col)
+    {
+        if (col == null) return true;
+
+        Transform colRoot = col.transform.root;
+        if (colRoot == transform.root || col.transform.IsChildOf(transform))
+        {
+            return true;
+        }
+
+        if (col.CompareTag("Player") || (colRoot != null && colRoot.CompareTag("Player")))
+        {
+            return true;
+        }
+
+        if (playerTarget != null && (colRoot == playerTarget.root || col.transform.IsChildOf(playerTarget.root)))
+        {
+            return true;
+        }
+
+        int playerNamedLayer = LayerMask.NameToLayer("Player");
+        if (playerNamedLayer != -1 && col.gameObject.layer == playerNamedLayer)
+        {
+            return true;
+        }
+
+        return col.GetComponentInParent<PlayerController>() != null;
+    }
+
+    /// <summary>
+    /// Quét vật cản trên đường húc của Chiêu 5 (RunAttack).
+    /// Luôn bỏ qua bản thân Boss và Player (để húc dính Player vẫn lao tiếp), chỉ bắt các vật thể/tường cản khác.
+    /// </summary>
+    private bool TryGetRunAttackObstacle(Vector3 originPosition, Vector3 direction, float moveStep, out RaycastHit closestObstacleHit)
+    {
+        closestObstacleHit = default;
+        Vector3 dir = direction;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.001f) dir = transform.forward;
+        dir.Normalize();
+
+        Vector3 right = Vector3.Cross(Vector3.up, dir).normalized;
+        float bodyLeadBuffer = 1.5f;
+        float probeDistance = Mathf.Max(0.1f, moveStep) + bodyLeadBuffer;
+        LayerMask mask = GetRunAttackObstacleMask();
+
+        float[] sideOffsets = { 0f, -0.85f, 0.85f };
+        bool found = false;
+        float minDist = float.MaxValue;
+        Vector3 baseOrigin = originPosition + Vector3.up * 1.4f;
+
+        for (int i = 0; i < sideOffsets.Length; i++)
+        {
+            Vector3 rayOrigin = baseOrigin + right * sideOffsets[i];
+            RaycastHit[] hits = Physics.RaycastAll(rayOrigin, dir, probeDistance, mask, QueryTriggerInteraction.Ignore);
+            for (int h = 0; h < hits.Length; h++)
+            {
+                RaycastHit hit = hits[h];
+                if (IsPlayerOrSelfCollider(hit.collider)) continue;
+
+                if (hit.distance < minDist)
+                {
+                    minDist = hit.distance;
+                    closestObstacleHit = hit;
+                    found = true;
+                }
+            }
+        }
+
+        return found;
+    }
+
     private IEnumerator RunAttackRoutine()
     {
         isRunAttacking = true;
+
+        // Tạm tắt Interpolate & khóa kinematic để AutoSyncTransforms=0 không làm Rigidbody kéo tụt transform.position về vị trí cũ giữa các frame
+        hasSavedRunAttackRbState = (rb != null);
+        if (rb != null)
+        {
+            runAttackOriginalKinematic = rb.isKinematic;
+            runAttackOriginalGravity = rb.useGravity;
+            runAttackOriginalInterpolation = rb.interpolation;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+            rb.interpolation = RigidbodyInterpolation.None;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.position = transform.position;
+        }
 
         if (facePlayerOnAttack)
         {
             SnapFaceTarget();
         }
 
-        // Kích hoạt trigger animation RunAttack
-        anim.SetTrigger(RunAttackHash);
+        // Khóa cứng hướng lao thẳng theo trục mặt phẳng XZ (không cho bẻ cua giữa chừng)
+        Vector3 chargeDirection = transform.forward;
+        chargeDirection.y = 0f;
+        if (chargeDirection.sqrMagnitude < 0.001f) chargeDirection = transform.forward;
+        chargeDirection.Normalize();
+        Quaternion lockedChargeRotation = Quaternion.LookRotation(chargeDirection, Vector3.up);
+        transform.rotation = lockedChargeRotation;
 
-        // Kích hoạt vòng sáng/hào quang bao quanh Boss khi chạy
+        // Bắt đầu hoạt ảnh chạy húc
+        if (anim != null)
+        {
+            anim.speed = 1.0f;
+            anim.SetTrigger(RunAttackHash);
+        }
+
+        // Timing Mixup (Khựng thế xuất phát 0.5s - 0.8s)
+        float runHold = GetRandomHoldDuration(4);
+        if (runHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(runHold));
+        }
+
+        // Kích hoạt vòng sáng thiên thạch xanh dương & vệt gió bao quanh Boss khi chạy
         EnableRunAura();
 
+        Vector3 dashStartPos = transform.position;
         float timer = 0f;
+        float traveledDistance = 0f;
+        float effectiveStartSpeed = Mathf.Min(runAttackInitialSpeed, runAttackSpeed);
+        float avgSpeed = Mathf.Max((effectiveStartSpeed + runAttackSpeed) * 0.5f, 1f);
+        float maxDashDuration = Mathf.Max(runAttackDuration, (runAttackDistance / avgSpeed) + 1.2f);
         HashSet<IDamageable> hitDamageables = new HashSet<IDamageable>();
+        bool hitObstacle = false;
+        Collider hitObstacleCollider = null;
 
-        while (timer < runAttackDuration)
+        while (traveledDistance < runAttackDistance && timer < maxDashDuration)
         {
             timer += Time.deltaTime;
 
-            // Xoay nhẹ bám theo mục tiêu trong nửa đầu cú chạy để tăng độ chuẩn xác
-            if (timer < runAttackDuration * 0.5f)
+            // Giữ nguyên hướng lao thẳng tuyệt đối, không bẻ cua
+            transform.rotation = lockedChargeRotation;
+
+            // Tăng tốc từ từ: sau runAttackAccelerationDistance (5m) sẽ đạt tốc độ tối đa (runAttackSpeed)
+            float accelRatio = (runAttackAccelerationDistance > 0.001f)
+                ? Mathf.Clamp01(traveledDistance / runAttackAccelerationDistance)
+                : 1f;
+            float smoothAccel = Mathf.SmoothStep(0f, 1f, accelRatio);
+            float currentSpeed = Mathf.Lerp(effectiveStartSpeed, runAttackSpeed, smoothAccel);
+
+            // Tăng dần tốc độ hoạt ảnh khớp với gia tốc di chuyển (từ 1.0f lên 1.45f)
+            if (anim != null)
             {
-                Transform target = GetPlayerTarget();
-                if (target != null)
-                {
-                    SmoothFaceTarget(target, facePlayerSpeed * 0.8f);
-                }
+                anim.speed = Mathf.Lerp(1.0f, 1.45f, smoothAccel);
             }
 
-            // Di chuyển lao nhanh về phía trước
-            transform.position += transform.forward * runAttackSpeed * Time.deltaTime;
+            // Tính vị trí tuyệt đối từ dashStartPos để không bao giờ bị mất quãng đường tích lũy giữa các frame
+            float remainingDistance = runAttackDistance - traveledDistance;
+            float stepDist = Mathf.Min(currentSpeed * Time.deltaTime, remainingDistance);
+            Vector3 currentPos = dashStartPos + chargeDirection * traveledDistance;
+            if (TryGetRunAttackObstacle(currentPos, chargeDirection, stepDist, out RaycastHit obstacleHit))
+            {
+                hitObstacle = true;
+                hitObstacleCollider = obstacleHit.collider;
+                break;
+            }
 
-            // Quét va chạm húc trúng người chơi
-            PerformRunAttackHitCheck(hitDamageables);
+            traveledDistance += stepDist;
+            Vector3 nextPos = dashStartPos + chargeDirection * traveledDistance;
+            transform.position = nextPos;
+            if (rb != null)
+            {
+                rb.position = nextPos;
+            }
+            Physics.SyncTransforms();
+
+            // Quét va chạm dọc đoạn di chuyển vừa đi qua (chống xuyên qua Player khi chạy nhanh)
+            PerformRunAttackHitCheck(hitDamageables, currentPos, nextPos);
 
             yield return null;
         }
 
+        float actualMovedDist = Vector3.Distance(dashStartPos, transform.position);
+        RestoreRunAttackPhysicsState();
         DisableRunAura();
 
-        // Chờ animation RunAttack chuyển hoàn tất về thế Idle (kèm timeout chống kẹt)
-        float runSafetyTimeout = 1.0f;
-        while (anim != null && anim.GetCurrentAnimatorStateInfo(0).IsName("RunAttack") && runSafetyTimeout > 0f)
+        if (anim != null)
         {
-            runSafetyTimeout -= Time.deltaTime;
-            yield return null;
+            anim.speed = 1.0f;
+        }
+
+        if (hitObstacle)
+        {
+            string obsName = hitObstacleCollider != null ? hitObstacleCollider.name : "Unknown";
+            string obsLayer = hitObstacleCollider != null ? LayerMask.LayerToName(hitObstacleCollider.gameObject.layer) : "Unknown";
+            Debug.Log($"[IceGolem] Chiêu 5 (RunAttack) bị ngắt động tác vì va phải vật cản '{obsName}' (Layer: {obsLayer}) tại {actualMovedDist:0.##}m / {runAttackDistance:0.##}m.");
+
+            // Ngắt động tác lao ngay lập tức về thế Idle khi va phải vật thể không phải Player
+            SafeResetTrigger(RunAttackHash);
+            if (anim != null)
+            {
+                anim.CrossFade("Idle", 0.08f, 0);
+            }
+        }
+        else
+        {
+            Debug.Log($"[IceGolem] Chiêu 5 (RunAttack) hoàn tất quãng đường {actualMovedDist:0.##}m / {runAttackDistance:0.##}m.");
+
+            // Chờ animation RunAttack chuyển hoàn tất về thế Idle (kèm timeout chống kẹt)
+            float runSafetyTimeout = 1.0f;
+            while (anim != null && anim.GetCurrentAnimatorStateInfo(0).IsName("RunAttack") && runSafetyTimeout > 0f)
+            {
+                runSafetyTimeout -= Time.deltaTime;
+                yield return null;
+            }
         }
 
         isRunAttacking = false;
         if (anim != null)
         {
+            anim.speed = 1.0f;
             anim.applyRootMotion = false;
             anim.transform.localPosition = Vector3.zero;
         }
         ApplyCombatPacing();
     }
 
-    private void PerformRunAttackHitCheck(HashSet<IDamageable> hitDamageables)
+    private void PerformRunAttackHitCheck(HashSet<IDamageable> hitDamageables, Vector3 stepStartPos, Vector3 stepEndPos)
     {
-        Vector3 checkCenter = transform.position + transform.forward * 1.6f + Vector3.up * 1.3f;
-        LayerMask queryMask = targetLayers.value != 0 ? targetLayers : (LayerMask)(1 << LayerMask.NameToLayer("Player"));
-        Collider[] hits = Physics.OverlapSphere(checkCenter, runAttackHitRadius, queryMask);
+        Vector3 forwardFlat = transform.forward;
+        forwardFlat.y = 0f;
+        if (forwardFlat.sqrMagnitude < 0.001f) forwardFlat = transform.forward;
+        forwardFlat.Normalize();
+
+        Vector3 capsuleStart = stepStartPos + Vector3.up * 1.25f;
+        Vector3 capsuleEnd = stepEndPos + forwardFlat * 1.6f + Vector3.up * 1.25f;
+
+        LayerMask queryMask = targetLayers;
+        int playerNamedLayer = LayerMask.NameToLayer("Player");
+        if (playerNamedLayer != -1)
+        {
+            queryMask |= (1 << playerNamedLayer);
+        }
+        if (queryMask.value == 0) queryMask = ~0;
+
+        Collider[] hits = Physics.OverlapCapsule(capsuleStart, capsuleEnd, runAttackHitRadius, queryMask, QueryTriggerInteraction.Collide);
 
         foreach (Collider col in hits)
         {
@@ -2521,13 +2901,15 @@ public class IceGolemController : MonoBehaviour
 
             if (dmg != null && hitDamageables.Add(dmg))
             {
-                Vector3 hitPoint = col.ClosestPoint(checkCenter);
-                Vector3 knockDir = (transform.forward + Vector3.up * 0.25f).normalized;
+                Vector3 hitPoint = (col is BoxCollider || col is SphereCollider || col is CapsuleCollider || col is CharacterController)
+                    ? col.ClosestPoint(capsuleEnd)
+                    : col.bounds.ClosestPoint(capsuleEnd);
+                Vector3 knockDir = (forwardFlat + Vector3.up * 0.25f).normalized;
 
                 dmg.TakeDamage(runAttackDamage, hitPoint, knockDir, runAttackKnockback, transform);
 
                 // Sinh hiệu ứng va chạm Impact
-                SpawnAttack1ImpactVfx(hitPoint, Quaternion.LookRotation(-transform.forward, Vector3.up));
+                SpawnAttack1ImpactVfx(hitPoint, Quaternion.LookRotation(-forwardFlat, Vector3.up));
 
                 // Rung màn hình mạnh
                 StartCoroutine(TriggerCameraShake(0.35f, 0.25f));
@@ -2537,20 +2919,406 @@ public class IceGolemController : MonoBehaviour
 
     private void EnableRunAura()
     {
-        if (runAuraVfxPrefab != null && activeRunAuraInstance == null)
+        if (activeRunAuraInstance != null)
         {
-            activeRunAuraInstance = Instantiate(runAuraVfxPrefab, transform.position + Vector3.up * 1.5f, Quaternion.identity, transform);
+            DisableRunAura();
+        }
+
+        if (runAuraVfxPrefab != null)
+        {
+            activeRunAuraInstance = Instantiate(runAuraVfxPrefab, transform.position + Vector3.up * 1.5f + transform.forward * runAuraZOffset, Quaternion.identity, transform);
             ParticleSystem[] psList = activeRunAuraInstance.GetComponentsInChildren<ParticleSystem>();
             foreach (var ps in psList) ps.Play();
+        }
+        else
+        {
+            activeRunAuraInstance = CreateProceduralMeteorRunAura();
         }
     }
 
     private void DisableRunAura()
     {
-        if (activeRunAuraInstance != null)
+        if (activeRunAuraInstance == null) return;
+
+        GameObject oldInstance = activeRunAuraInstance;
+        activeRunAuraInstance = null;
+
+        ParticleSystem[] psList = oldInstance.GetComponentsInChildren<ParticleSystem>();
+        foreach (var ps in psList)
         {
-            Destroy(activeRunAuraInstance);
-            activeRunAuraInstance = null;
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        TrailRenderer[] trails = oldInstance.GetComponentsInChildren<TrailRenderer>();
+        foreach (var tr in trails)
+        {
+            tr.emitting = false;
+        }
+
+        Light[] lights = oldInstance.GetComponentsInChildren<Light>();
+        foreach (var lt in lights)
+        {
+            lt.enabled = false;
+        }
+
+        Destroy(oldInstance, 0.75f);
+    }
+
+    private GameObject CreateProceduralMeteorRunAura()
+    {
+        EnsureMeteorVfxAssets();
+
+        GameObject root = new GameObject("MeteorRunAuraVFX");
+        root.transform.SetParent(transform, false);
+        root.transform.localPosition = new Vector3(0f, 0f, runAuraZOffset);
+        root.transform.localRotation = Quaternion.identity;
+
+        // 1. Vo lua thien thach xanh duong lui ve khop nguc va than truoc cua Boss
+        GameObject coneObj = new GameObject("MeteorFlameCone");
+        coneObj.transform.SetParent(root.transform, false);
+        coneObj.transform.localPosition = new Vector3(0f, 2.5f, 0.45f);
+        coneObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        ParticleSystem conePs = coneObj.AddComponent<ParticleSystem>();
+        var coneMain = conePs.main;
+        coneMain.loop = true;
+        coneMain.startLifetime = new ParticleSystem.MinMaxCurve(0.22f, 0.38f);
+        coneMain.startSpeed = new ParticleSystem.MinMaxCurve(12f, 18f);
+        coneMain.startSize = new ParticleSystem.MinMaxCurve(2.0f, 3.4f);
+        coneMain.startColor = new Color(0.62f, 0.94f, 1.0f, 0.92f);
+        coneMain.simulationSpace = ParticleSystemSimulationSpace.Local;
+        coneMain.maxParticles = 160;
+
+        var coneEmission = conePs.emission;
+        coneEmission.rateOverTime = 120f;
+
+        var coneShape = conePs.shape;
+        coneShape.enabled = true;
+        coneShape.shapeType = ParticleSystemShapeType.Cone;
+        coneShape.angle = 32f;
+        coneShape.radius = 1.9f;
+        coneShape.radiusThickness = 0.65f;
+
+        var coneColor = conePs.colorOverLifetime;
+        coneColor.enabled = true;
+        Gradient flameGrad = new Gradient();
+        flameGrad.SetKeys(
+            new[]
+            {
+                new GradientColorKey(new Color(0.90f, 0.98f, 1.0f), 0f),
+                new GradientColorKey(new Color(0.20f, 0.78f, 1.0f), 0.35f),
+                new GradientColorKey(new Color(0.05f, 0.35f, 1.0f), 0.75f),
+                new GradientColorKey(new Color(0.02f, 0.14f, 0.70f), 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(0f, 0f),
+                new GradientAlphaKey(0.88f, 0.14f),
+                new GradientAlphaKey(0.58f, 0.62f),
+                new GradientAlphaKey(0f, 1f)
+            });
+        coneColor.color = new ParticleSystem.MinMaxGradient(flameGrad);
+
+        var coneSize = conePs.sizeOverLifetime;
+        coneSize.enabled = true;
+        coneSize.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+            new Keyframe(0f, 0.85f),
+            new Keyframe(0.3f, 1.15f),
+            new Keyframe(1f, 0.4f)));
+
+        ParticleSystemRenderer coneRenderer = coneObj.GetComponent<ParticleSystemRenderer>();
+        coneRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        coneRenderer.velocityScale = 0.2f;
+        coneRenderer.lengthScale = 1.9f;
+        coneRenderer.sharedMaterial = cachedMeteorParticleMaterial;
+        coneRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        coneRenderer.receiveShadows = false;
+        conePs.Play();
+
+        // 1b. Lop vo khi quyen xanh duong boc xung quanh 360 do toan bo than hinh cua Boss
+        GameObject bodyWrapObj = new GameObject("MeteorFullBodyWrap");
+        bodyWrapObj.transform.SetParent(root.transform, false);
+        bodyWrapObj.transform.localPosition = new Vector3(0f, 2.45f, -0.25f);
+        bodyWrapObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        ParticleSystem bodyWrapPs = bodyWrapObj.AddComponent<ParticleSystem>();
+        var bodyMain = bodyWrapPs.main;
+        bodyMain.loop = true;
+        bodyMain.startLifetime = new ParticleSystem.MinMaxCurve(0.24f, 0.40f);
+        bodyMain.startSpeed = new ParticleSystem.MinMaxCurve(6f, 12f);
+        bodyMain.startSize = new ParticleSystem.MinMaxCurve(2.4f, 3.8f);
+        bodyMain.startColor = new Color(0.45f, 0.88f, 1.0f, 0.85f);
+        bodyMain.simulationSpace = ParticleSystemSimulationSpace.Local;
+        bodyMain.maxParticles = 140;
+
+        var bodyEmission = bodyWrapPs.emission;
+        bodyEmission.rateOverTime = 95f;
+
+        var bodyShape = bodyWrapPs.shape;
+        bodyShape.enabled = true;
+        bodyShape.shapeType = ParticleSystemShapeType.Sphere;
+        bodyShape.radius = 2.35f;
+        bodyShape.radiusThickness = 0.45f;
+
+        var bodyVel = bodyWrapPs.velocityOverLifetime;
+        bodyVel.enabled = true;
+        bodyVel.space = ParticleSystemSimulationSpace.Local;
+        bodyVel.z = new ParticleSystem.MinMaxCurve(10f);
+
+        var bodyColor = bodyWrapPs.colorOverLifetime;
+        bodyColor.enabled = true;
+        bodyColor.color = new ParticleSystem.MinMaxGradient(flameGrad);
+
+        ParticleSystemRenderer bodyRenderer = bodyWrapObj.GetComponent<ParticleSystemRenderer>();
+        bodyRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        bodyRenderer.velocityScale = 0.22f;
+        bodyRenderer.lengthScale = 2.4f;
+        bodyRenderer.sharedMaterial = cachedMeteorParticleMaterial;
+        bodyRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        bodyRenderer.receiveShadows = false;
+        bodyWrapPs.Play();
+
+        // 2. Vet gio xe khong khi mau xanh duong toa phia sau trong World Space
+        GameObject windObj = new GameObject("MeteorWindStreaks");
+        windObj.transform.SetParent(root.transform, false);
+        windObj.transform.localPosition = new Vector3(0f, 2.45f, 0.0f);
+        windObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        ParticleSystem windPs = windObj.AddComponent<ParticleSystem>();
+        var windMain = windPs.main;
+        windMain.loop = true;
+        windMain.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.58f);
+        windMain.startSpeed = new ParticleSystem.MinMaxCurve(6f, 14f);
+        windMain.startSize = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
+        windMain.startColor = new Color(0.75f, 0.97f, 1.0f, 0.95f);
+        windMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        windMain.maxParticles = 180;
+
+        var windEmission = windPs.emission;
+        windEmission.rateOverTime = 125f;
+
+        var windShape = windPs.shape;
+        windShape.enabled = true;
+        windShape.shapeType = ParticleSystemShapeType.Sphere;
+        windShape.radius = 2.5f;
+
+        var windColor = windPs.colorOverLifetime;
+        windColor.enabled = true;
+        Gradient windGrad = new Gradient();
+        windGrad.SetKeys(
+            new[]
+            {
+                new GradientColorKey(new Color(0.82f, 0.98f, 1.0f), 0f),
+                new GradientColorKey(new Color(0.15f, 0.62f, 1.0f), 0.5f),
+                new GradientColorKey(new Color(0.05f, 0.24f, 0.90f), 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(0.95f, 0f),
+                new GradientAlphaKey(0.60f, 0.5f),
+                new GradientAlphaKey(0f, 1f)
+            });
+        windColor.color = new ParticleSystem.MinMaxGradient(windGrad);
+
+        ParticleSystemRenderer windRenderer = windObj.GetComponent<ParticleSystemRenderer>();
+        windRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        windRenderer.velocityScale = 0.32f;
+        windRenderer.lengthScale = 5.0f;
+        windRenderer.sharedMaterial = cachedMeteorParticleMaterial;
+        windRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        windRenderer.receiveShadows = false;
+        windPs.Play();
+
+        // 2b. Vong song xung kich re gio phia truoc nguc Boss
+        GameObject shockRingObj = new GameObject("MeteorFrontShockRing");
+        shockRingObj.transform.SetParent(root.transform, false);
+        shockRingObj.transform.localPosition = new Vector3(0f, 2.5f, 0.65f);
+        shockRingObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        ParticleSystem ringPs = shockRingObj.AddComponent<ParticleSystem>();
+        var ringMain = ringPs.main;
+        ringMain.loop = true;
+        ringMain.startLifetime = new ParticleSystem.MinMaxCurve(0.20f, 0.32f);
+        ringMain.startSpeed = new ParticleSystem.MinMaxCurve(5f, 10f);
+        ringMain.startSize = new ParticleSystem.MinMaxCurve(1.6f, 2.6f);
+        ringMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        ringMain.maxParticles = 96;
+
+        var ringEmission = ringPs.emission;
+        ringEmission.rateOverTime = 75f;
+
+        var ringShape = ringPs.shape;
+        ringShape.enabled = true;
+        ringShape.shapeType = ParticleSystemShapeType.Circle;
+        ringShape.radius = 2.1f;
+
+        var ringColor = ringPs.colorOverLifetime;
+        ringColor.enabled = true;
+        ringColor.color = new ParticleSystem.MinMaxGradient(windGrad);
+
+        ParticleSystemRenderer ringRenderer = shockRingObj.GetComponent<ParticleSystemRenderer>();
+        ringRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        ringRenderer.velocityScale = 0.22f;
+        ringRenderer.lengthScale = 2.6f;
+        ringRenderer.sharedMaterial = cachedMeteorParticleMaterial;
+        ringRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        ringRenderer.receiveShadows = false;
+        ringPs.Play();
+
+        // 3. Tia lua xanh duong ban tung tu mat dat khi luot toc do cao
+        GameObject sparkObj = new GameObject("MeteorGroundSparks");
+        sparkObj.transform.SetParent(root.transform, false);
+        sparkObj.transform.localPosition = new Vector3(0f, 0.35f, 0.0f);
+        sparkObj.transform.localRotation = Quaternion.Euler(-15f, 180f, 0f);
+
+        ParticleSystem sparkPs = sparkObj.AddComponent<ParticleSystem>();
+        var sparkMain = sparkPs.main;
+        sparkMain.loop = true;
+        sparkMain.startLifetime = new ParticleSystem.MinMaxCurve(0.28f, 0.48f);
+        sparkMain.startSpeed = new ParticleSystem.MinMaxCurve(8f, 15f);
+        sparkMain.startSize = new ParticleSystem.MinMaxCurve(0.35f, 0.75f);
+        sparkMain.gravityModifier = -0.35f;
+        sparkMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        sparkMain.maxParticles = 96;
+
+        var sparkEmission = sparkPs.emission;
+        sparkEmission.rateOverTime = 75f;
+
+        var sparkShape = sparkPs.shape;
+        sparkShape.enabled = true;
+        sparkShape.shapeType = ParticleSystemShapeType.Cone;
+        sparkShape.angle = 38f;
+        sparkShape.radius = 2.0f;
+
+        var sparkColor = sparkPs.colorOverLifetime;
+        sparkColor.enabled = true;
+        sparkColor.color = new ParticleSystem.MinMaxGradient(windGrad);
+
+        ParticleSystemRenderer sparkRenderer = sparkObj.GetComponent<ParticleSystemRenderer>();
+        sparkRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        sparkRenderer.velocityScale = 0.22f;
+        sparkRenderer.lengthScale = 4.5f;
+        sparkRenderer.sharedMaterial = cachedMeteorParticleMaterial;
+        sparkRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        sparkRenderer.receiveShadows = false;
+        sparkPs.Play();
+
+        // 4. Sau dai gio luot boc tu dinh dau, hai vai, hai ben tay va trong tam Boss
+        Vector3[] trailOffsets =
+        {
+            new Vector3( 0.0f,  4.95f,  0.0f),
+            new Vector3(-2.25f, 3.60f, -0.1f),
+            new Vector3( 2.25f, 3.60f, -0.1f),
+            new Vector3(-2.55f, 2.05f, -0.2f),
+            new Vector3( 2.55f, 2.05f, -0.2f),
+            new Vector3( 0.0f,  1.00f, -0.2f)
+        };
+        Gradient trailGrad = new Gradient();
+        trailGrad.SetKeys(
+            new[]
+            {
+                new GradientColorKey(new Color(0.80f, 0.98f, 1.0f), 0f),
+                new GradientColorKey(new Color(0.14f, 0.60f, 1.0f), 0.52f),
+                new GradientColorKey(new Color(0.05f, 0.22f, 0.85f), 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(0.95f, 0f),
+                new GradientAlphaKey(0.60f, 0.45f),
+                new GradientAlphaKey(0f, 1f)
+            });
+
+        for (int i = 0; i < trailOffsets.Length; i++)
+        {
+            GameObject trailObj = new GameObject($"WindTrail_{i}");
+            trailObj.transform.SetParent(root.transform, false);
+            trailObj.transform.localPosition = trailOffsets[i];
+
+            TrailRenderer tr = trailObj.AddComponent<TrailRenderer>();
+            tr.time = 0.55f;
+            tr.minVertexDistance = 0.1f;
+            tr.widthCurve = new AnimationCurve(
+                new Keyframe(0f, 1.1f),
+                new Keyframe(0.35f, 0.65f),
+                new Keyframe(1f, 0f));
+            tr.colorGradient = trailGrad;
+            tr.sharedMaterial = cachedMeteorTrailMaterial;
+            tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            tr.receiveShadows = false;
+            tr.emitting = true;
+        }
+
+        // 5. Den hao quang xanh duong om sat trong tam Boss luc lao huc
+        GameObject lightObj = new GameObject("MeteorBlueLight");
+        lightObj.transform.SetParent(root.transform, false);
+        lightObj.transform.localPosition = new Vector3(0f, 2.5f, 0.2f);
+        Light auraLight = lightObj.AddComponent<Light>();
+        auraLight.type = LightType.Point;
+        auraLight.color = new Color(0.25f, 0.78f, 1.0f);
+        auraLight.range = 14f;
+        auraLight.intensity = 4.5f;
+
+        return root;
+    }
+
+    private static void EnsureMeteorVfxAssets()
+    {
+        if (cachedMeteorGlowTexture == null)
+        {
+            const int size = 64;
+            cachedMeteorGlowTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            cachedMeteorGlowTexture.wrapMode = TextureWrapMode.Clamp;
+            Color[] pixels = new Color[size * size];
+            float half = (size - 1) * 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x - half) / half;
+                    float dy = (y - half) / half;
+                    float distSq = dx * dx + dy * dy;
+                    float radial = Mathf.Clamp01(1f - Mathf.Sqrt(distSq));
+                    float alpha = Mathf.Pow(radial, 2.0f);
+                    float core = Mathf.Exp(-distSq * 4.5f);
+                    float intensity = Mathf.Clamp01(radial * 0.75f + core * 0.6f);
+                    pixels[y * size + x] = new Color(intensity, intensity, intensity, alpha);
+                }
+            }
+
+            cachedMeteorGlowTexture.SetPixels(pixels);
+            cachedMeteorGlowTexture.Apply(false, true);
+        }
+
+        if (cachedMeteorParticleMaterial == null)
+        {
+            Shader psShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (psShader == null) psShader = Shader.Find("Sprites/Default");
+            cachedMeteorParticleMaterial = new Material(psShader);
+            cachedMeteorParticleMaterial.mainTexture = cachedMeteorGlowTexture;
+
+            if (psShader != null && psShader.name.Contains("Particles/Unlit"))
+            {
+                cachedMeteorParticleMaterial.SetTexture("_BaseMap", cachedMeteorGlowTexture);
+                cachedMeteorParticleMaterial.SetColor("_BaseColor", Color.white);
+                cachedMeteorParticleMaterial.SetFloat("_Surface", 1f);
+                cachedMeteorParticleMaterial.SetFloat("_Blend", 2f);
+                cachedMeteorParticleMaterial.SetFloat("_ColorMode", 0f);
+                cachedMeteorParticleMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                cachedMeteorParticleMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                cachedMeteorParticleMaterial.SetInt("_ZWrite", 0);
+                cachedMeteorParticleMaterial.SetFloat("_Cull", 0f);
+                cachedMeteorParticleMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                cachedMeteorParticleMaterial.renderQueue = 3000;
+            }
+        }
+
+        if (cachedMeteorTrailMaterial == null)
+        {
+            Shader trailShader = Shader.Find("Sprites/Default");
+            if (trailShader == null) trailShader = Shader.Find("Universal Render Pipeline/Unlit");
+            cachedMeteorTrailMaterial = new Material(trailShader);
+            cachedMeteorTrailMaterial.mainTexture = cachedMeteorGlowTexture;
         }
     }
 
@@ -2572,6 +3340,13 @@ public class IceGolemController : MonoBehaviour
 
         // Bật hiệu ứng hào quang bao quanh 2 bàn tay trong suốt chuỗi 3 đòn
         EnableHandAuras();
+
+        // Timing Mixup (Khựng nhát chém đầu tiên 0.5s - 0.8s)
+        float ltHold = GetRandomHoldDuration(5);
+        if (ltHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(ltHold));
+        }
 
         float timer = 0f;
         bool hit1Done = false;
@@ -3281,6 +4056,13 @@ public class IceGolemController : MonoBehaviour
             }
             enterWait -= Time.deltaTime;
             yield return null;
+        }
+
+        // Timing Mixup (Khựng 2 tay giơ cao trước đợt đập sàn đầu tiên 0.5s - 0.8s)
+        float gumoHold = GetRandomHoldDuration(1);
+        if (gumoHold > 0f)
+        {
+            yield return StartCoroutine(HoldWindupRoutine(gumoHold));
         }
 
         // Hệ thống theo dõi chuyển động thực tế của 2 bàn tay kết hợp Timeline Backup bảo hiểm kép 100%
@@ -4580,6 +5362,74 @@ public class IceGolemController : MonoBehaviour
 
         float endRadius = flameRange * Mathf.Tan(halfAng * Mathf.Deg2Rad);
         Gizmos.DrawWireSphere(floorOrigin + fDirFlat * flameRange, endRadius);
+
+        // 5. Quãng đường húc thẳng và hành lang va chạm của RunAttack - Chiêu 5 (Màu Xanh Dương Thiên Thạch)
+        Vector3 runDir = transform.forward;
+        runDir.y = 0f;
+        if (runDir.sqrMagnitude < 0.001f) runDir = Vector3.forward;
+        runDir.Normalize();
+        Vector3 runRight = Vector3.Cross(Vector3.up, runDir).normalized;
+
+        float effectiveRunDist = Mathf.Max(0f, runAttackDistance);
+        bool blockedByWall = TryGetRunAttackObstacle(start, runDir, effectiveRunDist, out RaycastHit runWallHit);
+        float drawDist = blockedByWall ? Mathf.Max(0f, runWallHit.distance - 1.5f) : effectiveRunDist;
+
+        Vector3 runStartFloor = start + Vector3.up * 0.12f;
+        Vector3 runEndFloor = runStartFloor + runDir * effectiveRunDist;
+        Vector3 runActualEndFloor = runStartFloor + runDir * drawDist;
+
+        // Trục đường húc chính (dưới sàn & ngang ngực) + hai biên hành lang va chạm
+        Gizmos.color = new Color(0.15f, 0.78f, 1f, 0.95f);
+        Gizmos.DrawLine(runStartFloor, runEndFloor);
+        Gizmos.DrawLine(start + Vector3.up * 1.3f, start + Vector3.up * 1.3f + runDir * effectiveRunDist);
+
+        Gizmos.color = new Color(0.25f, 0.88f, 1f, 0.65f);
+        Gizmos.DrawLine(runStartFloor + runRight * runAttackHitRadius, runEndFloor + runRight * runAttackHitRadius);
+        Gizmos.DrawLine(runStartFloor - runRight * runAttackHitRadius, runEndFloor - runRight * runAttackHitRadius);
+
+        // Vạch chia mỗi 5 mét trên đường húc để dễ ước lượng cự ly trên Scene
+        for (float mark = 5f; mark < effectiveRunDist; mark += 5f)
+        {
+            Vector3 markCenter = runStartFloor + runDir * mark;
+            if (Mathf.Abs(mark - runAttackAccelerationDistance) < 0.25f)
+            {
+                Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.95f); // Vạch vàng tại mốc 5m đạt max tốc độ
+                Gizmos.DrawLine(markCenter - runRight * 1.15f, markCenter + runRight * 1.15f);
+#if UNITY_EDITOR
+                UnityEditor.Handles.Label(markCenter + Vector3.up * 0.45f, $"★ Đạt Max Tốc ({runAttackSpeed:0.#}m/s)");
+#endif
+            }
+            else
+            {
+                Gizmos.color = new Color(0.25f, 0.88f, 1f, 0.65f);
+                Gizmos.DrawLine(markCenter - runRight * 0.75f, markCenter + runRight * 0.75f);
+            }
+        }
+
+        // Điểm dừng thân Boss (Sphere xanh dương) + Vùng quét hitbox xa nhất tại điểm cuối
+        Gizmos.DrawWireSphere(runEndFloor, 0.55f);
+        Vector3 runEndHitCenter = start + runDir * (effectiveRunDist + 1.6f) + Vector3.up * 1.3f;
+        Gizmos.color = new Color(0.05f, 0.55f, 1f, 0.75f);
+        Gizmos.DrawWireSphere(runEndHitCenter, runAttackHitRadius);
+
+        // Mũi tên chỉ hướng ở cuối quãng húc
+        Gizmos.color = new Color(0.15f, 0.95f, 1f, 0.95f);
+        Gizmos.DrawLine(runEndFloor, runEndFloor - runDir * 1.2f + runRight * 0.8f);
+        Gizmos.DrawLine(runEndFloor, runEndFloor - runDir * 1.2f - runRight * 0.8f);
+
+        // Nếu phía trước có tường cản trước khi hết quãng đường -> vẽ điểm chặn màu đỏ
+        if (blockedByWall)
+        {
+            Gizmos.color = new Color(1f, 0.25f, 0.25f, 0.95f);
+            Gizmos.DrawWireSphere(runActualEndFloor + Vector3.up * 1.3f, 0.75f);
+        }
+
+#if UNITY_EDITOR
+        string runLabel = blockedByWall
+            ? $"Chiêu 5 (RunAttack): {effectiveRunDist:0.##}m (chạm tường ở {drawDist:0.##}m - Max tốc sau {runAttackAccelerationDistance:0.##}m)"
+            : $"Chiêu 5 (RunAttack): {effectiveRunDist:0.##}m (tăng tốc 0-{runAttackAccelerationDistance:0.##}m -> max {runAttackSpeed:0.#}m/s)";
+        UnityEditor.Handles.Label(runEndFloor + Vector3.up * 2.2f, runLabel);
+#endif
     }
 
     private void EnsureBodyAuraLight()

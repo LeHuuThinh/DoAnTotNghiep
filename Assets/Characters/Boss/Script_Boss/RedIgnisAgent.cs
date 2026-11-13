@@ -39,9 +39,11 @@ public class RedIgnisAgent : Agent
     [Tooltip("Bán kính đấu trường (mét)")]
     [SerializeField] private float arenaRadius = 25f;
     [Tooltip("Cự ly tối ưu tối thiểu (mét)")]
-    [SerializeField] private float optimalDistanceMin = 2.5f;
+    [SerializeField] private float optimalDistanceMin = 1.0f;
     [Tooltip("Cự ly tối ưu tối đa (mét)")]
-    [SerializeField] private float optimalDistanceMax = 6.5f;
+    [SerializeField] private float optimalDistanceMax = 2.0f;
+    [Tooltip("Cự ly tối đa cho phép Boss đi lùi (mét). Từ ngưỡng này trở lên sẽ khóa nút lùi, ưu tiên đứng thế hoặc đi vòng ngang")]
+    [SerializeField] private float backwardLockDistance = 1.5f;
     [Tooltip("LayerMask của tường/chướng ngại vật")]
     [SerializeField] private LayerMask obstacleMask = 1; // Default layer
 
@@ -312,9 +314,17 @@ public class RedIgnisAgent : Agent
         if (!isDelayingAttack && controller != null && !controller.IsBusy() && !controller.IsDead)
         {
             float dist = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : 0f;
-            if (dist > optimalDistanceMax && (currentAiMoveVector.x != 0f || currentAiMoveVector.y < 0f))
+            if (dist > optimalDistanceMax && (currentAiMoveVector.x != 0f || currentAiMoveVector.y <= 0f))
             {
                 currentAiMoveVector = new Vector2(0f, 1f);
+            }
+            else if (dist >= backwardLockDistance && currentAiMoveVector.y < 0f)
+            {
+                currentAiMoveVector.y = 0f;
+            }
+            else if (dist < optimalDistanceMin && currentAiMoveVector.y > 0f)
+            {
+                currentAiMoveVector.y = 0f;
             }
             controller.Move(currentAiMoveVector.x, currentAiMoveVector.y);
         }
@@ -529,19 +539,33 @@ public class RedIgnisAgent : Agent
             else
             {
                 currentCommittedMoveAction = selectedMoveAction;
-                moveCommitTimer = (selectedMoveAction != 0) ? movePersistenceTime : 0f;
+                moveCommitTimer = (selectedMoveAction != 0)
+                    ? ((selectedMoveAction == 2) ? Mathf.Min(movePersistenceTime, 0.25f) : movePersistenceTime)
+                    : 0f;
             }
         }
 
-        // Kiểm soát Spacing: Khi ở xa (> optimalDistanceMax) buộc tiến tới
+        // Kiểm soát Spacing: Khi ở xa (> optimalDistanceMax) buộc tiến tới; khóa lùi sớm khi >= backwardLockDistance
         float distToPlayer = (playerTransform != null) ? Vector3.Distance(transform.position, playerTransform.position) : 0f;
         if (distToPlayer > optimalDistanceMax && attackAction == 0)
         {
-            if (selectedMoveAction == 2 || selectedMoveAction == 3 || selectedMoveAction == 4)
+            if (selectedMoveAction == 0 || selectedMoveAction == 2 || selectedMoveAction == 3 || selectedMoveAction == 4)
             {
                 selectedMoveAction = 1;
                 currentCommittedMoveAction = 1;
             }
+        }
+        else if (distToPlayer >= backwardLockDistance && selectedMoveAction == 2)
+        {
+            selectedMoveAction = 0;
+            currentCommittedMoveAction = 0;
+            moveCommitTimer = 0f;
+        }
+        else if (distToPlayer < optimalDistanceMin && selectedMoveAction == 1)
+        {
+            selectedMoveAction = 0;
+            currentCommittedMoveAction = 0;
+            moveCommitTimer = 0f;
         }
 
         float horiz = 0f;
@@ -568,18 +592,17 @@ public class RedIgnisAgent : Agent
             AddReward(0.004f);
             if (moveAction == 3 || moveAction == 4)
             {
-                AddReward(0.006f); // Thưởng vờn quanh đối thủ phong cách Duelist
+                AddReward(0.006f); // Thưởng đi vòng ngang vờn quanh đối thủ phong cách Duelist
             }
         }
-        else if (distToPlayer < 1.8f && attackAction == 0)
+        else if (distToPlayer < optimalDistanceMin && attackAction == 0)
         {
-            AddReward(-0.006f);
-            if (moveAction == 2) AddReward(0.008f); // Thưởng chủ động lùi khi bị áp sát quá gần
+            AddReward(-0.004f); // Nhắc nhẹ khi đứng dính sát hơn cự ly tối thiểu
         }
         else if (distToPlayer > optimalDistanceMax)
         {
             if (moveAction == 1) AddReward(0.006f); // Thưởng tiến tới thu hẹp khoảng cách
-            else if (moveAction == 3 || moveAction == 4) AddReward(-0.005f);
+            else if (moveAction == 2 || moveAction == 3 || moveAction == 4) AddReward(-0.005f);
         }
 
         // 2. Xử lý tấn công
@@ -593,32 +616,27 @@ public class RedIgnisAgent : Agent
                     AddReward(hitIFramePenalty); // Phạt đánh vào I-Frames
                 }
 
-                // Thưởng / Phạt theo cự ly hiệu dụng:
+                // Thưởng / Phạt theo cự ly hiệu dụng đồng bộ trực tiếp với thông số Inspector trên Controller:
+                float skillMaxRange = GetSkillEffectiveMaxRange(skillIndex);
                 if (skillIndex == 3) // Combo Attack (Cận chiến 4 nhát)
                 {
-                    if (distToPlayer <= 3.8f) AddReward(0.35f);
+                    if (distToPlayer <= skillMaxRange) AddReward(0.35f);
                     else AddReward(-0.8f); // Phạt nặng chém gió cận chiến ở cự ly xa
                 }
-                else if (skillIndex == 0 || skillIndex == 1) // Sóng kiếm dọc & ngang (Tầm trung)
+                else if (skillIndex == 0 || skillIndex == 1) // Sóng kiếm dọc & ngang
                 {
-                    if (distToPlayer >= 3.0f && distToPlayer <= 18.0f) AddReward(0.35f);
+                    if (distToPlayer <= skillMaxRange) AddReward(0.35f);
                     else AddReward(-0.4f);
                 }
-                else if (skillIndex == 2) // Jump Attack (Nhảy dậm đất)
+                else if (skillIndex == 2) // Jump Attack (Nhảy dậm đất áp sát từ xa)
                 {
-                    if (distToPlayer >= 5.0f && distToPlayer <= 20.0f) AddReward(0.4f);
-                    else if (distToPlayer < 3.5f) AddReward(-0.5f);
+                    if (distToPlayer >= 3.5f && distToPlayer <= skillMaxRange) AddReward(0.4f);
+                    else if (distToPlayer < 3.0f) AddReward(-0.5f);
                 }
 
-                if (timingAction == 1)
-                {
-                    if (delayedAttackCoroutine != null) StopCoroutine(delayedAttackCoroutine);
-                    delayedAttackCoroutine = StartCoroutine(DelayedAttackRoutine(skillIndex, 0.35f));
-                }
-                else
-                {
-                    controller.CastAttack(skillIndex);
-                }
+                // Xử lý Timing: Đánh ngay hay giữ nhịp khựng lấy đà (Timing Mixup Type 2 trong Animation)
+                bool forceMixup = (timingAction == 1);
+                controller.CastAttack(skillIndex, forceMixup);
             }
         }
     }
@@ -768,12 +786,17 @@ public class RedIgnisAgent : Agent
             actionMask.SetActionEnabled(0, 4, false); // Khóa dạt phải
             activeStrafeDirection = 0;
         }
-        else if (dist < optimalDistanceMin)
-        {
-            actionMask.SetActionEnabled(0, 1, false); // Khóa tiến
-        }
         else
         {
+            if (dist < optimalDistanceMin)
+            {
+                actionMask.SetActionEnabled(0, 1, false); // Khóa tiến
+            }
+            if (dist >= backwardLockDistance)
+            {
+                actionMask.SetActionEnabled(0, 2, false); // Khóa lùi sớm, ưu tiên đứng thế hoặc đi vòng ngang
+            }
+
             if (activeStrafeDirection == 3) actionMask.SetActionEnabled(0, 4, false);
             else if (activeStrafeDirection == 4) actionMask.SetActionEnabled(0, 3, false);
         }
@@ -796,20 +819,17 @@ public class RedIgnisAgent : Agent
                 continue;
             }
 
+            float skillMaxRange = GetSkillEffectiveMaxRange(skillIdx);
             bool isRangeValid = true;
             switch (skillIdx)
             {
-                case 0: // AttackSlash (Chém dọc: 3.0m - 18.0m)
-                    if (dist < 2.5f || dist > 18.0f) isRangeValid = false;
-                    break;
-                case 1: // HorizontalSlash (Chém ngang: 3.0m - 16.0m)
-                    if (dist < 2.5f || dist > 16.0f) isRangeValid = false;
-                    break;
-                case 2: // JumpAttack (Nhảy dậm đất: 5.0m - 20.0f)
-                    if (dist < 4.5f || dist > 20.0f) isRangeValid = false;
-                    break;
+                case 0: // AttackSlash (Chém dọc: 0m - attackSlashMaxDistance)
+                case 1: // HorizontalSlash (Chém ngang: 0m - horizontalSlashMaxDistance)
                 case 3: // ComboAttack (Combo cận chiến: tối đa 3.8m)
-                    if (dist > 3.8f) isRangeValid = false;
+                    if (dist > skillMaxRange) isRangeValid = false;
+                    break;
+                case 2: // JumpAttack (Nhảy dậm đất: 3.5m - jumpLeapDistance + jumpStopOffset)
+                    if (dist < 3.5f || dist > skillMaxRange) isRangeValid = false;
                     break;
             }
 
@@ -817,6 +837,21 @@ public class RedIgnisAgent : Agent
             {
                 actionMask.SetActionEnabled(1, actionIndex, false);
             }
+        }
+    }
+
+    private float GetSkillEffectiveMaxRange(int skillIdx)
+    {
+        switch (skillIdx)
+        {
+            case 0:
+                return (controller != null) ? Mathf.Max(0.5f, controller.AttackSlashMaxDistance) : 18.0f;
+            case 1:
+                return (controller != null) ? Mathf.Max(0.5f, controller.HorizontalSlashMaxDistance) : 16.0f;
+            case 2:
+                return (controller != null) ? Mathf.Max(3.5f, controller.JumpLeapDistance + controller.JumpStopOffset) : 26.3f;
+            default:
+                return 3.8f;
         }
     }
 
@@ -832,6 +867,46 @@ public class RedIgnisAgent : Agent
         {
             playerHealth.onTakeDamage.RemoveListener(OnPlayerTakeDamage);
             playerHealth.onDeath.RemoveListener(OnPlayerDeath);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Vector3 groundCenter = transform.position + Vector3.up * 0.05f;
+
+        // 1. Vòng tròn vùng giữ cự ly chiến đấu AI (1m - 1.5m - 2m)
+        Gizmos.color = new Color(1f, 0.25f, 0.25f, 0.9f);
+        RedIgnisController.DrawGroundCircle(groundCenter, optimalDistanceMin);
+
+        Gizmos.color = new Color(1f, 0.9f, 0.1f, 0.9f);
+        RedIgnisController.DrawGroundCircle(groundCenter, backwardLockDistance);
+
+        Gizmos.color = new Color(0.2f, 1f, 0.35f, 0.95f);
+        RedIgnisController.DrawGroundCircle(groundCenter, optimalDistanceMax);
+
+        // 2. Vòng tròn ranh giới đấu trường (Arena Radius)
+        Vector3 center = (arenaCenter != Vector3.zero) ? arenaCenter : transform.position;
+        center.y = groundCenter.y;
+        Gizmos.color = new Color(0.25f, 0.55f, 1f, 0.4f);
+        RedIgnisController.DrawGroundCircle(center, arenaRadius, 64);
+
+        // 3. 4 tia cảm biến tường xung quanh (12m theo đúng GetWallDistance)
+        Vector3 sensorOrigin = transform.position + Vector3.up * 1.5f;
+        Vector3[] sensorDirs = { transform.forward, -transform.forward, -transform.right, transform.right };
+        float maxSensorDist = 12f;
+        foreach (Vector3 dir in sensorDirs)
+        {
+            if (Physics.Raycast(sensorOrigin, dir, out RaycastHit hit, maxSensorDist, obstacleMask))
+            {
+                Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.7f);
+                Gizmos.DrawLine(sensorOrigin, hit.point);
+                Gizmos.DrawWireSphere(hit.point, 0.2f);
+            }
+            else
+            {
+                Gizmos.color = new Color(1f, 1f, 1f, 0.25f);
+                Gizmos.DrawRay(sensorOrigin, dir * maxSensorDist);
+            }
         }
     }
 }

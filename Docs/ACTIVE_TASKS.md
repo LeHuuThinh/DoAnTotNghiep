@@ -13,14 +13,14 @@
 | **Giai đoạn 1** | Hoàn Thiện Trải Nghiệm Hầm Ngục (PCG & Combat) | 18 / 18 | ✅ Hoàn thành | **100%** | PCG, Đồ họa, Combat Souls-like, Boss Arena D-02, ARPG Damage & Floating Numbers |
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
 | **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 10 / 10 | ✅ **Hoàn thành** | **100%** | **Xong Cửa hàng RPG-07, Lò rèn RPG-08, Ma Trận Rơi Đồ RPG-09 & 51 Items** |
-| **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 5 / 7 | 🟡 **ĐANG THỰC HIỆN** | **71%** | Xong Ice Golem, Red Ignis, ML Ice Golem; Chờ ML Red Ignis |
+| **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 8 / 9 | 🟡 **ĐANG THỰC HIỆN** | **89%** | Xong Ice Golem, Red Ignis, ML Ice Golem & RedIgnisAgent (ML-03); Đang tiếp tục train ML-04 |
 | **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 1 / 3 | ⚪ Chờ thực hiện | **33%** | Xong Bản đồ hầm ngục Fullscreen; Chờ Menu & Audio |
 | **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
 | **Giai đoạn 7** | Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng | 3 / 3 | ✅ Hoàn thành | **100%** | UsableSlot, Drag & Drop, Punch scale, Sửa lỗi Scene Cleanup |
 
 > **🔥 TRỌNG TÂM HIỆN TẠI (CURRENT FOCUS):**  
 > 1. **`Task RPG-09`:** Cân bằng Ma trận rơi đồ toàn diện & 2 Đá Quý MonsterGem, BossGem - ✅ **Hoàn thành**.  
-> 2. **`Task BOSS-02 / ML-02`:** Hoàn thiện Huấn Luyện Học Máy Tăng Cường Cho Kiếm Sĩ Red Ignis (ML-Agents).
+> 2. **`Task ML-03 / ML-04`:** Tiếp tục huấn luyện PPO (`RedIgnis_PPO.yaml`) & đóng gói ONNX đa sàn đấu cho kiếm sĩ Red Ignis.
 
 ---
 
@@ -387,16 +387,18 @@
   - Menu 1-Click Unity Editor: Cấu hình Prefab Boss, Nối dây Animator và Dọn dẹp Scene.
 
 - [x] **BOSS-02: Chuẩn Hóa Khung Xương, Vật Lý Áo Choàng & Vũ Khí Trùm Red Ignis (`Boss_RedIgnis.prefab`)**
-  - Khắc phục triệt để lỗi vật lý tà áo `UnityChanSpringBone`: Dọn sạch mảng null (12 xương hợp lệ), gỡ bỏ 4 xương ngọn leaf bones lỗi, vô hiệu hóa khóa góc xoay và sàn ảo.
+  - Nâng cấp toàn diện vật lý tóc đuôi mũ (cố định đốt gốc `Bone`, rũ mượt `Bone.002..Bone.006`, `hatTailForceScale = 0.22`) & áo choàng 3 dải Trái/Giữa/Phải (`14 SpringBones` dùng `stiffnessForce` thấp `5.0→1.5` chống xoắn vai, tắt `lengthLimitTargets`/`enableAngleLimits`, **16 anatomical colliders** gồm 4 Sphere + 9 Capsule + 3 Back Panel bù scale chống xuyên người); `RedIgnisClothMotion.cs` bước cố định `60Hz`, chống lộn ngược (`ClampUpwardDrape`), xử lý va chạm đa điểm dọc xương/vạt lá (`EnforcePostStepSegmentCollisions`), hãm rung khi xoay/đi ngang (`ApplyDynamicTurnDamping`), tạo dáng xòe nhẹ chữ A (`capeHemFlare`, `wingSpreadStrength = 1.65f`), đồng bộ nhịp bước `WalkSpeed` trên 4 state `Walk*RI`, và gắn đủ 4 `[Header]` + 17 `[Tooltip]` tiếng Việt trên Inspector.
   - Khắc phục lỗi lún đất & co ngắn chiều cao: Ánh xạ chuẩn xương `Hips -> mixamorig:Hips` trong `RedIgnis.fbx`, chuẩn hóa hoạt ảnh bước đi `Ignis_Walk.fbx` với `Based Upon = Feet / Center of Mass` và bù trừ cao độ Offset Y.
   - Tích hợp Vũ khí Kiếm Siu Nhân Đỏ (`KiemSiuNhanDo.fbx`): Import Settings chuẩn vật thể tĩnh, gắn vào lòng bàn tay phải qua `RightHand_Socket`.
   - Tool cân chỉnh kiếm & chuẩn hóa T-Pose (`IgnisWeaponAligner.cs`): Giải quyết góc lệch -45.8 độ xương cổ tay, chuẩn hóa T-Pose qua `HumanPoseHandler`, cố định vị trí socket `Hand_R_Weapon` (Scale 0.8x, 0.8x, 1.0x).
 
 - [x] **BOSS-03: Bộ Điều Khiển Chiến Đấu Trùm Red Ignis (`RedIgnisController.cs`, `Ignis_animator.controller` & Bộ VFX Độc Lập)**
-  - Bảng thông số sinh tồn: Máu `bossMaxHealth = 1200`, Poise `maxPoise = 400` kèm trạng thái choáng vỡ thế `Weaken` (2.5s).
-  - Động cơ di chuyển 4 hướng mượt mà qua phím Mũi Tên và API `Move(h, v)` cho AI, tự xoay mặt theo Player `280°/s`.
-  - Trọn bộ 4 kỹ năng chiến đấu (Phím 1-4): `AttackSlashRI` (chém dọc phóng đạn kiếm 90 độ), `HorizontalSlashRI` (chém ngang phóng đạn kiếm bay ngang), `JumpAttackRI` (nhảy tới dậm đất nổ lan AOE), `ComboAttackRI` (chém liên hoàn 4 nhát lướt kiếm).
-  - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường, không can thiệp thư mục VFX gốc.
+  - Bảng thông số sinh tồn: Máu `bossMaxHealth = 1200`, Poise `maxPoise = 400` (Prefab `Boss_RedIgnis.prefab`: `500`) kèm trạng thái choáng vỡ thế `Weaken`.
+  - Động cơ di chuyển 4 hướng mượt mà qua phím Mũi Tên và API `Move(h, v)` cho AI: tách riêng tốc độ đi tới (`moveSpeed = 4.2m/s`), tốc độ đi lùi chậm (`backwardSpeed = 1.8m/s`) để Player dễ áp sát đổi đòn và giảm tốc dạt ngang (`strafeSpeed = 1.9m/s`, đồng bộ `WalkSpeed` theo tốc độ thực tế `referenceSpeed`: tiến `3.8`, lùi `2.4`, ngang `2.2`, clamp `0.60..1.55`).
+  - Trọn bộ 4 kỹ năng chiến đấu (Phím 1-4): `AttackSlashRI` (chém dọc phóng đạn kiếm 90 độ), `HorizontalSlashRI` (chém ngang phóng đạn kiếm bay ngang), `JumpAttackRI` (nhảy tới đáp ngay trước mặt Player và dậm đất nổ lan AoE), `ComboAttackRI` (chém liên hoàn 4 nhát lướt kiếm).
+  - Tham số tầm bay & tốc độ chỉnh trực tiếp trên Inspector cho chiêu 1, 2, 3: `attackSlashMaxDistance` (18m) & `horizontalSlashMaxDistance` (16m) giới hạn tầm bay thực tế qua `RedIgnisSlashProjectile.cs` (`maxDistance`); JumpAttack bỏ sàn cứng 25m và hỗ trợ `jumpLeapDistance` (25m), `jumpStopOffset` (1.3m), `jumpLeapSpeed` (12m/s) + `jumpAttackLeapDuration` (0.85s) giúp Boss bay chậm, dễ quan sát né và đáp sát mặt Player.
+  - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường và tự hủy khi chạm giới hạn `maxDistance`, không can thiệp thư mục VFX gốc.
+  - Hệ thống Scene View Gizmos (`OnDrawGizmosSelected` & `DrawGroundCircle`): Vẽ đường ngắm Player, quỹ đạo/tầm tối đa sóng kiếm 1 & 2, tầm nhảy tối đa & điểm đáp + vòng nổ AoE JumpAttack, và quãng lướt + hitbox 4 nhát ComboAttack trực quan theo thông số Inspector.
   - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Tool 1-Click cấu hình Prefab và Animator.
 
 - [x] **BOSS-04: Hệ Thống Vệt Kiếm IgnisSwordTrail.cs, Chuẩn Hóa Combo 4 Nhát & Cơ Chế Gồng Kiếm Lửa Phase 2** *(HOÀN THÀNH)*
@@ -434,15 +436,17 @@
   - Đấu trường hiệp đấu liên hoàn không Game Over (`IceGolemBattleArena.cs`): Tự hồi phục và reset cự ly khi máu <= 5 HP để tập luyện không cần reload scene.
   - Tích hợp Sparring Partner Bot AI cho Player (`PlayerBotAI.cs` phím B bật/tắt) phục vụ tự luyện; Đóng gói model huấn luyện Run 3: `IceGolemSoulsAI-12955.onnx`.
 
-- [ ] **ML-03: Thiết kế Agent Kiếm Thuật Cơ Động & Tái Sinh Đổi Dạng 2 Pha (`RedIgnisAgent.cs`)**
-  - Cơ Chế Tái Sinh Đổi Diện Mạo (Phase 2 Rebirth & Appearance Transformation): Khi máu Phase 1 = 0, Boss quỵ ngã -> bùng nổ sóng nhiệt đẩy lùi Player -> hồi 100% máu và hoán đổi diện mạo mới (Flaming Wings / Dark Flame Aura, kiếm rực lửa) mở khóa bộ não Phase 2.
-  - Observations 27 chiều bổ sung cờ `isPhase2`; Actions linh hoạt giữa rình rập vờn quanh (Phase 1) và cuồng bạo lướt vệt lửa sàn, bão lửa AOE (Phase 2).
-  - Reward Shaping phong cách Duelist: Thưởng áp sát phá thủ, thưởng bắt roll, phạt vung kiếm trượt cự ly.
+- [x] **ML-03: Thiết kế Agent Kiếm Thuật Cơ Động & Đấu Trường Liên Hoàn (`RedIgnisAgent.cs` & `RedIgnisBattleArena.cs`)** *(ĐÃ TRIỂN KHAI)*
+  - Observations 27 chiều chuẩn hóa (tọa độ tương đối, cự ly, cos/sin góc mặt, máu & `IsBusy` Boss, cooldown 4 kỹ năng, cờ `IsPhase2`, máu/stamina/trạng thái Player bao gồm `IsRolling` & cửa sổ Roll-Recovery 0.4s, vận tốc Player, 4 raycast tường 12m, vị trí tới tâm Arena).
+  - Action Space 3 Discrete Branches `[5, 5, 2]`: Di chuyển 4 hướng (có Move Persistence 0.6s & Strafe Commitment), 4 kỹ năng chiến đấu, Timing Mixup (`0.35s` trễ bắt bài roll) và Action Masking (`WriteDiscreteActionMask`) kết hợp `GetSkillEffectiveMaxRange` đồng bộ trực tiếp với thông số Inspector trên `RedIgnisController`.
+  - Chống đi lùi câu giờ (Anti-Backward Kiting): Thu hẹp cự ly giữ thế xuống `1.0m - 2.0m`, khóa nút lùi từ ngưỡng `backwardLockDistance = 1.5m` (ở cả Action Mask, `OnActionReceived` và `Update`) kết hợp `backwardSpeed = 1.8m/s` trên Controller.
+  - Trọng tài Đấu trường (`RedIgnisBattleArena.cs` & cờ `isManagedByArena`): Tránh trùng lặp cộng/trừ điểm & gọi `EndEpisode()` kép; phục hồi đúng `BossMaxHealth` (`1200 HP`) thay vì cố định sai, hồi 100% HP/Stamina/Spirit Player, reset animation/cooldowns và giữ vị trí hiệp mới mượt mà.
+  - Gizmos Debug trong Scene View (`OnDrawGizmosSelected`): Hiển thị vòng `optimalDistanceMin` (`1m`), `backwardLockDistance` (`1.5m`), `optimalDistanceMax` (`2m`), `arenaRadius` (`25m`) và 4 tia cảm biến tường `12m`.
 
-- [ ] **ML-04: Huấn Luyện Đa Sàn Đấu & Đóng Gói Model ONNX Thời Gian Thực**
-  - Dựng 8 đến 16 sàn đấu Arena chạy song song trong Scene huấn luyện để tăng tốc độ hội tụ gấp 10 lần (`--time-scale=10`).
-  - Huấn luyện PPO qua `mlagents-learn` với file cấu hình `IceGolem_PPO.yaml` và `RedIgnis_PPO.yaml`.
-  - Đóng gói file `.onnx` xuất xưởng, nạp vào `Behavior Parameters` (chế độ `Inference Only`) chạy mượt mà 100% không phụ thuộc Python.
+- [ ] **ML-04: Huấn Luyện Đa Sàn Đấu & Đóng Gói Model ONNX Thời Gian Thực** *(ĐANG HUẤN LUYỆN)*
+  - Cấu hình `MLAgents/Config/RedIgnis_PPO.yaml` (behavior `RedIgnisSoulsAI`: PPO, `batch_size: 256`, `buffer_size: 2048`, `hidden_units: 256`, `num_layers: 3`, `max_steps: 1000000`); đã chạy thử nghiệm đến Run 03 (`Assets/TrainingAI/RedIgnis_Run03/RedIgnisSoulsAI/RedIgnisSoulsAI-33411.onnx`) và gắn test trong Scene `IceGolem.unity`.
+  - Tiếp tục huấn luyện tinh chỉnh sau đợt nâng cấp cự ly `1-2m`, chống đi lùi và tầm bay/tốc độ chiêu 1, 2, 3; nhân bản 8-16 sàn đấu Arena song song để tăng tốc hội tụ (`--time-scale=10`).
+  - Đóng gói file `.onnx` xuất xưởng nạp vào `Behavior Parameters` (chế độ `Inference Only`) cho cả `Boss_IceGolem` và `Boss_RedIgnis` chạy mượt mà 100% không phụ thuộc Python.
 
 ---
 

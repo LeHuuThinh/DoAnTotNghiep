@@ -242,14 +242,29 @@ namespace InfiniteLabyrinth.EditorTools
                 soController.FindProperty("facePlayerOnAttack").boolValue = true;
                 soController.FindProperty("minFaceDistance").floatValue = 0.5f;
 
-                // Cooldowns
-                soController.FindProperty("attack1Cooldown").floatValue = 1.5f;
-                soController.FindProperty("gumoGumoCooldown").floatValue = 6.0f;
-                soController.FindProperty("flameBreathCooldown").floatValue = 8.0f;
-                soController.FindProperty("jumpAttackCooldown").floatValue = 7.0f;
-                soController.FindProperty("runAttackCooldown").floatValue = 6.0f;
-                soController.FindProperty("attackLTCooldown").floatValue = 5.0f;
-                soController.FindProperty("iceBallCooldown").floatValue = 7.0f;
+                // Cooldowns (đồng bộ 15s cho cả 7 chiêu)
+                soController.FindProperty("attack1Cooldown").floatValue = 15.0f;
+                soController.FindProperty("gumoGumoCooldown").floatValue = 15.0f;
+                soController.FindProperty("flameBreathCooldown").floatValue = 15.0f;
+                soController.FindProperty("jumpAttackCooldown").floatValue = 15.0f;
+                soController.FindProperty("runAttackCooldown").floatValue = 15.0f;
+                soController.FindProperty("attackLTCooldown").floatValue = 15.0f;
+                soController.FindProperty("iceBallCooldown").floatValue = 15.0f;
+                soController.FindProperty("runAttackDistance").floatValue = 15.0f;
+                soController.FindProperty("runAttackSpeed").floatValue = 22.0f;
+                var pInitSpeed = soController.FindProperty("runAttackInitialSpeed");
+                if (pInitSpeed != null) pInitSpeed.floatValue = 6.0f;
+                var pAccelDist = soController.FindProperty("runAttackAccelerationDistance");
+                if (pAccelDist != null) pAccelDist.floatValue = 5.0f;
+                soController.FindProperty("runAttackDuration").floatValue = 1.5f;
+                var pPacing1Min = soController.FindProperty("phase1PacingMin");
+                if (pPacing1Min != null) pPacing1Min.floatValue = 4.0f;
+                var pPacing1Max = soController.FindProperty("phase1PacingMax");
+                if (pPacing1Max != null) pPacing1Max.floatValue = 4.5f;
+                var pPacing2Min = soController.FindProperty("phase2PacingMin");
+                if (pPacing2Min != null) pPacing2Min.floatValue = 3.0f;
+                var pPacing2Max = soController.FindProperty("phase2PacingMax");
+                if (pPacing2Max != null) pPacing2Max.floatValue = 3.5f;
 
                 // Phản hồi chớp đỏ
                 soController.FindProperty("hitFlashDuration").floatValue = 0.12f;

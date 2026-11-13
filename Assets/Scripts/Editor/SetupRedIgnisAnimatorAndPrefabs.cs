@@ -102,6 +102,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         // 1. Đảm bảo các Parameters
         EnsureParameter(controller, "MoveType", AnimatorControllerParameterType.Int);
         EnsureParameter(controller, "Speed", AnimatorControllerParameterType.Float);
+        EnsureParameter(controller, "WalkSpeed", AnimatorControllerParameterType.Float, 1f);
         EnsureParameter(controller, "MoveX", AnimatorControllerParameterType.Float);
         EnsureParameter(controller, "MoveZ", AnimatorControllerParameterType.Float);
         EnsureParameter(controller, "AttackSlash", AnimatorControllerParameterType.Trigger);
@@ -123,15 +124,23 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
 
         AnimatorState stateWalkFwd = rootStateMachine.AddState("WalkT_RI", new Vector3(300, -20, 0));
         stateWalkFwd.motion = clipWalkFwd;
+        stateWalkFwd.speedParameterActive = true;
+        stateWalkFwd.speedParameter = "WalkSpeed";
 
         AnimatorState stateWalkBack = rootStateMachine.AddState("WalkBackRI", new Vector3(300, 220, 0));
         stateWalkBack.motion = clipWalkBack;
+        stateWalkBack.speedParameterActive = true;
+        stateWalkBack.speedParameter = "WalkSpeed";
 
         AnimatorState stateWalkLeft = rootStateMachine.AddState("WalkLeftRI", new Vector3(60, 100, 0));
         stateWalkLeft.motion = clipWalkLeft;
+        stateWalkLeft.speedParameterActive = true;
+        stateWalkLeft.speedParameter = "WalkSpeed";
 
         AnimatorState stateWalkRight = rootStateMachine.AddState("WalkRightRI", new Vector3(540, 100, 0));
         stateWalkRight.motion = clipWalkRight;
+        stateWalkRight.speedParameterActive = true;
+        stateWalkRight.speedParameter = "WalkSpeed";
 
         AnimatorState stateAttackSlash = rootStateMachine.AddState("AttackSlashRI", new Vector3(800, -60, 0));
         stateAttackSlash.motion = clipAttackSlash;
@@ -354,13 +363,18 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         trans.duration = duration;
     }
 
-    private static void EnsureParameter(AnimatorController controller, string name, AnimatorControllerParameterType type)
+    private static void EnsureParameter(AnimatorController controller, string name, AnimatorControllerParameterType type, float defaultFloat = 0f)
     {
         foreach (var p in controller.parameters)
         {
             if (p.name == name) return;
         }
-        controller.AddParameter(name, type);
+        controller.AddParameter(new AnimatorControllerParameter
+        {
+            name = name,
+            type = type,
+            defaultFloat = defaultFloat
+        });
     }
 
     private static void AddTransition(AnimatorState src, AnimatorState dst, string paramName, AnimatorConditionMode mode, float threshold, float duration, bool hasExitTime)
@@ -782,6 +796,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
             try
             {
                 ConfigureIgnisGameObject(root, controller, horizSlash, vertSlash, impactSlash, jumpImpact, slashRed);
+                SpringManagerHelper.ConfigureBossObject(root, useUndo: false);
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 Debug.Log("<color=cyan>[Red Ignis Setup] Đã cấu hình Boss_RedIgnis.prefab thành công với hiệu ứng Slash_Red!</color>");
             }
@@ -900,7 +915,7 @@ public class SetupRedIgnisAnimatorAndPrefabs : EditorWindow
         SetDefaultFloatIfUnset(so, "weakenFrontDuration", 4.27f);
         SetDefaultFloatIfUnset(so, "weakenBackDuration", 4.27f);
         SetDefaultFloatIfUnset(so, "moveSpeed", 4.2f);
-        SetDefaultFloatIfUnset(so, "strafeSpeed", 3.2f);
+        SetDefaultFloatIfUnset(so, "strafeSpeed", 1.9f);
         so.FindProperty("alwaysFacePlayer").boolValue = true;
         so.FindProperty("autoFindPlayer").boolValue = true;
         SetDefaultFloatIfUnset(so, "gravity", -20f);

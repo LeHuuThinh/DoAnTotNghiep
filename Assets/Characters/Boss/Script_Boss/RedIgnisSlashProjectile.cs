@@ -9,6 +9,8 @@ public class RedIgnisSlashProjectile : MonoBehaviour
     [Header("=== THÔNG SỐ BAY (MOVEMENT) ===")]
     [Tooltip("Tốc độ bay của đường chém (mét/giây)")]
     [SerializeField] private float speed = 20f;
+    [Tooltip("Khoảng cách bay tối đa của đường chém (mét). <= 0 là không giới hạn khoảng cách")]
+    [SerializeField] private float maxDistance = 0f;
     [Tooltip("Thời gian tồn tại tối đa (giây)")]
     [SerializeField] private float lifeTime = 3f;
 
@@ -40,9 +42,11 @@ public class RedIgnisSlashProjectile : MonoBehaviour
     private Transform attacker;
     private bool hasHit = false;
     private float aliveTimer = 0f;
+    private float traveledDistance = 0f;
 
     public float Damage { get => damage; set => damage = value; }
     public float Speed { get => speed; set => speed = value; }
+    public float MaxDistance { get => maxDistance; set => maxDistance = value; }
     public float SlashTiltAngle { get => slashTiltAngle; set => slashTiltAngle = value; }
     public GameObject HitVfxPrefab { get => hitVfxPrefab; set => hitVfxPrefab = value; }
 
@@ -91,11 +95,12 @@ public class RedIgnisSlashProjectile : MonoBehaviour
     }
 
     /// <summary>
-    /// Bắn đường kiếm bay thẳng về phía trước theo launchDirection với tốc độ và góc nghiêng tùy chỉnh
+    /// Bắn đường kiếm bay thẳng về phía trước theo launchDirection với tốc độ, góc nghiêng và tầm bay tùy chỉnh
     /// </summary>
-    public void Launch(Transform attackerRoot, Vector3 launchDirection, float speedOverride = -1f, float tiltAngleOverride = -999f)
+    public void Launch(Transform attackerRoot, Vector3 launchDirection, float speedOverride = -1f, float tiltAngleOverride = -999f, float maxDistanceOverride = -1f)
     {
         attacker = attackerRoot;
+        traveledDistance = 0f;
 
         if (boxCollider != null && attackerRoot != null)
         {
@@ -126,6 +131,11 @@ public class RedIgnisSlashProjectile : MonoBehaviour
             slashTiltAngle = tiltAngleOverride;
         }
 
+        if (maxDistanceOverride >= 0f)
+        {
+            maxDistance = maxDistanceOverride;
+        }
+
         // Xoay TOÀN BỘ Game Object theo hướng bắn kết hợp góc nghiêng (Roll quanh trục Z - trục bay).
         // Nhờ đó TẤT CẢ Particle Systems con, vệt chém, mesh và BoxCollider đều nghiêng đồng bộ chính xác!
         transform.rotation = Quaternion.LookRotation(launchDirection) * Quaternion.Euler(0f, 0f, slashTiltAngle);
@@ -153,6 +163,17 @@ public class RedIgnisSlashProjectile : MonoBehaviour
 
         aliveTimer += Time.deltaTime;
         float moveDistance = speed * Time.deltaTime;
+        if (maxDistance > 0f)
+        {
+            float remaining = maxDistance - traveledDistance;
+            if (remaining <= 0.001f)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            moveDistance = Mathf.Min(moveDistance, remaining);
+        }
+
         Vector3 moveStep = transform.forward * moveDistance;
 
         // Dò tia trước mặt chống xuyên thấu (Raycast sweep)
@@ -183,6 +204,12 @@ public class RedIgnisSlashProjectile : MonoBehaviour
         }
 
         transform.position += moveStep;
+        traveledDistance += moveDistance;
+
+        if (maxDistance > 0f && traveledDistance >= maxDistance - 0.001f)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter(Collider other)

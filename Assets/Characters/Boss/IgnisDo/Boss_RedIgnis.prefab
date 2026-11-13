@@ -1,5 +1,52 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &560074105992536658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8266798443995245619}
+  - component: {fileID: 376480921144783712}
+  m_Layer: 0
+  m_Name: CapeCol_RightShoulder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8266798443995245619
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560074105992536658}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.000014858645, y: 0.10225522, z: -0.014570431}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6828381516197057901}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &376480921144783712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560074105992536658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 328bfb8438c749d46ad9174283110a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
+  radius: 0.096
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &1080715650473680714
 GameObject:
   m_ObjectHideFlags: 0
@@ -31,6 +78,102 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2630692277918947367}
   m_LocalEulerAnglesHint: {x: 2.661, y: 18.535, z: -11.446}
+--- !u!1 &1082911968247485525
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6891276264219104039}
+  - component: {fileID: 314039729501689370}
+  m_Layer: 0
+  m_Name: CapeCol_UpperChest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6891276264219104039
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082911968247485525}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0017476425, y: 0, z: 0.704951, w: 0.70925397}
+  m_LocalPosition: {x: 0.07799867, y: 0.05180971, z: 0.00019244461}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3200466146777560883}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &314039729501689370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082911968247485525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.102
+  height: 0.156
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &1187858111909212907
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1901516985761620175}
+  - component: {fileID: 5100504629425716919}
+  m_Layer: 0
+  m_Name: CapeCol_TorsoBackPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1901516985761620175
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187858111909212907}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0012605299, y: 0.99999386, z: 0.0021462021, w: -0.002484729}
+  m_LocalPosition: {x: -0.0003249716, y: 0.07012772, z: -0.02969845}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6936119560403060030}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5100504629425716919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187858111909212907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e7256f2aaf05e47be7fdfced84d489, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringPanelCollider
+  width: 0.36
+  height: 0.42
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &1672586996193284809
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,6 +207,102 @@ Transform:
   - {fileID: 6919764849268380130}
   m_Father: {fileID: 3284113099889343442}
   m_LocalEulerAnglesHint: {x: -0.953, y: -53.529, z: 83.786}
+--- !u!1 &3056055674454585084
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8076132203380079679}
+  - component: {fileID: 5031928422960504629}
+  m_Layer: 0
+  m_Name: CapeCol_HeadBackPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8076132203380079679
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3056055674454585084}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0050008562, y: 0.9976867, z: -0.014023977, w: -0.066330284}
+  m_LocalPosition: {x: -0.003956481, y: 0.054259453, z: -0.026272764}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7557839864251068977}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5031928422960504629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3056055674454585084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e7256f2aaf05e47be7fdfced84d489, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringPanelCollider
+  width: 0.26
+  height: 0.42
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &3403164639000966604
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4492753903404814212}
+  - component: {fileID: 7473344349582136056}
+  m_Layer: 0
+  m_Name: CapeCol_Torso
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4492753903404814212
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3403164639000966604}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0019777643, y: 0, z: 0.7079868, w: 0.70622295}
+  m_LocalPosition: {x: 0.055023506, y: 0.037257355, z: 0.0051543536}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6936119560403060030}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7473344349582136056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3403164639000966604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.102
+  height: 0.11
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &3806274301772261096
 GameObject:
   m_ObjectHideFlags: 0
@@ -80,6 +319,7 @@ GameObject:
   - component: {fileID: 4693721257989699828}
   - component: {fileID: 4679275123697775893}
   - component: {fileID: 4052892601178878195}
+  - component: {fileID: 6182930475618293047}
   m_Layer: 9
   m_Name: Boss_RedIgnis
   m_TagString: Enemy
@@ -120,25 +360,27 @@ MonoBehaviour:
   isPaused: 0
   simulationFrameRate: 60
   dynamicRatio: 1
-  gravity: {x: 0, y: -4, z: 0}
+  gravity: {x: 0, y: -22, z: 0}
   bounce: 0
   friction: 1
   enableAngleLimits: 0
   enableCollision: 1
-  enableLengthLimits: 1
+  enableLengthLimits: 0
   collideWithGround: 0
   groundHeight: 0
   springBones:
+  - {fileID: 3635006387534889357}
   - {fileID: 5248188247627938357}
+  - {fileID: 2375664590760629880}
+  - {fileID: 7192485885829198386}
   - {fileID: 4218777416692155126}
   - {fileID: 1787687732111965880}
   - {fileID: 9158013695233464153}
-  - {fileID: 493755796977801640}
-  - {fileID: 6133976210228493124}
   - {fileID: 2555793667829317585}
-  - {fileID: 4576591846032301698}
-  - {fileID: 4667910546966905290}
+  - {fileID: 493755796977801640}
   - {fileID: 5240280156830843138}
+  - {fileID: 4667910546966905290}
+  - {fileID: 4576591846032301698}
   - {fileID: 3053239541994412661}
   - {fileID: 7873472157857817034}
   boneColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -224,7 +466,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   moveSpeed: 4.2
-  strafeSpeed: 3.2
+  backwardSpeed: 1.8
+  strafeSpeed: 1.9
   moveAcceleration: 9
   moveDeceleration: 12
   locomotionDampTime: 0.1
@@ -244,6 +487,12 @@ MonoBehaviour:
   swordEnrageBonusDamage: 10
   swordCastingIgniteDelay: 0.85
   swordCastingTotalDuration: 2
+  enableTimingMixup: 1
+  timingMixupChance: 0.5
+  windupWaitTime: 0.2
+  minHoldDuration: 0.5
+  maxHoldDuration: 0.8
+  holdAnimationSpeed: 0.02
   attackSlashSwingVfxPrefab: {fileID: 0}
   verticalSlashPrefab: {fileID: 6882116249847192011, guid: 961e8d8af5a54582affa38e44bd17694, type: 3}
   attackSlashImpactVfxPrefab: {fileID: 2504214343621411470, guid: 121cc5ae878943f5b99628271150fae4, type: 3}
@@ -252,6 +501,7 @@ MonoBehaviour:
   attackSlashCooldown: 3
   attackSlashDelay: 1.4
   attackSlashProjectileSpeed: 22
+  attackSlashMaxDistance: 18
   attackSlashTiltAngle: 90
   attackSlashHeightOffset: 1.5
   attackSlashTotalDuration: 1.5
@@ -262,6 +512,7 @@ MonoBehaviour:
   horizontalSlashCooldown: 3.5
   horizontalSlashDelay: 1.2
   horizontalSlashProjectileSpeed: 20
+  horizontalSlashMaxDistance: 20
   horizontalSlashTiltAngle: 0
   horizontalSlashHeightOffset: 0
   horizontalSlashTotalDuration: 1.6
@@ -269,8 +520,10 @@ MonoBehaviour:
   jumpAttackDamage: 30
   jumpAttackCooldown: 5
   jumpAttackWindupDelay: 0.25
-  jumpAttackLeapDuration: 0.55
-  jumpLeapDistance: 20
+  jumpAttackLeapDuration: 0.85
+  jumpLeapSpeed: 12
+  jumpLeapDistance: 25
+  jumpStopOffset: 1.3
   jumpAttackApexHeight: 1.8
   jumpAttackRadius: 4.5
   jumpImpactHeightOffset: 0
@@ -312,7 +565,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: f5bb39934e1d2ab4e9e1b917841896a0, type: 3}
   m_InferenceDevice: 0
   m_BehaviorType: 0
   m_BehaviorName: RedIgnisSoulsAI
@@ -346,8 +599,9 @@ MonoBehaviour:
   playerStats: {fileID: 0}
   arenaCenter: {x: 0, y: 0, z: 0}
   arenaRadius: 25
-  optimalDistanceMin: 2.5
-  optimalDistanceMax: 6.5
+  optimalDistanceMin: 1
+  optimalDistanceMax: 2
+  backwardLockDistance: 1.5
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1
@@ -363,6 +617,7 @@ MonoBehaviour:
   movePersistenceTime: 0.6
   minStrafeDistance: 2.2
   minStrafeDuration: 1
+  isManagedByArena: 0
 --- !u!114 &4052892601178878195
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -378,6 +633,83 @@ MonoBehaviour:
   DecisionPeriod: 5
   DecisionStep: 0
   TakeActionsBetweenDecisions: 1
+--- !u!114 &6182930475618293047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806274301772261096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3bebc33c0cf4ec7ab70f490048a46c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RedIgnisClothMotion
+  targetSimulationFps: 60
+  maxFrameDeltaTime: 0.05
+  maxSubstepsPerFrame: 3
+  teleportResetDistance: 1.5
+  enableGroundCollision: 1
+  groundClearanceOffset: 0.04
+  footstepCycleOffset: 0.18
+  stepLateralSwayStrength: 0.1
+  stepVerticalBounceStrength: 0
+  stepWaveLagRadians: 1.35
+  aerodynamicLiftStrength: 0
+  wingSpreadStrength: 2.12
+  idleBreezeStrength: 0.04
+  hatTailForceScale: 0.22
+  fallStabilizationStrength: 0.65
+  turnDampingThresholdDegPerSec: 45
+  maxExtraTurnDrag: 0.28
+--- !u!1 &4893131963998318933
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4084508638097499207}
+  - component: {fileID: 5469353469677386800}
+  m_Layer: 0
+  m_Name: CapeCol_LeftShin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4084508638097499207
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4893131963998318933}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0000032263708, y: 0, z: 0.0000011457404, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2823923029020335059}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5469353469677386800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4893131963998318933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.085
+  height: 0.44280362
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &5183950090897731107
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,6 +741,149 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4345900317041521329}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5470601840232501836
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5432887223424836101}
+  - component: {fileID: 3521451085447756607}
+  m_Layer: 0
+  m_Name: CapeCol_RightThigh
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5432887223424836101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5470601840232501836}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0000048439233, y: 0, z: -0.0000004370372, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4374149240617312086}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3521451085447756607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5470601840232501836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.096
+  height: 0.41447785
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &6412658342904866797
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8066803872586729629}
+  - component: {fileID: 5198633921679712676}
+  m_Layer: 0
+  m_Name: CapeCol_Neck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8066803872586729629
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6412658342904866797}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.000001084991, y: 0.049552105, z: -0.0000012882521}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8228780806264115955}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5198633921679712676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6412658342904866797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 328bfb8438c749d46ad9174283110a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
+  radius: 0.09
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &6671660123507398193
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1806117450715679816}
+  - component: {fileID: 5953451803769326939}
+  m_Layer: 0
+  m_Name: CapeCol_Hips
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1806117450715679816
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6671660123507398193}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0020356185, y: 0, z: 0.70799905, w: 0.70621043}
+  m_LocalPosition: {x: 0.059983157, y: 0.010073648, z: 0.0025306914}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4441507083544221741}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5953451803769326939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6671660123507398193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.095
+  height: 0.12
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &6911256532254517642
 GameObject:
   m_ObjectHideFlags: 0
@@ -440,6 +915,244 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2630692277918947367}
   m_LocalEulerAnglesHint: {x: 0.527, y: 8.156, z: -11.735}
+--- !u!1 &7353225421668861354
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4295169992287707716}
+  - component: {fileID: 5852242257012196426}
+  m_Layer: 0
+  m_Name: CapeCol_Head
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4295169992287707716
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353225421668861354}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.000000536206, y: 0.049237777, z: 0.0000003378141}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7557839864251068977}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5852242257012196426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7353225421668861354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 328bfb8438c749d46ad9174283110a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
+  radius: 0.115
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &7378304922422071337
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6940902808409283957}
+  - component: {fileID: 2674467336208051149}
+  m_Layer: 0
+  m_Name: CapeCol_LeftShoulder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6940902808409283957
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7378304922422071337}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.00001039526, y: 0.102838345, z: -0.014700734}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4596013657931019298}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2674467336208051149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7378304922422071337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 328bfb8438c749d46ad9174283110a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringSphereCollider
+  radius: 0.096
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &7395207735770148085
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5688321138992482968}
+  - component: {fileID: 8593955368627682745}
+  m_Layer: 0
+  m_Name: CapeCol_RightShin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5688321138992482968
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7395207735770148085}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.0000024883534, y: -0, z: 0.000000933659, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6509915300299801019}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8593955368627682745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7395207735770148085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.085
+  height: 0.44239026
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &7808196832181729104
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6076155039613190975}
+  - component: {fileID: 6793523820354560580}
+  m_Layer: 0
+  m_Name: CapeCol_RightArm
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6076155039613190975
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7808196832181729104}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0000009495621, y: 0, z: 0.00000027506624, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3710315675561517549}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6793523820354560580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7808196832181729104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.08
+  height: 0.1745809
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
+--- !u!1 &7840870921772173220
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2348169632426602506}
+  - component: {fileID: 283637749819432569}
+  m_Layer: 0
+  m_Name: CapeCol_PelvisBackPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2348169632426602506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7840870921772173220}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0013622029, y: 0.99983454, z: 0.01797457, w: -0.002463597}
+  m_LocalPosition: {x: 0.00017693707, y: -0.11891579, z: -0.032295555}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4441507083544221741}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &283637749819432569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7840870921772173220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e7256f2aaf05e47be7fdfced84d489, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringPanelCollider
+  width: 0.34
+  height: 0.44
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &8183946739531524042
 GameObject:
   m_ObjectHideFlags: 0
@@ -471,6 +1184,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2630692277918947367}
   m_LocalEulerAnglesHint: {x: 5.545, y: 33.45, z: -10.372}
+--- !u!1 &8607254701650554105
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3766609161088225175}
+  - component: {fileID: 3575206832454835077}
+  m_Layer: 0
+  m_Name: CapeCol_LeftThigh
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3766609161088225175
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8607254701650554105}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.000002051925, y: 0, z: -0.0000027821245, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5830871058035987591}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3575206832454835077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8607254701650554105}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.096
+  height: 0.41722688
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1 &8760966975015594793
 GameObject:
   m_ObjectHideFlags: 0
@@ -502,6 +1263,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2630692277918947367}
   m_LocalEulerAnglesHint: {x: 11.809, y: 19.136, z: -91.544}
+--- !u!1 &9145249861116757093
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4868548313373684933}
+  - component: {fileID: 6562411427695776839}
+  m_Layer: 0
+  m_Name: CapeCol_LeftArm
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4868548313373684933
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145249861116757093}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0000012919096, y: 0, z: -0.0000043455148, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2053092080752644617}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6562411427695776839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145249861116757093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f228c6e846db8bd4ca8c289bdb7565b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringCapsuleCollider
+  radius: 0.08
+  height: 0.17445499
+  linkedRenderer: {fileID: 4247249529380236516}
+  shouldDrawGizmosThisFrame: 0
 --- !u!1001 &930614054524270586
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -673,6 +1482,48 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -5671910290767253545, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1806117450715679816}
+    - targetCorrespondingSourceObject: {fileID: -5671910290767253545, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2348169632426602506}
+    - targetCorrespondingSourceObject: {fileID: -2593687625098271875, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3766609161088225175}
+    - targetCorrespondingSourceObject: {fileID: -6063354155749413847, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4084508638097499207}
+    - targetCorrespondingSourceObject: {fileID: -5738099386740791124, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5432887223424836101}
+    - targetCorrespondingSourceObject: {fileID: 6250409095508506177, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5688321138992482968}
+    - targetCorrespondingSourceObject: {fileID: 7829577706673091268, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4492753903404814212}
+    - targetCorrespondingSourceObject: {fileID: 7829577706673091268, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1901516985761620175}
+    - targetCorrespondingSourceObject: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6891276264219104039}
+    - targetCorrespondingSourceObject: {fileID: -5538751756592888872, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6940902808409283957}
+    - targetCorrespondingSourceObject: {fileID: -8028729752870558221, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4868548313373684933}
+    - targetCorrespondingSourceObject: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8066803872586729629}
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4295169992287707716}
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8076132203380079679}
     - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1930371365982862443}
@@ -685,16 +1536,28 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5686562361022115808}
+    - targetCorrespondingSourceObject: {fileID: -3302972225415322985, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8266798443995245619}
+    - targetCorrespondingSourceObject: {fileID: 4582277379452294679, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6076155039613190975}
     - targetCorrespondingSourceObject: {fileID: 2412161367050800168, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 766709305620523826}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -5940291217940540646, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3635006387534889357}
     - targetCorrespondingSourceObject: {fileID: -7770812399464758167, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5248188247627938357}
     - targetCorrespondingSourceObject: {fileID: -8360255808340513212, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4218777416692155126}
+    - targetCorrespondingSourceObject: {fileID: 1611297961126368243, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2375664590760629880}
     - targetCorrespondingSourceObject: {fileID: 6117305315221037748, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1787687732111965880}
@@ -704,9 +1567,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5324209967536134309, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5240280156830843138}
-    - targetCorrespondingSourceObject: {fileID: -6059321790700975605, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6133976210228493124}
     - targetCorrespondingSourceObject: {fileID: -6378187494344363705, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4667910546966905290}
@@ -716,6 +1576,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 236981464830111913, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7873472157857817034}
+    - targetCorrespondingSourceObject: {fileID: 1053603381897360218, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7192485885829198386}
     - targetCorrespondingSourceObject: {fileID: 4196489597796080480, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9158013695233464153}
@@ -726,6 +1589,53 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4576591846032301698}
   m_SourcePrefab: {fileID: 100100000, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+--- !u!1 &177067812995712160 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1053603381897360218, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7192485885829198386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177067812995712160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 5
+  dragForce: 0.22
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.25
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.028
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
+  panelColliders: []
 --- !u!1 &508998216110315966 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8360255808340513212, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
@@ -743,10 +1653,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 2
+  dragForce: 0.15
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.7
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -758,9 +1668,22 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.036
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
 --- !u!4 &819811194924355601 stripped
 Transform:
@@ -784,10 +1707,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 100
-  dragForce: 0.8
-  springForce: {x: 0, y: -0.02, z: 0}
-  windInfluence: 1
+  stiffnessForce: 10
+  dragForce: 0.12
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.6
   pivotNode: {fileID: 5686562361022115808}
   angularStiffness: 100
   yAngleLimits:
@@ -799,9 +1722,18 @@ MonoBehaviour:
     min: -84
     max: 82
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.042
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
   panelColliders: []
 --- !u!1 &1408839107686125490 stripped
 GameObject:
@@ -820,10 +1752,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 2.5
+  dragForce: 0.16
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.55
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -835,9 +1767,22 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.036
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
 --- !u!1 &1784186065902662547 stripped
 GameObject:
@@ -856,10 +1801,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 3.5
+  dragForce: 0.18
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.45
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -871,51 +1816,134 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.032
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
+  panelColliders: []
+--- !u!1 &1924812168702206985 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1611297961126368243, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2375664590760629880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924812168702206985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 5
+  dragForce: 0.22
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.25
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.028
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
+  panelColliders: []
+--- !u!4 &2053092080752644617 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8028729752870558221, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2406589135582110944 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5940291217940540646, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3635006387534889357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406589135582110944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
+  stiffnessForce: 5
+  dragForce: 0.21
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.25
+  pivotNode: {fileID: 0}
+  angularStiffness: 100
+  yAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  zAngleLimits:
+    active: 0
+    min: 0
+    max: 0
+  lengthLimitTargets: []
+  radius: 0.024
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
 --- !u!4 &2630692277918947367 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6311746236779106339, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
   m_PrefabInstance: {fileID: 930614054524270586}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &2811022843924168177 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -6059321790700975605, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+--- !u!4 &2823923029020335059 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6063354155749413847, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
   m_PrefabInstance: {fileID: 930614054524270586}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6133976210228493124
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2811022843924168177}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 200
-  dragForce: 0.8
-  springForce: {x: 0, y: -0.02, z: 0}
-  windInfluence: 1
-  pivotNode: {fileID: 1930371365982862443}
-  angularStiffness: 100
-  yAngleLimits:
-    active: 1
-    min: -84
-    max: 82
-  zAngleLimits:
-    active: 1
-    min: -83
-    max: 77
-  lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
-  panelColliders: []
 --- !u!1 &2895844548215375195 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2655487480752943777, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
@@ -933,10 +1961,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 1.5
+  dragForce: 0.14
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.7
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -948,9 +1976,22 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.036
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
 --- !u!1 &3140720644029957821 stripped
 GameObject:
@@ -969,10 +2010,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 100
-  dragForce: 0.8
-  springForce: {x: 0, y: -0.02, z: 0}
-  windInfluence: 1
+  stiffnessForce: 24
+  dragForce: 0.17
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.3
   pivotNode: {fileID: 3786032727770636138}
   angularStiffness: 100
   yAngleLimits:
@@ -984,13 +2025,32 @@ MonoBehaviour:
     min: -88
     max: 93
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.042
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
   panelColliders: []
+--- !u!4 &3200466146777560883 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6881390770214846263, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3284113099889343442 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2412161367050800168, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3710315675561517549 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4582277379452294679, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
   m_PrefabInstance: {fileID: 930614054524270586}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &3951584881517423770 stripped
@@ -1010,10 +2070,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 3.5
+  dragForce: 0.19
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.4
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -1025,10 +2085,43 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.032
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
+--- !u!137 &4247249529380236516 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -5324531855699944674, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4374149240617312086 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5738099386740791124, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4441507083544221741 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5671910290767253545, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4596013657931019298 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5538751756592888872, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4870139087936873407 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3495917837264923579, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
@@ -1046,10 +2139,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 2.5
+  dragForce: 0.16
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.55
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -1061,9 +2154,22 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.036
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
 --- !u!1 &4974595555024072543 stripped
 GameObject:
@@ -1082,10 +2188,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 1.5
+  dragForce: 0.14
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.7
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -1097,10 +2203,28 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.036
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
+--- !u!4 &5830871058035987591 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -2593687625098271875, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &6345356682989425998 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6117305315221037748, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
@@ -1118,10 +2242,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 10
-  dragForce: 0.5
-  springForce: {x: 0, y: -0.06, z: 0}
-  windInfluence: 1
+  stiffnessForce: 3.5
+  dragForce: 0.19
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.4
   pivotNode: {fileID: 0}
   angularStiffness: 100
   yAngleLimits:
@@ -1133,10 +2257,43 @@ MonoBehaviour:
     min: 0
     max: 0
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.032
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
+  - {fileID: 3575206832454835077}
+  - {fileID: 3521451085447756607}
+  - {fileID: 5469353469677386800}
+  - {fileID: 8593955368627682745}
   panelColliders: []
+--- !u!4 &6509915300299801019 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6250409095508506177, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6828381516197057901 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3302972225415322985, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6936119560403060030 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7829577706673091268, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7557839864251068977 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7208261743932278219, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7578786422961136972 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1889411133253528906, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
@@ -1154,10 +2311,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03118221f4bfcd74ba0ad8075da02411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.unity.animations.springbone::Unity.Animations.SpringBones.SpringBone
-  stiffnessForce: 100
-  dragForce: 0.8
-  springForce: {x: 0, y: -0.02, z: 0}
-  windInfluence: 1
+  stiffnessForce: 16
+  dragForce: 0.14
+  springForce: {x: 0, y: 0, z: 0}
+  windInfluence: 0.45
   pivotNode: {fileID: 6944076566958353782}
   angularStiffness: 100
   yAngleLimits:
@@ -1169,10 +2326,24 @@ MonoBehaviour:
     min: -102
     max: 89
   lengthLimitTargets: []
-  radius: 0.05
-  sphereColliders: []
-  capsuleColliders: []
+  radius: 0.042
+  sphereColliders:
+  - {fileID: 5852242257012196426}
+  - {fileID: 5198633921679712676}
+  - {fileID: 2674467336208051149}
+  - {fileID: 376480921144783712}
+  capsuleColliders:
+  - {fileID: 314039729501689370}
+  - {fileID: 7473344349582136056}
+  - {fileID: 5953451803769326939}
+  - {fileID: 6562411427695776839}
+  - {fileID: 6793523820354560580}
   panelColliders: []
+--- !u!4 &8228780806264115955 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9140253385185518857, guid: 54459fd3dfe41484886055c114b7b488, type: 3}
+  m_PrefabInstance: {fileID: 930614054524270586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7843861127440039161
 PrefabInstance:
   m_ObjectHideFlags: 0
