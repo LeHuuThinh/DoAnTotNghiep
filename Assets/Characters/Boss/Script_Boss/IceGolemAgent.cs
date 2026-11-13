@@ -100,6 +100,7 @@ public class IceGolemAgent : Agent
 
     private bool isDelayingAttack = false;
     private Coroutine delayedAttackCoroutine = null;
+    private int lastUsedSkillIndex = -1;
 
     private Vector3 initialBossPosition;
     private Quaternion initialBossRotation;
@@ -109,7 +110,12 @@ public class IceGolemAgent : Agent
     private Vector3 playerVelocity;
 
     // Public properties để Arena Manager truy cập
-        public void SetRespawnOnDeath(bool enable)
+    [Tooltip("Nếu có IceGolemBattleArena trong Scene, Arena sẽ làm trọng tài điều phối hiệp đấu, tránh trùng lặp điểm và EndEpisode")]
+    [SerializeField] private bool isManagedByArena = false;
+    public void SetManagedByArena(bool managed) => isManagedByArena = managed;
+    public bool IsManagedByArena => isManagedByArena;
+
+    public void SetRespawnOnDeath(bool enable)
     {
         respawnBossOnDeath = enable;
     }
@@ -122,6 +128,12 @@ public class IceGolemAgent : Agent
     {
         initialBossPosition = transform.position;
         initialBossRotation = transform.rotation;
+
+        if (FindFirstObjectByType<IceGolemBattleArena>() != null)
+        {
+            isManagedByArena = true;
+        }
+
         // Trong chế độ chơi Dungeon / Campaign thực tế (có DungeonManager), luôn tắt tự động hồi sinh / reset episode
         if (FindFirstObjectByType<DungeonManager>() != null)
         {
@@ -297,6 +309,7 @@ public class IceGolemAgent : Agent
         isPlayerInRollRecovery = false;
         isPlayerHealingWindow = false;
         isDelayingAttack = false;
+        lastUsedSkillIndex = -1;
 
         if (rollRecoveryCoroutine != null) { StopCoroutine(rollRecoveryCoroutine); rollRecoveryCoroutine = null; }
         if (healWindowCoroutine != null) { StopCoroutine(healWindowCoroutine); healWindowCoroutine = null; }
@@ -671,7 +684,7 @@ public class IceGolemAgent : Agent
                 // Thưởng / Phạt theo Cự ly hiệu dụng của từng chiêu (Effective Range):
                 if (skillIndex == 0 || skillIndex == 5) // Chiêu 1 & Chiêu 6 (Combo cận chiến)
                 {
-                    if (distToPlayer <= 3.8f)
+                    if (distToPlayer <= 4.8f)
                     {
                         AddReward(0.35f); // Thưởng ra đòn cận chiến chuẩn cự ly!
                     }
@@ -682,30 +695,45 @@ public class IceGolemAgent : Agent
                 }
                 else if (skillIndex == 1) // Chiêu 2 (GumoGumo - đấm đất)
                 {
-                    if (distToPlayer <= 5.5f) AddReward(0.3f);
+                    if (distToPlayer <= 6.0f) AddReward(0.3f);
                     else AddReward(-0.6f);
                 }
                 else if (skillIndex == 2) // Chiêu 3 (FlameBreath - phun lửa)
                 {
-                    if (distToPlayer >= 3.5f && distToPlayer <= 14.0f) AddReward(0.35f);
+                    if (distToPlayer >= 4.0f && distToPlayer <= 15.5f) AddReward(0.35f);
                     else AddReward(-0.5f);
                 }
-                else if (skillIndex == 3 || skillIndex == 4 || skillIndex == 6) // Chiêu 4 (Jump), 5 (Run), 7 (IceBall)
+                else if (skillIndex == 3) // Chiêu 4 (JumpAttack - nhảy vồ tầm xa)
                 {
-                    if (distToPlayer >= 5.0f && distToPlayer <= 18.0f) AddReward(0.4f);
-                    else if (distToPlayer < 4.0f) AddReward(-0.6f); // Phạt lãng phí chiêu tầm xa ở cự ly áp sát
+                    if (distToPlayer >= 5.5f && distToPlayer <= 20.0f) AddReward(0.4f);
+                    else AddReward(-0.5f);
+                }
+                else if (skillIndex == 4) // Chiêu 5 (RunAttack - chạy húc cả gần lẫn xa)
+                {
+                    if (distToPlayer >= 2.0f && distToPlayer <= 20.0f) AddReward(0.4f);
+                }
+                else if (skillIndex == 6) // Chiêu 7 (IceBall - cầu băng cả gần lẫn xa)
+                {
+                    if (distToPlayer >= 2.0f && distToPlayer <= 22.0f) AddReward(0.4f);
                 }
 
-                // Xử lý Timing: Đánh ngay hay đánh trễ nhịp (Delayed Attack)
-                if (timingAction == 1)
+                // Thưởng đa dạng hóa chiêu thức: Khuyến khích Boss dùng xen kẽ nhiều kỹ năng thay vì lặp lại 1 chiêu
+                if (lastUsedSkillIndex != -1)
                 {
-                    if (delayedAttackCoroutine != null) StopCoroutine(delayedAttackCoroutine);
-                    delayedAttackCoroutine = StartCoroutine(DelayedAttackRoutine(skillIndex, 0.35f));
+                    if (skillIndex != lastUsedSkillIndex)
+                    {
+                        AddReward(0.25f);
+                    }
+                    else
+                    {
+                        AddReward(-0.2f);
+                    }
                 }
-                else
-                {
-                    controller.CastAttack(skillIndex);
-                }
+                lastUsedSkillIndex = skillIndex;
+
+                // Xử lý Timing: Đánh ngay hay giữ nhịp khựng lấy đà (Timing Mixup Type 2 trong Animation)
+                bool forceMixup = (timingAction == 1);
+                controller.CastAttack(skillIndex, forceMixup);
             }
         }
     }
@@ -760,6 +788,8 @@ public class IceGolemAgent : Agent
 
     private void OnPlayerDeath()
     {
+        if (isManagedByArena) return; // Arena chịu trách nhiệm làm trọng tài điều phối hiệp đấu
+
         AddReward(defeatPlayerReward); // +5.0
         Debug.Log("<color=cyan>[ML-Agents]</color> 🏆 BOSS CHIẾN THẮNG HIỆP ĐẤU! Thưởng +" + defeatPlayerReward);
         if (respawnBossOnDeath)
@@ -781,6 +811,8 @@ public class IceGolemAgent : Agent
 
     private void OnBossDeath()
     {
+        if (isManagedByArena) return; // Arena chịu trách nhiệm làm trọng tài điều phối hiệp đấu
+
         AddReward(deathPenalty); // -3.0
         Debug.Log("<color=red>[ML-Agents]</color> 💀 Boss bị hạ gục! Phạt " + deathPenalty);
         if (respawnBossOnDeath)
@@ -921,7 +953,7 @@ public class IceGolemAgent : Agent
             return;
         }
 
-        // Khóa toàn bộ 7 kỹ năng tấn công nếu đang trong thời gian nghỉ Combat Pacing (6-7s Phase 1, 4-5s Phase 2)
+        // Khóa toàn bộ 7 kỹ năng tấn công nếu đang trong thời gian nghỉ Combat Pacing (4.0-4.5s Phase 1, 3.0-3.5s Phase 2)
         // hoặc đang diễn hoạt chuyển pha 50% HP -> Ép Boss đi bộ vờn quanh và giữ cự ly
         if (controller.IsPhase2Transitioning || Time.time < controller.NextAttackAllowedTime)
         {
@@ -937,6 +969,12 @@ public class IceGolemAgent : Agent
         {
             actionMask.SetActionEnabled(1, 3, false);
             actionMask.SetActionEnabled(1, 7, false);
+        }
+
+        // Khóa chiêu vừa dùng: Không cho phép Agent chọn lại đúng chiêu vừa tung ra (chống lặp 1 chiêu 2 lần liên tục)
+        if (lastUsedSkillIndex != -1)
+        {
+            actionMask.SetActionEnabled(1, lastUsedSkillIndex + 1, false);
         }
 
         // Branch 1: Kỹ năng chiến đấu (0=Không đánh, 1..7 tương ứng Chiêu 1..7)
@@ -955,32 +993,32 @@ public class IceGolemAgent : Agent
             bool isRangeValid = true;
             switch (skillIdx)
             {
-                case 0: // Chiêu 1 (Attack 1): Đấm thẳng cận chiến (tối đa 3.5m)
-                    if (dist > 3.5f) isRangeValid = false;
+                case 0: // Chiêu 1 (Attack 1): Đấm thẳng cận chiến (tối đa 4.8m khớp hitbox thực tế)
+                    if (dist > 4.8f) isRangeValid = false;
                     break;
 
-                case 1: // Chiêu 2 (GumoGumo): Đấm đất liên hoàn (tối đa 5.5m)
-                    if (dist > 5.5f) isRangeValid = false;
+                case 1: // Chiêu 2 (GumoGumo): Đấm đất liên hoàn (tối đa 6.0m)
+                    if (dist > 6.0f) isRangeValid = false;
                     break;
 
-                case 2: // Chiêu 3 (FlameBreath): Phun lửa nón (tầm 3.2m - 14.5m)
-                    if (dist < 3.0f || dist > 14.5f) isRangeValid = false;
+                case 2: // Chiêu 3 (FlameBreath): Phun lửa nón tầm xa Phase 2 (4.0m - 15.5m)
+                    if (dist < 4.0f || dist > 15.5f) isRangeValid = false;
                     break;
 
-                case 3: // Chiêu 4 (JumpAttack): Nhảy vồ áp sát (tầm 5.5m - 18.0m)
-                    if (dist < 5.0f || dist > 18.0f) isRangeValid = false;
+                case 3: // Chiêu 4 (JumpAttack): Nhảy vồ áp sát tầm xa (5.5m - 20.0m)
+                    if (dist < 5.5f || dist > 20.0f) isRangeValid = false;
                     break;
 
-                case 4: // Chiêu 5 (RunAttack): Chạy lao húc tới (tầm 4.0m - 12.0m)
-                    if (dist < 3.8f || dist > 12.0f) isRangeValid = false;
+                case 4: // Chiêu 5 (RunAttack): Chạy lao húc tới dùng cả gần lẫn xa (2.0m - 20.0m)
+                    if (dist < 2.0f || dist > 20.0f) isRangeValid = false;
                     break;
 
-                case 5: // Chiêu 6 (AttackLT): Combo 3 nhát chém cận chiến (tối đa 4.0m)
-                    if (dist > 4.0f) isRangeValid = false;
+                case 5: // Chiêu 6 (AttackLT): Combo 3 nhát chém cận chiến (tối đa 4.8m khớp hitbox thực tế)
+                    if (dist > 4.8f) isRangeValid = false;
                     break;
 
-                case 6: // Chiêu 7 (IceBall): Ném cầu tím tầm xa (tầm 5.5m - 22.0m)
-                    if (dist < 5.0f || dist > 22.0f) isRangeValid = false;
+                case 6: // Chiêu 7 (IceBall): Ném cầu băng Phase 2 dùng cả gần lẫn xa (2.0m - 22.0m)
+                    if (dist < 2.0f || dist > 22.0f) isRangeValid = false;
                     break;
             }
 

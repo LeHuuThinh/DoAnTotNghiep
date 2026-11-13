@@ -1,0 +1,29 @@
+{
+    "RedIgnisSoulsAI": {
+        "checkpoints": [
+            {
+                "steps": 1019,
+                "file_path": "results\\RedIgnis_Run02\\RedIgnisSoulsAI\\RedIgnisSoulsAI-1019.onnx",
+                "reward": 45.36399728059769,
+                "creation_time": 1794331057.5664318,
+                "auxillary_file_paths": [
+                    "results\\RedIgnis_Run02\\RedIgnisSoulsAI\\RedIgnisSoulsAI-1019.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1019,
+            "file_path": "results\\RedIgnis_Run02\\RedIgnisSoulsAI.onnx",
+            "reward": 45.36399728059769,
+            "creation_time": 1794331057.5664318,
+            "auxillary_file_paths": [
+                "results\\RedIgnis_Run02\\RedIgnisSoulsAI\\RedIgnisSoulsAI-1019.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

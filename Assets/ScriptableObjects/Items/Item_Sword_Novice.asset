@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: weapon_sword_novice
   itemName: Novice Knight Sword
-  description: "A standard knightly blade from Haven with a leather-wrapped hilt and a clean steel edge (+14 Attack)."
+  description: A standard knightly blade from Haven with a leather-wrapped hilt and
+    a clean steel edge (+14 Attack).
   icon: {fileID: 21300000, guid: 529ec3609d7d2c445b8e299800b4daf4, type: 3}
   itemType: 0
   rarity: 1
