@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: potion_berserker
   itemName: Berserker Draught
-  description: Fierce draught that awakens raw combat instinct, granting +15 Attack
-    during life-or-death battles.
+  description: Fierce draught that awakens raw combat instinct, granting +20 Attack
+    Damage and +15% Attack Speed for 25s.
   icon: {fileID: 21300000, guid: 3461e5f236cea004c8421e6bcb9eb42f, type: 3}
   itemType: 2
   rarity: 2
   maxStack: 3
   goldValue: 85
-  bonusAttack: 15
+  bonusAttack: 20
   bonusDefense: 0
   bonusHealth: 0
   bonusStamina: 0

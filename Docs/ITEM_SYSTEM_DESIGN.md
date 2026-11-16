@@ -118,18 +118,18 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 
 ## 5. Vật Phẩm Tiêu Hao Sinh Tồn (Consumables)
 
-| ID Vật Phẩm | Tên Tiêu Hao | Phẩm Cấp | Max Stack | Giá Bán Shop | Hiệu Quả Tức Thời |
+| ID Vật Phẩm | Tên Tiêu Hao | Phẩm Cấp | Max Stack | Giá Bán Shop | Hiệu Quả Tức Thời & Buff |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| `potion_health_small` | **Bình Máu Nhỏ (Small Health Potion)** | Common | 10 | 25 Vàng | Hồi phục tức thì **40 HP**. |
-| `potion_health_large` | **Bình Máu Lớn (Large Health Potion)** | Rare | 5 | 65 Vàng | Hồi phục tức thì **100 HP**. |
-| `potion_stamina_elixir`| **Tiên Dược Thể Lực (Stamina Elixir)** | Uncommon | 5 | 45 Vàng | Hồi đầy 100% Thể lực & tăng 50% tốc độ hồi trong 8s. |
-| `potion_spirit_nectar` | **Mật Năng Lượng (Spirit Nectar)** | Rare | 3 | 90 Vàng | Tức thì nạp đầy **2 Ngôi Sao Năng Lượng** (100 Spirit). |
-| `potion_ironbark_brew` | **Thuốc Da Sắt (Ironbark Brew)** | Uncommon | 5 | 50 Vàng | Tăng **+15 DEF** trong thời gian 30 giây. |
-| `potion_berserker` | **Rượu Cuồng Nộ (Berserker Draught)** | Rare | 3 | 85 Vàng | Tăng **+25% ATK** trong 20s (giảm nhẹ 10% DEF). |
+| `potion_health_small` | **Bình Máu Nhỏ (Small Health Potion)** | Common | 10 | 25 Vàng | Hồi phục tức thì **50 HP** (50% lượng máu cơ bản 100). |
+| `potion_health_large` | **Bình Máu Lớn (Large Health Potion)** | Rare | 5 | 65 Vàng | Hồi phục tức thì **120 HP** (bảo đảm sinh tồn giữa trận boss). |
+| `potion_stamina_elixir`| **Tiên Dược Thể Lực (Stamina Elixir)** | Uncommon | 5 | 45 Vàng | Hồi tức thì **80 Thể lực**, tăng **+50% tốc độ hồi thể lực** và **+15% tốc chạy** trong **15s**. |
+| `potion_spirit_nectar` | **Mật Năng Lượng (Spirit Nectar)** | Rare | 3 | 90 Vàng | Tức thì nạp **+120 Spirit** (đủ cast 2 lần Skill E hoặc 1 lần Skill Q). |
+| `potion_ironbark_brew` | **Thuốc Da Sắt (Ironbark Brew)** | Uncommon | 5 | 50 Vàng | Tăng **+20 DEF** trong thời gian **30 giây** (giảm 17% - 25% sát thương nhận vào). |
+| `potion_berserker` | **Rượu Cuồng Nộ (Berserker Draught)** | Rare | 3 | 85 Vàng | Tăng **+20 ATK** và **+15% Tốc độ đánh** trong **25s**. |
 
 ---
 
-## 6. Ma Trận Phân Bổ Rơi Đồ Đã Cân Bằng (Balanced Drop Tables)
+## 6. Ma Trận Phân Bổ Rơi Đồ Phân Tầng (Floor-Based Tiered Loot Tables)
 *(Được tính toán tối ưu cho quy mô trung bình ~100 quái/tầng hầm ngục + 1 boss, tổng thu 1 tầng đạt ~750 - 850 Gold chuẩn Roguelite)*
 
 ### A. 3 Loại Thùng Gỗ Đập Được (`BreakableProp.cs` & `DungeonPropDecorator.cs`):
@@ -151,53 +151,65 @@ Giáp là thẻ thuộc tính mang Icon và chỉ số phòng hộ toàn diện 
 
 ---
 
-### B. 4 Quái Vật Skeleton (`EnemyAIBase.cs`):
+### B. 4 Quái Vật Skeleton (EnemyAIBase.cs):
+*(Quái thường KHÔNG rơi Gear trực tiếp. Khi quái trở thành Quái Tinh Nhuệ Elite từ Tầng 2+, kích hoạt tỷ lệ rơi 25% Gear ngẫu nhiên từ eliteGearPool)*
+
 * **Skeleton Minion (Lính Xương Đánh Lén):**
   * 65%: 1 – 3 Tiền Vàng.
-  * 30%: 1 Mảnh Xương Quái (`mat_bone_fragment`).
-  * **6%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
+  * 30%: 1 Mảnh Xương Quái (mat_bone_fragment).
+  * **6%: 1 Ngọc Quái Vật (mat_monster_gem - Bán 14 Vàng).**
 * **Skeleton Warrior (Chiến Binh Xương Cận Chiến):**
   * 80%: 3 – 6 Tiền Vàng.
-  * 45%: 1 – 2 Mảnh Xương Quái (`mat_bone_fragment`).
-  * 20%: 1 Huy Hiệu Chiến Binh (`mat_warrior_insignia`).
-  * 10%: 1 Đá Cường Hóa (`mat_upgrade_stone`).
-  * **8%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
+  * 45%: 1 – 2 Mảnh Xương Quái (mat_bone_fragment).
+  * 20%: 1 Huy Hiệu Chiến Binh (mat_warrior_insignia).
+  * 10%: 1 Đá Cường Hóa (mat_upgrade_stone).
+  * **8%: 1 Ngọc Quái Vật (mat_monster_gem - Bán 14 Vàng).**
 * **Skeleton Rogue (Thích Khách Cung Thủ Tầm Xa):**
   * 80%: 4 – 7 Tiền Vàng.
-  * 40%: 1 – 2 Mũi Tên Đen (`mat_dark_arrowhead`).
-  * 20%: 1 Bình Máu Nhỏ (`potion_health_small`).
-  * 12%: 1 Tiên Dược Thể Lực (`potion_stamina_elixir`).
-  * **8%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
+  * 40%: 1 – 2 Mũi Tên Đen (mat_dark_arrowhead).
+  * 20%: 1 Bình Máu Nhỏ (potion_health_small).
+  * 12%: 1 Tiên Dược Thể Lực (potion_stamina_elixir).
+  * **8%: 1 Ngọc Quái Vật (mat_monster_gem - Bán 14 Vàng).**
 * **Skeleton Mage (Pháp Sư Triệu Hồi & Cầu Lửa):**
   * 90%: 7 – 12 Tiền Vàng.
-  * 50%: 1 – 2 Bụi Tinh Hoa Ma Pháp (`mat_arcane_dust`).
-  * 25%: 1 Đá Cường Hóa (`mat_upgrade_stone`).
-  * 8%: 1 Giấy Da Cổ Ma Thuật (`mat_spell_parchment`).
-  * **12%: 1 Ngọc Quái Vật (`mat_monster_gem` - Bán 14 Vàng).**
+  * 50%: 1 – 2 Bụi Tinh Hoa Ma Pháp (mat_arcane_dust).
+  * 25%: 1 Đá Cường Hóa (mat_upgrade_stone).
+  * 8%: 1 Giấy Da Cổ Ma Thuật (mat_spell_parchment).
+  * **12%: 1 Ngọc Quái Vật (mat_monster_gem - Bán 14 Vàng).**
+* **Cơ Chế Rơi Gear Quái Tinh Nhuệ (Elite Monsters - Tầng 2+):**
+  * Tỷ lệ rơi **25%** một trang bị từ danh mục: *Novice Sword, Broad Iron Blade, Dark Iron, Vanguard Broadsword, Punk Blade, Leather Explorer, Iron Cuirass, Windrunner, Quartz Pendant, Warrior Crest*.
 
 ---
 
-### C. 3 Cấp Độ Rương Kho Báu (`ChestInteractable.cs`):
-* **Rương Thường (`Interactive_Chest` - Viền Xanh Lá):**
-  * 100%: 20 – 40 Tiền Vàng.
+### C. 3 Cấp Độ Rương Kho Báu Theo Tầng (ChestInteractable.cs):
+* **Rương Thường (Interactive_Chest - Viền Xanh Lá):**
+  * 100%: 20 – 40 Tiền Vàng (+20% mỗi tầng từ Tầng 2).
   * 100%: 1 – 2 Bình Máu Nhỏ.
   * 40%: 1 Đá Cường Hóa.
-  * 25%: Rơi 1 Trang bị Uncommon ngẫu nhiên (*Novice Knight Sword*, *Broad Iron Blade*, *Explorer Leather Vest*).
-* **Rương Hiếm (`Interactive_Chest_Rare` - Viền Tím Thần Bí / Phòng Ngách & Gác Lửng):**
-  * 100%: 50 – 90 Tiền Vàng.
+  * **Tầng 1:** 25% Trang bị Uncommon (*Novice Sword*, *Broad Iron*, *Cloth Novice*, *Leather*); 15% Trang sức Common/Uncommon (*Copper Band*, *Iron Will*, *Quartz Pendant*).
+  * **Tầng 2+:** 35% Trang bị Uncommon/Rare (*Dark Iron*, *Vanguard*, *Iron Cuirass*); 20% Trang sức Rare (*Windrunner*, *Warrior Crest*, *Arcane Ring*).
+* **Rương Hiếm (Interactive_Chest_Rare - Viền Tím Thần Bí / Phòng Ngách & Gác Lửng):**
+  * 100%: 50 – 90 Tiền Vàng (+20% mỗi tầng).
   * 100%: 2 – 3 Bình Máu Lớn.
-  * 100%: 2 – 3 Đá Cường Hóa (`mat_upgrade_stone`).
-  * 50%: Rơi 1 Vũ Khí Rare ngẫu nhiên (*Punk Blade*, *Bonecleaver*, *Deathbringer*, *Equilibrium Blade*).
-  * 30%: Rơi Giáp Sắt Cường Hóa (*Reinforced Iron Cuirass*).
-* **Rương Boss Bục Đá 12m (`Interactive_Chest_Boss` - Viền Hoàng Kim Thánh Đường):**
+  * 100%: 2 – 3 Đá Cường Hóa (mat_upgrade_stone).
+  * **Tầng 1:** 40% Vũ khí Rare (*Punk*, *Bone*, *Dead*, *Equilibrium*); 25% Giáp Rare (*Iron Cuirass*); 20% Trang sức Rare (*Warrior Crest*, *Arcane Ring*, *Berserker Ring*).
+  * **Tầng 2+:** 50% Vũ khí Rare; **15% Vũ khí Epic** (*Emerald Jade*, *Rose Rapier*, *Kitsune Katana*); 30% Giáp; 30% Trang sức Rare/Epic (*Berserker Ring*, *Bloodstone Choker*, *Frost Monarch*).
+* **Rương Boss Bục Đá 12m (Interactive_Chest_Boss - Viền Hoàng Kim Thánh Đường):**
   * 100%: **150 – 250 Tiền Vàng** (Bung tỏa hình nón cực đẹp).
-  * **100%: 1 Đại Ma Viên Ngọc (`mat_boss_gem` - Epic, bán 160 Vàng).**
-  * 100%: **1 Lõi Boss Huyền Thoại Tương Ứng** (Ice Core / Flame Core / Void Eye).
+  * **100%: 1 Đại Ma Viên Ngọc (mat_boss_gem - Epic, bán 160 Vàng).**
+  * **100%: 1 Lõi Boss Huyền Thoại Tương Ứng** (Ice Core / Flame Core / Void Eye).
   * 100%: 2 – 3 Mảnh Cổ Tự / Tinh chất Epic của Boss tương ứng.
-  * 100%: 3 – 5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ (`mat_upgrade_crystal`).
+  * 100%: 3 – 5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ (mat_upgrade_crystal).
   * 100%: 3 Bình Máu Lớn & 2 Tiên Dược Năng Lượng.
-  * 65%: Rơi 1 Trang bị Epic / Legendary cực phẩm (*Demonic Blade*, *Titan Heavy Cleaver*, *Ancient Artifact Blade*...).
-
+  * **TẦNG 1 (Cân bằng chống nhảy vọt endgame):**
+    * **50% Rơi 1 Gear RARE** (*Bonecleaver*, *Deathbringer*, *Equilibrium*, *Vanguard*, *Bone Carapace*).
+    * **15% Rơi 1 Gear EPIC (Jackpot Tầng 1)** (*Demonic Blade*, *Titan Heavy Cleaver*, *Emerald Jade*, *Frost Guardian Armor*).
+    * **0% Rơi Legendary (Khóa đồ tối thượng ở Tầng 1)**.
+    * **50% Rơi 1 Trang sức RARE** (*Arcane Ring*, *Berserker Ring*, *Bloodstone Choker*).
+    * **15% Rơi 1 Trang sức EPIC** (*Frost Monarch*).
+  * **TẦNG 2+:**
+    * **60% Gear Rare/Epic**, **30% Gear Epic Cực Phẩm**, **10% Gear Legendary** (*Radiant Sunblade*, *Ancient Artifact Blade*).
+    * **40% Trang sức Epic / Legendary** (*Frost Monarch*, *Crimson Dragon Heart*, *Void Eye Pendant*).
 ---
 
 ## 7. Quy Tắc Hoạt Động Của Cửa Hàng & Lò Rèn

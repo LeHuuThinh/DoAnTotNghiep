@@ -57,6 +57,9 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
    * **Hysteresis Buffer:** Độ đệm 6m chống nhấp nháy đèn (Flicker-free) ở ranh giới culling.
    * **Triệt tiêu Shadow Caster Pass:** Tự động phát hiện và vô hiệu hóa shadow pass của Directional Light cường độ 0 (tiết kiệm 4 cascades 2048x2048 vô ích).
    * **Duy trì FPS cực cao:** Đạt 110 - 120 FPS ngay cả trong hầm ngục quy mô lớn 300m x 322m với Far Clip Plane 200m.
+6. **Khóa Cứng Serialized Prefabs & Build Preprocessing (DungeonPropSetupEditor.cs):**
+   * Toàn bộ 80+ Prefabs trang trí (đuốc sàn/tường, rương, thùng gỗ, bàn ghế, templates, chìa khóa, bục Boss) được serialize và lưu trực tiếp vào `DungeonScene.unity` thay vì nạp động qua `AssetDatabase` trong Play Mode Editor.
+   * Tích hợp `IPreprocessBuildWithReport` tự động kiểm tra và khóa cứng trước mọi lần Build Player, đảm bảo bản build độc lập (`.exe`) hoạt động hoàn hảo 100% đồng nhất với Editor.
 
 ---
 
@@ -411,7 +414,7 @@ flowchart TD
    * **Kiến trúc điều phối chính (InventoryUIController.cs):** Quản lý đóng/mở mượt mà bằng CanvasGroup (phím Tab hoặc Esc), tự động giải phóng con trỏ chuột (Cursor.lockState = None), khóa di chuyển người chơi và đóng băng xoay camera / combat. Tự động kiểm tra và khởi tạo EventSystem + InputSystemUIInputModule tại runtime nếu scene bị thiếu.
    * **Cửa sổ Trái (Character & Stats):**
      * **3D Character Preview (`CharacterPreviewController.cs` & `PlayerWeaponVisualSync.cs`):** Camera phụ chuyên dụng soi nhân vật qua `RenderTexture` (512x512). Thiết lập `cullingMask = 1 << 3` (chỉ soi Layer 3: Player) giúp loại bỏ 100% tường, sàn, quái hầm ngục khỏi khung xem trước. Tự động đồng bộ đệ quy Layer 3 cho mọi vũ khí kiếm khi đổi trang bị (`SetLayerRecursively` & `EnsurePlayerAndWeaponLayers`). Tích hợp **Smart Adaptive Studio Lighting** tự động phân biệt cường độ sáng giữa hầm ngục (`dungeonLightIntensity = 1.3f`) và làng ngoài trời (`landLightIntensity = 0.25f`), thiết lập góc chiếu Studio Key Light 3/4 nghệ thuật và sử dụng hook URP `RenderPipelineManager.beginCameraRendering` để cô lập hoàn toàn đèn xem trước (không bao giờ rọi vào Player ở ngoài thế giới). Hỗ trợ sự kiện chuột `IDragHandler` cho phép nhấp giữ chuột trái và kéo ngang trên khung để xoay nhân vật 360 độ. Tự động tắt Camera khi đóng túi hoặc chuyển sang chế độ 2D để tiết kiệm 100% tài nguyên GPU trong lúc chơi game.
-     * **Ô trang bị (`EquipmentSlotUI.cs`):** Quản lý 3 ô chuyên dụng: Ô Vũ khí (`WeaponSlot`), Ô Giáp (`ArmorSlot`) và Ô Tiêu Hao / Bình Máu (`UsableSlot`). Tự động ẩn placeholder khi đã mặc đồ, đổi icon và tô màu nền trắng `RarityBG` theo phẩm cấp món đồ. Hỗ trợ hiển thị số lượng dồn stack và vòng xoay hồi chiêu `CDFill` (Radial 360) cho ô `UsableSlot`.
+     * **Ô trang bị (`EquipmentSlotUI.cs`):** Quản lý 5 ô chuyên dụng: Ô Vũ khí (`WeaponSlot`), Ô Giáp (`ArmorSlot`), Ô Tiêu Hao / Bình Máu (`UsableSlot`), và 2 Ô Trang Sức Phụ Trợ (`AccessorySlot` & `AccessorySlot2`). Tự động ẩn placeholder khi đã mặc đồ, đổi icon và tô màu nền trắng `RarityBG` theo phẩm cấp món đồ. Hỗ trợ hiển thị số lượng dồn stack và vòng xoay hồi chiêu `CDFill` (Radial 360) cho ô `UsableSlot`, cùng badge cấp độ cường hóa `+1`..`+5` cho Vũ khí, Giáp và Trang Sức.
      * **Ô Phím Tắt Tiêu Hao Ngoài Màn Hình HUD (`UsableSlotUI.cs`):** Cố định góc dưới-trái màn hình HUD, hiển thị icon bình thuốc đã trang bị, số lượng stack, phím tắt [C] và vòng xoay tiến trình hồi chiêu `CDFill`. Hỗ trợ nhấn phím [C] hoặc click chuột trực tiếp để hồi máu ngay lập tức kèm hoạt ảnh nhún nảy (Punchy Pop 1.15x).
      * **Thời Gian Hồi Chiêu Dùng Chung 2.0s (Global Shared Consumable Cooldown):** Thuốc dùng từ phím C, click HUD hoặc bấm `[Use]` trong Popup đều kích hoạt thời gian hồi chiêu 2.0s chung, đồng bộ vòng xoay `CDFill` trên HUD, LeftPanel và toàn bộ các ô chứa bình thuốc trong lưới 30 ô, đồng thời tạm khóa nút `[Use]` để chống spam bất tử.
      * **Bảng chỉ số thời gian thực (`PlayerStatsPanelUI.cs`):** Tự động liên kết và đọc chỉ số từ `PlayerCombat.cs`, `Health.cs`, `PlayerStats.cs` và `InventoryManager.cs`. Hiển thị: Sát thương tấn công (ATK + Bonus), Phòng thủ (DEF), Máu tối đa (Max HP + Bonus), Thể lực tối đa (Stamina + Bonus). Cập nhật tức thì ngay khi đổi trang bị.
@@ -443,7 +446,7 @@ flowchart TD
           - HP = baseHealth * (1 + 0.08 * level) + (12 * level)
           - Dòng phụ: Tăng nhẹ +3% / cấp.
         + **7 Chỉ số mở rộng:** CritRate, CritDamage, Lifesteal (cap 25 HP), SpiritCostReduction (giảm tiêu hao Spirit chiêu E/Q/R), StaminaCostReduction (giảm hao thể lực Dash/Roll/Attack), SpiritGainBonus (tăng Spirit hồi khi đánh trúng hoặc Parry), MoveSpeedBonus.
-        + **Dữ Liệu Động Instance Data & Procedural Roll (EquipmentAffixData.cs, EquipmentAffixGenerator.cs):** Mỗi trang bị rơi ra đất, mua shop hoặc rèn đều roll dòng chính (+-8%~25%), dòng phụ (0-4 dòng theo Rarity) và các ô phù phép độc lập. Áp dụng cơ chế Bốc Thăm Theo Trọng Số (Weighted Random Roll without replacement): Kiếm sở hữu 10 chỉ số trong pool (bổ sung DEF, HP, Max Stamina với trọng số cao để tạo độ biến thiên ra đồ lệch hệ/dỏm đem bán Shop; dòng CritRate, CritDamage, Lifesteal với trọng số hiếm 10 để tạo cảm giác God Roll); Giáp sở hữu 8 chỉ số (loại bỏ hoàn toàn Lifesteal). Dọn sạch 100% các trường static bonus ẩn gốc trên toàn bộ file .asset của Kiếm và Giáp, đảm bảo toàn bộ dòng phụ đến từ Procedural Generation.
+        + **Dữ Liệu Động Instance Data & Procedural Roll (EquipmentAffixData.cs, EquipmentAffixGenerator.cs):** Mỗi trang bị rơi ra đất, mua shop hoặc rèn đều roll dòng chính (+-8%~25%), dòng phụ (0-4 dòng theo Rarity) và các ô phù phép độc lập. Áp dụng cơ chế Bốc Thăm Theo Trọng Số (Weighted Random Roll without replacement): Kiếm sở hữu 10 chỉ số trong pool (bổ sung DEF, HP, Max Stamina với trọng số cao để tạo độ biến thiên ra đồ lệch hệ/dỏm đem bán Shop; dòng CritRate, CritDamage, Lifesteal với trọng số hiếm 10 để tạo cảm giác God Roll); Giáp sở hữu 8 chỉ số (loại bỏ hoàn toàn Lifesteal); Trang Sức (Accessory) sở hữu dòng chính tùy biến linh hoạt (`rolledMainStat` & `mainStatType`: Thể Lực, Bạo Kích, Tốc Chạy, Hút Máu, Giảm Hao Thể Lực...) và trọn bộ 11 chỉ số Substat kết hợp 10 Phù Phép Thần Binh. Dọn sạch 100% các trường static bonus ẩn gốc trên toàn bộ file .asset của Kiếm và Giáp, đảm bảo toàn bộ dòng phụ đến từ Procedural Generation.
         + **Hệ thống Phù Phép Thức Tỉnh Tại Mốc +1, +3, +5 (Enchantment Awakening):**
           - Mở 1 ô (+1) cho Common/Uncommon, 2 ô (+1, +3) cho Rare, 3 ô (+1, +3, +5) cho Epic/Legendary.
           - 10 Phù phép chuyên sâu: BleedingCrit (gây chảy máu rút 30% dmg qua 3s khi bạo kích), SkillECostReduction (-30% Spirit chiêu E), SkillQCostReduction (-30% Spirit chiêu Q), SkillRCostReduction (-25% Spirit chiêu R), LowHealthBloodthirst (+8% hút máu khi dưới 50% HP), TitanCharge (+25% sát thương đòn gồng), ParryStaminaRestore (hồi 25 thể lực khi parry thành công), SprintWind (+20% tốc chạy sau khi lăn né), CritFrenzy (+15% tốc chạy khi chém crit), SoulSiphon (tiêu diệt mục tiêu hồi 15 Spirit & 15 HP).
@@ -511,6 +514,28 @@ flowchart TD
   * **Cửa Sổ Sáng Tạo (Creative Mode - Toàn bộ 51 Items Game):** Thanh tìm kiếm thời gian thực (`TMP_InputField`), bộ nút lọc phân loại nhanh (`ALL`, `WEAPON`, `ARMOR`, `POTION`, `MATERIAL`, `KEY/GOLD`), danh sách ScrollView hiển thị toàn bộ 51 items (bao gồm cả `MonsterGem` và `BossGem`) kèm Icon, Tên theo màu Rarity, chỉ số, nút `[ +1 ]` và `[ +Max ]` nhận đồ thẳng vào túi.
   * Mini Debug Overlay góc trên-phải: Hiển thị FPS thời gian thực, tọa độ Player (X, Y, Z), phòng hiện tại / vị trí làng, và huy hiệu trạng thái Cheat ([GOD], [INF STAM], [INF SPIRIT], [NO CD], [FROZEN AI], [SPD]).
   * Hệ thống Toast Notification mượt mà phản hồi tức thì mỗi khi thực thi lệnh.
+
+---
+
+### G. Phân Hệ Bản Đồ & Định Vị Toàn Cảnh (Dual Map System - Phím M)
+Hệ thống bản đồ thích ứng theo ngữ cảnh từng Scene (Scene-Aware Map System), kích hoạt đồng bộ bằng phím nóng **`M`** (hoặc `Esc` để đóng):
+
+1. **Bản Đồ Hầm Ngục PCG (`DungeonMapManager.cs` - DungeonScene):**
+   * **Bản đồ Động (Procedural BSP):** Vẽ chuẩn xác hình học phòng và hành lang 9-slice từ thuật toán BSP; Ghép nối góc L, ngã 3 chữ T mượt mà; Đại Lộ Boss 40m uy nghi.
+   * **Sương mù Khám phá (Fog of War):** 3 trạng thái Chưa khám phá, Lân cận và Đã khám phá sáng rực vàng gold; Luôn hiển thị vị trí Icon Boss, Key Tế đàn và Kho báu.
+   * **Điều khiển ARPG Souls-like:** Phóng to/thu nhỏ bằng con lăn chuột ($1.0\times - 3.5\times$), kéo chuột trái để Pan di chuyển, tự động căn giữa vị trí Người chơi khi mở.
+
+2. **Bản Đồ Toàn Cảnh Làng Haven (`VillageMapManager.cs` - LandScene):**
+   * **Bản đồ Tĩnh Dựa Trên Hình Ảnh (Image-based Top-down Map):** Khai thác ảnh chụp trực giao chất lượng cao `Assets/UI RPG/GameImage/VillageMap.png` ($2624 \times 1632$) làm nền bản đồ thế giới.
+   * **Ánh Xạ Không Gian 3D $\leftrightarrow$ 2D:** Thuật toán chiếu tọa độ trực giao chuyển đổi chính xác tọa độ thế giới thực $(X, Z)$ của nhân vật và NPC sang pixel trên UI (`WorldToMapPosition`).
+   * **5 Điểm Mốc Cố Định (Landmarks / POI):**
+     * 🔔 **Chuông Thánh Haven (`Bell.png`):** Vị trí $(X=186.89, Z=127.47)$ — Tâm làng, điểm hồi sinh & cầu nguyện hồi máu.
+     * ⚔️ **Tiệm Trang Bị & Rèn Binh (`EquipmentShop.png`):** Vị trí $(X=183.30, Z=114.10)$.
+     * 🧪 **Tiệm Dược Liệu & Nhu Yếu Phẩm (`SuppliesShop.png`):** Vị trí $(X=149.71, Z=144.10)$.
+     * 🔨 **Lò Rèn Haven (`BlackSmithShop.png`):** Vị trí $(X=210.05, Z=119.76)$ — Cường hóa vũ khí $+1\dots+5$ & Chế tạo thần binh từ Lõi Boss.
+     * 🌀 **Cổng Hầm Ngục (`Portal.png`):** Vị trí $(X=235.17, Z=98.45)$ — Dịch chuyển sang `DungeonScene`.
+   * **Vị Trí & Góc Xoay Người Chơi:** Icon `Player_Icon.png` bám sát tọa độ thế giới 3D và xoay theo hướng mặt nhân vật thời gian thực.
+   * **Cơ Chế Tự Phục Hồi & Tự Động Hóa:** `EnsureInstance()` và `[RuntimeInitializeOnLoadMethod]` tự động nạp sprite, dựng cấu trúc hierarchy và kết nối an toàn 100% trong Runtime. Hỗ trợ tool 1-click `VillageMapSetupEditor.cs` và Master Dashboard (`Ctrl+Alt+D`).
 
 ---
 

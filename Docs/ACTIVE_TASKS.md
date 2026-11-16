@@ -12,9 +12,9 @@
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **Giai đoạn 1** | Hoàn Thiện Trải Nghiệm Hầm Ngục (PCG & Combat) | 18 / 18 | ✅ Hoàn thành | **100%** | PCG, Đồ họa, Combat Souls-like, Boss Arena D-02, ARPG Damage & Floating Numbers |
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
-| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 11 / 11 | ✅ **Hoàn thành** | **100%** | **Cửa hàng RPG-07, Lò rèn RPG-08, Ma trận rơi đồ RPG-09, Cân bằng độ khó RPG-12** |
+| **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 14 / 14 | ✅ **Hoàn thành** | **100%** | **Cửa hàng RPG-07, Lò rèn RPG-08, Ma trận rơi đồ RPG-09, Cân bằng độ khó RPG-12, Trang sức RPG-14, Cường hóa linh hoạt & Giá bán RPG-16, Potions & Buffs RPG-17** |
 | **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 8 / 9 | 🟡 **ĐANG THỰC HIỆN** | **89%** | Xong Ice Golem, Red Ignis, ML Ice Golem & RedIgnisAgent (ML-03); Đang tiếp tục train ML-04 |
-| **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 1 / 3 | ⚪ Chờ thực hiện | **33%** | Xong Bản đồ hầm ngục Fullscreen; Chờ Menu & Audio |
+| **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 2 / 4 | 🟡 **Đang thực hiện** | **50%** | Xong Bản đồ hầm ngục POL-03 & Bản đồ Làng Haven POL-04; Chờ Menu & Audio |
 | **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
 | **Giai đoạn 7** | Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng | 3 / 3 | ✅ Hoàn thành | **100%** | UsableSlot, Drag & Drop, Punch scale, Sửa lỗi Scene Cleanup |
 
@@ -67,6 +67,11 @@
   - Bảo vệ từ gốc phân chia không gian BSP: Đưa `startRoomMinGapTiles` vào thiết lập `minDungeonY = Mathf.Max(startRoomHeight, doorGridY) + Mathf.Max(2, startRoomMinGapTiles)` cho `mainDungeonRoot`. Tuyệt đối không một phòng nào trong toàn bộ hầm ngục có thể sinh trong vùng đệm an toàn trước cửa phòng khởi đầu.
   - Đồng bộ liên kết phòng: Lưu `data.startRoomBounds = closestRoom` trong `ConnectStartRoom` và cập nhật `DungeonRoomAnalyzer` ưu tiên gán `data.startRoom` theo `data.startRoomBounds`, đảm bảo phòng kết nối thực tế đồng bộ 100% với phòng bắt đầu của BFS đồ thị và Mini-map.
   - Hành lang dẫn lối an toàn: Tự động dẫn đoạn hành lang thẳng tối thiểu ra khỏi cửa (`minTurnY = gridDoorPos.y + corridorThickness + 1`) trước khi rẽ Z, loại bỏ hoàn toàn nguy cơ tường hành lang gãy góc đè lên ngàm nối cửa khởi đầu.
+
+- [x] **FIX-04: Khắc phục hầm ngục Standalone Build (.exe) bị trống trơn đạo cụ (Bake Prefabs trực tiếp vào DungeonScene & Tự động hóa IPreprocessBuildWithReport)**
+  - Phát hiện nguyên nhân cốt lõi: `DungeonPropDecorator` trước đây nạp động 80+ Prefabs (đuốc, bàn ghế, thùng vỡ, rương báu, templates tàn tích, bục Boss) qua `AssetDatabase` trong hàm `Awake()` chỉ chạy được ở Unity Editor. Khi build bản standalone (.exe), `AssetDatabase` bị loại bỏ và scene file `DungeonScene.unity` chưa từng được lưu danh sách prefabs, dẫn đến toàn bộ danh sách là null/rỗng khiến hầm ngục sinh ra trống trơn.
+  - Khắc phục triệt để: Xây dựng bộ công cụ [`DungeonPropSetupEditor.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/DungeonPropSetupEditor.cs), tích hợp `IPreprocessBuildWithReport` tự động kiểm tra và khóa cứng toàn bộ prefabs vào file `DungeonScene.unity` trước mỗi lần Build Player.
+  - Tích hợp 1-Click Menu `Infinite Labyrinth -> PCG -> 1. Cấu Hình & Lưu Prefabs Trang Trí Hầm Ngục (1-Click)` và đưa vào Master Dashboard (`Ctrl+Alt+D`).
 
 - [x] **PCG-03: Hệ thống sinh Thùng Gỗ Đập Được & Rương Báu (Interactive Chests & Breakable Barrels)**
   - Tự động nạp các Prefabs từ `Assets/Prefabs/RPG/` (`Breakable_Barrel_Small/Medium/Large`, `Interactive_Chest`, `Interactive_Chest_Gold`).
@@ -479,6 +484,97 @@
     + Scale Giáp Boss: $+3\text{ DEF}$ mỗi tầng; Scale toàn bộ sát thương các chiêu thức của Boss $+14\%$ mỗi tầng.
     + `BossVictoryDirector.cs`: Lắng nghe đồng bộ sự kiện tử trận của cả `IceGolemController` và `RedIgnisController`.
 
+- [x] **RPG-14: Hệ Thống Trang Sức (Accessories) Đa Dạng Hóa Trang Bị & 2 Ô Trang Bị Phụ Trợ (Dual Accessory Slots)**
+  - [x] **Bước 1: Core Logic, Procedural Affix, Dual Slot Inventory & UI Bindings (HOÀN THÀNH):**
+    + `ItemEnums.cs`: Bổ sung `ItemType.Accessory = 6` với giá trị int tường minh bảo toàn cấu trúc tuần tự hóa asset cũ.
+    + `ItemData.cs`: Mở rộng thuộc tính `IsEquipment` bao gồm `Accessory`, ràng buộc `maxStack = 1` qua `OnValidate()`.
+    + `EquipmentAffixData.cs`: Tích hợp thuộc tính chính linh hoạt `mainStatType` và `rolledMainStat`, phương thức tính toán `GetMainStatValue(upgradeLevel)` tăng tiến theo cấp cường hóa Lò rèn (+1 đến +5).
+    + `EquipmentAffixGenerator.cs`: Tạo `AccessorySubStatPool` (11 chỉ số), cơ chế bốc thăm trọng số, tự động trích xuất thuộc tính chính qua `GetAccessoryPrimaryStatInfo(ItemData)` với biên độ roll $\pm 8\%\sim 25\%$, loại trừ thuộc tính chính khỏi pool substats, và kích hoạt 10 mốc phù phép thức tỉnh.
+    + `InventoryManager.cs`: Thiết lập 2 ô trang sức song song (`equippedAccessory1`, `equippedAccessory2`), tự động trang bị vào ô trống hoặc thay thế ô ưu tiên, cập nhật tất cả 11 hàm tính toán tổng chỉ số nhân vật (`GetTotal...Bonus`), kiểm tra phù phép trên cả 2 trang sức (`HasEnchantment`), và nâng cấp Lò rèn (`UpgradeEquipped`).
+    + `EquipmentSlotUI.cs`: Mở rộng chỉ mục `slotIndex` (0 và 1), cơ chế `AutoFindReferences` tự động nhận diện `AccessorySlot` (slot 0) và `AccessorySlot2` (slot 1), tự động kích hoạt badge cường hóa.
+    + `InventoryUIController.cs` & `InventoryDragDropController.cs`: Nối dây 2 ô trang sức, hỗ trợ đầy đủ Click xem chi tiết, Right-click tháo/mặc nhanh, Kéo thả (Drag & Drop) 2 chiều giữa túi và ô trang bị, phân loại trang sức vào danh mục Tab Armor.
+    + `ItemDetailPopupUI.cs`: Hiển thị dòng chính linh hoạt của Trang sức trên MainStats, nút Equip/Unequip với `slotIndex`, tên phân loại `"Accessory"`.
+    + `BlacksmithUIController.cs` & `ShopUIController.cs`: Hỗ trợ nạp trang sức vào đe rèn cường hóa (+1..+5), hiển thị xem trước Before/After, mua/bán tại Cửa hàng (tự động roll Affix khi mua).
+    + `LootDropper.cs`, `WorldItemPickup.cs` & `AdminCheatUI.cs`: Tự động sinh Procedural Affix khi trang sức rơi từ quái/rương hoặc vứt ra đất; hỗ trợ subtitle và lọc thẻ trong Creative Admin.
+  - [x] **Bước 2: Tạo Bộ 11 ScriptableObject Trang Sức (Accessories) (HOÀN THÀNH):**
+    + Cấu hình và khởi tạo thành công trọn bộ 11 `.asset` Trang Sức chuẩn hóa tại `Assets/ScriptableObjects/Items/`:
+      1. `Item_Acc_Copper_Band` (Common, +12 Max Stamina, giá 20 Gold)
+      2. `Item_Acc_Iron_Will` (Common, +4 Defense, giá 35 Gold)
+      3. `Item_Acc_Windrunner` (Uncommon, +5% Movement Speed, giá 70 Gold)
+      4. `Item_Acc_Quartz_Pendant` (Uncommon, -8% Stamina Cost, giá 80 Gold)
+      5. `Item_Acc_Warrior_Crest` (Uncommon, +40 Max Health, giá 90 Gold)
+      6. `Item_Acc_Arcane_Ring` (Rare, -10% Spirit Cost, giá 160 Gold)
+      7. `Item_Acc_Berserker_Ring` (Rare, +4% Critical Rate, giá 180 Gold)
+      8. `Item_Acc_Bloodstone_Choker` (Rare, +2.5% Lifesteal, giá 210 Gold)
+      9. `Item_Acc_Frost_Monarch` (Epic, +15% Spirit Gain, giá 325 Gold)
+      10. `Item_Acc_Crimson_Dragon_Heart` (Legendary, +12 Attack Damage, giá 550 Gold)
+      11. `Item_Acc_Void_Eye_Pendant` (Legendary, +25% Critical Damage, giá 675 Gold)
+    + Cập nhật `ItemDatabaseGenerator.cs`: Hỗ trợ tìm kiếm Sprite đệ quy qua các thư mục con `Accessories/`, `Armors/`, `Swords/`, `Potions/`, `Materials/`.
+  - [x] **Bước 3: Phân Bổ Vào Hệ Thống Kinh Tế & Thu Thập (Shop, Drop Tables, Crafting) (HOÀN THÀNH):**
+    + **Cửa Hàng Haven (`EquipmentShopData.asset` & `ShopSetupEditor.cs`):** Tinh chỉnh chỉ bán 3 Trang Sức cơ bản (Copper Band 40G, Iron Will 70G, Windrunner 140G), toàn bộ trang sức bậc cao đưa vào Rương Dungeon và Lò Rèn.
+    + **Ma Trận Rơi Đồ Hầm Ngục (`LootTableSetupEditor.cs` & 7 Prefabs):** Đã nâng cấp toàn diện sang hệ thống phân tầng Floor-Based Loot.
+    + **Công Thức Rèn Tại Lò Rèn Haven (`CraftingRecipe`):** Bổ sung trọn bộ 6 công thức chế tạo Trang Sức tại `Assets/ScriptableObjects/Crafting/` (Warrior Crest, Berserker Ring, Bloodstone Choker, Frost Monarch, Crimson Dragon Heart, Void Eye Pendant).
+
+- [x] **RPG-15: Hệ Thống Phân Tầng Chiến Lợi Phẩm (Floor-Based Tiered Loot) & Tái Cấu Trúc Dòng Chính Trang Sức (HOÀN THÀNH):**
+  - **Dòng chính Trang Sức Random Theo Pool Phân Cấp (`EquipmentAffixGenerator.cs`):**
+    + Thay thế giá trị tĩnh bằng Pool dòng chính phân cấp:
+      * *Common:* Sinh tồn cơ bản (`MaxStamina`, `DefenseBonus`, `HealthBonus`).
+      * *Uncommon:* Thêm cơ động & thể lực (`MoveSpeedBonus`, `StaminaCostReduction`, `AttackBonus`).
+      * *Rare+ / Epic / Legendary:* Mở rộng toàn bộ 11 chỉ số thuộc tính chiến đấu.
+    + Bảng giá trị cơ sở (`GetAccessoryBaseStatValue`) tăng tiến theo phẩm cấp (Stamina 15 $\to$ 60, CritRate 4% $\to$ 8.5%, CritDamage 16% $\to$ 38%, Lifesteal 2.5% $\to$ 6.0%) kết hợp biến thiên ngẫu nhiên `mainVariance` ($\pm 8\% \sim 25\%$).
+    + Tự động loại trừ dòng chính đã roll khỏi Pool Dòng Phụ (Substats), triệt tiêu 100% trùng lặp chỉ số.
+    + **Chuẩn Hóa Hiển Thị Xem Trước (Preview UI):** Khi xem trước Trang Sức chưa sở hữu (tại Shop, Lò Rèn Tab Rèn, Popup hoặc Admin Creative), dòng chính hiển thị cố định nhãn Main Stat: <color=#90A4AE>Random</color> đồng bộ với Substats, triệt tiêu hiện tượng nhảy số ngẫu nhiên mỗi lần bấm chuột và xóa bỏ hành vi canh 're-roll ảo'.
+  - **Cơ Chế Phân Tầng Chiến Lợi Phẩm Theo Tầng (`LootData.cs` & `LootDropper.cs`):**
+    + `LootEntry`: Bổ sung `minFloor` (mặc định 1) và `maxFloor` (mặc định 999).
+    + `LootDropper.DropLoot()`: Nhận diện thời gian thực `GameManager.Instance.CurrentFloor`, lọc bỏ các mục không thuộc tầng hiện tại, tăng nhẹ lượng Vàng rơi $+20\%$ mỗi tầng từ Tầng 2.
+    + **Quái thường Tầng 1:** Loại bỏ hoàn toàn việc rơi Gear trực tiếp; chỉ rơi Vàng, Nguyên liệu quái, Đá cường hóa, Bình thuốc và Monster Gem (6-12%).
+    + **Quái Tinh Nhuệ (Elite Monsters Tầng 2+):** Bổ sung `eliteGearPool` với tỷ lệ rơi $25\%$ đồ Uncommon/Rare khi bị tiêu diệt.
+  - **Tái Cấu Trúc Ma Trận Rơi Đồ Rương Báu & Rương Boss Bục Đá 12m (`LootTableSetupEditor.cs`):**
+    + *Rương Thường:* Tầng 1 rơi đồ Uncommon (25%), Trang sức Common/Uncommon (15%); Tầng 2+ rơi đồ Rare (35%), Trang sức Rare (20%).
+    * *Rương Hiếm:* Tầng 1 rơi vũ khí Rare (40%), giáp Rare (25%), trang sức Rare (20%); Tầng 2+ rơi đồ Epic (15%), trang sức Epic (30%).
+    * *Rương Boss Bục Đá 12m:*
+      - **Tầng 1:** $50\%$ rơi Gear Rare, **$15\%$ rơi Gear Epic (chuẩn jackpot cân bằng)**, $0\%$ rơi Legendary (khóa trang bị endgame ở tầng 1); $50\%$ rơi Trang sức Rare, $15\%$ rơi Trang sức Epic (Frost Monarch).
+      - **Tầng 2+:** $60\%$ Rare/Epic, $30\%$ Epic cực phẩm, $10\%$ Legendary, $40\%$ Trang sức Epic/Legendary.
+  - **Mở Rộng 4 Công Thức Rèn Trang Sức Tại Lò Rèn Haven (`BlacksmithSetupEditor.cs`):**
+    + `recipe_acc_warrior_crest`: 4 Huy Hiệu Chiến Binh + 2 Đá Cường Hóa + 120 Vàng.
+    + `recipe_acc_berserker`: 4 Mảnh Xương + 1 Ngọc Quái Vật + 3 Đá Cường Hóa + 220 Vàng.
+    + `recipe_acc_bloodstone`: 2 Bụi Ma Pháp + 1 Ngọc Quái Vật + 3 Đá Cường Hóa + 260 Vàng.
+    + `recipe_acc_dragon_heart`: 1 Lõi Lửa Flame Core + 2 Huy Hiệu Liệt Hỏa + 1 Tinh Thể Hoàn Mỹ + 650 Vàng.
+
+- [x] **RPG-16: Hệ Thống Cường Hóa Đa Dạng (Dynamic 3D Upgrade Formula) & Định Giá Bán Theo Cấp Đập Đồ (HOÀN THÀNH):**
+  - **Công Thức Nâng Cấp Linh Hoạt 3 Chiều (`BlacksmithUpgradeConfig.cs`):**
+    + Thay thế công thức hardcode tĩnh bằng thuật toán tính động: $\text{Chi Phí} = f(\text{ItemType}) \times f(\text{Rarity}) \times f(\text{UpgradeLevel})$.
+    + **Hệ số theo Loại Trang Bị (ItemType):** Vũ khí (Đá $\times 1.0$, Vàng $\times 1.0$); Giáp (Đá $\times 0.8$, Vàng $\times 0.9$); Trang sức (Đá $\times 0.6$, Vàng $\times 0.7$).
+    + **Hệ số theo Độ Hiếm (Rarity):** Common ($\times 1.0$), Uncommon ($\times 1.2$), Rare ($\times 1.5$), Epic ($\times 2.0$), Legendary ($\times 2.8$ Vàng, $\times 2.5$ Đá, $\times 1.5$ Tinh thể).
+    + **Nguyên Liệu Đặc Thù Chuẩn Lore Từng Trang Bị (`ResolveSpecialMaterial`):**
+      * *Common:* Không yêu cầu nguyên liệu phụ.
+      * *Uncommon:* Yêu cầu Mảnh Xương Quái (`mat_bone_fragment`) hoặc Huy Hiệu Chiến Binh (`mat_warrior_insignia`).
+      * *Rare:* Yêu cầu Bụi Ma Pháp (`mat_arcane_dust`), Huy Hiệu hoặc Monster Gem (`mat_monster_gem`).
+      * *Epic:* Tự động nhận diện hệ nguyên tố của trang bị: Hệ Băng dùng Mảnh Cổ Tự Băng (`mat_boss_ice_rune`); Hệ Lửa dùng Huy Hiệu Liệt Hỏa (`mat_boss_fire_crest`); Hệ Hư Không dùng Tinh Chất Vực Thẳm (`mat_boss_void_essence`); Trang sức dùng Monster Gem.
+      * *Legendary:* Cấp +1..+2 dùng nguyên liệu tinh hoa; Cấp +3..+5 bắt buộc dùng **Lõi Boss tối thượng** tương ứng (Trái Tim Băng `mat_boss_ice_core`, Lõi Lửa `mat_boss_fire_core`, Con Mắt Hư Không `mat_boss_void_eye`, hoặc Đại Ma Viên Ngọc `mat_boss_gem`).
+  - **Đồng Bộ Giao Diện Lò Rèn Haven (`BlacksmithUIController.cs`):**
+    + Tự động hiển thị thẻ nguyên liệu đặc thù thứ 3 trên `upgradeMaterialsContainer` kèm màu Rarity, icon và trạng thái đủ/thiếu $\text{Owned/Needed}$.
+    + Kiểm tra điều kiện đủ đồ chặt chẽ qua `CanAffordUpgrade` 4 tiêu chí (Vàng, Đá, Tinh thể, Nguyên liệu đặc thù) và khấu trừ chuẩn xác khi nhấn nút UPGRADE.
+  - **Cơ Chế Tăng Giá Bán Trang Bị Đã Cường Hóa (+1 đến +5) (`ItemData.cs`, `ShopUIController.cs`, `ItemDetailPopupUI.cs`):**
+    + Phương thức `ItemData.GetSellPrice(upgradeLevel)`: Trang bị đã đập đồ bán lại cho Shop với giá cao vượt trội: $\text{SellPrice} = \text{BaseSell} \times (1 + 0.35 \times \text{Level}) + (\text{Level} \times 25\text{ Gold})$, hoàn vốn và tôn vinh công sức đập đồ của người chơi.
+    + `ShopUIController.cs`: Tự động nhận diện `slot.UpgradeLevel` khi bán trang bị từ túi đồ, cộng đủ số Vàng lũy tiến vào túi người chơi.
+    + `ItemDetailPopupUI.cs`: Nút bán Shop giữ nguyên chữ `Sell` tinh gọn chuẩn UI không tràn viền nút; giá bán thực nhận lũy tiến được đồng bộ thể hiện ở dòng `Sell Value: X Gold (+N)` trong nội dung chi tiết.
+
+- [x] **RPG-17: Hoàn Thiện & Cân Bằng Toàn Diện Hệ Thống Vật Phẩm Tiêu Hao (Consumables & Potions System) (HOÀN THÀNH):**
+  - **Triển Khai Đầy Đủ Hiệu Ứng Toàn Bộ 6 Bình Thuốc (`InventoryManager.cs`, `PlayerCombat.cs`, `PlayerStats.cs`, `PlayerController.cs`):**
+    + *Bình Máu Nhỏ (`potion_health_small`):* Tăng lượng hồi phục từ $40 \to 50\text{ HP}$ (tương đương $50\%$ thanh máu gốc 100 HP).
+    + *Bình Máu Lớn (`potion_health_large`):* Tăng lượng hồi phục từ $100 \to 120\text{ HP}$ (bảo đảm giá trị sinh tồn giữa các trận chiến khốc liệt).
+    + *Thuốc Da Sắt (`potion_ironbark_brew`):* Tăng từ $+15 \to +20\text{ DEF}$ trong thời gian **30 giây** (giảm trực tiếp $\sim 17\% - 25\%$ sát thương nhận vào).
+    + *Rượu Cuồng Nộ (`potion_berserker`):* Kích hoạt buff tấn công bộc phát: $+20\text{ Sát Thương Đòn Đánh}$ (Flat Attack) và $+15\%\text{ Tốc Độ Đánh}$ (Attack Speed) trong **25 giây**; hỗ trợ đầy đủ thanh tiến trình thời gian và Icon trên `PlayerBuffHUD.cs`.
+    + *Tiên Dược Thể Lực (`potion_stamina_elixir`):* Hồi tức thì **80 Thể Lực** + Kích hoạt buff tăng tốc hồi thể lực **$+50\%$ Stamina Recovery** và **$+15\%$ Tốc Độ Di Chuyển** trong **15 giây**; hỗ trợ hồi sức cấp bách khi né đòn/chém liên hoàn.
+    + *Mật Năng Lượng (`potion_spirit_nectar`):* Nạp tức thì **+120 Điểm Tinh Thần** (`GainSpirit(120f)`), đủ tài nguyên để tung ngay 2 lần Kỹ năng Lướt Kiếm (Skill E - 60 Spirit) hoặc 1 lần Trảm Phong (Skill Q - 100 Spirit).
+  - **Cơ Chế Bảo Vệ Chống Lãng Phí Tiêu Hao (`ApplyConsumableEffects`):**
+    + Tự động kiểm tra điều kiện sinh tồn trước khi sử dụng: chặn uống bình máu khi HP đã đầy $100\%$, chặn dùng Mật Năng Lượng khi Spirit đã đầy max $200/200$, hiển thị thông báo NotiFeed sinh động và hoàn lại vật phẩm.
+    + Gom chung logic xử lý giữa `UseItem()` (dùng từ túi đồ) và `UseEquippedUsable()` (dùng từ phím tắt F / Quick Slot) qua phương thức dùng chung `ApplyConsumableEffects()`, triệt tiêu hoàn toàn code trùng lặp.
+  - **Đồng Bộ Dữ Liệu ScriptableObject, Tooltip & Giao Diện:**
+    + Cập nhật chuẩn xác thông số và văn bản miêu tả lore/chỉ số trong 6 file `.asset` tại `Assets/ScriptableObjects/Items/`.
+    + Cập nhật hiển thị tooltip `ItemDetailPopupUI.cs` phản ánh chân thực các chỉ số mở rộng của bình thuốc.
+
 ---
 
 ## 🚩 GIAI ĐOẠN 4: Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & Trùm Học Máy (Boss ML-Agents)
@@ -570,6 +666,20 @@
   - Dựng hình Phòng & Hành lang chuẩn BSP: Ghép nối góc L, ngã 3 chữ T và ngã 4 bằng 9-slice; Thu nhẹ đầu hành lang `corridorLengthTrim` kết hợp đệm đáy `FloorBase` xóa sổ 100% mấu nhô thừa; Đại Lộ Boss 40m nối liền lạc không đứt gãy.
   - Cơ chế Sương mù Fog of War: 3 trạng thái Chưa khám phá, Lân cận và Đã khám phá sáng rực vàng gold; Luôn hiển thị vị trí Icon Boss, Icon Key Tế đàn và Icon Phòng Kho Báu.
   - Cân bằng Phòng Kho Báu: 75% phòng ngách cụt thành kho báu (3-4 phòng/dungeon), luôn có ít nhất 4 quái tinh nhuệ canh giữ.
+
+- [x] **POL-04: Bản Đồ Toàn Cảnh & Minimap Làng Haven (`VillageMapManager.cs`)**
+  - Kích hoạt bằng phím nóng `M` trong `LandScene`, hỗ trợ phím `Esc` để đóng. Bố trí ở tầng đáy Canvas bên dưới HUD và Inventory.
+  - Phân tách rành mạch (Scene Awareness): Phím `M` ở `LandScene` mở bản đồ Làng Haven; phím `M` ở `DungeonScene` mở bản đồ Hầm ngục PCG.
+  - Khai thác ảnh chụp trực giao chất lượng cao `Assets/UI RPG/GameImage/VillageMap.png` ($2624 \times 1632$) làm nền bản đồ.
+  - Hiển thị 5 điểm mốc (Landmarks/POI) với icon đặc trưng trong `Assets/UI RPG/Icon/Map/` kèm nhãn Text Outline nổi bật:
+    + 🔔 Chuông Thánh Haven (`Bell.png` - Tâm làng $X=186.89, Z=127.47$, hồi máu & respawn).
+    + ⚔️ Tiệm Trang Bị & Rèn Binh (`EquipmentShop.png` - $X=183.30, Z=114.10$).
+    + 🧪 Tiệm Dược Liệu & Tạp Hóa (`SuppliesShop.png` - $X=149.71, Z=144.10$).
+    + 🔨 Lò Rèn Haven (`BlackSmithShop.png` - $X=210.05, Z=119.76$, cường hóa $+1\dots+5$ & rèn trang bị thần binh).
+    + 🌀 Cổng Dịch Chuyển Dungeon (`Portal.png` - $X=235.17, Z=98.45$).
+  - Vị trí & Hướng nhìn Người chơi: Icon `Player_Icon.png` bám sát tọa độ thế giới 3D và xoay mượt mà theo góc quay nhân vật thời gian thực.
+  - Trải nghiệm Pan & Zoom hoàn hảo: Lăn chuột zoom ($0.6\times \dots 3.5\times$), kéo chuột trái Pan, tự động căn giữa Người chơi (`CenterMapOnPlayer`) khi vừa mở.
+  - Cơ chế Tự Phục Hồi (`EnsureInstance()` & `[RuntimeInitializeOnLoadMethod]`): Tự động nạp sprite, dựng khung UI và liên kết trong Runtime mà không cần setup thủ công. Tích hợp Tool 1-Click `VillageMapSetupEditor.cs` và Master Dashboard (`Ctrl+Alt+D`).
 
 ---
 

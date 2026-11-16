@@ -7,12 +7,13 @@ namespace InfiniteLabyrinth.Inventory
   /// </summary>
   public enum ItemType
   {
-    Weapon,     // Vũ khí (Kiếm, rìu...)
-    Armor,      // Giáp (Áo giáp, khiên...)
-    Consumable, // Vật phẩm tiêu hao (Bình máu, bình thể lực...)
-    Material,   // Nguyên liệu (Đá nâng cấp kiếm, xương quái, quặng...)
-    Currency,   // Tiền tệ (Đồng tiền vàng)
-    Key         // Chìa khóa & Vật phẩm nhiệm vụ (Chìa khóa Hầm ngục...)
+    Weapon = 0,     // Vũ khí (Kiếm, rìu...)
+    Armor = 1,      // Giáp (Áo giáp, khiên...)
+    Consumable = 2, // Vật phẩm tiêu hao (Bình máu, bình thể lực...)
+    Material = 3,   // Nguyên liệu (Đá nâng cấp kiếm, xương quái, quặng...)
+    Currency = 4,   // Tiền tệ (Đồng tiền vàng)
+    Key = 5,        // Chìa khóa & Vật phẩm nhiệm vụ (Chìa khóa Hầm ngục...)
+    Accessory = 6   // Trang sức (Nhẫn, dây chuyền, bùa hộ mệnh, ngọc...)
   }
 
   /// <summary>

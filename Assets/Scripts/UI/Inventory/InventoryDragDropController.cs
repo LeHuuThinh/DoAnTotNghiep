@@ -477,7 +477,7 @@ namespace InfiniteLabyrinth.UI
 
         if (toIdx >= 0)
         {
-          InventoryManager.Instance.UnequipToSlot(SourceEquipSlot.SlotType, toIdx);
+          InventoryManager.Instance.UnequipToSlot(SourceEquipSlot.SlotType, toIdx, SourceEquipSlot.SlotIndex);
         }
       }
       // 3. Kéo từ UpgradeSlot -> BagSlot (Tháo trang bị từ đe rèn thả vào ô túi đồ đích)
@@ -512,7 +512,7 @@ namespace InfiniteLabyrinth.UI
           int bagIdx = SourceBagSlot.ActualBagIndex;
           if (bagIdx >= 0)
           {
-            InventoryManager.Instance.EquipFromSlot(bagIdx);
+            InventoryManager.Instance.EquipFromSlot(bagIdx, targetEquipSlot.SlotIndex);
           }
         }
         else

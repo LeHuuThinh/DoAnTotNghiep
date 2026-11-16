@@ -36,6 +36,59 @@ namespace InfiniteLabyrinth.Inventory
       SubStatType.SpiritCostReduction
     };
 
+    private static readonly SubStatType[] AccessorySubStatPool = new[]
+    {
+      SubStatType.CritRate,
+      SubStatType.CritDamage,
+      SubStatType.Lifesteal,
+      SubStatType.MoveSpeedBonus,
+      SubStatType.SpiritGainBonus,
+      SubStatType.SpiritCostReduction,
+      SubStatType.StaminaCostReduction,
+      SubStatType.MaxStamina,
+      SubStatType.HealthBonus,
+      SubStatType.AttackBonus,
+      SubStatType.DefenseBonus
+    };
+
+    /// <summary>
+    /// Pool dòng chính phân cấp cho Trang Sức (Accessory) theo Phẩm cấp (Rarity):
+    /// - Common: Sinh tồn & phòng ngự cơ bản (MaxStamina, Defense, Health).
+    /// - Uncommon: Mở rộng thêm độ cơ động & thể lực (MoveSpeed, StaminaCostReduction, AttackBonus).
+    /// - Rare+: Mở rộng đầy đủ 11 chỉ số thuộc tính.
+    /// </summary>
+    private static readonly SubStatType[] CommonAccessoryMainPool = new[]
+    {
+      SubStatType.MaxStamina,
+      SubStatType.DefenseBonus,
+      SubStatType.HealthBonus
+    };
+
+    private static readonly SubStatType[] UncommonAccessoryMainPool = new[]
+    {
+      SubStatType.MaxStamina,
+      SubStatType.DefenseBonus,
+      SubStatType.HealthBonus,
+      SubStatType.MoveSpeedBonus,
+      SubStatType.StaminaCostReduction,
+      SubStatType.AttackBonus
+    };
+
+    private static readonly SubStatType[] RareAccessoryMainPool = new[]
+    {
+      SubStatType.MaxStamina,
+      SubStatType.DefenseBonus,
+      SubStatType.HealthBonus,
+      SubStatType.MoveSpeedBonus,
+      SubStatType.StaminaCostReduction,
+      SubStatType.AttackBonus,
+      SubStatType.CritRate,
+      SubStatType.CritDamage,
+      SubStatType.Lifesteal,
+      SubStatType.SpiritGainBonus,
+      SubStatType.SpiritCostReduction
+    };
+
     /// <summary>
     /// Trọng số xác suất xuất hiện của từng loại dòng phụ (Weighted Random Roll).
     /// Tier S (Crit, Lifesteal): Hiếm (10)
@@ -62,7 +115,7 @@ namespace InfiniteLabyrinth.Inventory
           default: return 20;
         }
       }
-      else // Armor
+      else if (itemType == ItemType.Armor)
       {
         switch (type)
         {
@@ -75,6 +128,24 @@ namespace InfiniteLabyrinth.Inventory
           case SubStatType.DefenseBonus: return 45;
           case SubStatType.HealthBonus: return 45;
           default: return 25;
+        }
+      }
+      else // Accessory
+      {
+        switch (type)
+        {
+          case SubStatType.CritRate: return 15;
+          case SubStatType.CritDamage: return 15;
+          case SubStatType.Lifesteal: return 15;
+          case SubStatType.MoveSpeedBonus: return 20;
+          case SubStatType.SpiritGainBonus: return 20;
+          case SubStatType.SpiritCostReduction: return 25;
+          case SubStatType.StaminaCostReduction: return 25;
+          case SubStatType.MaxStamina: return 25;
+          case SubStatType.AttackBonus: return 20;
+          case SubStatType.HealthBonus: return 30;
+          case SubStatType.DefenseBonus: return 30;
+          default: return 20;
         }
       }
     }
@@ -113,7 +184,7 @@ namespace InfiniteLabyrinth.Inventory
     public static EquipmentAffixData Generate(ItemData item, int initialUpgradeLevel = 0)
     {
       if (item == null) return null;
-      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return null;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Accessory) return null;
 
       var affix = new EquipmentAffixData();
       ItemRarity rarity = item.Rarity;
@@ -176,6 +247,17 @@ namespace InfiniteLabyrinth.Inventory
           affix.rolledDefense = 0f;
         }
       }
+      else if (item.ItemType == ItemType.Accessory)
+      {
+        var (primaryType, baseVal) = GetAccessoryPrimaryStatInfo(item);
+
+        affix.mainStatType = primaryType;
+        affix.rolledMainStat = Mathf.Max(1f, Mathf.Round(baseVal * mainVariance * 10f) / 10f);
+
+        if (primaryType == SubStatType.DefenseBonus) affix.rolledDefense = affix.rolledMainStat;
+        else if (primaryType == SubStatType.HealthBonus) affix.rolledHealth = affix.rolledMainStat;
+        else if (primaryType == SubStatType.AttackBonus) affix.rolledAttack = affix.rolledMainStat;
+      }
 
       // 2. ROLL DÒNG PHỤ (SUB-STATS)
       int subStatCount = 0;
@@ -198,7 +280,7 @@ namespace InfiniteLabyrinth.Inventory
           break;
       }
 
-      SubStatType[] pool = (item.ItemType == ItemType.Weapon) ? WeaponSubStatPool : ArmorSubStatPool;
+      SubStatType[] pool = (item.ItemType == ItemType.Weapon) ? WeaponSubStatPool : (item.ItemType == ItemType.Armor ? ArmorSubStatPool : AccessorySubStatPool);
       var availableTypes = new List<SubStatType>(pool);
 
       // Nếu giáp đã có dòng chính là Defense thì loại bớt DefenseBonus khỏi pool dòng phụ (và tương tự với Health)
@@ -206,6 +288,10 @@ namespace InfiniteLabyrinth.Inventory
       {
         if (affix.rolledDefense > 0f) availableTypes.Remove(SubStatType.DefenseBonus);
         if (affix.rolledHealth > 0f) availableTypes.Remove(SubStatType.HealthBonus);
+      }
+      else if (item.ItemType == ItemType.Accessory)
+      {
+        availableTypes.Remove(affix.mainStatType);
       }
 
       for (int i = 0; i < subStatCount && availableTypes.Count > 0; i++)
@@ -270,6 +356,143 @@ namespace InfiniteLabyrinth.Inventory
       }
 
       return affix;
+    }
+
+    /// <summary>
+    /// Xác định thuộc tính chính (Primary Stat) và giá trị gốc cho Trang Sức (Accessory) dựa theo Pool Phân Cấp Rarity
+    /// </summary>
+    public static (SubStatType primaryType, float baseVal) GetAccessoryPrimaryStatInfo(ItemData item)
+    {
+      if (item == null) return (SubStatType.MaxStamina, 15f);
+
+      ItemRarity rarity = item.Rarity;
+      SubStatType[] pool;
+      switch (rarity)
+      {
+        case ItemRarity.Common:
+          pool = CommonAccessoryMainPool;
+          break;
+        case ItemRarity.Uncommon:
+          pool = UncommonAccessoryMainPool;
+          break;
+        default:
+          pool = RareAccessoryMainPool; // Rare, Epic, Legendary
+          break;
+      }
+
+      int pickIndex = UnityEngine.Random.Range(0, pool.Length);
+      SubStatType chosenType = pool[pickIndex];
+      float baseVal = GetAccessoryBaseStatValue(chosenType, rarity);
+
+      return (chosenType, baseVal);
+    }
+
+    /// <summary>
+    /// Bảng giá trị cơ sở cho từng loại dòng chính Trang Sức tăng tiến theo Phẩm cấp (Rarity)
+    /// </summary>
+    public static float GetAccessoryBaseStatValue(SubStatType type, ItemRarity rarity)
+    {
+      switch (type)
+      {
+        case SubStatType.MaxStamina:
+          switch (rarity)
+          {
+            case ItemRarity.Common: return 15f;
+            case ItemRarity.Uncommon: return 22f;
+            case ItemRarity.Rare: return 32f;
+            case ItemRarity.Epic: return 45f;
+            case ItemRarity.Legendary: return 60f;
+          }
+          break;
+        case SubStatType.HealthBonus:
+          switch (rarity)
+          {
+            case ItemRarity.Common: return 30f;
+            case ItemRarity.Uncommon: return 50f;
+            case ItemRarity.Rare: return 80f;
+            case ItemRarity.Epic: return 120f;
+            case ItemRarity.Legendary: return 160f;
+          }
+          break;
+        case SubStatType.DefenseBonus:
+          switch (rarity)
+          {
+            case ItemRarity.Common: return 4f;
+            case ItemRarity.Uncommon: return 7f;
+            case ItemRarity.Rare: return 12f;
+            case ItemRarity.Epic: return 18f;
+            case ItemRarity.Legendary: return 25f;
+          }
+          break;
+        case SubStatType.MoveSpeedBonus:
+          switch (rarity)
+          {
+            case ItemRarity.Uncommon: return 5f;
+            case ItemRarity.Rare: return 8f;
+            case ItemRarity.Epic: return 12f;
+            case ItemRarity.Legendary: return 15f;
+            default: return 4f;
+          }
+        case SubStatType.StaminaCostReduction:
+          switch (rarity)
+          {
+            case ItemRarity.Uncommon: return 6f;
+            case ItemRarity.Rare: return 10f;
+            case ItemRarity.Epic: return 14f;
+            case ItemRarity.Legendary: return 20f;
+            default: return 5f;
+          }
+        case SubStatType.AttackBonus:
+          switch (rarity)
+          {
+            case ItemRarity.Uncommon: return 5f;
+            case ItemRarity.Rare: return 8f;
+            case ItemRarity.Epic: return 13f;
+            case ItemRarity.Legendary: return 18f;
+            default: return 4f;
+          }
+        case SubStatType.CritRate:
+          switch (rarity)
+          {
+            case ItemRarity.Rare: return 4.0f;
+            case ItemRarity.Epic: return 6.0f;
+            case ItemRarity.Legendary: return 8.5f;
+            default: return 3.0f;
+          }
+        case SubStatType.CritDamage:
+          switch (rarity)
+          {
+            case ItemRarity.Rare: return 16f;
+            case ItemRarity.Epic: return 26f;
+            case ItemRarity.Legendary: return 38f;
+            default: return 12f;
+          }
+        case SubStatType.Lifesteal:
+          switch (rarity)
+          {
+            case ItemRarity.Rare: return 2.5f;
+            case ItemRarity.Epic: return 4.0f;
+            case ItemRarity.Legendary: return 6.0f;
+            default: return 2.0f;
+          }
+        case SubStatType.SpiritGainBonus:
+          switch (rarity)
+          {
+            case ItemRarity.Rare: return 12f;
+            case ItemRarity.Epic: return 18f;
+            case ItemRarity.Legendary: return 25f;
+            default: return 10f;
+          }
+        case SubStatType.SpiritCostReduction:
+          switch (rarity)
+          {
+            case ItemRarity.Rare: return 8f;
+            case ItemRarity.Epic: return 12f;
+            case ItemRarity.Legendary: return 18f;
+            default: return 6f;
+          }
+      }
+      return 10f;
     }
 
     private static float RollSubStatValue(SubStatType type, ItemRarity rarity)

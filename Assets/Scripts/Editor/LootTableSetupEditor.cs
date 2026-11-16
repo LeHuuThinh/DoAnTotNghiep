@@ -36,7 +36,7 @@ namespace InfiniteLabyrinth.Editor
     [MenuItem("Infinite Labyrinth/RPG/2. Cấu Hình Ma Trận Rơi Đồ (Full Loot Drop Tables)", false, 20)]
     public static void ConfigureAllLootTablesManual()
     {
-      ConfigureAllLootTables(true);
+      ConfigureAllLootTables(false);
     }
 
     [InitializeOnLoadMethod]
@@ -47,10 +47,9 @@ namespace InfiniteLabyrinth.Editor
         if (File.Exists(MinionPrefabPath))
         {
           string minionText = File.ReadAllText(MinionPrefabPath);
-          // Kiểm tra xem đã cập nhật sang chuẩn cân bằng kinh tế mới chưa (minGold: 1 thay vì minGold: 3)
-          if (!minionText.Contains("minGold: 1") || !minionText.Contains("goldDropChance: 0.65"))
+          if (!minionText.Contains("e3e97e9a6af840da8877aa2c08a157cb")) // GUID của Item_Acc_Copper_Band
           {
-            Debug.Log("[LootTableSetupEditor] Phát hiện bản cân bằng kinh tế mới (Balanced Gold Economy). Đang tự động cập nhật Ma Trận Rơi Đồ chuẩn...");
+            Debug.Log("[LootTableSetupEditor] Phát hiện bổ sung Trang Sức (Accessories) vào Ma Trận Rơi Đồ. Đang tự động cập nhật...");
             ConfigureAllLootTables(false);
           }
         }
@@ -106,7 +105,23 @@ namespace InfiniteLabyrinth.Editor
 
       // ==========================================
       // 2. CẤU HÌNH 4 QUÁI SKELETON (CÂN BẰNG MỚI)
+      // QUÁI THƯỜNG KHÔNG RƠI GEAR TRỰC TIẾP (CHỈ VÀNG, NGUYÊN LIỆU, THUỐC, NGỌC MONSTER GEM)
+      // QUÁI TINH NHUỆ (ELITE TẦNG 2+) CÓ 25% TỶ LỆ RƠI GEAR
       // ==========================================
+      var eliteGearList = new List<ItemData>
+      {
+        LoadItem("Item_Sword_Novice.asset"),
+        LoadItem("Item_Sword_Broad_Iron.asset"),
+        LoadItem("Item_Sword_DarkIron.asset"),
+        LoadItem("Item_Sword_Vanguard.asset"),
+        LoadItem("Item_Sword_Punk.asset"),
+        LoadItem("Item_Armor_Leather.asset"),
+        LoadItem("Item_Armor_Iron_Cuirass.asset"),
+        LoadItem("Item_Acc_Windrunner.asset"),
+        LoadItem("Item_Acc_Quartz_Pendant.asset"),
+        LoadItem("Item_Acc_Warrior_Crest.asset")
+      };
+
       // A. Skeleton Minion
       // 65% Vàng (1-3), 30% Mảnh Xương Quái, 6% Ngọc Quái Vật (Monster Gem)
       updatedCount += ConfigurePrefab(MinionPrefabPath, worldPickup, goldConfig, goldItem,
@@ -115,7 +130,8 @@ namespace InfiniteLabyrinth.Editor
         {
           CreateEntry(LoadItem("Item_Mat_Bone_Fragment.asset"), 0.30f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.06f, 1, 1)
-        });
+        },
+        eliteGear: eliteGearList, eliteGearChance: 0.25f);
 
       // B. Skeleton Warrior
       // 80% Vàng (3-6), 45% 1-2 Mảnh Xương, 20% Huy Hiệu Chiến Binh, 10% Đá Cường Hóa, 8% Ngọc Quái Vật
@@ -127,7 +143,8 @@ namespace InfiniteLabyrinth.Editor
           CreateEntry(LoadItem("Item_Mat_Warrior_Insignia.asset"), 0.20f, 1, 1),
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.10f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
-        });
+        },
+        eliteGear: eliteGearList, eliteGearChance: 0.25f);
 
       // C. Skeleton Rogue
       // 80% Vàng (4-7), 40% 1-2 Mũi Tên Đen, 20% Bình Máu Nhỏ, 12% Tiên Dược Thể Lực, 8% Ngọc Quái Vật
@@ -139,7 +156,8 @@ namespace InfiniteLabyrinth.Editor
           CreateEntry(LoadItem("Item_Potion_Health.asset"), 0.20f, 1, 1),
           CreateEntry(LoadItem("Item_Potion_Stamina_Elixir.asset"), 0.12f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.08f, 1, 1)
-        });
+        },
+        eliteGear: eliteGearList, eliteGearChance: 0.25f);
 
       // D. Skeleton Mage
       // 90% Vàng (7-12), 50% 1-2 Bụi Tinh Hoa Ma Pháp, 25% Đá Cường Hóa, 8% Giấy Da Cổ Ma Thuật, 12% Ngọc Quái Vật
@@ -151,49 +169,114 @@ namespace InfiniteLabyrinth.Editor
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.25f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Spell_Parchment.asset"), 0.08f, 1, 1),
           CreateEntry(LoadItem("Item_Mat_Monster_Gem.asset"), 0.12f, 1, 1)
-        });
+        },
+        eliteGear: eliteGearList, eliteGearChance: 0.25f);
 
       // ==========================================
-      // 3. CẤU HÌNH 3 CẤP ĐỘ RƯƠNG KHO BÁU (CÂN BẰNG MỚI)
+      // 3. CẤU HÌNH 3 CẤP ĐỘ RƯƠNG KHO BÁU (PHÂN TẦNG FLOOR-BASED)
       // ==========================================
       // A. Rương Thường (Interactive_Chest)
-      // 100% Vàng (20-40), 100% 1-2 Bình Máu Nhỏ, 40% 1 Đá Cường Hóa, 25% Trang bị Uncommon ngẫu nhiên
+      // 100% Vàng (20-40), 100% 1-2 Bình Máu Nhỏ, 40% 1 Đá Cường Hóa
+      // Tầng 1: 25% Uncommon gear, 15% Common/Uncommon Acc
+      // Tầng 2+: 35% Uncommon/Rare gear, 20% Uncommon/Rare Acc
       updatedCount += ConfigurePrefab(ChestNormalPrefabPath, worldPickup, goldConfig, goldItem,
         goldChance: 1.0f, minGold: 20, maxGold: 40,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health.asset"), 1.0f, 1, 2),
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 0.40f, 1, 1),
+
+          // Tầng 1: Đồ Tân binh / Thám hiểm
           CreatePoolEntry(new List<ItemData>
           {
             LoadItem("Item_Sword_Novice.asset"),
             LoadItem("Item_Sword_Broad_Iron.asset"),
             LoadItem("Item_Armor_Leather.asset"),
             LoadItem("Item_Armor_Cloth_Novice.asset")
-          }, 0.25f, 1, 1)
+          }, 0.25f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Copper_Band.asset"),
+            LoadItem("Item_Acc_Iron_Will.asset"),
+            LoadItem("Item_Acc_Quartz_Pendant.asset")
+          }, 0.15f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // Tầng 2+: Đồ Rare & Trang sức cao hơn
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_DarkIron.asset"),
+            LoadItem("Item_Sword_Vanguard.asset"),
+            LoadItem("Item_Armor_Iron_Cuirass.asset")
+          }, 0.35f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Windrunner.asset"),
+            LoadItem("Item_Acc_Warrior_Crest.asset"),
+            LoadItem("Item_Acc_Arcane_Ring.asset")
+          }, 0.20f, 1, 1, minFloor: 2, maxFloor: 999)
         });
 
       // B. Rương Hiếm (Interactive_Chest_Rare)
-      // 100% Vàng (50-90), 100% 2-3 Bình Máu Lớn, 100% 2-3 Đá Cường Hóa, 50% Vũ khí Rare ngẫu nhiên, 30% Thiết Giáp Sắt
+      // 100% Vàng (50-90), 100% 2-3 Bình Máu Lớn, 100% 2-3 Đá Cường Hóa
+      // Tầng 1: 40% Vũ khí Rare, 25% Giáp Rare, 20% Trang sức Rare
+      // Tầng 2+: 50% Vũ khí Rare, 15% Vũ khí Epic, 30% Giáp, 30% Trang sức Rare/Epic
       updatedCount += ConfigurePrefab(ChestRarePrefabPath, worldPickup, goldConfig, goldItem,
         goldChance: 1.0f, minGold: 50, maxGold: 90,
         entries: new List<LootEntry>
         {
           CreateEntry(LoadItem("Item_Potion_Health_Large.asset"), 1.0f, 2, 3),
           CreateEntry(LoadItem("Item_Stone_Upgrade.asset"), 1.0f, 2, 3),
+
+          // Tầng 1: Rare Gear
           CreatePoolEntry(new List<ItemData>
           {
             LoadItem("Item_Sword_Punk.asset"),
             LoadItem("Item_Sword_Bone.asset"),
             LoadItem("Item_Sword_Dead.asset"),
             LoadItem("Item_Sword_Equilibrium.asset")
-          }, 0.50f, 1, 1),
-          CreateEntry(LoadItem("Item_Armor_Iron_Cuirass.asset"), 0.30f, 1, 1)
+          }, 0.40f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          CreateEntry(LoadItem("Item_Armor_Iron_Cuirass.asset"), 0.25f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Warrior_Crest.asset"),
+            LoadItem("Item_Acc_Arcane_Ring.asset"),
+            LoadItem("Item_Acc_Berserker_Ring.asset")
+          }, 0.20f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // Tầng 2+: Rare & Epic Gear
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Punk.asset"),
+            LoadItem("Item_Sword_Bone.asset"),
+            LoadItem("Item_Sword_Dead.asset"),
+            LoadItem("Item_Sword_Equilibrium.asset"),
+            LoadItem("Item_Armor_Bone_Carapace.asset")
+          }, 0.50f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Emerald.asset"),
+            LoadItem("Item_Sword_Rose.asset"),
+            LoadItem("Item_Sword_Katsunesi.asset")
+          }, 0.15f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Berserker_Ring.asset"),
+            LoadItem("Item_Acc_Bloodstone_Choker.asset"),
+            LoadItem("Item_Acc_Frost_Monarch.asset")
+          }, 0.30f, 1, 1, minFloor: 2, maxFloor: 999)
         });
 
       // C. Rương Boss Bục Đá 12m (Interactive_Chest_Boss)
       // 100% Vàng (150-250), 100% 1 Boss Gem (Epic), 100% Trái Tim Băng Ice Core, 100% 2-3 Mảnh Cổ Tự Băng,
-      // 100% 3-5 Đá Cường Hóa, 100% 1 Tinh Thể Hoàn Mỹ, 100% 3 Bình Máu Lớn, 100% 2 Mật Năng Lượng Spirit, 65% Trang bị Epic/Legendary
+      // 100% 3-5 Đá Cường Hóa, 100% 1 Tinh Thể Hoàn Mỹ, 100% 3 Bình Máu Lớn, 100% 2 Mật Năng Lượng Spirit
+      // TẦNG 1: 50% Rare gear, 15% Epic gear, 0% Legendary gear; 50% Rare Acc, 15% Epic Acc
+      // TẦNG 2+: 60% Rare/Epic gear, 30% Epic gear, 10% Legendary gear; 40% Epic/Legendary Acc
       updatedCount += ConfigurePrefab(ChestBossPrefabPath, worldPickup, goldConfig, goldItem,
         goldChance: 1.0f, minGold: 150, maxGold: 250,
         entries: new List<LootEntry>
@@ -205,14 +288,69 @@ namespace InfiniteLabyrinth.Editor
           CreateEntry(LoadItem("Item_Mat_Flawless_Crystal.asset"), 1.0f, 1, 1),
           CreateEntry(LoadItem("Item_Potion_Health_Large.asset"), 1.0f, 3, 3),
           CreateEntry(LoadItem("Item_Potion_Spirit_Nectar.asset"), 1.0f, 2, 2),
+
+          // --- TẦNG 1 ---
+          // 50% Rơi 1 Gear RARE
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Bone.asset"),
+            LoadItem("Item_Sword_Dead.asset"),
+            LoadItem("Item_Sword_Equilibrium.asset"),
+            LoadItem("Item_Sword_Vanguard.asset"),
+            LoadItem("Item_Armor_Bone_Carapace.asset")
+          }, 0.50f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // 15% Rơi 1 Gear EPIC (Jackpot Tầng 1, KHÔNG CÓ LEGENDARY)
           CreatePoolEntry(new List<ItemData>
           {
             LoadItem("Item_Sword_Demonic.asset"),
             LoadItem("Item_Sword_Titan.asset"),
-            LoadItem("Item_Sword_Artifact.asset"),
+            LoadItem("Item_Sword_Emerald.asset"),
+            LoadItem("Item_Armor_Frost_Guardian.asset")
+          }, 0.15f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // 50% Trang sức RARE Tầng 1
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Arcane_Ring.asset"),
+            LoadItem("Item_Acc_Berserker_Ring.asset"),
+            LoadItem("Item_Acc_Bloodstone_Choker.asset")
+          }, 0.50f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // 15% Trang sức EPIC Tầng 1
+          CreateEntry(LoadItem("Item_Acc_Frost_Monarch.asset"), 0.15f, 1, 1, minFloor: 1, maxFloor: 1),
+
+          // --- TẦNG 2+ ---
+          // 60% Gear Rare/Epic
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Demonic.asset"),
+            LoadItem("Item_Sword_Titan.asset"),
             LoadItem("Item_Sword_Ice.asset"),
             LoadItem("Item_Armor_Frost_Guardian.asset")
-          }, 0.65f, 1, 1)
+          }, 0.60f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          // 30% Gear Epic Cực Phẩm
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Rose.asset"),
+            LoadItem("Item_Sword_Katsunesi.asset")
+          }, 0.30f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          // 10% Gear Legendary
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Sword_Sunblade.asset"),
+            LoadItem("Item_Sword_Artifact.asset")
+          }, 0.10f, 1, 1, minFloor: 2, maxFloor: 999),
+
+          // 40% Trang sức Epic / Legendary
+          CreatePoolEntry(new List<ItemData>
+          {
+            LoadItem("Item_Acc_Frost_Monarch.asset"),
+            LoadItem("Item_Acc_Crimson_Dragon_Heart.asset"),
+            LoadItem("Item_Acc_Void_Eye_Pendant.asset")
+          }, 0.40f, 1, 1, minFloor: 2, maxFloor: 999)
         });
 
       // Cập nhật cả các GameObject có LootDropper trong Active Scene (nếu có)
@@ -235,7 +373,8 @@ namespace InfiniteLabyrinth.Editor
     }
 
     private static int ConfigurePrefab(string prefabPath, GameObject worldPickup, GoldDropVisualConfig goldConfig,
-      ItemData goldItem, float goldChance, int minGold, int maxGold, List<LootEntry> entries)
+      ItemData goldItem, float goldChance, int minGold, int maxGold, List<LootEntry> entries,
+      List<ItemData> eliteGear = null, float eliteGearChance = 0.25f)
     {
       if (!File.Exists(prefabPath))
       {
@@ -257,6 +396,10 @@ namespace InfiniteLabyrinth.Editor
         dropper.SetPrefabs(worldPickup, goldConfig);
         dropper.ConfigureGold(goldItem, goldChance, minGold, maxGold);
         dropper.SetLootTable(entries);
+        if (eliteGear != null)
+        {
+          dropper.ConfigureEliteGear(eliteGear, eliteGearChance);
+        }
 
         PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
         return 1;
@@ -348,14 +491,61 @@ namespace InfiniteLabyrinth.Editor
             CreateEntry(LoadItem("Item_Mat_Flawless_Crystal.asset"), 1.0f, 1, 1),
             CreateEntry(LoadItem("Item_Potion_Health_Large.asset"), 1.0f, 3, 3),
             CreateEntry(LoadItem("Item_Potion_Spirit_Nectar.asset"), 1.0f, 2, 2),
+
+            // Tầng 1: 50% Rare gear, 15% Epic gear, 50% Rare Acc, 15% Epic Acc
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Sword_Bone.asset"),
+              LoadItem("Item_Sword_Dead.asset"),
+              LoadItem("Item_Sword_Equilibrium.asset"),
+              LoadItem("Item_Sword_Vanguard.asset"),
+              LoadItem("Item_Armor_Bone_Carapace.asset")
+            }, 0.50f, 1, 1, minFloor: 1, maxFloor: 1),
+
             CreatePoolEntry(new List<ItemData>
             {
               LoadItem("Item_Sword_Demonic.asset"),
               LoadItem("Item_Sword_Titan.asset"),
-              LoadItem("Item_Sword_Artifact.asset"),
+              LoadItem("Item_Sword_Emerald.asset"),
+              LoadItem("Item_Armor_Frost_Guardian.asset")
+            }, 0.15f, 1, 1, minFloor: 1, maxFloor: 1),
+
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Acc_Arcane_Ring.asset"),
+              LoadItem("Item_Acc_Berserker_Ring.asset"),
+              LoadItem("Item_Acc_Bloodstone_Choker.asset")
+            }, 0.50f, 1, 1, minFloor: 1, maxFloor: 1),
+
+            CreateEntry(LoadItem("Item_Acc_Frost_Monarch.asset"), 0.15f, 1, 1, minFloor: 1, maxFloor: 1),
+
+            // Tầng 2+: 60% Rare/Epic, 30% Epic, 10% Legendary, 40% Epic/Leg Acc
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Sword_Demonic.asset"),
+              LoadItem("Item_Sword_Titan.asset"),
               LoadItem("Item_Sword_Ice.asset"),
               LoadItem("Item_Armor_Frost_Guardian.asset")
-            }, 0.65f, 1, 1)
+            }, 0.60f, 1, 1, minFloor: 2, maxFloor: 999),
+
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Sword_Rose.asset"),
+              LoadItem("Item_Sword_Katsunesi.asset")
+            }, 0.30f, 1, 1, minFloor: 2, maxFloor: 999),
+
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Sword_Sunblade.asset"),
+              LoadItem("Item_Sword_Artifact.asset")
+            }, 0.10f, 1, 1, minFloor: 2, maxFloor: 999),
+
+            CreatePoolEntry(new List<ItemData>
+            {
+              LoadItem("Item_Acc_Frost_Monarch.asset"),
+              LoadItem("Item_Acc_Crimson_Dragon_Heart.asset"),
+              LoadItem("Item_Acc_Void_Eye_Pendant.asset")
+            }, 0.40f, 1, 1, minFloor: 2, maxFloor: 999)
           });
           EditorUtility.SetDirty(dropper);
           sceneUpdatedCount++;
@@ -370,7 +560,7 @@ namespace InfiniteLabyrinth.Editor
       return sceneUpdatedCount;
     }
 
-    private static LootEntry CreateEntry(ItemData item, float chance, int minQty, int maxQty)
+    private static LootEntry CreateEntry(ItemData item, float chance, int minQty, int maxQty, int minFloor = 1, int maxFloor = 999)
     {
       return new LootEntry
       {
@@ -378,11 +568,13 @@ namespace InfiniteLabyrinth.Editor
         dropChance = chance,
         minQuantity = minQty,
         maxQuantity = maxQty,
+        minFloor = minFloor,
+        maxFloor = maxFloor,
         randomItemPool = new List<ItemData>()
       };
     }
 
-    private static LootEntry CreatePoolEntry(List<ItemData> pool, float chance, int minQty, int maxQty)
+    private static LootEntry CreatePoolEntry(List<ItemData> pool, float chance, int minQty, int maxQty, int minFloor = 1, int maxFloor = 999)
     {
       var entry = new LootEntry
       {
@@ -390,6 +582,8 @@ namespace InfiniteLabyrinth.Editor
         dropChance = chance,
         minQuantity = minQty,
         maxQuantity = maxQty,
+        minFloor = minFloor,
+        maxFloor = maxFloor,
         randomItemPool = pool != null ? new List<ItemData>(pool) : new List<ItemData>()
       };
       return entry;

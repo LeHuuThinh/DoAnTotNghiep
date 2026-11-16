@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Inventory.ItemData
   id: potion_health_small
   itemName: Small Health Potion
-  description: "Extracted from luminescent dungeon herbs. Instantly restores 40 Health points."
+  description: "Extracted from luminescent dungeon herbs. Instantly restores 50 Health points."
   icon: {fileID: 21300000, guid: 5a1ffcfce753c8b4ca9d1ef1f3c52231, type: 3}
   itemType: 2
   rarity: 0
@@ -24,6 +24,6 @@ MonoBehaviour:
   bonusDefense: 0
   bonusHealth: 0
   bonusStamina: 0
-  healAmount: 40
+  healAmount: 50
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 0}

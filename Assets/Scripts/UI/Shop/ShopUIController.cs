@@ -826,7 +826,7 @@ namespace InfiniteLabyrinth.UI
 
       // 2. Thêm vật phẩm vào túi đồ (tự động roll dòng ngẫu nhiên và phù phép nếu là trang bị)
       EquipmentAffixData affix = null;
-      if (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor)
+      if (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory)
       {
         affix = EquipmentAffixGenerator.Generate(item);
       }
@@ -927,7 +927,7 @@ namespace InfiniteLabyrinth.UI
               isMatch = (item.ItemType == ItemType.Weapon);
               break;
             case InventoryTab.Armor:
-              isMatch = (item.ItemType == ItemType.Armor);
+              isMatch = (item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory);
               break;
             case InventoryTab.Item:
               isMatch = (item.ItemType == ItemType.Consumable || item.ItemType == ItemType.Material);
@@ -982,7 +982,8 @@ namespace InfiniteLabyrinth.UI
       // Không cho phép bán vật phẩm nhiệm vụ
       if (item.Id == "item_key_dungeon") return;
 
-      int sellPrice = item.SellPrice; // Đã là 40% giá trị gốc
+      int upgradeLvl = slot != null ? slot.UpgradeLevel : 0;
+      int sellPrice = item.GetSellPrice(upgradeLvl); // Tự động tăng giá bán nếu trang bị đã cường hóa +1..+5
 
       // 1. Cộng tiền vàng cho người chơi
       InventoryManager.Instance.AddGold(sellPrice);
@@ -1032,9 +1033,11 @@ namespace InfiniteLabyrinth.UI
       {
         case ItemType.Weapon: return "Weapon";
         case ItemType.Armor: return "Armor";
+        case ItemType.Accessory: return "Accessory";
         case ItemType.Consumable: return "Consumable";
         case ItemType.Material: return "Material";
         case ItemType.Currency: return "Currency";
+        case ItemType.Key: return "Key";
         default: return "Item";
       }
     }
@@ -1071,7 +1074,7 @@ namespace InfiniteLabyrinth.UI
         return;
       }
 
-      bool isEquipment = item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor;
+      bool isEquipment = item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory;
 
       if (isEquipment)
       {
@@ -1090,7 +1093,7 @@ namespace InfiniteLabyrinth.UI
           if (mainStatLabelText != null) mainStatLabelText.text = "Attack";
           if (mainStatValueText != null) mainStatValueText.text = $"{minAtk:0.#} - {maxAtk:0.#}";
         }
-        else // Armor
+        else if (item.ItemType == ItemType.Armor)
         {
           bool hasDef = item.BonusDefense > 0f;
           bool hasHp = item.BonusHealth > 0f;
@@ -1122,6 +1125,11 @@ namespace InfiniteLabyrinth.UI
             if (mainStatLabelText != null) mainStatLabelText.text = "Max Health";
             if (mainStatValueText != null) mainStatValueText.text = $"{minHp:0.#} - {maxHp:0.#}";
           }
+        }
+        else if (item.ItemType == ItemType.Accessory)
+        {
+          if (mainStatLabelText != null) mainStatLabelText.text = "Main Stat";
+          if (mainStatValueText != null) mainStatValueText.text = "<color=#90A4AE>Random</color>";
         }
 
         // 2. DÒNG PHỤ (SUB-STATS)

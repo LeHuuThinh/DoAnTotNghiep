@@ -438,6 +438,10 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+  onBleedStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  bleedVfxPrefab: {fileID: 0}
 --- !u!114 &3806274301772261099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -452,6 +456,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bossMaxHealth: 1200
   bossDefense: 25
+  bossExpReward: 350
   maxPoise: 500
   currentPoise: 500
   weakenFrontDuration: 4.27

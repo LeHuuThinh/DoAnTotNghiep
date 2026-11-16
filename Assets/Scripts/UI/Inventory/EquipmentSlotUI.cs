@@ -15,8 +15,11 @@ namespace InfiniteLabyrinth.UI
                                  IPointerClickHandler
   {
     [Header("=== CẤU HÌNH LOẠI Ô ===")]
-    [Tooltip("Loại trang bị của ô này (Weapon hoặc Armor)")]
+    [Tooltip("Loại trang bị của ô này (Weapon, Armor, hoặc Accessory)")]
     [SerializeField] private ItemType slotType = ItemType.Weapon;
+
+    [Tooltip("Chỉ mục ô trang bị nếu có nhiều ô cùng loại (0 = slot 1, 1 = slot 2...)")]
+    [SerializeField] private int slotIndex = 0;
 
     [Header("=== THÀNH PHẦN UI ===")]
     [Tooltip("Icon hiển thị trang bị đang mặc")]
@@ -50,9 +53,40 @@ namespace InfiniteLabyrinth.UI
     public int EquippedQuantity { get; private set; } = 1;
 
     public ItemType SlotType => slotType;
+    public int SlotIndex => slotIndex;
     public ItemData EquippedItem { get; private set; }
-    public int UpgradeLevel => (!InventoryManager.HasInstance) ? 0 : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponUpgradeLevel : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorUpgradeLevel : 0));
-    public EquipmentAffixData AffixData => (!InventoryManager.HasInstance) ? null : (slotType == ItemType.Weapon ? InventoryManager.Instance.EquippedWeaponAffix : (slotType == ItemType.Armor ? InventoryManager.Instance.EquippedArmorAffix : null));
+    public int UpgradeLevel
+    {
+      get
+      {
+        if (!InventoryManager.HasInstance) return 0;
+        if (slotType == ItemType.Weapon) return InventoryManager.Instance.EquippedWeaponUpgradeLevel;
+        if (slotType == ItemType.Armor) return InventoryManager.Instance.EquippedArmorUpgradeLevel;
+        if (slotType == ItemType.Accessory)
+        {
+          return slotIndex == 1
+            ? InventoryManager.Instance.EquippedAccessory2UpgradeLevel
+            : InventoryManager.Instance.EquippedAccessory1UpgradeLevel;
+        }
+        return 0;
+      }
+    }
+    public EquipmentAffixData AffixData
+    {
+      get
+      {
+        if (!InventoryManager.HasInstance) return null;
+        if (slotType == ItemType.Weapon) return InventoryManager.Instance.EquippedWeaponAffix;
+        if (slotType == ItemType.Armor) return InventoryManager.Instance.EquippedArmorAffix;
+        if (slotType == ItemType.Accessory)
+        {
+          return slotIndex == 1
+            ? InventoryManager.Instance.EquippedAccessory2Affix
+            : InventoryManager.Instance.EquippedAccessory1Affix;
+        }
+        return null;
+      }
+    }
     public bool IsEmpty => EquippedItem == null;
     public TMPro.TextMeshProUGUI UpgradeBadgeText => upgradeBadgeText;
 
@@ -165,7 +199,7 @@ namespace InfiniteLabyrinth.UI
         }
       }
 
-      if (upgradeBadgeText == null && (slotType == ItemType.Weapon || slotType == ItemType.Armor))
+      if (upgradeBadgeText == null && (slotType == ItemType.Weapon || slotType == ItemType.Armor || slotType == ItemType.Accessory))
       {
         // Tự động khởi tạo badge cấp độ ở góc trên-phải ô nếu chưa có sẵn (đảm bảo hoạt động trên mọi scene)
         GameObject badgeObj = new GameObject("UpgradeBadgeText");
@@ -189,6 +223,18 @@ namespace InfiniteLabyrinth.UI
       if (gameObject.name.IndexOf("usable", StringComparison.OrdinalIgnoreCase) >= 0)
       {
         slotType = ItemType.Consumable;
+      }
+      else if (gameObject.name.IndexOf("accessory", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        slotType = ItemType.Accessory;
+        if (gameObject.name.IndexOf("2", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          slotIndex = 1;
+        }
+        else
+        {
+          slotIndex = 0;
+        }
       }
     }
 
@@ -287,7 +333,7 @@ namespace InfiniteLabyrinth.UI
       EnsureInitialized();
       if (upgradeBadgeText != null)
       {
-        if (level > 0 && EquippedItem != null && (slotType == ItemType.Weapon || slotType == ItemType.Armor))
+        if (level > 0 && EquippedItem != null && (slotType == ItemType.Weapon || slotType == ItemType.Armor || slotType == ItemType.Accessory))
         {
           upgradeBadgeText.gameObject.SetActive(true);
           upgradeBadgeText.text = $"+{level}";

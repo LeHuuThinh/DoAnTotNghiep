@@ -169,7 +169,7 @@ namespace InfiniteLabyrinth.Inventory
       quantity = count;
       upgradeLevel = upgrade;
       affixData = affix;
-      if (affixData == null && itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor))
+      if (affixData == null && itemData != null && itemData.IsEquipment)
       {
         affixData = EquipmentAffixGenerator.Generate(itemData, upgradeLevel);
       }
@@ -195,7 +195,7 @@ namespace InfiniteLabyrinth.Inventory
       quantity = count;
       upgradeLevel = upgrade;
       affixData = affix;
-      if (affixData == null && itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor))
+      if (affixData == null && itemData != null && itemData.IsEquipment)
       {
         affixData = EquipmentAffixGenerator.Generate(itemData, upgradeLevel);
       }

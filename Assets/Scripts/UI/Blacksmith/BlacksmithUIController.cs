@@ -674,7 +674,7 @@ namespace InfiniteLabyrinth.UI
       if (slot.IsEmpty) return;
 
       ItemData item = slot.ItemData;
-      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Accessory) return;
 
       // Nếu trước đó đang có trang bị khác trên đe rèn -> Hoàn trả lại túi trước!
       if (heldUpgradeItem != null)
@@ -845,9 +845,34 @@ namespace InfiniteLabyrinth.UI
       }
 
       // Thể lực tối đa (Max Stamina)
-      if (item.BonusStamina > 0f)
+      if (item.BonusStamina > 0f && item.ItemType != ItemType.Accessory)
       {
         sb.AppendLine($"Max Stamina: <color=#66BB6A>+{item.BonusStamina:0.#}</color>");
+      }
+
+      // Trang sức: Hiển thị dòng chính (Main Stat)
+      if (item.ItemType == ItemType.Accessory)
+      {
+        SubStatType mainType = (affix != null) ? affix.mainStatType : SubStatType.MaxStamina;
+        float baseVal = (affix != null && affix.rolledMainStat > 0f) ? affix.rolledMainStat : 15f;
+        if (affix == null)
+        {
+          var (pType, pVal) = EquipmentAffixGenerator.GetAccessoryPrimaryStatInfo(item);
+          mainType = pType;
+          baseVal = pVal;
+        }
+        float val = (affix != null) ? affix.GetMainStatValue(level) : BlacksmithUpgradeConfig.CalculateUpgradedSubStat(baseVal, level);
+        var (sName, sVal) = ItemDetailPopupUI.FormatSubStat(mainType, val);
+        if (showBonusDiff && level > 0)
+        {
+          float prevVal = (affix != null) ? affix.GetMainStatValue(level - 1) : BlacksmithUpgradeConfig.CalculateUpgradedSubStat(baseVal, level - 1);
+          float diff = val - prevVal;
+          sb.AppendLine($"{sName}: <color=#77FF77>{sVal} (+{diff:0.#})</color>");
+        }
+        else
+        {
+          sb.AppendLine($"{sName}: <color=#80D8FF>{sVal}</color>");
+        }
       }
 
       // DÒNG PHỤ THẦN BINH (SUB-STATS) TỪ AFFIXDATA
@@ -1043,7 +1068,7 @@ namespace InfiniteLabyrinth.UI
 
       // 3. Materials Needed
       if (materialsNeededText != null) materialsNeededText.text = "Materials Needed";
-      BlacksmithUpgradeConfig.GetRequirement(curLevel, out var req);
+      BlacksmithUpgradeConfig.GetRequirement(item, curLevel, out var req);
 
       PopulateUpgradeMaterials(req);
 
@@ -1056,7 +1081,7 @@ namespace InfiniteLabyrinth.UI
         upgradeGoldPriceText.color = hasEnoughGold ? normalPriceColor : redPriceColor;
       }
 
-      bool canAfford = BlacksmithUpgradeConfig.CanAffordUpgrade(curLevel, InventoryManager.Instance, out _, out _, out _);
+      bool canAfford = BlacksmithUpgradeConfig.CanAffordUpgrade(item, curLevel, InventoryManager.Instance, out _, out _, out _, out _);
       if (btnUpgrade != null) btnUpgrade.interactable = canAfford;
       if (btnUpgradeBorder != null) btnUpgradeBorder.SetActive(canAfford);
       if (btnUpgradeCorner != null) btnUpgradeCorner.SetActive(canAfford);
@@ -1084,6 +1109,13 @@ namespace InfiniteLabyrinth.UI
       {
         ItemData crystalItem = FindItemAssetById(BlacksmithUpgradeConfig.UPGRADE_CRYSTAL_ID);
         list.Add((crystalItem != null ? crystalItem.ItemName : "Flawless Crystal", crystalOwned, req.CrystalCount, crystalItem?.Icon, crystalItem != null ? crystalItem.Rarity : ItemRarity.Rare));
+      }
+
+      if (!string.IsNullOrEmpty(req.SpecialMaterialId) && req.SpecialMaterialCount > 0)
+      {
+        ItemData specialItem = FindItemAssetById(req.SpecialMaterialId);
+        int specialOwned = InventoryManager.HasInstance ? InventoryManager.Instance.GetItemCount(req.SpecialMaterialId) : 0;
+        list.Add((specialItem != null ? specialItem.ItemName : "Special Material", specialOwned, req.SpecialMaterialCount, specialItem?.Icon, specialItem != null ? specialItem.Rarity : ItemRarity.Rare));
       }
 
       // Tái sử dụng hoặc ẩn bớt các GameObject con trong container
@@ -1182,8 +1214,8 @@ namespace InfiniteLabyrinth.UI
       if (selectedUpgradeItem == null || !InventoryManager.HasInstance) return;
       if (selectedUpgradeLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL) return;
 
-      if (!BlacksmithUpgradeConfig.GetRequirement(selectedUpgradeLevel, out var req)) return;
-      if (!BlacksmithUpgradeConfig.CanAffordUpgrade(selectedUpgradeLevel, InventoryManager.Instance, out _, out _, out _)) return;
+      if (!BlacksmithUpgradeConfig.GetRequirement(selectedUpgradeItem, selectedUpgradeLevel, out var req)) return;
+      if (!BlacksmithUpgradeConfig.CanAffordUpgrade(selectedUpgradeItem, selectedUpgradeLevel, InventoryManager.Instance, out _, out _, out _, out _)) return;
 
       // 1. Trừ vàng
       InventoryManager.Instance.SpendGold(req.GoldCost);
@@ -1193,6 +1225,10 @@ namespace InfiniteLabyrinth.UI
       if (req.CrystalCount > 0)
       {
         InventoryManager.Instance.RemoveItem(BlacksmithUpgradeConfig.UPGRADE_CRYSTAL_ID, req.CrystalCount);
+      }
+      if (!string.IsNullOrEmpty(req.SpecialMaterialId) && req.SpecialMaterialCount > 0)
+      {
+        InventoryManager.Instance.RemoveItem(req.SpecialMaterialId, req.SpecialMaterialCount);
       }
 
       // 3. Tăng cấp cường hóa của món đồ trên đe rèn
@@ -1238,22 +1274,26 @@ namespace InfiniteLabyrinth.UI
 
     private void LoadAllRecipesIfEmpty()
     {
-      if (craftingRecipes == null || craftingRecipes.Count == 0)
+      if (craftingRecipes == null)
       {
-        craftingRecipes = new List<CraftingRecipe>(Resources.LoadAll<CraftingRecipe>(""));
-#if UNITY_EDITOR
-        if (craftingRecipes.Count == 0)
-        {
-          string[] guids = UnityEditor.AssetDatabase.FindAssets("t:CraftingRecipe");
-          foreach (var g in guids)
-          {
-            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(g);
-            var r = UnityEditor.AssetDatabase.LoadAssetAtPath<CraftingRecipe>(path);
-            if (r != null && !craftingRecipes.Contains(r)) craftingRecipes.Add(r);
-          }
-        }
-#endif
+        craftingRecipes = new List<CraftingRecipe>();
       }
+
+      var resRecipes = Resources.LoadAll<CraftingRecipe>("");
+      foreach (var r in resRecipes)
+      {
+        if (r != null && !craftingRecipes.Contains(r)) craftingRecipes.Add(r);
+      }
+
+#if UNITY_EDITOR
+      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:CraftingRecipe");
+      foreach (var g in guids)
+      {
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(g);
+        var r = UnityEditor.AssetDatabase.LoadAssetAtPath<CraftingRecipe>(path);
+        if (r != null && !craftingRecipes.Contains(r)) craftingRecipes.Add(r);
+      }
+#endif
     }
 
     private void PopulateForgeRecipesList()
@@ -1547,7 +1587,7 @@ namespace InfiniteLabyrinth.UI
           switch (currentInventoryTab)
           {
             case InventoryTab.Weapon: isMatch = (item.ItemType == ItemType.Weapon); break;
-            case InventoryTab.Armor: isMatch = (item.ItemType == ItemType.Armor); break;
+            case InventoryTab.Armor: isMatch = (item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory); break;
             case InventoryTab.Item: isMatch = (item.ItemType == ItemType.Consumable || item.ItemType == ItemType.Material); break;
           }
           if (isMatch)
@@ -1596,9 +1636,9 @@ namespace InfiniteLabyrinth.UI
       if (slot == null || slot.IsEmpty || slot.CurrentItem == null) return;
 
       ItemData item = slot.CurrentItem;
-      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor)
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Accessory)
       {
-        Debug.Log($"[Blacksmith] Vật phẩm {item.ItemName} không phải Vũ khí hay Giáp, không thể cường hóa!");
+        Debug.Log($"[Blacksmith] Vật phẩm {item.ItemName} không phải Trang bị, không thể cường hóa!");
         return;
       }
 
@@ -1623,7 +1663,7 @@ namespace InfiniteLabyrinth.UI
     private void HandlePutInFromBag(InventorySlotUI slot, ItemData item)
     {
       if (slot == null || item == null) return;
-      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor) return;
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Accessory) return;
 
       // Nạp món đồ vào đe rèn để cường hóa (tạm thời nhấc khỏi túi)
       PutItemIntoUpgrade(slot.ActualBagIndex);
@@ -1753,7 +1793,7 @@ namespace InfiniteLabyrinth.UI
               winUI.mainStatValue.text = $"{targetAtk:0.#}";
           }
         }
-        else // Armor
+        else if (item.ItemType == ItemType.Armor)
         {
           bool isDefense = (affix != null) ? (affix.rolledDefense > 0f) : (item.BonusDefense > 0f);
 
@@ -1788,6 +1828,32 @@ namespace InfiniteLabyrinth.UI
               else
                 winUI.mainStatValue.text = $"{targetHp:0.#}";
             }
+          }
+        }
+        else if (item.ItemType == ItemType.Accessory)
+        {
+          SubStatType mainType = (affix != null) ? affix.mainStatType : SubStatType.MaxStamina;
+          float baseVal = (affix != null && affix.rolledMainStat > 0f) ? affix.rolledMainStat : 15f;
+          if (affix == null)
+          {
+            var (pType, pVal) = EquipmentAffixGenerator.GetAccessoryPrimaryStatInfo(item);
+            mainType = pType;
+            baseVal = pVal;
+          }
+          float curVal = (affix != null) ? affix.GetMainStatValue(curLevel) : BlacksmithUpgradeConfig.CalculateUpgradedSubStat(baseVal, curLevel);
+          float targetVal = (affix != null) ? affix.GetMainStatValue(targetLevel) : BlacksmithUpgradeConfig.CalculateUpgradedSubStat(baseVal, targetLevel);
+          float diffVal = targetVal - curVal;
+
+          var (sName, curStr) = ItemDetailPopupUI.FormatSubStat(mainType, curVal);
+          var (_, targetStr) = ItemDetailPopupUI.FormatSubStat(mainType, targetVal);
+
+          if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = sName;
+          if (winUI.mainStatValue != null)
+          {
+            if (isAfter && !isMaxLevel && diffVal > 0.05f)
+              winUI.mainStatValue.text = $"{targetStr} <color=#55FF55>(+{diffVal:0.#})</color>";
+            else
+              winUI.mainStatValue.text = isAfter ? targetStr : curStr;
           }
         }
       }
@@ -2003,7 +2069,7 @@ namespace InfiniteLabyrinth.UI
           if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Attack";
           if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minAtk:0.#} - {maxAtk:0.#}";
         }
-        else // Armor
+        else if (item.ItemType == ItemType.Armor)
         {
           bool hasDef = item.BonusDefense > 0f;
           bool hasHp = item.BonusHealth > 0f;
@@ -2035,6 +2101,11 @@ namespace InfiniteLabyrinth.UI
             if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Max Health";
             if (winUI.mainStatValue != null) winUI.mainStatValue.text = $"{minHp:0.#} - {maxHp:0.#}";
           }
+        }
+        else if (item.ItemType == ItemType.Accessory)
+        {
+          if (winUI.mainStatLabel != null) winUI.mainStatLabel.text = "Main Stat";
+          if (winUI.mainStatValue != null) winUI.mainStatValue.text = "<color=#90A4AE>Random</color>";
         }
       }
 

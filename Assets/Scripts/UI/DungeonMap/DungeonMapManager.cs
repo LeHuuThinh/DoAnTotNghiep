@@ -339,7 +339,11 @@ namespace InfiniteLabyrinth.UI
 
       if (togglePressed)
       {
-        ToggleMap();
+        // Chỉ mở Dungeon Map khi đang có dữ liệu Hầm Ngục PCG (tránh mở đè trong LandScene)
+        if (activeDungeonData != null || (DungeonManager.Instance != null && DungeonManager.Instance.currentData != null))
+        {
+          ToggleMap();
+        }
       }
 
       // 2. Phím Esc đóng map nếu đang mở

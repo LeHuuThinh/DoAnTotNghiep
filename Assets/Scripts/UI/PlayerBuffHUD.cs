@@ -96,13 +96,13 @@ namespace InfiniteLabyrinth.UI
     {
       if (attackEffectObj == null) return;
 
-      if (playerCombat != null && playerCombat.IsAttackSpeedBoosted)
+      if (playerCombat != null && (playerCombat.IsAttackSpeedBoosted || playerCombat.HasTemporaryAttackBoost))
       {
         if (!attackEffectObj.activeSelf) attackEffectObj.SetActive(true);
         if (attackFillImage != null)
         {
-          float maxDur = Mathf.Max(0.1f, playerCombat.AttackSpeedBonusDuration);
-          attackFillImage.fillAmount = Mathf.Clamp01(playerCombat.AttackSpeedBonusTimer / maxDur);
+          float maxDur = Mathf.Max(0.1f, playerCombat.TemporaryAttackDuration);
+          attackFillImage.fillAmount = Mathf.Clamp01(playerCombat.TemporaryAttackTimer / maxDur);
         }
       }
       else

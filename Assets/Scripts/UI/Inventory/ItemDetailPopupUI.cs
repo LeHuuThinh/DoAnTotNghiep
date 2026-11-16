@@ -918,7 +918,7 @@ namespace InfiniteLabyrinth.UI
         }
       }
 
-      bool isEquipment = item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor;
+      bool isEquipment = item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory;
 
       if (!isEquipment)
       {
@@ -953,23 +953,18 @@ namespace InfiniteLabyrinth.UI
           }
           else if (item.BonusAttack > 0f)
           {
-            suppliesSubList.Add(("Attack Boost", $"<color=#FFB74D>+{item.BonusAttack:0.#} ATK</color>"));
-            suppliesSubList.Add(("Duration", "30 Seconds"));
+            suppliesSubList.Add(("Attack Boost", $"<color=#FFB74D>+{item.BonusAttack:0.#} ATK & +15% Spd</color>"));
+            suppliesSubList.Add(("Duration", "25 Seconds"));
           }
-          else if (item.BonusStamina > 0f)
+          else if (item.BonusStamina > 0f || (!string.IsNullOrEmpty(item.Id) && item.Id.Contains("stamina")))
           {
-            suppliesSubList.Add(("Stamina Boost", $"<color=#81C784>+{item.BonusStamina:0.#} Max</color>"));
-            suppliesSubList.Add(("Effect", "Regen Boost"));
-          }
-          else if (item.BonusHealth > 0f)
-          {
-            suppliesSubList.Add(("Health Boost", $"<color=#77FF77>+{item.BonusHealth:0.#} Max HP</color>"));
-            suppliesSubList.Add(("Effect", "Increases Max HP"));
+            suppliesSubList.Add(("Stamina Recovery", "<color=#81C784>+80 Stamina</color>"));
+            suppliesSubList.Add(("Buff (15s)", "+50% Regen & Speed"));
           }
           else if (!string.IsNullOrEmpty(item.Id) && item.Id.Contains("spirit"))
           {
-            suppliesSubList.Add(("Spirit Recovery", "<color=#BA68C8>Instant Spirit</color>"));
-            suppliesSubList.Add(("Effect", "Replenish Skills"));
+            suppliesSubList.Add(("Spirit Recovery", "<color=#BA68C8>+120 Spirit</color>"));
+            suppliesSubList.Add(("Effect", "Instant Skill Focus"));
           }
           else
           {
@@ -1109,7 +1104,7 @@ namespace InfiniteLabyrinth.UI
         if (mainStatLabelText != null) mainStatLabelText.text = "Attack Damage";
         if (mainStatValueText != null) mainStatValueText.text = finalAtk.ToString("0.#");
       }
-      else // Armor
+      else if (item.ItemType == ItemType.Armor)
       {
         // Giáp có 1 dòng chính duy nhất: Hoặc Defense, hoặc Max Health
         bool isDefense = (affix != null) ? (affix.rolledDefense > 0f) : (item.BonusDefense > 0f);
@@ -1127,6 +1122,22 @@ namespace InfiniteLabyrinth.UI
           float finalHp = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, upgradeLevel);
           if (mainStatLabelText != null) mainStatLabelText.text = "Max Health";
           if (mainStatValueText != null) mainStatValueText.text = finalHp.ToString("0.#");
+        }
+      }
+      else if (item.ItemType == ItemType.Accessory)
+      {
+        if (affix == null)
+        {
+          if (mainStatLabelText != null) mainStatLabelText.text = "Main Stat";
+          if (mainStatValueText != null) mainStatValueText.text = "<color=#90A4AE>Random</color>";
+        }
+        else
+        {
+          SubStatType mainType = affix.mainStatType;
+          float finalVal = affix.GetMainStatValue(upgradeLevel);
+          var (sName, sVal) = FormatSubStat(mainType, finalVal);
+          if (mainStatLabelText != null) mainStatLabelText.text = sName;
+          if (mainStatValueText != null) mainStatValueText.text = sVal;
         }
       }
 
@@ -1628,6 +1639,7 @@ namespace InfiniteLabyrinth.UI
         {
           case ItemType.Weapon:
           case ItemType.Armor:
+          case ItemType.Accessory:
             if (btnEquip != null) btnEquip.gameObject.SetActive(true);
             if (btnUse != null) btnUse.gameObject.SetActive(false);
             break;
@@ -1675,6 +1687,22 @@ namespace InfiniteLabyrinth.UI
           float hp = BlacksmithUpgradeConfig.CalculateUpgradedHealth(baseHp, upgradeLevel);
           string upgStr = upgradeLevel > 0 ? $" <size=85%><color=#77FF77>(+{upgradeLevel})</color></size>" : "";
           sb.AppendLine($"<color=#EF5350>+ {hp:0.#} Max Health</color>{upgStr}");
+        }
+      }
+      else if (item.ItemType == ItemType.Accessory)
+      {
+        if (affix == null)
+        {
+          sb.AppendLine("<color=#90A4AE>Main Stat: Random</color>");
+        }
+        else
+        {
+          SubStatType mainType = affix.mainStatType;
+          float baseVal = affix.rolledMainStat > 0f ? affix.rolledMainStat : 15f;
+          float finalVal = affix.GetMainStatValue(upgradeLevel);
+          var (sName, sVal) = FormatSubStat(mainType, finalVal);
+          string upgStr = upgradeLevel > 0 ? $" <size=85%><color=#77FF77>(+{upgradeLevel})</color></size>" : "";
+          sb.AppendLine($"<color=#80D8FF>{sVal} {sName}</color>{upgStr}");
         }
       }
       else
@@ -1779,7 +1807,15 @@ namespace InfiniteLabyrinth.UI
 
       if (item.GoldValue > 0)
       {
-        sb.AppendLine($"<color=#FFE082>Value: {item.GoldValue} Gold</color>");
+        int sellPrice = item.GetSellPrice(upgradeLevel);
+        if (upgradeLevel > 0)
+        {
+          sb.AppendLine($"<color=#FFE082>Sell Value: {sellPrice} Gold (+{upgradeLevel})</color>");
+        }
+        else
+        {
+          sb.AppendLine($"<color=#FFE082>Sell Value: {sellPrice} Gold</color>");
+        }
       }
 
       return sb.Length > 0 ? sb.ToString().TrimEnd() : "No special attributes.";
@@ -1791,9 +1827,11 @@ namespace InfiniteLabyrinth.UI
       {
         case ItemType.Weapon: return "Weapon";
         case ItemType.Armor: return "Armor";
+        case ItemType.Accessory: return "Accessory";
         case ItemType.Consumable: return "Consumable";
         case ItemType.Material: return "Material";
         case ItemType.Currency: return "Currency";
+        case ItemType.Key: return "Key";
         default: return "Item";
       }
     }
@@ -1823,7 +1861,7 @@ namespace InfiniteLabyrinth.UI
     {
       if (currentItem == null || currentEquipSlot == null || !InventoryManager.HasInstance) return;
 
-      bool success = InventoryManager.Instance.Unequip(currentEquipSlot.SlotType);
+      bool success = InventoryManager.Instance.Unequip(currentEquipSlot.SlotType, currentEquipSlot.SlotIndex);
       if (success)
       {
         Hide();

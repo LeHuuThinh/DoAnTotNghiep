@@ -128,9 +128,18 @@ namespace InfiniteLabyrinth.Inventory
     public float rolledAttack = 0f;
     public float rolledDefense = 0f;
     public float rolledHealth = 0f;
+    public SubStatType mainStatType = SubStatType.MaxStamina;
+    public float rolledMainStat = 0f;
 
     public List<SubStatEntry> subStats = new List<SubStatEntry>();
     public List<EnchantmentEntry> enchantments = new List<EnchantmentEntry>();
+
+    public float GetMainStatValue(int upgradeLevel = 0)
+    {
+      if (rolledMainStat <= 0f) return 0f;
+      if (upgradeLevel <= 0) return rolledMainStat;
+      return InfiniteLabyrinth.Blacksmith.BlacksmithUpgradeConfig.CalculateUpgradedSubStat(rolledMainStat, upgradeLevel);
+    }
 
     public float GetSubStatValue(SubStatType type, int upgradeLevel = 0)
     {
@@ -180,6 +189,8 @@ namespace InfiniteLabyrinth.Inventory
         rolledAttack = this.rolledAttack,
         rolledDefense = this.rolledDefense,
         rolledHealth = this.rolledHealth,
+        mainStatType = this.mainStatType,
+        rolledMainStat = this.rolledMainStat,
         subStats = new List<SubStatEntry>(this.subStats)
       };
 

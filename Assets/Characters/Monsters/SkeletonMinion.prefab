@@ -71,6 +71,7 @@ MonoBehaviour:
   attackAnimationSpeed: 1.7
   expReward: 10
   enemyDefense: 10
+  isElite: 0
   weaponHitbox: {fileID: 594708534279544853}
   attackDamage: 10
   attackKnockback: 0.5
@@ -204,11 +205,15 @@ MonoBehaviour:
     dropChance: 0.3
     minQuantity: 1
     maxQuantity: 1
+    minFloor: 1
+    maxFloor: 999
   - item: {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
     randomItemPool: []
     dropChance: 0.06
     minQuantity: 1
     maxQuantity: 1
+    minFloor: 1
+    maxFloor: 999
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 0.65
   minGold: 1
@@ -221,6 +226,19 @@ MonoBehaviour:
   useForwardCone: 0
   wallSafetyPadding: 0.35
   autoDropOnDeath: 1
+  isEliteDrop: 0
+  eliteGearPool:
+  - {fileID: 11400000, guid: 0a5275c8def1647489bd98f46bc3a2d2, type: 2}
+  - {fileID: 11400000, guid: 1fa95291773753f4b9021b52e49ec4c2, type: 2}
+  - {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
+  - {fileID: 11400000, guid: 29aa6209c27f86e4b81c5651ce3bffe7, type: 2}
+  - {fileID: 11400000, guid: bb9834325c68d0346aae4a12fe723c83, type: 2}
+  - {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+  - {fileID: 11400000, guid: 596a197d90005564ab7e6937e9777465, type: 2}
+  - {fileID: 11400000, guid: 85209d30838f4da0b62dd18ab1e3842b, type: 2}
+  - {fileID: 11400000, guid: 0c26feaaa5a94da78eb6c0b1ade673b3, type: 2}
+  - {fileID: 11400000, guid: c2196b2fd7a948d4865f247cf19ef29e, type: 2}
+  eliteGearDropChance: 0.25
 --- !u!1001 &544001121955816606
 PrefabInstance:
   m_ObjectHideFlags: 0

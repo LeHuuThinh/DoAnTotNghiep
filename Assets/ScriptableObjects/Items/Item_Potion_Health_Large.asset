@@ -15,7 +15,7 @@ MonoBehaviour:
   id: potion_health_large
   itemName: Large Health Potion
   description: A potent restorative draught brewed from ancient mystical roots. Instantly
-    restores 100 Health points.
+    restores 120 Health points.
   icon: {fileID: 21300000, guid: 04653cd57cca946458fdd5241634c67d, type: 3}
   itemType: 2
   rarity: 2
@@ -25,6 +25,6 @@ MonoBehaviour:
   bonusDefense: 0
   bonusHealth: 0
   bonusStamina: 0
-  healAmount: 100
+  healAmount: 120
   worldModelPrefab: {fileID: 8852560050458291529, guid: 351c2dca7f8344b4ab5b154628b14398, type: 3}
   weaponVisualPrefab: {fileID: 0}

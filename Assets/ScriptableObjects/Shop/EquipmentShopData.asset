@@ -43,3 +43,12 @@ MonoBehaviour:
   - itemData: {fileID: 11400000, guid: 596a197d90005564ab7e6937e9777465, type: 2}
     buyPrice: 300
     stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: e3e97e9a6af840da8877aa2c08a157cb, type: 2}
+    buyPrice: 40
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 7140561714774197a0e5be9765b61dd0, type: 2}
+    buyPrice: 70
+    stockQuantity: -1
+  - itemData: {fileID: 11400000, guid: 85209d30838f4da0b62dd18ab1e3842b, type: 2}
+    buyPrice: 140
+    stockQuantity: -1

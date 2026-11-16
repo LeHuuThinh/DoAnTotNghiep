@@ -15,14 +15,14 @@ MonoBehaviour:
   id: potion_ironbark_brew
   itemName: Ironbark Brew
   description: A thick decoction made from thousand-year ironbark. Hardens the skin
-    like steel, granting +15 Defense.
+    like steel, granting +20 Defense for 30s.
   icon: {fileID: 21300000, guid: 1d221c8f370a9384f9b9b52856c3d89d, type: 3}
   itemType: 2
   rarity: 1
   maxStack: 5
   goldValue: 50
   bonusAttack: 0
-  bonusDefense: 15
+  bonusDefense: 20
   bonusHealth: 0
   bonusStamina: 0
   healAmount: 0

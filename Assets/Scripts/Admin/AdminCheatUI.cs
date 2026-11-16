@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 using InfiniteLabyrinth.Inventory;
+using InfiniteLabyrinth.UI;
 
 /// <summary>
 /// Controls the Admin / Debug Cheat Console UI.
@@ -534,6 +535,10 @@ public class AdminCheatUI : MonoBehaviour
       return $"Weapon | <color=#FF8A65>+{item.BonusAttack:F0} ATK</color>";
     if (item.ItemType == ItemType.Armor)
       return $"Armor | <color=#81D4FA>+{item.BonusDefense:F0} DEF</color>";
+    if (item.ItemType == ItemType.Accessory)
+    {
+      return "Accessory | <color=#90A4AE>Random Main Stat</color>";
+    }
     if (item.ItemType == ItemType.Consumable)
       return (item.HealAmount > 0f) ? $"Potion | <color=#A5D6A7>Heals {item.HealAmount:F0} HP</color>" : "Consumable Buff";
     if (item.ItemType == ItemType.Material)
@@ -564,6 +569,10 @@ public class AdminCheatUI : MonoBehaviour
         if (currentFilterType.Value == ItemType.Key)
         {
           matchCategory = (entry.item.ItemType == ItemType.Key || entry.item.ItemType == ItemType.Currency);
+        }
+        else if (currentFilterType.Value == ItemType.Armor)
+        {
+          matchCategory = (entry.item.ItemType == ItemType.Armor || entry.item.ItemType == ItemType.Accessory);
         }
         else
         {

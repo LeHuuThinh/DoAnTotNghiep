@@ -4550,8 +4550,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -55.079803, y: -44.980988}
-  m_SizeDelta: {x: 44.2797, y: 60.814}
+  m_AnchoredPosition: {x: -57.4, y: -44.980988}
+  m_SizeDelta: {x: 48.919, y: 60.814}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5815036521787802992
 CanvasRenderer:
@@ -6284,6 +6284,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.ItemDetailPopupUI
   itemNameText: {fileID: 6619656501888440492}
+  upgradeLevelText: {fileID: 0}
   itemRarityText: {fileID: 4984615601738026264}
   itemTypeText: {fileID: 2038683163495691514}
   itemIcon: {fileID: 836515927783379442}
@@ -6292,6 +6293,20 @@ MonoBehaviour:
   iconContainer: {fileID: 469751305482199183}
   itemDescriptionText: {fileID: 1821287470518480569}
   itemStatsText: {fileID: 0}
+  itemStatsTextContainer: {fileID: 0}
+  mainStatsRoot: {fileID: 0}
+  mainStatLabelText: {fileID: 0}
+  mainStatValueText: {fileID: 0}
+  subStatsDivider: {fileID: 0}
+  subStatsLayoutRoot: {fileID: 0}
+  subStatRows: []
+  itemEnchantmentContainer: {fileID: 0}
+  enchantmentDivider: {fileID: 0}
+  enchantmentLayoutRoot: {fileID: 0}
+  enchantRows: []
+  enchantHintRect: {fileID: 0}
+  enchantHintCanvasGroup: {fileID: 0}
+  enchantHintText: {fileID: 0}
   btnEquip: {fileID: 8393777400088434925}
   btnUnequip: {fileID: 3981546772043330015}
   btnUse: {fileID: 4941522202421432639}

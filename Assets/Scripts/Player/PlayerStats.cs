@@ -232,22 +232,49 @@ public class PlayerStats : MonoBehaviour
     onSpiritChanged?.Invoke(currentSpirit, maxSpirit);
   }
 
+  [Header("Temporary Stamina Buffs")]
+  private float temporaryStaminaRegenMultiplier = 1.0f;
+  private float temporaryStaminaRegenTimer = 0f;
+  private float temporaryStaminaRegenDuration = 15f;
+
+  public bool HasTemporaryStaminaBoost => temporaryStaminaRegenTimer > 0f;
+  public float TemporaryStaminaRegenTimer => temporaryStaminaRegenTimer;
+  public float TemporaryStaminaRegenDuration => temporaryStaminaRegenDuration;
+
+  public void TriggerTemporaryStaminaRegenBoost(float multiplier, float duration)
+  {
+    temporaryStaminaRegenMultiplier = Mathf.Max(temporaryStaminaRegenMultiplier, multiplier);
+    temporaryStaminaRegenTimer = Mathf.Max(temporaryStaminaRegenTimer, duration);
+    temporaryStaminaRegenDuration = Mathf.Max(temporaryStaminaRegenDuration, duration);
+  }
+
   private void Update()
   {
+    if (temporaryStaminaRegenTimer > 0f)
+    {
+      temporaryStaminaRegenTimer -= Time.deltaTime;
+      if (temporaryStaminaRegenTimer <= 0f)
+      {
+        temporaryStaminaRegenTimer = 0f;
+        temporaryStaminaRegenMultiplier = 1.0f;
+      }
+    }
     RegenerateStamina();
   }
 
   private void RegenerateStamina()
   {
+    float regenMultiplier = (temporaryStaminaRegenTimer > 0f) ? temporaryStaminaRegenMultiplier : 1.0f;
+
     if (staminaRegenTimer > 0f)
     {
-      staminaRegenTimer -= Time.deltaTime;
+      staminaRegenTimer -= Time.deltaTime * regenMultiplier;
       return;
     }
 
     if (currentStamina < maxStamina)
     {
-      currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
+      currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * regenMultiplier * Time.deltaTime);
       onStaminaChanged?.Invoke(currentStamina, maxStamina);
     }
   }

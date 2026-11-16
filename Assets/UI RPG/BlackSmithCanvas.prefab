@@ -45163,6 +45163,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 77b58bbd3bbf4f9688b5af2f63806eed, type: 2}
   - {fileID: 11400000, guid: 785ac7041b114531a31c9651e1847e7b, type: 2}
   - {fileID: 11400000, guid: 1a7335a6ee1d48ba8f15f1ed11ecb9d3, type: 2}
+  - {fileID: 11400000, guid: 68bf8e694ac553b489c2d1a1eac5d99a, type: 2}
+  - {fileID: 11400000, guid: 78bf8e694ac553b489c2d1a1eac5d99b, type: 2}
   fadeDuration: 0.18
 --- !u!1 &8125014760083904596
 GameObject:

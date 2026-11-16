@@ -57,7 +57,7 @@ namespace InfiniteLabyrinth.Inventory
 
     public EquipmentAffixData EnsureAffixData()
     {
-      if (itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor))
+      if (itemData != null && (itemData.ItemType == ItemType.Weapon || itemData.ItemType == ItemType.Armor || itemData.ItemType == ItemType.Accessory))
       {
         if (affixData == null)
         {

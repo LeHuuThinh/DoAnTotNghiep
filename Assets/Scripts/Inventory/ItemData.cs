@@ -74,6 +74,20 @@ namespace InfiniteLabyrinth.Inventory
     public int GoldValue => goldValue;
     public int SellPrice => Mathf.Max(1, Mathf.RoundToInt(goldValue * 0.4f));
 
+    /// <summary>
+    /// Tính giá bán lại cho Shop dựa theo cấp cường hóa (+1 đến +5).
+    /// Mỗi cấp cường hóa tăng thêm giá trị bán của trang bị, phản ánh công sức và nguyên liệu đập đồ (+35%/cấp + 25 Vàng/cấp).
+    /// </summary>
+    public int GetSellPrice(int upgradeLevel = 0)
+    {
+      int baseSell = SellPrice;
+      if (upgradeLevel <= 0) return baseSell;
+
+      float percentMultiplier = 1f + (0.35f * upgradeLevel);
+      int flatBonus = upgradeLevel * 25;
+      return Mathf.RoundToInt(baseSell * percentMultiplier) + flatBonus;
+    }
+
     public float BonusAttack => bonusAttack;
     public float BonusDefense => bonusDefense;
     public float BonusHealth => bonusHealth;
@@ -92,6 +106,8 @@ namespace InfiniteLabyrinth.Inventory
     public GameObject WorldModelPrefab => worldModelPrefab;
     public GameObject WeaponVisualPrefab => weaponVisualPrefab;
 
+    public bool IsEquipment => itemType == ItemType.Weapon || itemType == ItemType.Armor || itemType == ItemType.Accessory;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -99,7 +115,7 @@ namespace InfiniteLabyrinth.Inventory
       {
         id = name.ToLower().Replace(" ", "_");
       }
-      if (itemType == ItemType.Weapon || itemType == ItemType.Armor)
+      if (itemType == ItemType.Weapon || itemType == ItemType.Armor || itemType == ItemType.Accessory)
       {
         maxStack = 1; // Trang bị không cộng dồn ô
       }

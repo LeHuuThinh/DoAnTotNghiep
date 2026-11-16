@@ -25,6 +25,12 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Số lượng rơi tối đa")]
     public int maxQuantity = 1;
 
+    [Tooltip("Tầng hầm ngục tối thiểu để mục này có thể rơi (Mặc định 1)")]
+    public int minFloor = 1;
+
+    [Tooltip("Tầng hầm ngục tối đa để mục này có thể rơi (-1 hoặc 999 = không giới hạn)")]
+    public int maxFloor = 999;
+
     public int EvaluateQuantity()
     {
       if (minQuantity >= maxQuantity) return minQuantity;

@@ -99,12 +99,18 @@ public class ThirdPersonCamera : MonoBehaviour
   [Tooltip("Tự động tối ưu Near Clip Plane của Camera để không cắt mặt phẳng khi đứng sát (0.1 - 0.15m)")]
   [SerializeField] private float cameraNearClipPlane = 0.12f;
 
+  public static ThirdPersonCamera Instance { get; private set; }
+
   private TargetLockSystem lockSystem;
   private Camera cam;
   private float baseFov = 60f;
   private float currentParryDistanceOffset = 0f;
   private float currentParryFovOffset = 0f;
   private Coroutine parryZoomCoroutine;
+
+  // Rung chấn màn hình (Camera Shake Offset mềm không can thiệp vị trí gốc)
+  private Vector3 currentShakeOffset = Vector3.zero;
+  private Coroutine cameraShakeCoroutine;
 
   private float cameraYaw;
   private float cameraPitch = 15f;
@@ -159,6 +165,8 @@ public class ThirdPersonCamera : MonoBehaviour
 
   private void Awake()
   {
+    Instance = this;
+
     // Tự động sửa thông số nếu Scene cũ bị lưu giá trị âm hoặc bất hợp lý
     if (cameraLookHeight < 0.5f)
     {
@@ -287,6 +295,12 @@ public class ThirdPersonCamera : MonoBehaviour
     else
     {
       UpdateFreeCamera();
+    }
+
+    // Bù đắp rung màn hình (Camera Shake Offset) mượt mà mà không làm mất vị trí bám theo Player
+    if (currentShakeOffset != Vector3.zero)
+    {
+      transform.position += currentShakeOffset;
     }
   }
 
@@ -696,6 +710,38 @@ public class ThirdPersonCamera : MonoBehaviour
     parryZoomCoroutine = null;
   }
 
+  // =========================================================================
+  // RUNG CHẤN MÀN HÌNH (CAMERA SHAKE SYSTEM)
+  // =========================================================================
+  public void TriggerShake(float duration, float magnitude)
+  {
+    if (cameraShakeCoroutine != null)
+    {
+      StopCoroutine(cameraShakeCoroutine);
+    }
+    cameraShakeCoroutine = StartCoroutine(ShakeRoutine(duration, magnitude));
+  }
+
+  private IEnumerator ShakeRoutine(float duration, float magnitude)
+  {
+    float elapsed = 0f;
+    while (elapsed < duration)
+    {
+      elapsed += Time.unscaledDeltaTime;
+      float decay = 1f - Mathf.Clamp01(elapsed / duration);
+
+      float x = Random.Range(-1f, 1f) * magnitude * decay;
+      float y = Random.Range(-1f, 1f) * magnitude * decay;
+      float z = Random.Range(-1f, 1f) * magnitude * decay * 0.4f;
+
+      currentShakeOffset = new Vector3(x, y, z);
+      yield return null;
+    }
+
+    currentShakeOffset = Vector3.zero;
+    cameraShakeCoroutine = null;
+  }
+
   private void OnDisable()
   {
     if (parryZoomCoroutine != null)
@@ -703,8 +749,22 @@ public class ThirdPersonCamera : MonoBehaviour
       StopCoroutine(parryZoomCoroutine);
       parryZoomCoroutine = null;
     }
+    if (cameraShakeCoroutine != null)
+    {
+      StopCoroutine(cameraShakeCoroutine);
+      cameraShakeCoroutine = null;
+    }
+    currentShakeOffset = Vector3.zero;
     currentParryFovOffset = 0f;
     currentParryDistanceOffset = 0f;
     if (cam != null) cam.fieldOfView = baseFov;
+  }
+
+  private void OnDestroy()
+  {
+    if (Instance == this)
+    {
+      Instance = null;
+    }
   }
 }

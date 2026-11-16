@@ -16,26 +16,16 @@ namespace InfiniteLabyrinth.Editor
     private const string GoldConfigPath = "Assets/Resources/GoldDropVisualConfig.asset";
     private const int DamageableLayer = 8; // Layer "Damageable" nhận sát thương từ kiếm
 
-    [MenuItem("Infinite Labyrinth/RPG/1. Khởi Tạo Toàn Bộ Dữ Liệu Vật Phẩm (Full 51 Items Database)", false, 10)]
+    [MenuItem("Infinite Labyrinth/RPG/1. Khởi Tạo Toàn Bộ Dữ Liệu Vật Phẩm (Full 62 Items Database)", false, 10)]
     public static void GenerateDefaultItems()
     {
-      GenerateItems(true);
+      GenerateItems(false);
     }
 
-    [InitializeOnLoadMethod]
+    // [InitializeOnLoadMethod] -> Đã gỡ bỏ để tránh việc tự động chạy ngầm đè lại các vật phẩm và chỉ số người dùng đã chỉnh
     private static void AutoRunOnceOnLoad()
     {
-      EditorApplication.delayCall += () =>
-      {
-        EnsurePlayerWeaponVisualSync();
-        string rustyAssetPath = $"{TargetFolder}/Item_Sword_Rusty_Iron.asset";
-        if (!File.Exists($"{TargetFolder}/Item_Sword_Excalibur.asset") ||
-            (File.Exists(rustyAssetPath) && !File.ReadAllText(rustyAssetPath).Contains("bffaf84d3633d0b40b74c2a435d0ec01")))
-        {
-          Debug.Log("[ItemDatabaseGenerator] Phát hiện cập nhật đường dẫn kiếm mới tại Player/Swords. Đang tự động cập nhật lại vật phẩm...");
-          GenerateItems(false);
-        }
-      };
+      // Không tự động chạy ngầm nữa
     }
 
     public static void GenerateItems(bool showDialog = true)
@@ -55,18 +45,19 @@ namespace InfiniteLabyrinth.Editor
       // ==========================================
       // 1. TIỀN TỆ & CHÌA KHÓA (CURRENCY & KEYS)
       // ==========================================
-      Sprite goldIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI RPG/PlayerHUD 2/Exp_Circle.png");
+      Sprite goldIcon = LoadItemIcon("GoldCoin.png");
       CreateOrUpdateItem("Item_Gold_Coin", "currency_gold", "Gold Coin",
         "The standard currency circulating across Haven and beyond. Used for purchasing goods at the Village Shop and forging weapons at the Blacksmith.",
         goldIcon, ItemType.Currency, ItemRarity.Common, maxStack: 9999, goldValue: 1,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
+      GameObject keyWorldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/DungeonKeyPickup.prefab") ?? worldPickup;
       CreateOrUpdateItem("Item_Key_Dungeon", "dungeon_key", "Dungeon Boss Key",
         "An ancient golden key resonating with sacred magic. Required to unlock the Grand Gate leading into the Boss Arena.",
         LoadItemIcon("DungeonKey.png"), ItemType.Key, ItemRarity.Legendary, maxStack: 1, goldValue: 0,
         bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
-        worldPrefab: worldPickup, visualPrefab: null);
+        worldPrefab: keyWorldPrefab, visualPrefab: null);
 
       // ==========================================
       // 2. VẬT PHẨM TIÊU HAO (CONSUMABLES - 6 ITEMS)
@@ -213,16 +204,15 @@ namespace InfiniteLabyrinth.Editor
         worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Leather_Scout", "armor_leather_scout", "Scout Leather Armor",
-        "Supple leather armor tailored for scouts. Balanced and flexible, protecting without hindering swift movement (+5 DEF, +25 HP, +10 Stamina, -10% Stamina Cost, +5% Move Speed).",
+        "Supple leather armor tailored for scouts. Balanced and flexible, protecting without hindering swift movement (+5 DEF, +25 HP).",
         LoadItemIcon("LeatherArmor.png"), ItemType.Armor, ItemRarity.Common, maxStack: 1, goldValue: 80,
-        bonusAtk: 0, bonusDef: 5f, bonusHp: 25f, bonusStamina: 10f, heal: 0,
-        worldPrefab: worldPickup, visualPrefab: null,
-        staminaCostRed: 10f, moveSpeed: 5f);
+        bonusAtk: 0, bonusDef: 5f, bonusHp: 25f, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Leather", "armor_leather_explorer", "Explorer Leather Vest",
-        "Sturdy explorer leather vest crafted to withstand punishing dungeon expeditions (+9 DEF, +45 HP, +15 Stamina).",
+        "Sturdy explorer leather vest crafted to withstand punishing dungeon expeditions (+9 DEF, +45 HP).",
         LoadItemIcon("ExplorerArmor.png"), ItemType.Armor, ItemRarity.Uncommon, maxStack: 1, goldValue: 160,
-        bonusAtk: 0, bonusDef: 9f, bonusHp: 45f, bonusStamina: 15f, heal: 0,
+        bonusAtk: 0, bonusDef: 9f, bonusHp: 45f, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Iron_Cuirass", "armor_iron_cuirass", "Reinforced Iron Cuirass",
@@ -232,31 +222,28 @@ namespace InfiniteLabyrinth.Editor
         worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Bone_Carapace", "armor_bone_carapace", "Bone Carapace Plate",
-        "Carapace armor assembled from elite Skeleton bones, endowing the wearer with remarkable resilience (+22 DEF, +110 HP, +20 Stamina).",
+        "Carapace armor assembled from elite Skeleton bones, endowing the wearer with remarkable resilience (+22 DEF, +110 HP).",
         LoadItemIcon("BoneArmor.png"), ItemType.Armor, ItemRarity.Rare, maxStack: 1, goldValue: 420,
-        bonusAtk: 0, bonusDef: 22f, bonusHp: 110f, bonusStamina: 20f, heal: 0,
+        bonusAtk: 0, bonusDef: 22f, bonusHp: 110f, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Frost_Guardian", "armor_frost_guardian", "Frostborne Platemail",
-        "Glacial plate forged with the essence of the Ice Golem, radiating frost that dampens incoming kinetic shock (+32 DEF, +170 HP, -15% Spirit Cost).",
+        "Glacial plate forged with the essence of the Ice Golem, radiating frost that dampens incoming kinetic shock (+32 DEF, +170 HP).",
         LoadItemIcon("FrostArmor.png"), ItemType.Armor, ItemRarity.Epic, maxStack: 1, goldValue: 650,
         bonusAtk: 0, bonusDef: 32f, bonusHp: 170f, bonusStamina: 0, heal: 0,
-        worldPrefab: worldPickup, visualPrefab: null,
-        spiritCostRed: 15f);
+        worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Crimson_Scale", "armor_crimson_scale", "Crimson Dragon Scale",
-        "Impenetrable battle armor reinforced with crimson dragon scales, offering absolute defense against lethal strikes (+45 DEF, +240 HP, +30 Stamina, +8% Crit Rate, +25% Crit DMG, +3% Lifesteal).",
+        "Impenetrable battle armor reinforced with crimson dragon scales, offering absolute defense against lethal strikes (+45 DEF, +240 HP).",
         LoadItemIcon("CrimsonScale.png"), ItemType.Armor, ItemRarity.Legendary, maxStack: 1, goldValue: 950,
-        bonusAtk: 0, bonusDef: 45f, bonusHp: 240f, bonusStamina: 30f, heal: 0,
-        worldPrefab: worldPickup, visualPrefab: null,
-        critRate: 8f, critDmg: 25f, lifesteal: 3f);
+        bonusAtk: 0, bonusDef: 45f, bonusHp: 240f, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
 
       CreateOrUpdateItem("Item_Armor_Void_Shroud", "armor_void_shroud", "Voidwalker Mantle",
-        "Ethereal mantle woven from the deep cosmic void, warping mortal strikes away from the bearer (+58 DEF, +320 HP, +40 Stamina, -20% Spirit Cost, -15% Stamina Cost, +8% Move Speed).",
+        "Ethereal mantle woven from the deep cosmic void, warping mortal strikes away from the bearer (+58 DEF, +320 HP).",
         LoadItemIcon("VoidArmor.png"), ItemType.Armor, ItemRarity.Legendary, maxStack: 1, goldValue: 1400,
-        bonusAtk: 0, bonusDef: 58f, bonusHp: 320f, bonusStamina: 40f, heal: 0,
-        worldPrefab: worldPickup, visualPrefab: null,
-        spiritCostRed: 20f, staminaCostRed: 15f, moveSpeed: 8f);
+        bonusAtk: 0, bonusDef: 58f, bonusHp: 320f, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
 
       // ==========================================
       // 5. VŨ KHÍ CHIẾN ĐẤU (WEAPONS - 20 SWORDS)
@@ -299,119 +286,192 @@ namespace InfiniteLabyrinth.Editor
 
       // Tier 2: Phiêu Lưu & Tinh Nhuệ (Rare)
       CreateOrUpdateItem("Item_Sword_Vanguard", "weapon_sword_vanguard", "Vanguard Broadsword",
-        "A broadsword carried by frontline vanguards, bolstering both vitality and striking momentum (+27 Attack, +20 Max HP).",
+        "A broadsword carried by frontline vanguards, bolstering both vitality and striking momentum (+27 Attack).",
         LoadItemIcon("VanguardSword.png"), ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 320,
-        bonusAtk: 27f, bonusDef: 0, bonusHp: 20f, bonusStamina: 0, heal: 0,
+        bonusAtk: 27f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/VanguardSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Punk", "weapon_sword_punk", "Barbed Punk Blade",
-        "A fierce jagged blade lined with vicious barbs, engineered for swift rending slashes (+31 Attack, +10 Stamina).",
+        "A fierce jagged blade lined with vicious barbs, engineered for swift rending slashes (+31 Attack).",
         LoadItemIcon("PunkSword.png"), ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 380,
-        bonusAtk: 31f, bonusDef: 0, bonusHp: 0, bonusStamina: 10f, heal: 0,
+        bonusAtk: 31f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/PunkSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Bone", "weapon_sword_bone", "Bonecleaver Blade",
-        "Carved from dense Skeleton champion bones, heavily eroding the stance and poise of enemy targets (+34 Attack, +15 Stamina).",
+        "Carved from dense Skeleton champion bones, heavily eroding the stance and poise of enemy targets (+34 Attack).",
         LoadItemIcon("BoneSword.png"), ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 430,
-        bonusAtk: 34f, bonusDef: 0, bonusHp: 0, bonusStamina: 15f, heal: 0,
+        bonusAtk: 34f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/BoneSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Equilibrium", "weapon_sword_equilibrium", "Equilibrium Blade",
-        "A twin-toned blade of light and dark, striking a flawless balance between offensive power and vitality (+37 Attack, +25 Max HP).",
+        "A twin-toned blade of light and dark, striking a flawless balance between offensive power and vitality (+37 Attack).",
         LoadItemIcon("EquilibriumBlade.png"), ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 480,
-        bonusAtk: 37f, bonusDef: 0, bonusHp: 25f, bonusStamina: 0, heal: 0,
+        bonusAtk: 37f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/EquilibriumSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Dead", "weapon_sword_dead", "Deathbringer Sword",
-        "A grim blade steeped in necromantic aura, siphoning lingering vigor from fallen foes (+40 Attack, +15 Max HP).",
+        "A grim blade steeped in necromantic aura, siphoning lingering vigor from fallen foes (+40 Attack).",
         LoadItemIcon("DeadSword.png"), ItemType.Weapon, ItemRarity.Rare, maxStack: 1, goldValue: 520,
-        bonusAtk: 40f, bonusDef: 0, bonusHp: 15f, bonusStamina: 0, heal: 0,
+        bonusAtk: 40f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/DeadSword.prefab"));
 
       // Tier 3: Ma Pháp & Tinh Hoa (Epic)
       CreateOrUpdateItem("Item_Sword_Emerald", "weapon_sword_emerald", "Emerald Jade Edge",
-        "Sculpted from ancient jade, radiating a serene emerald sheen that wards its bearer (+45 Attack, +6 DEF).",
+        "Sculpted from ancient jade, radiating a serene emerald sheen that wards its bearer (+45 Attack).",
         LoadItemIcon("EmeraldSword.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 620,
-        bonusAtk: 45f, bonusDef: 6f, bonusHp: 0, bonusStamina: 0, heal: 0,
+        bonusAtk: 45f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/EmeraldSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Rose", "weapon_sword_rose", "Crimson Rose Rapier",
-        "An ornate crimson rapier resembling a barbed rose blossom, striking with lethal speed and minimal effort (+49 Attack, +20 Stamina).",
+        "An ornate crimson rapier resembling a barbed rose blossom, striking with lethal speed and minimal effort (+49 Attack).",
         LoadItemIcon("RoseSword.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 680,
-        bonusAtk: 49f, bonusDef: 0, bonusHp: 0, bonusStamina: 20f, heal: 0,
+        bonusAtk: 49f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
         visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/RoseSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Katsunesi", "weapon_sword_katsunesi", "Kitsune Spirit Katana",
-        "A spirit katana housing the mystical soul of a kitsune, significantly amplifying sword waves and spells (+53 Attack, +30 Max HP, +15% Crit Rate, +35% Crit DMG, +8% Move Speed).",
+        "A spirit katana housing the mystical soul of a kitsune, significantly amplifying sword waves and spells (+53 Attack).",
         LoadItemIcon("KatsunesiBlade.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 750,
-        bonusAtk: 53f, bonusDef: 0, bonusHp: 30f, bonusStamina: 0, heal: 0,
+        bonusAtk: 53f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/KatsunesiSword.prefab"),
-        critRate: 15f, critDmg: 35f, moveSpeed: 8f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/KatsunesiSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Titan", "weapon_sword_titan", "Titan Heavy Cleaver",
-        "A colossal cleaver that demands superhuman physique to wield, delivering devastating earth-shattering swings (+58 Attack, +45 Max HP, +20% Crit DMG).",
+        "A colossal cleaver that demands superhuman physique to wield, delivering devastating earth-shattering swings (+58 Attack).",
         LoadItemIcon("TitanSword.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 820,
-        bonusAtk: 58f, bonusDef: 0, bonusHp: 45f, bonusStamina: 0, heal: 0,
+        bonusAtk: 58f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/TitanSword.prefab"),
-        critDmg: 20f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/TitanSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Demonic", "weapon_sword_demonic", "Nether Demonic Blade",
-        "Forged from nether metals within the underworld abyss, thirsting for the blood of fallen foes (+63 Attack, +35 Max HP, +6% Lifesteal, +8% Crit Rate).",
+        "Forged from nether metals within the underworld abyss, emanating an overwhelming murderous aura (+63 Attack).",
         LoadItemIcon("DemonicSword.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 900,
-        bonusAtk: 63f, bonusDef: 0, bonusHp: 35f, bonusStamina: 0, heal: 0,
+        bonusAtk: 63f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/DemonicSword.prefab"),
-        critRate: 8f, lifesteal: 6f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/DemonicSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Ice", "weapon_sword_ice", "Frostfang Glacial Sword",
-        "An unmelting glacial blade carved from the Ice Golem, chilling the sinew and muscle of struck targets (+68 Attack, +8 DEF, +20 Stamina, -15% Spirit Cost, +20% Spirit Gain).",
+        "An unmelting glacial blade carved from the Ice Golem, chilling the sinew and muscle of struck targets (+68 Attack).",
         LoadItemIcon("IceSword.png"), ItemType.Weapon, ItemRarity.Epic, maxStack: 1, goldValue: 1000,
-        bonusAtk: 68f, bonusDef: 8f, bonusHp: 0, bonusStamina: 20f, heal: 0,
+        bonusAtk: 68f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/IceSword.prefab"),
-        spiritCostRed: 15f, spiritGain: 20f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/IceSword.prefab"));
 
       // Tier 4: Thần Binh Tối Thượng (Legendary)
       CreateOrUpdateItem("Item_Sword_Sunblade", "weapon_sword_sunblade", "Radiant Sunblade",
-        "A glorious sun-forged blade shining with blazing daylight, dispelling the dungeon gloom (+75 Attack, +30 Stamina, +12% Crit Rate, +25% Spirit Gain).",
+        "A glorious sun-forged blade shining with blazing daylight, dispelling the dungeon gloom (+75 Attack).",
         LoadItemIcon("RadiantSunBlade.png"), ItemType.Weapon, ItemRarity.Legendary, maxStack: 1, goldValue: 1250,
-        bonusAtk: 75f, bonusDef: 0, bonusHp: 0, bonusStamina: 30f, heal: 0,
+        bonusAtk: 75f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/RadiantSword.prefab"),
-        critRate: 12f, spiritGain: 25f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/RadiantSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Excalibur", "weapon_sword_excalibur", "Excalibur Sovereign",
-        "The sovereign holy blade of ancient monarchs, commanding destiny and overwhelming battlefield authority (+84 Attack, +12 DEF, +60 Max HP, +10% Crit Rate, +30% Crit DMG).",
+        "The sovereign holy blade of ancient monarchs, commanding destiny and overwhelming battlefield authority (+84 Attack).",
         LoadItemIcon("Excalibur.png"), ItemType.Weapon, ItemRarity.Legendary, maxStack: 1, goldValue: 1500,
-        bonusAtk: 84f, bonusDef: 12f, bonusHp: 60f, bonusStamina: 0, heal: 0,
+        bonusAtk: 84f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/ExcaliburSword.prefab"),
-        critRate: 10f, critDmg: 30f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/ExcaliburSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Artifact", "weapon_sword_artifact", "Ancient Artifact Blade",
-        "A relic excavated from a forgotten epoch, humming with incomprehensible primordial energy (+92 Attack, +70 Max HP, +35 Stamina, -20% Spirit Cost).",
+        "A relic excavated from a forgotten epoch, humming with incomprehensible primordial energy (+92 Attack).",
         LoadItemIcon("ArtifactSword.png"), ItemType.Weapon, ItemRarity.Legendary, maxStack: 1, goldValue: 1800,
-        bonusAtk: 92f, bonusDef: 0, bonusHp: 70f, bonusStamina: 35f, heal: 0,
+        bonusAtk: 92f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/ArtifactSword.prefab"),
-        spiritCostRed: 20f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/ArtifactSword.prefab"));
 
       CreateOrUpdateItem("Item_Sword_Dragonic", "weapon_sword_dragonic", "Dragonfire Apocalypse",
-        "The ultimate apocalyptic blade harboring a dragon soul, consuming all adversaries in scorching inferno (+105 Attack, +80 Max HP, +40 Stamina, +15% Crit Rate, +45% Crit DMG, +5% Lifesteal).",
+        "The ultimate apocalyptic blade harboring a dragon soul, consuming all adversaries in scorching inferno (+105 Attack).",
         LoadItemIcon("DragonicSword.png"), ItemType.Weapon, ItemRarity.Legendary, maxStack: 1, goldValue: 2200,
-        bonusAtk: 105f, bonusDef: 0, bonusHp: 80f, bonusStamina: 40f, heal: 0,
+        bonusAtk: 105f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
         worldPrefab: worldPickup,
-        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/DragonicSword.prefab"),
-        critRate: 15f, critDmg: 45f, lifesteal: 5f);
+        visualPrefab: LoadWeaponPrefab($"{SwordsFolder}/DragonicSword.prefab"));
+
+      // ==========================================
+      // 6. TRANG SỨC & PHỤ KIỆN (ACCESSORIES - 11 ITEMS)
+      // ==========================================
+      // Tier 1: Common (2 Nhẫn cơ bản)
+      CreateOrUpdateItem("Item_Acc_Copper_Band", "acc_copper_band", "Copper Band",
+        "A simple copper ring polished with river sand. Extends the wearer's physical endurance (+12 Max Stamina).",
+        LoadItemIcon("CopperBand.png"), ItemType.Accessory, ItemRarity.Common, maxStack: 1, goldValue: 20,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 12f, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
+
+      CreateOrUpdateItem("Item_Acc_Iron_Will", "acc_iron_will", "Iron Will Ring",
+        "A rugged iron band forged from bog iron. Hardens the wearer's resolve against bludgeoning attacks (+4 Defense).",
+        LoadItemIcon("IronWillRing.png"), ItemType.Accessory, ItemRarity.Common, maxStack: 1, goldValue: 35,
+        bonusAtk: 0, bonusDef: 4f, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
+
+      // Tier 2: Uncommon (3 Phụ kiện chuyên dụng)
+      CreateOrUpdateItem("Item_Acc_Windrunner", "acc_windrunner", "Windrunner Band",
+        "An aerodynamic ring enchanted with gentle drafts, allowing the bearer to step lightly across treacherous dungeon ground (+5% Movement Speed).",
+        LoadItemIcon("WindrunnerRing.png"), ItemType.Accessory, ItemRarity.Uncommon, maxStack: 1, goldValue: 70,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        moveSpeed: 5f);
+
+      CreateOrUpdateItem("Item_Acc_Quartz_Pendant", "acc_quartz_pendant", "Quartz Pendant",
+        "A crystalline pendant reflecting fractured light, easing physical exertion during intense weapon swings and evasion (-8% Stamina Cost).",
+        LoadItemIcon("QuartzPendant.png"), ItemType.Accessory, ItemRarity.Uncommon, maxStack: 1, goldValue: 80,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        staminaCostRed: 8f);
+
+      CreateOrUpdateItem("Item_Acc_Warrior_Crest", "acc_warrior_crest", "Warrior's Crest",
+        "A battle-tested talisman inscribed with ancient heraldry. Bolsters maximum life force against lethal dungeon perils (+40 Max Health).",
+        LoadItemIcon("WarriorCrest.png"), ItemType.Accessory, ItemRarity.Uncommon, maxStack: 1, goldValue: 90,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 40f, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
+
+      // Tier 3: Rare (3 Trang sức ma pháp & cuồng chiến)
+      CreateOrUpdateItem("Item_Acc_Arcane_Ring", "acc_arcane_ring", "Arcane Conduit Ring",
+        "A sapphire-inlaid band inscribed with swirling mystic runes, channeling atmospheric aether to sustain martial spellcraft (-10% Spirit Cost).",
+        LoadItemIcon("ArcaneRing.png"), ItemType.Accessory, ItemRarity.Rare, maxStack: 1, goldValue: 160,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        spiritCostRed: 10f);
+
+      CreateOrUpdateItem("Item_Acc_Berserker_Ring", "acc_berserker_ring", "Berserker Ring",
+        "A jagged bone ring vibrating with feral bloodlust. Guides weapon edges directly toward enemy vital points (+4% Critical Rate).",
+        LoadItemIcon("BerserkerRing.png"), ItemType.Accessory, ItemRarity.Rare, maxStack: 1, goldValue: 180,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        critRate: 4f);
+
+      CreateOrUpdateItem("Item_Acc_Bloodstone_Choker", "acc_bloodstone_choker", "Bloodstone Choker",
+        "A crimson jewel that pulses like a beating heart. Siphons vitality from wounded foes upon impact (+2.5% Lifesteal).",
+        LoadItemIcon("BloodStoneChoker.png"), ItemType.Accessory, ItemRarity.Rare, maxStack: 1, goldValue: 210,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        lifesteal: 2.5f);
+
+      // Tier 4: Epic (1 Nhẫn Ngọc Băng Vương Giả)
+      CreateOrUpdateItem("Item_Acc_Frost_Monarch", "acc_frost_monarch", "Frost Monarch Signet",
+        "A royal crest carved from permafrost ice. Rapidly condenses spirit energy whenever striking an opponent (+15% Spirit Gain).",
+        LoadItemIcon("FrostMonarchRing.png"), ItemType.Accessory, ItemRarity.Epic, maxStack: 1, goldValue: 325,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        spiritGain: 15f);
+
+      // Tier 5: Legendary (2 Bảo vật cực phẩm)
+      CreateOrUpdateItem("Item_Acc_Crimson_Dragon_Heart", "acc_crimson_dragon_heart", "Crimson Dragon Heart",
+        "A legendary talisman encapsulating the smoldering draconic spark. Infuses all melee attacks with catastrophic destructive power (+12 Attack Damage).",
+        LoadItemIcon("CrimsonDragonHeart.png"), ItemType.Accessory, ItemRarity.Legendary, maxStack: 1, goldValue: 550,
+        bonusAtk: 12f, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null);
+
+      CreateOrUpdateItem("Item_Acc_Void_Eye_Pendant", "acc_void_eye_pendant", "Void Eye Pendant",
+        "A relic from the abyssal cosmic eye that gazes into the void. Catastrophically magnifies the impact of critical strikes (+25% Critical Damage).",
+        LoadItemIcon("VoidEyePendant.png"), ItemType.Accessory, ItemRarity.Legendary, maxStack: 1, goldValue: 675,
+        bonusAtk: 0, bonusDef: 0, bonusHp: 0, bonusStamina: 0, heal: 0,
+        worldPrefab: worldPickup, visualPrefab: null,
+        critDmg: 25f);
 
       EnsurePlayerWeaponVisualSync();
 
@@ -421,20 +481,22 @@ namespace InfiniteLabyrinth.Editor
       if (showDialog)
       {
         EditorUtility.DisplayDialog("Infinite Labyrinth", 
-          "Đã khởi tạo và cập nhật thành công TOÀN BỘ 51 VẬT PHẨM:\n- 20 Vũ Khí (Đầy đủ 3D Model & Icon)\n- 8 Giáp Trụ (Thuộc tính & Icon)\n- 15 Nguyên Liệu Rèn, Đá Quý & Lõi Boss\n- 6 Dược Phẩm Sinh Tồn\n- Tiền Vàng & Chìa Khóa Boss Hầm Ngục!\n\nToàn bộ dữ liệu nằm tại: Assets/ScriptableObjects/Items/", "OK");
+          "Đã khởi tạo và cập nhật thành công TOÀN BỘ 62 VẬT PHẨM:\n- 20 Vũ Khí (Đầy đủ 3D Model & Icon)\n- 8 Giáp Trụ (Thuộc tính & Icon)\n- 11 Trang Sức & Phụ Kiện (Dual Accessories & Affixes)\n- 15 Nguyên Liệu Rèn, Đá Quý & Lõi Boss\n- 6 Dược Phẩm Sinh Tồn\n- Tiền Vàng & Chìa Khóa Boss Hầm Ngục!\n\nToàn bộ dữ liệu nằm tại: Assets/ScriptableObjects/Items/", "OK");
       }
-      Debug.Log("[ItemDatabaseGenerator] Đã tạo thành công toàn bộ 51 vật phẩm trong Assets/ScriptableObjects/Items/");
+      Debug.Log("[ItemDatabaseGenerator] Đã tạo thành công toàn bộ 62 vật phẩm trong Assets/ScriptableObjects/Items/");
     }
 
     private static Sprite LoadItemIcon(string iconName)
     {
-      string path = $"Assets/UI RPG/Icon/Items/{iconName}";
-      Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-      if (sp == null)
+      string[] subdirs = { "", "Accessories/", "Armors/", "Swords/", "Potions/", "Materials/" };
+      foreach (var sub in subdirs)
       {
-        Debug.LogWarning($"[ItemDatabaseGenerator] Không tìm thấy icon tại: {path}");
+        string p = $"Assets/UI RPG/Icon/Items/{sub}{iconName}";
+        Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(p);
+        if (sp != null) return sp;
       }
-      return sp;
+      Debug.LogWarning($"[ItemDatabaseGenerator] Không tìm thấy icon: {iconName}");
+      return null;
     }
 
     private static GameObject LoadWeaponPrefab(string prefabPath)
@@ -659,7 +721,8 @@ namespace InfiniteLabyrinth.Editor
       return config;
     }
 
-    [MenuItem("Infinite Labyrinth/RPG/4. Cấu Hình Tự Động Rơi Đồ (Setup Props & Monsters Loot)", false, 13)]
+    // [MenuItem("Infinite Labyrinth/RPG/4. Cấu Hình Tự Động Rơi Đồ (Setup Props & Monsters Loot)", false, 13)] 
+    // Lưu ý: Đã chuyển sang sử dụng LootTableSetupEditor.cs ("Infinite Labyrinth/RPG/2. Cấu Hình Ma Trận Rơi Đồ")
     public static void SetupPropsAndMonstersLoot()
     {
       GameObject worldPickup = EnsureWorldItemPickupPrefab();
@@ -872,11 +935,15 @@ namespace InfiniteLabyrinth.Editor
       string assetPath = $"{TargetFolder}/{assetName}.asset";
       ItemData item = AssetDatabase.LoadAssetAtPath<ItemData>(assetPath);
 
-      if (item == null)
+      if (item != null)
       {
-        item = ScriptableObject.CreateInstance<ItemData>();
-        AssetDatabase.CreateAsset(item, assetPath);
+        // Nếu asset vật phẩm đã tồn tại, không ghi đè dữ liệu để tránh xóa mất các tùy chỉnh cân bằng,
+        // mô hình 3D và icon do người dùng thiết lập.
+        return;
       }
+
+      item = ScriptableObject.CreateInstance<ItemData>();
+      AssetDatabase.CreateAsset(item, assetPath);
 
       SerializedObject so = new SerializedObject(item);
       so.FindProperty("id").stringValue = id;

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c3ea9d20b64deca9d361c8fe551ac9, type: 3}
+  m_Name: recipe_acc_bloodstone
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.Blacksmith.CraftingRecipe
+  recipeId: recipe_acc_bloodstone
+  recipeName: Bloodstone Choker
+  description: Mystical choker inlaid with pulsating monster gem and refined arcane
+    dust. Feasts on the lifeforce of fallen foes.
+  resultItem: {fileID: 11400000, guid: a9b1182eaeb04928a9215804b55a93f3, type: 2}
+  resultQuantity: 1
+  goldCost: 260
+  requiredMaterials:
+  - materialItem: {fileID: 11400000, guid: 98bf2e694ac553b489c2d1a1eac5d66c, type: 2}
+    quantity: 2
+  - materialItem: {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
+    quantity: 1
+  - materialItem: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+    quantity: 3

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -44,6 +45,12 @@ namespace InfiniteLabyrinth.UI
 
     [Tooltip("Ô trang bị Giáp")]
     [SerializeField] private EquipmentSlotUI armorSlot;
+
+    [Tooltip("Ô trang bị Trang Sức 1")]
+    [SerializeField] private EquipmentSlotUI accessorySlot1;
+
+    [Tooltip("Ô trang bị Trang Sức 2")]
+    [SerializeField] private EquipmentSlotUI accessorySlot2;
 
     [Tooltip("Panel hiển thị chỉ số nhân vật thời gian thực")]
     [SerializeField] private PlayerStatsPanelUI statsPanel;
@@ -185,6 +192,20 @@ namespace InfiniteLabyrinth.UI
         armorSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
         armorSlot.OnRightClicked += HandleEquipmentSlotRightClicked;
       }
+      if (accessorySlot1 != null)
+      {
+        accessorySlot1.OnClicked -= HandleEquipmentSlotClicked;
+        accessorySlot1.OnClicked += HandleEquipmentSlotClicked;
+        accessorySlot1.OnRightClicked -= HandleEquipmentSlotRightClicked;
+        accessorySlot1.OnRightClicked += HandleEquipmentSlotRightClicked;
+      }
+      if (accessorySlot2 != null)
+      {
+        accessorySlot2.OnClicked -= HandleEquipmentSlotClicked;
+        accessorySlot2.OnClicked += HandleEquipmentSlotClicked;
+        accessorySlot2.OnRightClicked -= HandleEquipmentSlotRightClicked;
+        accessorySlot2.OnRightClicked += HandleEquipmentSlotRightClicked;
+      }
       if (usableSlot != null)
       {
         usableSlot.OnClicked -= HandleEquipmentSlotClicked;
@@ -199,8 +220,30 @@ namespace InfiniteLabyrinth.UI
       if (leftPanel == null) leftPanel = transform.Find("LeftPanel") as RectTransform;
       if (rightPanel == null) rightPanel = transform.Find("RightPanel") as RectTransform;
       if (darkOverlay == null) darkOverlay = transform.Find("DarkOverlay")?.GetComponent<Image>();
-      if (usableSlot == null && leftPanel != null) usableSlot = leftPanel.Find("UsableSlot")?.GetComponent<EquipmentSlotUI>();
-      if (usableSlot == null) usableSlot = transform.Find("LeftPanel/UsableSlot")?.GetComponent<EquipmentSlotUI>();
+
+      if (accessorySlot1 == null || accessorySlot2 == null)
+      {
+        var eqSlots = GetComponentsInChildren<EquipmentSlotUI>(true);
+        foreach (var eq in eqSlots)
+        {
+          if (eq == null) continue;
+          string slotName = eq.gameObject.name;
+          if (slotName.IndexOf("accessory", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            if (slotName.IndexOf("2", StringComparison.OrdinalIgnoreCase) >= 0 || slotName.EndsWith("2"))
+            {
+              accessorySlot2 = eq;
+            }
+            else
+            {
+              if (accessorySlot1 == null) accessorySlot1 = eq;
+            }
+          }
+        }
+      }
+
+      if (usableSlot == null && leftPanel != null) usableSlot = leftPanel.Find("EquipRow/UsableSlot")?.GetComponent<EquipmentSlotUI>() ?? leftPanel.Find("UsableSlot")?.GetComponent<EquipmentSlotUI>();
+      if (usableSlot == null) usableSlot = transform.Find("LeftPanel/EquipRow/UsableSlot")?.GetComponent<EquipmentSlotUI>() ?? transform.Find("LeftPanel/UsableSlot")?.GetComponent<EquipmentSlotUI>();
       if (hudUsableSlot == null) hudUsableSlot = GetComponentInParent<Canvas>()?.GetComponentInChildren<UsableSlotUI>(true);
       SetupEquipmentSlotListeners();
       AutoFindTabs();
@@ -278,6 +321,16 @@ namespace InfiniteLabyrinth.UI
       {
         armorSlot.OnClicked -= HandleEquipmentSlotClicked;
         armorSlot.OnRightClicked -= HandleEquipmentSlotRightClicked;
+      }
+      if (accessorySlot1 != null)
+      {
+        accessorySlot1.OnClicked -= HandleEquipmentSlotClicked;
+        accessorySlot1.OnRightClicked -= HandleEquipmentSlotRightClicked;
+      }
+      if (accessorySlot2 != null)
+      {
+        accessorySlot2.OnClicked -= HandleEquipmentSlotClicked;
+        accessorySlot2.OnRightClicked -= HandleEquipmentSlotRightClicked;
       }
       if (usableSlot != null)
       {
@@ -996,7 +1049,7 @@ namespace InfiniteLabyrinth.UI
               isMatch = (item.ItemType == ItemType.Weapon);
               break;
             case InventoryTab.Armor:
-              isMatch = (item.ItemType == ItemType.Armor);
+              isMatch = (item.ItemType == ItemType.Armor || item.ItemType == ItemType.Accessory);
               break;
             case InventoryTab.Item:
               isMatch = (item.ItemType == ItemType.Consumable || item.ItemType == ItemType.Material);
@@ -1028,11 +1081,16 @@ namespace InfiniteLabyrinth.UI
     }
 
     /// <summary>
-    /// Làm mới 2 ô trang bị (Vũ khí & Giáp)
+    /// Làm mới các ô trang bị (Vũ khí, Giáp, Trang sức 1 & 2, Bình thuốc)
     /// </summary>
     private void RefreshEquipment()
     {
       if (!InventoryManager.HasInstance) return;
+
+      if (accessorySlot1 == null || accessorySlot2 == null)
+      {
+        AutoFindPanels();
+      }
 
       if (weaponSlot != null)
       {
@@ -1042,6 +1100,16 @@ namespace InfiniteLabyrinth.UI
       if (armorSlot != null)
       {
         armorSlot.SetEquippedItem(InventoryManager.Instance.EquippedArmor);
+      }
+
+      if (accessorySlot1 != null)
+      {
+        accessorySlot1.SetEquippedItem(InventoryManager.Instance.EquippedAccessory1, 1, InventoryManager.Instance.EquippedAccessory1UpgradeLevel);
+      }
+
+      if (accessorySlot2 != null)
+      {
+        accessorySlot2.SetEquippedItem(InventoryManager.Instance.EquippedAccessory2, 1, InventoryManager.Instance.EquippedAccessory2UpgradeLevel);
       }
 
       if (usableSlot != null)
@@ -1105,8 +1173,8 @@ namespace InfiniteLabyrinth.UI
       if (!InventoryManager.HasInstance) return;
 
       ItemData item = slot.CurrentItem;
-      // 3 loại trang bị được hỗ trợ: Vũ khí, Giáp, và Bình thuốc (Consumable)
-      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Consumable)
+      // 4 loại trang bị được hỗ trợ: Vũ khí, Giáp, Trang sức (Accessory), và Bình thuốc (Consumable)
+      if (item.ItemType != ItemType.Weapon && item.ItemType != ItemType.Armor && item.ItemType != ItemType.Consumable && item.ItemType != ItemType.Accessory)
       {
         return;
       }
@@ -1156,7 +1224,7 @@ namespace InfiniteLabyrinth.UI
       if (!InventoryManager.HasInstance) return;
 
       ItemType slotType = eqSlot.SlotType;
-      bool success = InventoryManager.Instance.Unequip(slotType);
+      bool success = InventoryManager.Instance.Unequip(slotType, eqSlot.SlotIndex);
       if (success)
       {
         if (itemDetailPopup != null)

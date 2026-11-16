@@ -385,6 +385,18 @@ namespace InfiniteLabyrinth.Editor
 
             EditorGUILayout.Space(6);
 
+            // Card 4: Haven Village Minimap (Phím M)
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🗺️ Bản Đồ Làng Haven (Phím M - Top-Down Minimap)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("Thiết lập bản đồ toàn cảnh Làng Haven (VillageMap.png), 5 Icon POI (2 Shop, Lò rèn, Chuông, Cổng Dungeon) và vị trí người chơi thời gian thực.", MessageType.None);
+            if (GUILayout.Button("🗺️ 1-Click Thiết Lập Bản Đồ Làng Haven", GUILayout.Height(32)))
+            {
+                VillageMapSetupEditor.SetupVillageMap();
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
             // Card 3: Progression, Interaction & Key
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("📈 Tiến Trình Cấp Độ, Tương Tác & Chìa Khóa Hầm Ngục", EditorStyles.boldLabel);
@@ -509,6 +521,21 @@ namespace InfiniteLabyrinth.Editor
             {
                 AdminCheatSetupEditor.SetupAdminCheatSystem();
             }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            // Card 3: Dungeon PCG Prefabs & Standalone Build Fix
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🏰 Cấu Hình & Khóa Prefabs Trang Trí Hầm Ngục (Build Standalone)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("Tự động quét và lưu cứng toàn bộ 80+ Prefabs (Đuốc, Bàn ghế, Thùng vỡ, Rương báu, Templates tàn tích, Cổng Boss) trực tiếp vào DungeonScene.unity. Khắc phục triệt để lỗi khi Build .exe hầm ngục bị trống trơn do AssetDatabase không hoạt động ở runtime.", MessageType.None);
+
+            GUI.backgroundColor = new Color(0.2f, 0.85f, 0.4f);
+            if (GUILayout.Button("🏰 CẤU HÌNH & LƯU PREFABS TRANG TRÍ HẦM NGỤC (1-CLICK)", GUILayout.Height(34)))
+            {
+                DungeonPropSetupEditor.ConfigureAndSaveDungeonProps(silent: false);
+            }
+            GUI.backgroundColor = Color.white;
             EditorGUILayout.EndVertical();
         }
 

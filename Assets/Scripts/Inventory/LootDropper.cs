@@ -58,6 +58,13 @@ namespace InfiniteLabyrinth.Inventory
     [Tooltip("Quái Tinh Nhuệ (Elite) rơi nhiều Vàng hơn x2 và tăng tỷ lệ rơi nguyên liệu")]
     [SerializeField] private bool isEliteDrop = false;
 
+    [Header("=== ELITE GEAR DROPS (TẦNG 2+) ===")]
+    [Tooltip("Danh sách trang bị ngẫu nhiên có thể rơi khi tiêu diệt Quái Tinh Nhuệ (Elite từ Tầng 2+)")]
+    [SerializeField] private List<ItemData> eliteGearPool = new List<ItemData>();
+    [Range(0f, 1f)]
+    [Tooltip("Tỷ lệ rơi trang bị từ Quái Tinh Nhuệ (mặc định 25%)")]
+    [SerializeField] private float eliteGearDropChance = 0.25f;
+
     public void SetEliteDrop(bool elite) => isEliteDrop = elite;
 
     private static GoldDropVisualConfig cachedDefaultConfig;
@@ -112,6 +119,7 @@ namespace InfiniteLabyrinth.Inventory
 
     /// <summary>
     /// Kích hoạt tính toán và tung các vật phẩm rơi ra đất với thuật toán chống rơi vào tường & chống lơ lửng
+    /// Hỗ trợ lọc theo Tầng hầm ngục (Floor-Based Loot) và rơi Gear từ Quái Tinh Nhuệ (Elite).
     /// </summary>
     public void DropLoot()
     {
@@ -120,14 +128,29 @@ namespace InfiniteLabyrinth.Inventory
 
       EnsureGoldConfigLoaded();
 
+      int currentFloor = 1;
+      if (GameManager.Instance != null)
+      {
+        currentFloor = GameManager.Instance.CurrentFloor;
+      }
+      currentFloor = Mathf.Max(1, currentFloor);
+
       List<DropRequest> requests = new List<DropRequest>();
 
-      // 1. Tính toán rơi Tiền Vàng theo phân cấp Thresholds
+      // 1. Tính toán rơi Tiền Vàng theo phân cấp Thresholds & Tăng tiến theo Tầng (+20% mỗi tầng từ Tầng 2)
       float actualGoldChance = isEliteDrop ? 1.0f : goldDropChance;
       if (goldItemData != null && Random.value <= actualGoldChance)
       {
         int minG = isEliteDrop ? minGold * 2 : minGold;
         int maxG = isEliteDrop ? maxGold * 2 + 5 : maxGold;
+
+        if (currentFloor > 1)
+        {
+          float floorGoldMult = 1f + 0.20f * (currentFloor - 1);
+          minG = Mathf.RoundToInt(minG * floorGoldMult);
+          maxG = Mathf.RoundToInt(maxG * floorGoldMult);
+        }
+
         int goldAmount = Random.Range(minG, maxG + 1);
         if (goldAmount > 0)
         {
@@ -139,7 +162,7 @@ namespace InfiniteLabyrinth.Inventory
         }
       }
 
-      // 2. Tính toán rơi từng vật phẩm trong bảng Loot (dùng chung rương nhỏ WorldItemPickup)
+      // 2. Tính toán rơi từng vật phẩm trong bảng Loot (Lọc theo Tầng minFloor / maxFloor)
       if (lootTable != null)
       {
         for (int i = 0; i < lootTable.Count; i++)
@@ -147,6 +170,10 @@ namespace InfiniteLabyrinth.Inventory
           var entry = lootTable[i];
           if (entry != null)
           {
+            // Kiểm tra giới hạn tầng của mục này
+            if (entry.minFloor > 0 && currentFloor < entry.minFloor) continue;
+            if (entry.maxFloor > 0 && currentFloor > entry.maxFloor) continue;
+
             float chance = isEliteDrop ? Mathf.Min(1.0f, entry.dropChance * 1.5f) : entry.dropChance;
             if (Random.value <= chance)
             {
@@ -160,6 +187,20 @@ namespace InfiniteLabyrinth.Inventory
                 }
               }
             }
+          }
+        }
+      }
+
+      // 3. Cơ chế rơi trang bị từ Quái Tinh Nhuệ (Elite Monsters từ Tầng 2+)
+      if (isEliteDrop && currentFloor >= 2 && eliteGearPool != null && eliteGearPool.Count > 0)
+      {
+        if (Random.value <= eliteGearDropChance)
+        {
+          var validGear = eliteGearPool.FindAll(x => x != null);
+          if (validGear.Count > 0)
+          {
+            ItemData pickedGear = validGear[Random.Range(0, validGear.Count)];
+            requests.Add(new DropRequest { Item = pickedGear, Count = 1, Prefab = worldPickupPrefab });
           }
         }
       }
@@ -202,7 +243,7 @@ namespace InfiniteLabyrinth.Inventory
       if (pickup != null)
       {
         EquipmentAffixData affix = null;
-        if (item != null && (item.ItemType == ItemType.Weapon || item.ItemType == ItemType.Armor))
+        if (item != null && item.IsEquipment)
         {
           affix = EquipmentAffixGenerator.Generate(item);
         }
@@ -419,6 +460,15 @@ namespace InfiniteLabyrinth.Inventory
     {
       if (worldPickup != null) worldPickupPrefab = worldPickup;
       if (goldConfig != null) goldVisualConfig = goldConfig;
+    }
+
+    /// <summary>
+    /// API hỗ trợ cài đặt cấu hình rơi trang bị từ Quái Tinh Nhuệ (Elite) từ Editor/Script
+    /// </summary>
+    public void ConfigureEliteGear(List<ItemData> gearPool, float chance = 0.25f)
+    {
+      eliteGearPool = gearPool != null ? new List<ItemData>(gearPool) : new List<ItemData>();
+      eliteGearDropChance = Mathf.Clamp01(chance);
     }
 
     public List<LootEntry> GetLootTable() => lootTable;

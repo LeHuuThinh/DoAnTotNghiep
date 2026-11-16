@@ -174,7 +174,7 @@ namespace InfiniteLabyrinth.EditorTools
       Debug.Log("- 2 NPC Shop: Đã gắn ShopInteractable sẵn sàng tương tác phím F!");
     }
 
-    private static ShopData SetupEquipmentShopData()
+    public static ShopData SetupEquipmentShopData()
     {
       ShopData data = AssetDatabase.LoadAssetAtPath<ShopData>(EQUIPMENT_SHOP_PATH);
       if (data == null)
@@ -199,6 +199,11 @@ namespace InfiniteLabyrinth.EditorTools
       AddItem(items, "Item_Armor_Leather_Scout", 100, -1);
       AddItem(items, "Item_Armor_Leather", 180, -1);
       AddItem(items, "Item_Armor_Iron_Cuirass", 300, -1);
+
+      // Phân bổ Trang Sức (Accessories) vào Cửa Hàng Trang Bị Haven (Chỉ bán 3 Trang Sức cơ bản)
+      AddItem(items, "Item_Acc_Copper_Band", 40, -1);
+      AddItem(items, "Item_Acc_Iron_Will", 70, -1);
+      AddItem(items, "Item_Acc_Windrunner", 140, -1);
 
       data.SetItems(items);
       EditorUtility.SetDirty(data);

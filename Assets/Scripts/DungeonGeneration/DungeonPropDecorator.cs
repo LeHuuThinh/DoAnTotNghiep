@@ -547,7 +547,7 @@ public partial class DungeonPropDecorator : MonoBehaviour
       }
     }
 
-    // Nạp tự động Chìa Khóa Hầm Ngục & Tế Đàn
+    // Nạp tự động Chìa Khóa Hầm Ngục, Tế Đàn, Boss Gate, Boss Pedestal & Boss Character
     if (dungeonKeyPrefab == null)
     {
       dungeonKeyPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/DungeonKeyPickup.prefab");
@@ -560,8 +560,21 @@ public partial class DungeonPropDecorator : MonoBehaviour
     {
       shrineTemplatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Templates/Walls/wallset_shrine.prefab");
     }
+    if (bossGatePrefab == null)
+    {
+      bossGatePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/Interactable/BossGate.prefab");
+    }
+    if (bossPedestalPrefab == null)
+    {
+      bossPedestalPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Dungeon/DungeonPrefabs/BossPedestal.prefab");
+    }
+    if (bossCharacterPrefab == null)
+    {
+      bossCharacterPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Boss/IceGolem/Boss_IceGolem.prefab");
+    }
 
     templateBoundsCache.Clear();
+    UnityEditor.EditorUtility.SetDirty(this);
     Debug.Log($"<color=green>[DungeonPropDecorator]</color> Tải tự động thành công: <b>{guids.Length}</b> prefabs thường, <b>{wallTemplatePrefabs.Count}</b> wall templates, <b>{propTemplatePrefabs.Count}</b> prop templates từ '{folder}'.");
   }
 #endif

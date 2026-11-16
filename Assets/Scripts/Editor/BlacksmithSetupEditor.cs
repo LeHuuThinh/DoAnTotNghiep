@@ -159,7 +159,7 @@ namespace InfiniteLabyrinth.EditorTools
       Debug.Log("<color=#59F259><b>[BlacksmithSetup] HOÀN TẤT 100%!</b></color> Hệ thống Lò Rèn Haven (RPG-08) đã sẵn sàng.");
     }
 
-    private static List<CraftingRecipe> CreateAllCraftingRecipes()
+    public static List<CraftingRecipe> CreateAllCraftingRecipes()
     {
       var list = new List<CraftingRecipe>();
 
@@ -253,6 +253,101 @@ namespace InfiniteLabyrinth.EditorTools
         {
           ("Item_Mat_Ice_Core", 1),
           ("Item_Mat_Ice_Rune", 2),
+          ("Item_Mat_Flawless_Crystal", 1)
+        }
+      ));
+
+      // 7. Nhẫn Băng Vương (Frost Monarch Signet)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_frost_monarch",
+        "Frost Monarch Signet",
+        "Peerless ice signet that condenses frosty aura into a protective shield, drastically reducing skill stamina consumption (-12% Stamina Cost).",
+        "Item_Acc_Frost_Monarch",
+        1,
+        450,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Ice_Core", 1),
+          ("Item_Mat_Ice_Rune", 2),
+          ("Item_Mat_Monster_Gem", 1)
+        }
+      ));
+
+      // 8. Dây Chuyền Hư Không Nhãn (Void Eye Pendant)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_void_eye",
+        "Void Eye Pendant",
+        "A relic from the abyssal cosmic eye that gazes into the void. Catastrophically magnifies critical strike impact (+25% Critical Damage).",
+        "Item_Acc_Void_Eye_Pendant",
+        1,
+        600,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Void_Essence", 4),
+          ("Item_Mat_Void_Eye", 2),
+          ("Item_Mat_Boss_Gem", 1)
+        }
+      ));
+
+      // 9. Huy Hiệu Chiến Binh (Warrior Crest Insignia)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_warrior_crest",
+        "Warrior Crest Insignia",
+        "Honored badge of Haven frontline champions. Imbues the bearer with stalwart physical vigor.",
+        "Item_Acc_Warrior_Crest",
+        1,
+        120,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Warrior_Insignia", 4),
+          ("Item_Stone_Upgrade", 2)
+        }
+      ));
+
+      // 10. Nhẫn Cuồng Nộ (Berserker Rage Ring)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_berserker",
+        "Berserker Rage Ring",
+        "Forged from hardened monster bones and glowing monster gems. Awakens latent bloodlust and lethal precision.",
+        "Item_Acc_Berserker_Ring",
+        1,
+        220,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Bone_Fragment", 4),
+          ("Item_Mat_Monster_Gem", 1),
+          ("Item_Stone_Upgrade", 3)
+        }
+      ));
+
+      // 11. Vòng Cổ Huyết Thạch (Bloodstone Choker)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_bloodstone",
+        "Bloodstone Choker",
+        "Mystical choker inlaid with pulsating monster gem and refined arcane dust. Feasts on the lifeforce of fallen foes.",
+        "Item_Acc_Bloodstone_Choker",
+        1,
+        260,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Arcane_Dust", 2),
+          ("Item_Mat_Monster_Gem", 1),
+          ("Item_Stone_Upgrade", 3)
+        }
+      ));
+
+      // 12. Hỏa Long Tâm Thạch (Crimson Dragon Heart)
+      list.Add(GetOrCreateRecipe(
+        "recipe_acc_dragon_heart",
+        "Crimson Dragon Heart",
+        "Supreme draconic relic pulsating with the molten heart of Red Ignis. Cataclysmically surges offensive might.",
+        "Item_Acc_Crimson_Dragon_Heart",
+        1,
+        650,
+        new List<(string matItemName, int qty)>
+        {
+          ("Item_Mat_Fire_Core", 1),
+          ("Item_Mat_Fire_Crest", 2),
           ("Item_Mat_Flawless_Crystal", 1)
         }
       ));

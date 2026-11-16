@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.inference": "2.6.1",
     "com.unity.ai.navigation": "2.0.14",
@@ -15,7 +16,7 @@
     "com.unity.render-pipelines.universal": "17.5.0",
     "com.unity.render-pipelines.universal-config": "17.5.0",
     "com.unity.shadergraph": "17.5.0",
-    "com.unity.springbone": "https://github.com/unity3d-jp/UnityChanSpringBone.git",
+    "com.unity.springbone": "file:com.unity.springbone",
     "com.unity.test-framework": "1.7.0",
     "com.unity.timeline": "1.8.12",
     "com.unity.ugui": "2.5.0",

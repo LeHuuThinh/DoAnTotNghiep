@@ -22318,40 +22318,164 @@ MonoBehaviour:
   barrelTrioChance: 0.2
   barrelPairSpacing: 1
   barrelTrioRadius: 1.2
+  barrelSmallWeight: 0.58
+  barrelMediumWeight: 0.3
+  barrelLargeWeight: 0.12
   enableChests: 1
   floorChestChance: 0.25
   mezzanineChestChance: 0.7
   goldChestChance: 0.15
   treasureRoomGoldChestChance: 1
   mezzanineGoldChestChance: 0.25
-  breakableBarrelPrefabs: []
-  regularChestPrefab: {fileID: 0}
-  goldChestPrefab: {fileID: 0}
-  bossChestPrefab: {fileID: 0}
-  wallTemplatePrefabs: []
-  propTemplatePrefabs: []
-  dungeonKeyPrefab: {fileID: 0}
-  dungeonKeyItemData: {fileID: 0}
-  shrineTemplatePrefab: {fileID: 0}
-  wallTorchPrefab: {fileID: 0}
-  floorTorchPrefab: {fileID: 0}
-  bossCauldronPrefab: {fileID: 0}
-  bossGatePrefab: {fileID: 0}
-  bossPedestalPrefab: {fileID: 0}
-  bossCharacterPrefab: {fileID: 0}
+  breakableBarrelPrefabs:
+  - {fileID: 2136000453889306328, guid: 5ab0b34cf34a0384a9454cdda5204a78, type: 3}
+  - {fileID: 3632437886965462477, guid: 4693a538cdaf8cd4c952a7d5e735f3aa, type: 3}
+  - {fileID: 6141092553703913738, guid: d504eec8aa4451d4c94b45a29b524896, type: 3}
+  regularChestPrefab: {fileID: 7375483510383892791, guid: 64abae8dca4cae140b4d528157b83da8, type: 3}
+  goldChestPrefab: {fileID: 5200535742271969463, guid: 7e32912ee539cbc40a5410352791c7c5, type: 3}
+  bossChestPrefab: {fileID: 5200535742271969463, guid: 305d4b1eabfd7024ebe70bba9ae2a23b, type: 3}
+  wallTemplatePrefabs:
+  - {fileID: 3746003066274207376, guid: c489b70a32650784c8895a4289077f54, type: 3}
+  - {fileID: 3013331040197576124, guid: 22b1bfb9fef3c704eb0810d42786ae25, type: 3}
+  - {fileID: 3698066903753855149, guid: 1291d7e73f0bb8b4a8fbef2afb0b8cf1, type: 3}
+  - {fileID: 8851960570907354437, guid: 7d0b030161cb55a4c8e10588b69fbd5f, type: 3}
+  - {fileID: 1033572438786829737, guid: 4c61f9ff0c0dd254da64b8a1e4e2c356, type: 3}
+  - {fileID: 4495926312484072268, guid: 9e26585e665b06544bee8bf03a1a7d82, type: 3}
+  - {fileID: 5112353453714511983, guid: 13f53f040398b954288b4961f21b0c1d, type: 3}
+  - {fileID: 5803713146879124063, guid: 75f9bfb790d98e9448d222adee7e55d6, type: 3}
+  propTemplatePrefabs:
+  - {fileID: 2666562278712300236, guid: f73955f33c70e5241a98ad6fdde9d317, type: 3}
+  - {fileID: 684991748776886278, guid: c84f361af1961a04597fea75073b6e6a, type: 3}
+  - {fileID: 2793498258525258989, guid: 2deb8f7a1d0c6a44c98f0119ca0ba284, type: 3}
+  - {fileID: 1439255967833259944, guid: 1e521a5bed75c904482f114f2c63ad84, type: 3}
+  - {fileID: 8743210227417319764, guid: 48dbe76dee4030d4ca805c5f9a8eb63c, type: 3}
+  dungeonKeyPrefab: {fileID: 8852560050458291529, guid: c469af5ab3c4497190d5ac9c9019f1f2, type: 3}
+  dungeonKeyItemData: {fileID: 11400000, guid: 576b4e28676e43439859d8cfc16d1349, type: 2}
+  shrineTemplatePrefab: {fileID: 5112353453714511983, guid: 13f53f040398b954288b4961f21b0c1d, type: 3}
+  wallTorchPrefab: {fileID: 458611792477274970, guid: d66749b18664a544fb4b6e03e113cd4a, type: 3}
+  floorTorchPrefab: {fileID: 8891488673478048632, guid: 50013715752589c4099b996648598d06, type: 3}
+  bossCauldronPrefab: {fileID: 4638851822597546817, guid: 83e2682d3c5afec4b8ff7ab03171c5e1, type: 3}
+  bossGatePrefab: {fileID: 6771754460708893424, guid: e5c449b9ba0adc949a78450231d83cb1, type: 3}
+  bossPedestalPrefab: {fileID: 2583736587643228787, guid: 50f6af15279f11c45b3d19c867ed3bda, type: 3}
+  bossCharacterPrefab: {fileID: 8850410555655432218, guid: ce9afb35450975942a642ec7fb63e25c, type: 3}
   bossPedestalRotationY: 0
   bossRotationY: 180
   bossPedestalNorthOffset: 11.5
-  candlePrefabs: []
-  bannerPrefabs: []
-  wallWeaponPrefabs: []
-  rubblePrefabs: []
-  crateBoxPrefabs: []
-  tablePrefabs: []
-  chairPrefabs: []
-  shelfPrefabs: []
-  bedPrefabs: []
-  tabletopPrefabs: []
+  candlePrefabs:
+  - {fileID: 2892413166925472375, guid: c2954c80bc9a2e144a4b2b6cfa37637f, type: 3}
+  - {fileID: 6836388195559241747, guid: 6e1f321783056fc45baaae84913add86, type: 3}
+  - {fileID: 175893284728562065, guid: 2d53a111225a1fa45a5a924c3687d2db, type: 3}
+  - {fileID: 4613686886176402386, guid: 74399dbd6ffc58d4eb55b31c9a01a707, type: 3}
+  - {fileID: 4489875372849224953, guid: 3391351af9074094ebec996e551481e9, type: 3}
+  - {fileID: 7406719327470990641, guid: 041500413e715d74b9594a5b4e014e56, type: 3}
+  - {fileID: 5847044480013615908, guid: a86b44bb7be897d41b21e7a529ec3ade, type: 3}
+  bannerPrefabs:
+  - {fileID: 4947191175858555186, guid: fb45684e7ca495d4390344f12afe3b23, type: 3}
+  - {fileID: 3961376145924863889, guid: 2d7522a320e835b4c9aeb3f67e1ce904, type: 3}
+  - {fileID: 6966182364165177368, guid: 74ec3bc8ad586024dba43abaf7b33b26, type: 3}
+  - {fileID: 8186170165663131439, guid: 470a34beb7c27034fac78d5e88ba76de, type: 3}
+  - {fileID: 752872855879937034, guid: 8616a51044c629542a791f3802c6ce47, type: 3}
+  - {fileID: 3663536683361294505, guid: 665246889c68f8948a50545b8226d6ed, type: 3}
+  - {fileID: 7862964714748965622, guid: 6e46eb9cfc83f2c49ab25d20c46138b8, type: 3}
+  - {fileID: 3965499085825673053, guid: e5196bcee8607694f9eaaf15ed176204, type: 3}
+  - {fileID: 174027980761847045, guid: 1679eb4038c0dce4193c8bffe7f10d00, type: 3}
+  - {fileID: 6774833161603383701, guid: 561473b8c6c06c54b82f5de105bbc9a8, type: 3}
+  - {fileID: 7639390164684517679, guid: 74189eeb75586f942ae030aa477dedd1, type: 3}
+  - {fileID: 5968109662615855987, guid: 5d9143d3f62156f47949c615eba81305, type: 3}
+  - {fileID: 8687127857696543417, guid: 0885dc5b863266e4d87e5631c929e733, type: 3}
+  - {fileID: 2407833963254856038, guid: f0fa10c25910f9e458c1b7cd4b780546, type: 3}
+  - {fileID: 2226538131818363300, guid: b62e82ed659bda741a14b351e50c38d7, type: 3}
+  - {fileID: 6841038852138969293, guid: f5fb434aae8423c458ade9263ed84447, type: 3}
+  - {fileID: 4723207663015395953, guid: 50669a91a61c2574fbf244b94fb437e0, type: 3}
+  - {fileID: 5424884457235940299, guid: e72645cfdf3c34246aafa85b560d395f, type: 3}
+  - {fileID: 8392404102943737498, guid: ded8f12c4ac46c043abbb7cc9ba7ca56, type: 3}
+  - {fileID: 1353745722007254486, guid: e81f72cd00a0f6e419b83425ca28e137, type: 3}
+  - {fileID: 2624619939076513571, guid: 31bf31dca1046894ca651ccdb601304a, type: 3}
+  - {fileID: 1538502778451746678, guid: e0e75d4952751ff49af91338ec94da42, type: 3}
+  - {fileID: 1054107882430460322, guid: 1a00fe1b13dfaa640b610693f4fb5966, type: 3}
+  - {fileID: 7233379669697664518, guid: ea23ede02e018924da4e89b8f53c4e62, type: 3}
+  - {fileID: 1389130040838711808, guid: 57b2fc64544bf604ba6ee8eba250e6cc, type: 3}
+  - {fileID: 2327159097328965659, guid: f89539d51f08a61479e2e001517e7d1e, type: 3}
+  - {fileID: 4583336058351251556, guid: f864ef0af8c568d4e806a8e4f5fd013c, type: 3}
+  - {fileID: 7049372056553866487, guid: a6de24ca5768489498bda0669c075d28, type: 3}
+  - {fileID: 2329982940500635342, guid: f0ca97061ee709a46b643ef6c04b603d, type: 3}
+  - {fileID: 8451897020248754022, guid: 7fe01508aded9e54989b96f2ca112cf2, type: 3}
+  - {fileID: 2255409717023931821, guid: fdd261b389c7985439ee0385946efc7e, type: 3}
+  - {fileID: 5731096346824217696, guid: e4edc86b628cc484492805bb9339f451, type: 3}
+  - {fileID: 3340741990753047596, guid: 06118e8b859b19545aa2891d39ee01fc, type: 3}
+  - {fileID: 8623337689950815370, guid: 34a5956e0175cf54da3d137264830f85, type: 3}
+  - {fileID: 5456719459763747072, guid: 798c41a2b1f7f0d4592f12473c2adab3, type: 3}
+  - {fileID: 9179136939736805678, guid: b423b6ba5e42b7548adb37f265dc18f5, type: 3}
+  wallWeaponPrefabs:
+  - {fileID: 8814292975615649502, guid: 59877f3535ad67d489299443c30211b2, type: 3}
+  - {fileID: 1930148308897701352, guid: fec9beba39c5bbe45a166dc7ab94282b, type: 3}
+  - {fileID: 6326730998262267306, guid: a26efeac537c1db49b6b28f1b4b44608, type: 3}
+  - {fileID: 5601938317849118068, guid: 7305887db5bbc5240bb2b73fe958296e, type: 3}
+  - {fileID: 366534665348986508, guid: 567643600b1cc084d9de4f6e3935f5d2, type: 3}
+  - {fileID: 5194242435155401821, guid: 63494a79a3345794fa573dfed74cec17, type: 3}
+  - {fileID: 7709299521259609851, guid: 919e5ed6b55110a47918897110924c29, type: 3}
+  - {fileID: 6154714709896484214, guid: 14da2e2dd89da4744baa91465b90c28e, type: 3}
+  - {fileID: 2752839788059019768, guid: d1c11c71daaf5a34c9899c54abed81e7, type: 3}
+  rubblePrefabs:
+  - {fileID: 6145152055415587028, guid: 2d464f542f06f2848ae34e4777e959f6, type: 3}
+  - {fileID: 7070563116679587466, guid: e340efa04f3413b40a4fe1a76bf6d255, type: 3}
+  crateBoxPrefabs:
+  - {fileID: 5291288995964024872, guid: 53d8aa109aa50e34cb4cab17011f929f, type: 3}
+  - {fileID: 7388570655724212184, guid: b0e5adb6a17cf584a998706a4f8c9a65, type: 3}
+  - {fileID: 6727565762195064183, guid: f7d73b1752d97d14db21c4f292b43067, type: 3}
+  - {fileID: 1881785801238232937, guid: a47a3385b4250b14b87825db5b2c3b24, type: 3}
+  - {fileID: 4924389515009509228, guid: 8f8f0dc0a0b181d4dba3a3383a845843, type: 3}
+  - {fileID: 159624463616261528, guid: d1a690f6b66980748bda3668cf8168c6, type: 3}
+  - {fileID: 9088506215761058198, guid: a27568a1423a2bb48af9b9dd3c8334fe, type: 3}
+  - {fileID: 6123465084698821691, guid: b7dc83156347c424d9a3848ed3d7b426, type: 3}
+  - {fileID: 1838912302785760873, guid: 37901321e33a4ff47bf0064ec65a348d, type: 3}
+  - {fileID: 7725277880759690238, guid: bbe49e9cd0f0ad14997bf22fe676e90c, type: 3}
+  - {fileID: 8253873016710530706, guid: 2980109435a2e234095fd2a6b77a668f, type: 3}
+  - {fileID: 7744358846525070620, guid: 233ceaaa6957e684f885c3a44b3ff949, type: 3}
+  - {fileID: 4405585058829886477, guid: 2fe53792db876864280bdc41d6aed006, type: 3}
+  - {fileID: 450114903645119281, guid: c230ef60df7620147991dcdb7870a88b, type: 3}
+  - {fileID: 532498520000224696, guid: 968dc724f6259a34eb537331caa88937, type: 3}
+  - {fileID: 4584976499113614728, guid: ab2adb9709ad7c74da2dde045338a7cb, type: 3}
+  - {fileID: 3448741644052017201, guid: cecbc4a6b18007e499ed62b0faa911a9, type: 3}
+  tablePrefabs:
+  - {fileID: 2401142058439931328, guid: be8d4addf2c20f045b9ac001dc88501c, type: 3}
+  - {fileID: 2641321945080163768, guid: 1940b4d8afcd438419e26ee5e6abad2f, type: 3}
+  - {fileID: 1515470918503851490, guid: 2d2fde9357922234fbf78092e7e81271, type: 3}
+  - {fileID: 4069325465999501760, guid: 8fd7693bacb42e74ebcb4bac2a52f550, type: 3}
+  - {fileID: 5540225472215667534, guid: 8c5548c5d07e6cb4989e43b88c4c4cbf, type: 3}
+  - {fileID: 7294988662663474824, guid: 18e75af7e003dbd4191ba309d8870d15, type: 3}
+  - {fileID: 7298939549570293553, guid: fe2ec9118428453448a16f20cf2ccbc5, type: 3}
+  - {fileID: 450696998674824245, guid: 32be169ce0ade9e4797c21637abed73e, type: 3}
+  - {fileID: 7463986727816876547, guid: e02d4317836532f4f9928dd0582ddd4c, type: 3}
+  - {fileID: 4809709579741660358, guid: 76a3c3cd02de21f499e4d35b27fad85e, type: 3}
+  - {fileID: 1148975405064574634, guid: 2cfdcb17438d929488c430f922d40b2e, type: 3}
+  - {fileID: 8859374675630452615, guid: fbad5247210e0af449ff19f383c3ff58, type: 3}
+  - {fileID: 4638155091359592221, guid: 6a8a0ea2db2095d4fb483d387ebd3199, type: 3}
+  chairPrefabs:
+  - {fileID: 6568495286148155876, guid: d4146eae91be6114bb6ce4edcf102ae0, type: 3}
+  - {fileID: 134439612018222889, guid: b0eb1d037f1bcbf4690186e790e240e3, type: 3}
+  shelfPrefabs:
+  - {fileID: 6471466034801001195, guid: 038b10c8350538040bec7e34bfb73f6c, type: 3}
+  - {fileID: 4082075095983851491, guid: 2da5cf06f95399944bfad1a5159cc4f9, type: 3}
+  - {fileID: 5155463640551042664, guid: 3c118da98039e4940a1d90e64671619e, type: 3}
+  bedPrefabs:
+  - {fileID: 6883874267674265599, guid: d489c29f013ec084a98d5b69cb37380a, type: 3}
+  - {fileID: 3413140363424828703, guid: 6567b54b6d12c254689f5dec193bb5f3, type: 3}
+  - {fileID: 5021037622313983029, guid: 87ba6afcbf6a14c4580addf7196f7d58, type: 3}
+  tabletopPrefabs:
+  - {fileID: 4719753417819000597, guid: 6d5e1d35de5ad1249a33cd6021d14320, type: 3}
+  - {fileID: 5945074638625831084, guid: 918b59cea950f4a4b8bb75e4c1736f93, type: 3}
+  - {fileID: 6894456517913116016, guid: c15afb636a3895b4cae6965475415b96, type: 3}
+  - {fileID: 4462624680915469503, guid: 7d669757b50620f4aadfbf9c55db93b1, type: 3}
+  - {fileID: 2528496176532521812, guid: 01973599c3628af49858d51ad1e8eb36, type: 3}
+  - {fileID: 5242629972055072554, guid: fc75fe7e1131d8f40bbe3e96697a1286, type: 3}
+  - {fileID: 3858736206584150968, guid: 9397f77567956ca4f833ffc7557a8073, type: 3}
+  - {fileID: 3764042583169516918, guid: b9b5af66a4db7d146bd3996bdfdb10f4, type: 3}
+  - {fileID: 5283688219940745455, guid: 6ecbd79e5620d044f834f439cef70549, type: 3}
+  - {fileID: 4721155355975698957, guid: dfffed8c09b43de428a916bf45af21da, type: 3}
+  - {fileID: 5520748010671017849, guid: 022f06dd300dec74db0bc72aa5233e29, type: 3}
+  - {fileID: 7292637809142218562, guid: 5d50b7a3631b72d4c8ff04696a6f9579, type: 3}
+  - {fileID: 7277023774141718286, guid: 85ccf5356c8d7eb44aea584e2d1e3567, type: 3}
 --- !u!114 &1693836175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22393,7 +22517,7 @@ MonoBehaviour:
   obstacleCheckMask:
     serializedVersion: 2
     m_Bits: 1
-  enemyParentContainer: {fileID: 0}
+  enemyParentContainer: {fileID: 2125972239}
 --- !u!114 &1693836176
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26584,12 +26708,12 @@ MonoBehaviour:
   damageNumberPrefab: {fileID: 6595541791898397943, guid: 99f5f8ac5ce25f646967ef5896d1e7e3, type: 3}
   initialPoolSize: 40
   fontAsset: {fileID: 11400000, guid: 0e950c99590bf094e80bef353998c07b, type: 2}
-  fontSize: 4.5
+  fontSize: 3
   outlineWidth: 0.1
   showCritIcon: 1
-  critIconScale: 0.085
-  critIconOffsetLeft: 0.08
-  critScaleMultiplier: 1.15
+  critIconScale: 0.04
+  critIconOffsetLeft: 0.16
+  critScaleMultiplier: 1.2
   normalAttackStyle:
     styleName: "1. \u0110\xF2n \u0110\xE1nh Th\u01B0\u1EDDng (Combo 1, 2, 3)"
     baseScale: 1
@@ -26644,7 +26768,7 @@ MonoBehaviour:
     baseScale: 0.85
     peakScale: 1.15
     duration: 0.65
-    gradientPreset: {fileID: 0}
+    gradientPreset: {fileID: 11400000, guid: d674bbce6e5843e49803b591dc959f12, type: 2}
     fallbackColor: {r: 0.85, g: 0.12, b: 0.12, a: 1}
 --- !u!4 &2040577060
 Transform:
@@ -27978,6 +28102,37 @@ Transform:
   - {fileID: 668884815}
   - {fileID: 1995602660}
   - {fileID: 1396827924}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2125972238
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2125972239}
+  m_Layer: 0
+  m_Name: EnemyParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2125972239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125972238}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 221.87105, y: 21.06357, z: 93.25052}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2133477188
@@ -35170,7 +35325,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4709520775478865934, guid: f4081fba25be14e49ba3c11ba99020b7, type: 3}
       propertyPath: m_Alpha
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4814831676671873421, guid: f4081fba25be14e49ba3c11ba99020b7, type: 3}
       propertyPath: m_AnchorMax.y
@@ -36475,6 +36630,7 @@ SceneRoots:
   - {fileID: 418644122}
   - {fileID: 428919102}
   - {fileID: 1330478010}
+  - {fileID: 2125972239}
   - {fileID: 2140686590}
   - {fileID: 422451800}
   - {fileID: 254220313}

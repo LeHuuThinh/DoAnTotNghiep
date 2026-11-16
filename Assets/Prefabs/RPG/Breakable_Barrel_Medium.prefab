@@ -96,11 +96,15 @@ MonoBehaviour:
     dropChance: 0.35
     minQuantity: 1
     maxQuantity: 1
+    minFloor: 1
+    maxFloor: 999
   - item: {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
     randomItemPool: []
     dropChance: 0.15
     minQuantity: 1
     maxQuantity: 1
+    minFloor: 1
+    maxFloor: 999
   goldItemData: {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   goldDropChance: 0.7
   minGold: 3
@@ -113,6 +117,9 @@ MonoBehaviour:
   useForwardCone: 0
   wallSafetyPadding: 0.35
   autoDropOnDeath: 1
+  isEliteDrop: 0
+  eliteGearPool: []
+  eliteGearDropChance: 0.25
 --- !u!1001 &5754699676209579850
 PrefabInstance:
   m_ObjectHideFlags: 0

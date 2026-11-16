@@ -143,6 +143,24 @@ public class PlayerCombat : MonoBehaviour
   private float attackSpeedBoostMaxDuration = 3.5f;
   private float attackSpeedBoostMultiplier = 1.0f;
 
+  [Header("=== THUỐC TĂNG LỰC / CUỒNG NỘ (BERSERKER BUFF) ===")]
+  private float temporaryAttackBonus = 0f;
+  private float temporaryAttackTimer = 0f;
+  private float temporaryAttackDuration = 25f;
+
+  public bool HasTemporaryAttackBoost => temporaryAttackTimer > 0f || attackSpeedBoostTimer > 0f;
+  public float TemporaryAttackTimer => Mathf.Max(temporaryAttackTimer, attackSpeedBoostTimer);
+  public float TemporaryAttackDuration => Mathf.Max(temporaryAttackDuration, attackSpeedBoostMaxDuration);
+  public float TemporaryAttackBonus => temporaryAttackBonus;
+
+  public void TriggerTemporaryAttackBoost(float bonusAttack, float duration, float attackSpeedPercent = 15f)
+  {
+    temporaryAttackBonus = Mathf.Max(temporaryAttackBonus, bonusAttack);
+    temporaryAttackTimer = Mathf.Max(temporaryAttackTimer, duration);
+    temporaryAttackDuration = Mathf.Max(temporaryAttackDuration, duration);
+    TriggerAttackSpeedBoost(attackSpeedPercent, duration);
+  }
+
   public bool IsAttackSpeedBoosted => attackSpeedBoostTimer > 0f;
   public float AttackSpeedBoostTimer => attackSpeedBoostTimer;
   public float AttackSpeedBoostDuration => attackSpeedBoostMaxDuration > 0f ? attackSpeedBoostMaxDuration : 3.5f;
@@ -444,6 +462,17 @@ public class PlayerCombat : MonoBehaviour
         {
           animator.speed = 1.0f;
         }
+      }
+    }
+
+    // Đếm ngược buff Sát Thương Đòn Đánh (Berserker Buff)
+    if (temporaryAttackTimer > 0f)
+    {
+      temporaryAttackTimer -= Time.deltaTime;
+      if (temporaryAttackTimer <= 0f)
+      {
+        temporaryAttackTimer = 0f;
+        temporaryAttackBonus = 0f;
       }
     }
 
@@ -1373,7 +1402,7 @@ public class PlayerCombat : MonoBehaviour
   }
   public float TotalSpiritGainBonus => InfiniteLabyrinth.Inventory.InventoryManager.HasInstance ? InfiniteLabyrinth.Inventory.InventoryManager.Instance.GetTotalSpiritGainBonus() : 0f;
 
-  private float TotalAttackBonus => AttackBonus + ProgressionAttackBonus;
+  private float TotalAttackBonus => AttackBonus + ProgressionAttackBonus + (temporaryAttackTimer > 0f ? temporaryAttackBonus : 0f);
 
   // =========================================================================
   // CÁC ANIMATION EVENTS ĐƯỢC CHIA TỶ LỆ HITLAG & SLASH TRAIL VFX

@@ -262,20 +262,22 @@ public class AdminCheatManager : MonoBehaviour
     if (skeletonMagePrefab == null)
       skeletonMagePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/Monsters/SkeletonMage.prefab");
 
-    // 2. Load all 51 items into Creative Mode database
-    if (allGameItems == null || allGameItems.Count == 0)
+    // 2. Load all items into Creative Mode database (62 Items: Swords, Armors, Accessories, Potions, Materials, Keys, Currency)
+    if (allGameItems == null) allGameItems = new List<ItemData>();
+    string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData", new[] { "Assets/ScriptableObjects/Items" });
+    bool listModified = false;
+    foreach (var guid in guids)
     {
-      allGameItems = new List<ItemData>();
-      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData", new[] { "Assets/ScriptableObjects/Items" });
-      foreach (var guid in guids)
+      string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+      var item = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
+      if (item != null && !allGameItems.Contains(item))
       {
-        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-        var item = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
-        if (item != null && !allGameItems.Contains(item))
-        {
-          allGameItems.Add(item);
-        }
+        allGameItems.Add(item);
+        listModified = true;
       }
+    }
+    if (listModified || allGameItems.Count > 0)
+    {
       allGameItems.Sort((a, b) =>
       {
         int typeComp = a.ItemType.CompareTo(b.ItemType);

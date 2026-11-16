@@ -324,11 +324,11 @@ public class IceGolemController : MonoBehaviour
     [Range(0.2f, 5.0f)]
     [SerializeField] private float gumoSlamVfxScale = 2.0f;
     [Tooltip("BÁN KÍNH SÁT THƯƠNG diện rộng của mỗi cú đập tay xuống sàn (mét) - TỰ DO ĐIỀU CHỈNH TẠI ĐÂY")]
-    [SerializeField] private float gumoShockwaveRadius = 12.0f;
+    [SerializeField] private float gumoShockwaveRadius = 3.8f;
     [Tooltip("Sát thương mỗi cú đập / vòng sóng lan")]
     [SerializeField] private float gumoSlamDamage = 18f;
-    [Tooltip("Lực đẩy nhẹ mục tiêu dính sóng")]
-    [SerializeField] private float gumoSlamKnockback = 1.2f;
+    [Tooltip("Lực đẩy nhẹ mục tiêu dính sóng (0.4m vừa đủ, không vượt ngưỡng 1.2m để không ép vỡ Poise tức thì)")]
+    [SerializeField] private float gumoSlamKnockback = 0.4f;
 
     [Header("GumoGumo Hand-To-Ground Contact Settings (Bắt Điểm Chạm Đất Bàn Tay - Chiêu 2)")]
     [Tooltip("Nâng độ cao model Boss khi thực hiện chiêu 2 (m) - Giúp bù đắp hoạt ảnh để chân không bị lún xuống sàn (mặc định 0.35m)")]
@@ -1586,6 +1586,15 @@ public class IceGolemController : MonoBehaviour
         Transform playerTf = GetPlayerTarget();
         if (playerTf != null)
         {
+            // Tự động hủy khóa mục tiêu (Target Lock) để giải phóng góc nhìn Camera cho Player,
+            // tránh việc camera bị ép cứng góc nhìn vào mặt Boss khiến người chơi không thấy đường né đòn phun băng
+            TargetLockSystem targetLock = playerTf.GetComponent<TargetLockSystem>();
+            if (targetLock == null) targetLock = playerTf.GetComponentInChildren<TargetLockSystem>();
+            if (targetLock != null && targetLock.IsLockedOn)
+            {
+                targetLock.UnlockTarget();
+            }
+
             float dist = Vector3.Distance(transform.position, playerTf.position);
             if (dist < phase2PushRadius)
             {
@@ -1615,8 +1624,8 @@ public class IceGolemController : MonoBehaviour
             anim.ResetTrigger(phase2StaggerStateName);
         }
 
-        // Đợi cú hất văng kết thúc để Player lùi về đúng cự ly phun lửa
-        yield return new WaitForSeconds(phase2PushDuration);
+        // Đợi cú hất văng kết thúc và thêm một khoảng đệm an toàn để Player kịp định thần, quan sát và di chuyển né tránh
+        yield return new WaitForSeconds(phase2PushDuration + 0.6f);
 
         if (isDead)
         {
@@ -2590,6 +2599,12 @@ public class IceGolemController : MonoBehaviour
             AudioSource.PlayClipAtPoint(flameBreathSfx, GetMouthPosition());
         }
 
+        // Kích hoạt rung màn hình trong suốt đợt phun lửa (chỉ gọi 1 lần khi bắt đầu phun, tránh spam coroutine làm đứng camera)
+        if (enableFlameShake && flameShakeMagnitude > 0f)
+        {
+            StartCoroutine(TriggerCameraShake(flameDuration, flameShakeMagnitude));
+        }
+
         // 4. Vòng lặp duy trì ngọn lửa: bám theo chuyển động quay đầu của miệng & quét sát thương
         float activeTimer = 0f;
         float damageTickTimer = 0f;
@@ -2610,12 +2625,6 @@ public class IceGolemController : MonoBehaviour
                 {
                     activeFlameInstance.transform.rotation = Quaternion.LookRotation(currentDir, Vector3.up);
                 }
-            }
-
-            // Rung chấn màn hình (nếu được bật và cường độ > 0)
-            if (enableFlameShake && flameShakeMagnitude > 0f)
-            {
-                StartCoroutine(TriggerCameraShake(flameShakeDuration, flameShakeMagnitude));
             }
 
             if (damageTickTimer >= flameDamageTickInterval)
@@ -4348,16 +4357,16 @@ public class IceGolemController : MonoBehaviour
 
     public void TriggerHandSlam(int handIndex, Vector3? overrideGroundPos = null)
     {
-        // 0. Debounce chống trùng lặp nếu cả Trigger Collider và Bone Tracking cùng bắt được điểm chạm
+        // 0. Debounce chống trùng lặp nếu cả Trigger Collider, Timeline và Bone Tracking cùng bắt được điểm chạm
         float now = Time.time;
         if (handIndex == 0)
         {
-            if (now - lastLeftSlamTime < 0.08f) return;
+            if (now - lastLeftSlamTime < 0.28f) return;
             lastLeftSlamTime = now;
         }
         else
         {
-            if (now - lastRightSlamTime < 0.08f) return;
+            if (now - lastRightSlamTime < 0.28f) return;
             lastRightSlamTime = now;
         }
 
@@ -5152,6 +5161,13 @@ public class IceGolemController : MonoBehaviour
 
     private IEnumerator TriggerCameraShake(float duration, float magnitude)
     {
+        // Ưu tiên sử dụng hệ thống rung mềm của ThirdPersonCamera (không can thiệp cố định vị trí world, không gây khóa/kẹt camera)
+        if (ThirdPersonCamera.Instance != null)
+        {
+            ThirdPersonCamera.Instance.TriggerShake(duration, magnitude);
+            yield break;
+        }
+
         Camera cam = Camera.main;
         if (cam == null) yield break;
 

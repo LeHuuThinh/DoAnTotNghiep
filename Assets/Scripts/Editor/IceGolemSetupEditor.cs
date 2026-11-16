@@ -314,9 +314,9 @@ namespace InfiniteLabyrinth.EditorTools
 
                 // Attack 2 (GumoGumo Slam đấm sàn liên hoàn)
                 soController.FindProperty("gumoSlamVfxScale").floatValue = 2.0f;
-                soController.FindProperty("gumoShockwaveRadius").floatValue = 12.0f;
+                soController.FindProperty("gumoShockwaveRadius").floatValue = 3.8f;
                 soController.FindProperty("gumoSlamDamage").floatValue = 18f;
-                soController.FindProperty("gumoSlamKnockback").floatValue = 1.2f;
+                soController.FindProperty("gumoSlamKnockback").floatValue = 0.4f;
                 soController.FindProperty("gumoSlamStartTime").floatValue = 0.55f;
                 soController.FindProperty("gumoSlamEndTime").floatValue = 3.3f;
                 soController.FindProperty("gumoSlamInterval").floatValue = 0.35f;
