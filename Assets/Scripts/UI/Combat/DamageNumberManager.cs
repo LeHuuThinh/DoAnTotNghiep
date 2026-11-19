@@ -190,7 +190,10 @@ namespace InfiniteLabyrinth.UI.Combat
       }
 
       instance = this;
-      DontDestroyOnLoad(gameObject);
+      if (transform.parent == null)
+      {
+        DontDestroyOnLoad(gameObject);
+      }
 
       InitializePool();
     }

@@ -254,6 +254,7 @@ namespace InfiniteLabyrinth.UI
     public void OpenMap()
     {
       isMapOpen = true;
+      AudioManager.Instance?.PlayUIInteract();
 
       // Đưa map xuống đáy Canvas để nằm dưới các UI khác
       transform.SetAsFirstSibling();

@@ -336,6 +336,10 @@ public class SkeletonWarriorAI : EnemyAIBase
   public override void EnableEnemyAttackHitbox()
   {
     if (weaponHitbox != null) weaponHitbox.EnableHitbox(attackDamage, attackKnockback);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkeletonMeleeAttack(transform.position);
+    }
   }
 
   public override void DisableEnemyAttackHitbox()

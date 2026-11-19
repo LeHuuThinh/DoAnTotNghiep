@@ -226,6 +226,11 @@ public class SkeletonRogueAI : EnemyAIBase
   {
     if (arrowPrefab == null) return;
 
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkeletonArrowShoot(transform.position);
+    }
+
     Vector3 spawnPos = arrowSpawnPoint != null ? arrowSpawnPoint.position : (transform.position + Vector3.up * 1.2f + transform.forward * 0.5f);
     Vector3 targetPos = playerTransform != null ? (playerTransform.position + Vector3.up * 1.0f) : (spawnPos + transform.forward * 10f);
     Vector3 shootDir = (targetPos - spawnPos).normalized;

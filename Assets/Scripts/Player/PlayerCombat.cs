@@ -651,6 +651,11 @@ public class PlayerCombat : MonoBehaviour
     if (parryWindowCoroutine != null) StopCoroutine(parryWindowCoroutine);
     if (playerFeedback != null) playerFeedback.IsParrying = false;
 
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerParry();
+    }
+
     // Hoàn trả lại thể lực do Parry chuẩn xác, đồng thời thưởng Spirit!
     if (playerStats != null)
     {
@@ -1033,12 +1038,26 @@ public class PlayerCombat : MonoBehaviour
   /// <summary>
   /// Animation Event gọi vệt chém Skill E độc lập nếu muốn căn nhịp riêng biệt với việc phóng đạn
   /// </summary>
-  public void PlaySkillESlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillE);
+  public void PlaySkillESlash()
+  {
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillE);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+    }
+  }
 
   /// <summary>
   /// Animation Event gọi vệt chém Skill Q độc lập nếu muốn căn nhịp riêng biệt với việc nổ AOE
   /// </summary>
-  public void PlaySkillQSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
+  public void PlaySkillQSlash()
+  {
+    playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.SkillQ);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+    }
+  }
 
   /// <summary>
   /// Animation Event: Khoảnh khắc chuẩn bị chém ngang của Skill Ult
@@ -1166,6 +1185,11 @@ public class PlayerCombat : MonoBehaviour
 
     // 3. Quét Hitbox siêu to
     TriggerUltHitbox();
+
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+    }
   }
 
   /// <summary>
@@ -1320,10 +1344,17 @@ public class PlayerCombat : MonoBehaviour
       }
     }
 
-    // Kích hoạt Impact Hitlag 0.22s khi nhát chém trúng ít nhất 1 mục tiêu
-    if (damagedEntities.Count > 0 && ultImpactHitlag > 0f)
+    // Kích hoạt Impact Hitlag 0.22s và âm thanh va chạm uy lực khi nhát chém trúng ít nhất 1 mục tiêu
+    if (damagedEntities.Count > 0)
     {
-      playerFeedback?.TriggerHitlag(ultImpactHitlag, 0.05f);
+      if (ultImpactHitlag > 0f)
+      {
+        playerFeedback?.TriggerHitlag(ultImpactHitlag, 0.05f);
+      }
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlaySkillRImpact(center);
+      }
     }
   }
 
@@ -1413,6 +1444,11 @@ public class PlayerCombat : MonoBehaviour
   {
     weaponHitbox?.EnableHitbox(attack1Damage + TotalAttackBonus, attack1Knockback, attack1Hitlag, lethalHitlag, attack1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack1);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+      AudioManager.Instance.PlayPlayerAttackVoice(0.40f);
+    }
   }
 
   // Đòn 2: Nhanh, dứt khoát
@@ -1420,6 +1456,11 @@ public class PlayerCombat : MonoBehaviour
   {
     weaponHitbox?.EnableHitbox(attack2Damage + TotalAttackBonus, attack2Knockback, attack2Hitlag, lethalHitlag, attack2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack2);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+      AudioManager.Instance.PlayPlayerAttackVoice(0.40f);
+    }
   }
 
   // Đòn 3: Đòn kết đầm tay
@@ -1427,6 +1468,11 @@ public class PlayerCombat : MonoBehaviour
   {
     weaponHitbox?.EnableHitbox(attack3Damage + TotalAttackBonus * 1.5f, attack3Knockback, attack3Hitlag, lethalHitlag, attack3PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Normal, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Attack3);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerSlash();
+      AudioManager.Instance.PlayPlayerAttackVoice(0.40f);
+    }
   }
 
   // Charge Attack - Hit 1: Chém mở màn
@@ -1440,6 +1486,10 @@ public class PlayerCombat : MonoBehaviour
     }
     weaponHitbox?.EnableHitbox(chargeDmg * 0.4f, 0f, chargeHit1Hitlag, lethalHitlag, chargeHit1PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerChargeAttack(1);
+    }
   }
 
   // Charge Attack - Hit 2: Nhát bổ nặng dứt điểm
@@ -1453,6 +1503,10 @@ public class PlayerCombat : MonoBehaviour
     }
     weaponHitbox?.EnableHitbox(chargeDmg * 0.6f, chargeAttackKnockback, chargeHit2Hitlag, lethalHitlag, chargeHit2PoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Charge, TotalCritRate, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerChargeAttack(2);
+    }
   }
 
   // Counter Attack: Nhát chém trừng phạt cực nặng
@@ -1460,6 +1514,10 @@ public class PlayerCombat : MonoBehaviour
   {
     weaponHitbox?.EnableHitbox(counterAttackDamage + TotalAttackBonus * 2.0f, counterAttackKnockback, counterAttackHitlag, lethalHitlag, counterAttackPoiseDamage, InfiniteLabyrinth.UI.Combat.DamageNumberType.Counter, TotalCritRate + 15f, TotalCritDamage / 100f, TotalLifesteal);
     playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerCounterAttack();
+    }
   }
 
   public void DisableWeaponHitbox() => weaponHitbox?.DisableHitbox();
@@ -1474,6 +1532,132 @@ public class PlayerCombat : MonoBehaviour
   public void PlayChargeHit1Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge1);
   public void PlayChargeHit2Slash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Charge2);
   public void PlayCounterSlash() => playerSlashVFX?.PlaySlash(PlayerSlashVFX.SlashAttackType.Counter);
+
+  // =========================================================================
+  // ANIMATION EVENTS - ÂM THANH KỸ NĂNG (SKILL CHARGE & IMPACT)
+  // =========================================================================
+
+  /// <summary>
+  /// Gắn Event này tại thời điểm bắt đầu gồng tụ lực của Skill E (SmallCharge)
+  /// </summary>
+  public void PlaySkillEChargeSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkillECharge();
+    }
+  }
+
+  /// <summary>
+  /// Gắn Event này tại thời điểm bắt đầu gồng tụ lực của Skill Q (MediumCharge)
+  /// </summary>
+  public void PlaySkillQChargeSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkillQCharge();
+    }
+  }
+
+  /// <summary>
+  /// Gắn Event này tại thời điểm bắt đầu gồng tụ lực của Skill Ult (BigCharge)
+  /// </summary>
+  public void PlaySkillRChargeSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkillRCharge();
+    }
+  }
+
+  /// <summary>
+  /// Gắn Event này tại thời điểm nổ chấn địa / cắm kiếm của Skill Q (QImpact)
+  /// </summary>
+  public void PlaySkillQImpactSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkillQImpact(transform.position);
+    }
+  }
+
+  /// <summary>
+  /// Animation Event dự phòng phát âm thanh Skill R Impact thủ công
+  /// </summary>
+  public void PlaySkillRImpactSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkillRImpact(transform.position);
+    }
+  }
+
+  // =========================================================================
+  // ANIMATION EVENTS - ÂM THANH ĐỘNG TÁC IDLE (IDLE REACTION SFX)
+  // =========================================================================
+
+  /// <summary>
+  /// Gắn vào clip Idle quan sát / ngó nghiêng (Idle Action 1 - IdleLookAround).
+  /// intParameter = 0 (ngẫu nhiên), hoặc 1..5 (Checking1..5)
+  /// </summary>
+  public void PlayIdleCheckingSound(int index = 0)
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayIdleChecking(index);
+    }
+  }
+
+  public void PlayIdleChecking1() => PlayIdleCheckingSound(1);
+  public void PlayIdleChecking2() => PlayIdleCheckingSound(2);
+  public void PlayIdleChecking3() => PlayIdleCheckingSound(3);
+  public void PlayIdleChecking4() => PlayIdleCheckingSound(4);
+  public void PlayIdleChecking5() => PlayIdleCheckingSound(5);
+
+  /// <summary>
+  /// Gắn vào clip Idle khởi động / bẻ khớp (Idle Action 3 - IdleWarmup).
+  /// intParameter = 0 (ngẫu nhiên), hoặc 1..6 (Warmup1..6)
+  /// </summary>
+  public void PlayIdleWarmupSound(int index = 0)
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayIdleWarmup(index);
+    }
+  }
+
+  public void PlayIdleWarmup1() => PlayIdleWarmupSound(1);
+  public void PlayIdleWarmup2() => PlayIdleWarmupSound(2);
+  public void PlayIdleWarmup3() => PlayIdleWarmupSound(3);
+  public void PlayIdleWarmup4() => PlayIdleWarmupSound(4);
+  public void PlayIdleWarmup5() => PlayIdleWarmupSound(5);
+  public void PlayIdleWarmup6() => PlayIdleWarmupSound(6);
+
+  /// <summary>
+  /// Gắn vào clip Idle tiếng ngâm nga, thở khẽ (Hums).
+  /// intParameter = 0 (ngẫu nhiên), hoặc 1..2 (Hums1..2)
+  /// </summary>
+  public void PlayIdleHumsSound(int index = 0)
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayIdleHums(index);
+    }
+  }
+
+  public void PlayIdleHums1() => PlayIdleHumsSound(1);
+  public void PlayIdleHums2() => PlayIdleHumsSound(2);
+
+  /// <summary>
+  /// Gắn vào clip Idle vươn vai, ngáp (Idle Action 4 - IdleYawn / Streching).
+  /// </summary>
+  public void PlayIdleStretchingSound()
+  {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayIdleStretching();
+    }
+  }
 
   // Thêm vào PlayerCombat để PlayerController có thể đọc được
   public bool IsBlockingOrParrying => isParryActive;

@@ -222,6 +222,7 @@ public class SkeletonMageAI : EnemyAIBase
     }
 
     animator.SetTrigger(AttackTriggerHash);
+    AudioManager.Instance?.PlaySkeletonSpellCast(transform.position);
   }
 
   public override void InterruptAttack()

@@ -1,0 +1,152 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7832710246776963778
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7048099880080779863}
+  - component: {fileID: 7671645815126525095}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7048099880080779863
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7832710246776963778}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7671645815126525095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7832710246776963778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 084f67c2285b7d14f9f5c00a7e9485dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  masterVolume: 1
+  bgmVolume: 0.1
+  sfxVolume: 0.5
+  loadSavedSettingsOnStart: 0
+  landBgmTracks:
+  - {fileID: 8300000, guid: 34019e332ada5f242a4fb44a1cf4507b, type: 3}
+  - {fileID: 8300000, guid: 60cf0194b31a6df4bb7917dcc5fcc6c6, type: 3}
+  - {fileID: 8300000, guid: 627313b6b3db3824aa73ec0089b27cad, type: 3}
+  dungeonBgmTracks:
+  - {fileID: 8300000, guid: 46e979d613c89064db4b812197626e8a, type: 3}
+  - {fileID: 8300000, guid: 8f748337f15944844855e1a1f1721de3, type: 3}
+  combatBgmTracks:
+  - {fileID: 8300000, guid: 26114732f470b8c4da96a46d919edc63, type: 3}
+  - {fileID: 8300000, guid: 5fcd28cf823f5e94e80e26b1f49fcd97, type: 3}
+  bossBgmTracks:
+  - {fileID: 8300000, guid: 00eb2da0c8d410242bc4e71fe6b3f4f1, type: 3}
+  - {fileID: 8300000, guid: 14294474028b3e34693cc36cce9ced1d, type: 3}
+  - {fileID: 8300000, guid: fb378f2cfc78e234ab34b374131f8208, type: 3}
+  - {fileID: 8300000, guid: d0f1c23969b025c47b7c45f064da0cbd, type: 3}
+  silenceGapMin: 5
+  silenceGapMax: 10
+  combatGracePeriod: 2
+  defaultFadeDuration: 1.5
+  slashClips:
+  - {fileID: 8300000, guid: c8892d36247ca0c42bced6dc5b85be3d, type: 3}
+  - {fileID: 8300000, guid: e4b996fed8af9094c8c212d6b705deda, type: 3}
+  attackVoiceClips:
+  - {fileID: 8300000, guid: 90aa692fe43c7904ca6ce07ca5e7b67a, type: 3}
+  - {fileID: 8300000, guid: bd4d4cfca33c61a40adf5a8b2c2dbc83, type: 3}
+  - {fileID: 8300000, guid: b2ff00b93bad9ba4fab09bd5557e311e, type: 3}
+  - {fileID: 8300000, guid: 34359074b60cfc044a37ca2497af6ca2, type: 3}
+  hurtVoiceClips:
+  - {fileID: 8300000, guid: 636f4a6bc0b4f2e47bbac21676f63878, type: 3}
+  - {fileID: 8300000, guid: ab494e090887a58458a39dd3f7aec99f, type: 3}
+  - {fileID: 8300000, guid: ea69dafc308db944ca117c5f3a17ed1e, type: 3}
+  - {fileID: 8300000, guid: 38e47ffd73140d74fbf712af0e577496, type: 3}
+  - {fileID: 8300000, guid: 80079336ce24e1d4a87565d7b45ef007, type: 3}
+  parryClip: {fileID: 8300000, guid: dbf351a8317bbff41bb7fbf809489273, type: 3}
+  counterAttackClip: {fileID: 8300000, guid: 580af16ce8d96ef4ab75c415f5b8eb28, type: 3}
+  outOfStaminaClip: {fileID: 8300000, guid: bae46fbc4af5da84085a511af5df6694, type: 3}
+  staminaEmptyAlertClip: {fileID: 8300000, guid: 00dd4077e1850fa42bdac5cb03d19cc2, type: 3}
+  deathClip: {fileID: 8300000, guid: 1fff6c3b33d2b914cbbb5a05029dc5f0, type: 3}
+  healClip: {fileID: 8300000, guid: 48e8482cda0ef954b930143f3f52b532, type: 3}
+  footstepsDirt:
+  - {fileID: 8300000, guid: 9e68ea1ebd76aa44c8cfa5beb9850830, type: 3}
+  - {fileID: 8300000, guid: 1deb201b8bf8f89479323a74e421150b, type: 3}
+  - {fileID: 8300000, guid: 7c518e8469a403b4c981664ecb28a79a, type: 3}
+  - {fileID: 8300000, guid: 1f2844efbf7abf647ba3d75d510f823a, type: 3}
+  footstepsRock:
+  - {fileID: 8300000, guid: ecd647025e0a3c04fbd5829fff509e09, type: 3}
+  - {fileID: 8300000, guid: 3bd1b93317b7a3a49b13011cdaa64d0b, type: 3}
+  - {fileID: 8300000, guid: 7b4b6eb734482064c8c1e5fd45d4d76c, type: 3}
+  - {fileID: 8300000, guid: fba95cafa5bba8649a7d269656e7317b, type: 3}
+  skillEChargeClip: {fileID: 8300000, guid: 03a2035b26380e045b7baa0968cba76c, type: 3}
+  skillQChargeClip: {fileID: 8300000, guid: 7e81a0dd9b6fb7e4388aac6eb3697ae0, type: 3}
+  skillRChargeClip: {fileID: 8300000, guid: 05c52296db9b1604f9c12e8d77581897, type: 3}
+  skillEImpactClip: {fileID: 8300000, guid: 2c4b364e657a4134598b8416290d07a4, type: 3}
+  skillQImpactClip: {fileID: 8300000, guid: 2ee8290ba0a277c409d06bbdf4c048c1, type: 3}
+  skillRImpactClip: {fileID: 8300000, guid: e8d295963500cf843bba257fe7563a81, type: 3}
+  idleCheckingClips:
+  - {fileID: 8300000, guid: c5e13896efebd844d8987e241818e80b, type: 3}
+  - {fileID: 8300000, guid: e93ab4e23d3f437479f4e7aca560e6f8, type: 3}
+  - {fileID: 8300000, guid: fb8cd087ee8be8046816e74a804a2eef, type: 3}
+  - {fileID: 8300000, guid: 762226921ca1dea4a97c5a517764965e, type: 3}
+  - {fileID: 8300000, guid: 48b158ed7999c264daaafe456ca254ff, type: 3}
+  idleWarmupClips:
+  - {fileID: 8300000, guid: 9b829d3872575494a9302d5dc60975c9, type: 3}
+  - {fileID: 8300000, guid: 6b08961b236e7c141931fa1af8954db1, type: 3}
+  - {fileID: 8300000, guid: 81a89c91d17ea2141bd03a7937785d9f, type: 3}
+  - {fileID: 8300000, guid: f3b7748010c3d1c4b8a22adbb0e33962, type: 3}
+  - {fileID: 8300000, guid: a165d47924cfbbc4395d88176c8214f3, type: 3}
+  - {fileID: 8300000, guid: cb0770d5427412448adb473d2e660982, type: 3}
+  idleHumClips:
+  - {fileID: 8300000, guid: ec6d31445a015f04a85cfe9ae582e867, type: 3}
+  - {fileID: 8300000, guid: 2208c3214832f1e468a4ddef80324eea, type: 3}
+  idleStretchingClip: {fileID: 8300000, guid: dd4350865ac09dc4a91e8f0e434409ab, type: 3}
+  meleeAttackClip: {fileID: 8300000, guid: 491879b6c5468a54b886ce709dee62d7, type: 3}
+  meleeHitClip: {fileID: 8300000, guid: b7fb92eb115113846951fccd03076b20, type: 3}
+  arrowShootClip: {fileID: 8300000, guid: f323c0e9cb640bb41997871717865596, type: 3}
+  arrowHitClip: {fileID: 8300000, guid: 517d574dde16ae644aa9d907f85965af, type: 3}
+  spellCastClip: {fileID: 8300000, guid: 3569345f68fd3c44ba2b008de9dfb936, type: 3}
+  spellImpactClip: {fileID: 8300000, guid: f65fbb63a37a68e42bedb018cd114acb, type: 3}
+  skeletonGetHitClip: {fileID: 8300000, guid: 677c5d39e9c007a46aca7a61feb50c19, type: 3}
+  skeletonDeathClip: {fileID: 8300000, guid: 9c8dd1a25f8b6b342ae87137cb8f7866, type: 3}
+  ambientClips:
+  - {fileID: 8300000, guid: 3e6b8e6daef92cd48bc5092b2cacbbf3, type: 3}
+  - {fileID: 8300000, guid: c9aa0b5c79a8bc84e9105418c7df08af, type: 3}
+  barrelBreakClips:
+  - {fileID: 8300000, guid: 58d1888ea5ac78b43b4356bb0876a16a, type: 3}
+  - {fileID: 8300000, guid: 756b747b881474c429a64ced63a71fe8, type: 3}
+  bellClip: {fileID: 8300000, guid: 2da85e185e44b5341a1cb816a2bb7ca2, type: 3}
+  doorOpenClip: {fileID: 8300000, guid: 431a7053ec1fc4a4c8522a42cc3bd3d2, type: 3}
+  bossDoorOpenClip: {fileID: 8300000, guid: 6769f1fb1accf2e458c835cd20c3a5f7, type: 3}
+  chestOpenClip: {fileID: 8300000, guid: b501dafe076a91549a0c95b08439be31, type: 3}
+  chestAuraClip: {fileID: 8300000, guid: 4a72a2606c0f7fb45a0c29aae954b7cb, type: 3}
+  coinPickupClips:
+  - {fileID: 8300000, guid: 69fda575966dd5a4086a6baf2aab0c3a, type: 3}
+  - {fileID: 8300000, guid: 86f16059cd2a62b418fe2539e102a7ad, type: 3}
+  portalClip: {fileID: 8300000, guid: f6967d696898c6d4589921388ba1e39c, type: 3}
+  torchClip: {fileID: 8300000, guid: 6635779f40de08b4f86496a22adf0ed5, type: 3}
+  anvilClip: {fileID: 8300000, guid: eb0a87e2d7dcca54584700ae6fd6ceaa, type: 3}
+  equipClip: {fileID: 8300000, guid: 267da1a8b8d392c48ba418f7ed2426d3, type: 3}
+  potionClip: {fileID: 8300000, guid: fa5d26513cf86b24eaccd0e99dcf3d46, type: 3}
+  shopClip: {fileID: 8300000, guid: b7fa547fa2fe3f142baa5156db926ac2, type: 3}
+  itemPickupClip: {fileID: 8300000, guid: 316c1db24649e7c43a0fc300cd901b23, type: 3}
+  uiInteractClip: {fileID: 8300000, guid: 30c507d7d69da3543a96b8502f97edd8, type: 3}

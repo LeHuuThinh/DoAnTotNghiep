@@ -149,6 +149,11 @@ public class EnemyFeedback : MonoBehaviour
     // Luôn sinh hiệu ứng tứa xám (MobsGetHitVFX) tại điểm chém (kể cả khi đòn này kết liễu quái)
     SpawnHitVfx(hitPoint, hitDirection);
 
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkeletonGetHit(hitPoint != Vector3.zero ? hitPoint : transform.position);
+    }
+
     if (health.IsDead || health.CurrentHealth <= 0f) return;
 
     lastHitTime = Time.time;
@@ -350,6 +355,11 @@ public class EnemyFeedback : MonoBehaviour
       int randomDeath = Random.Range(0, 2);
       animator.SetInteger(DeathTypeHash, randomDeath);
       animator.SetTrigger(DieTriggerHash);
+    }
+
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlaySkeletonDeath(transform.position);
     }
 
     // 6. Xóa xác quái vật sau thời gian chờ

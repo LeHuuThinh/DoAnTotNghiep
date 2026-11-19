@@ -212,7 +212,11 @@ namespace InfiniteLabyrinth.Interaction
       isTransitioning = true;
       currentState = BossGateState.Opening;
 
-      if (openSound != null)
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayBossDoorOpen(transform.position);
+      }
+      else if (openSound != null)
       {
         AudioSource.PlayClipAtPoint(openSound, transform.position);
       }
@@ -343,7 +347,11 @@ namespace InfiniteLabyrinth.Interaction
       isTransitioning = true;
       currentState = BossGateState.Opened;
 
-      if (openSound != null)
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayBossDoorOpen(transform.position);
+      }
+      else if (openSound != null)
       {
         AudioSource.PlayClipAtPoint(openSound, transform.position);
       }

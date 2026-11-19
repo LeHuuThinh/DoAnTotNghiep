@@ -150,6 +150,15 @@ public class WeaponHitbox : MonoBehaviour
       damageable.TakeDamage(finalDamage, hitPoint, hitDirection, currentKnockback, attacker, currentDamageType, isCrit);
       OnHitTarget?.Invoke(damageable, finalDamage);
 
+      // Âm thanh trúng đòn da thịt khi quái cận chiến đánh trúng Player
+      if (attacker != null && (attacker.CompareTag("Enemy") || attacker.GetComponentInParent<EnemyAIBase>() != null))
+      {
+        if (other.CompareTag("Player") || (damageable is Component comp && comp.CompareTag("Player")))
+        {
+          AudioManager.Instance?.PlaySkeletonMeleeHit(hitPoint);
+        }
+      }
+
       // Kích hoạt Phù Phép khi Bạo Kích (Bleed & Frenzy)
       if (isCrit && attacker != null)
       {

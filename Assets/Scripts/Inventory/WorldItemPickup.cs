@@ -441,6 +441,15 @@ namespace InfiniteLabyrinth.Inventory
         bool success = InventoryManager.Instance.AddItem(itemData, quantity, out int remainder, notifyPickup: true, allowRefillEquippedUsable: true, upgradeLevel: upgradeLevel, affixData: affixData);
         if (success)
         {
+          if (itemData != null && itemData.ItemType == ItemType.Currency)
+          {
+            AudioManager.Instance?.PlayCoinPickup(transform.position);
+          }
+          else
+          {
+            AudioManager.Instance?.PlayUIItemPickup();
+          }
+
           if (remainder <= 0)
           {
             activePickups.Remove(this);

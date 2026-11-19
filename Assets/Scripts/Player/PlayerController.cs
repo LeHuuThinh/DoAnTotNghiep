@@ -234,6 +234,12 @@ public class PlayerController : MonoBehaviour
 
         if (justLanded && !isRolling && !isPreparingJump)
         {
+            if (AudioManager.HasInstance)
+            {
+                bool isDungeon = GameManager.HasInstance && GameManager.Instance.IsInDungeon;
+                AudioManager.Instance.PlayPlayerFootstep(isDungeon, 0.85f);
+            }
+
             // Kiểm tra xem cú tiếp đất này là rơi từ trên cao (tầng 2 xuống) hay chỉ là nhảy thường trên mặt đất
             bool isHardFall = verticalVelocity < -11f || (isJumping && transform.position.y < jumpStartY - 2.5f);
             float recoveryTime = isHardFall ? hardLandLockDuration : softLandLockDuration;
@@ -484,6 +490,7 @@ public class PlayerController : MonoBehaviour
             finalVelocity.y = verticalVelocity;
         }
         characterController.Move(finalVelocity * Time.deltaTime);
+        HandleFootstepAudio(isGrounded, finalVelocity);
 
         // =====================================================================
         // STEP-DOWN GROUND SNAPPING (Khắc phục triệt để lỗi khựng khi đi xuống bậc thang/thềm)
@@ -511,6 +518,28 @@ public class PlayerController : MonoBehaviour
                         wasGrounded = characterController.isGrounded;
                     }
                 }
+            }
+        }
+    }
+
+    private float footstepTimer = 0f;
+    private void HandleFootstepAudio(bool onGround, Vector3 velocity)
+    {
+        if (!onGround || isRolling) return;
+        Vector2 horizontalVel = new Vector2(velocity.x, velocity.z);
+        float speed = horizontalVel.magnitude;
+        if (speed < 0.6f) return;
+
+        bool isRunning = IsRunning;
+        float interval = isRunning ? 0.30f : 0.44f;
+        footstepTimer += Time.deltaTime;
+        if (footstepTimer >= interval)
+        {
+            footstepTimer = 0f;
+            if (AudioManager.HasInstance)
+            {
+                bool isDungeon = GameManager.HasInstance && GameManager.Instance.IsInDungeon;
+                AudioManager.Instance.PlayPlayerFootstep(isDungeon, isRunning ? 0.65f : 0.45f);
             }
         }
     }

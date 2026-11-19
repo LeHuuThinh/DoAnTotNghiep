@@ -78,7 +78,11 @@ namespace InfiniteLabyrinth.Interaction
       }
 
       // 3. Âm thanh chuông ngân thiêng liêng
-      if (praySound != null)
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayVillageBell(transform.position);
+      }
+      else if (praySound != null)
       {
         AudioSource.PlayClipAtPoint(praySound, transform.position);
       }

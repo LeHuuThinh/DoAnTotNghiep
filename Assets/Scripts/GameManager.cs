@@ -123,14 +123,8 @@ public class GameManager : MonoBehaviour
 
     private bool pendingRespawnAtBell = false;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    public static void InitializeBeforeSceneLoad()
-    {
-        EnsureInstance();
-    }
-
     /// <summary>
-    /// Đảm bảo luôn tồn tại một GameManager duy nhất xuyên suốt vòng đời game.
+    /// Đảm bảo luôn tồn tại một GameManager duy nhất xuyên suốt vòng đời game (ưu tiên bên trong [CORE_SYSTEMS]).
     /// </summary>
     public static void EnsureInstance()
     {
@@ -140,10 +134,23 @@ public class GameManager : MonoBehaviour
         instance = FindFirstObjectByType<GameManager>();
         if (instance != null)
         {
-            DontDestroyOnLoad(instance.gameObject);
+            if (instance.transform.parent == null)
+            {
+                DontDestroyOnLoad(instance.gameObject);
+            }
             return;
         }
 
+        // Ưu tiên tìm trong CoreSystems nếu có
+        var core = InfiniteLabyrinth.Core.CoreSystems.Instance;
+        if (core == null) core = FindFirstObjectByType<InfiniteLabyrinth.Core.CoreSystems>();
+        if (core != null)
+        {
+            instance = core.GetComponentInChildren<GameManager>();
+            if (instance != null) return;
+        }
+
+        // Dự phòng tối hậu
         GameObject go = new GameObject("[GameManager]");
         instance = go.AddComponent<GameManager>();
         DontDestroyOnLoad(go);
@@ -158,7 +165,10 @@ public class GameManager : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (transform.parent == null)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
     }
 
     private void OnApplicationQuit()

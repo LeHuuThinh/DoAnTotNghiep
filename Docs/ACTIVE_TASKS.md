@@ -659,7 +659,72 @@
 ## 🚩 GIAI ĐOẠN 5: Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish)
 
 - [ ] **POL-01: Hệ thống Menu** (MainMenu, Settings đồ họa & âm lượng, PauseMenu phím Esc).
-- [ ] **POL-02: Âm thanh (SFX & BGM)** (Nhạc nền Làng Haven yên bình, Nhạc hầm ngục u tối, Nhạc Boss rực lửa; Tiếng va chạm vũ khí, tiếng đe búa thợ rèn, tiếng bước chân, tiếng quái gầm).
+- [x] **POL-02: Hệ thống Âm thanh Toàn diện (SFX & Dynamic BGM System)**
+  - [x] **POL-02A: Bộ Não Điều Hành Âm Thanh & BGM Pacing (`AudioManager.cs`, `AudioSetupEditor.cs`):**
+    - Singleton `AudioManager` (`DontDestroyOnLoad`) tự phục hồi xuyên scene, điều phối 3 kênh BGM riêng biệt (`exploreSource`, `combatSource`, `bossSource`).
+    - **Thuật toán BGM Shuffle & Khoảng Lặng (Silence Gap 5-10s):** Chọn ngẫu nhiên bài tiếp theo không trùng bài trước, dừng nghỉ 5-10s giữa hai bài thám hiểm chống mỏi thính giác.
+    - **Hệ thống Fade Out giữa bài & Dual Crossfade:** Coroutine nội suy âm lượng bằng `Time.unscaledDeltaTime` (độc lập với Hitlag/Pause), chuyển đổi êm dịu giữa nhạc Khám phá, Chiến đấu và Trùm.
+    - **Bể Âm Thanh SFX Pools:** 8 kênh 2D SFX (UI, Grunts, Stamina) và 12 kênh 3D Spatial Audio (xa nghe nhỏ, gần nghe to, linear rolloff 2-25m).
+    - **Bộ nạp 40+ AudioClips tự động 1-Click:** `AudioSetupEditor.cs` tự động quét thư mục `Assets/Audio/` nạp toàn bộ BGM, đòn chém, giọng kêu, quái vật, môi trường, UI và đóng gói thành Prefab tại `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
+    - Tích hợp nút 1-Click vào Master Dashboard (`Ctrl+Alt+D`).
+  - [x] **POL-02B: Tích hợp Combat BGM theo quái Aggro & Fade Out giữa bài (`EnemyAIBase.cs`, `AudioManager.cs`):**
+    - **Cơ chế Báo cáo Aggro Tự Động (`EnemyAIBase.CheckAndReportAggro`):** Mỗi khi quái vật Skeleton chuyển sang trạng thái `Chase`, `Circling` hoặc `Attack` $\to$ tự động báo cáo trạng thái aggro lên `AudioManager.ReportEnemyAggro(this, true)`.
+    - **Quản lý Tập Hợp Quái Aggro (`activeAggroEnemies`):** Con quái đầu tiên phát hiện người chơi $\to$ kích hoạt chuyển sang Combat BGM ngẫu nhiên. Khi quái tử trận (`OnDeath`), bị tiêu biến (`OnDisable`), hoặc ngủ đông (`SetHibernation`) $\to$ tự động hủy aggro.
+    - **Khoảng Đệm An Toàn Grace Period (2.0s):** Khi quái cuối cùng chết hoặc bỏ truy đuổi, hệ thống chờ 2.0s. Nếu không có quái mới tiếp cận $\to$ Fade Out nhạc Combat mượt mà trong 1.8s và đưa nhạc khám phá trở lại.
+    - **Đồng Bộ Nhạc Boss Tự Động:** Lắng nghe trực tiếp `BossArenaTrigger.OnPlayerEnteredArena` để tự động bật Boss BGM khi bước vào đấu trường, và lắng nghe `BossVictoryDirector.OnVictorySequenceStarted` / `IceGolemController.OnBossDefeated` / `RedIgnisController.OnBossDefeated` để Fade Out nhạc Boss khi giành chiến thắng.
+  - [x] **POL-02C: Gắn SFX vào Player, Quái Skeleton, Môi Trường & UI (`PlayerCombat`, `PlayerFeedback`, `PlayerStats`, `ShopUI`, `BlacksmithUI`, `InventoryManager`, `BreakableProp`):**
+    - **Âm thanh Player Hành Động & Phản Ứng:**
+      * `PlayerCombat.cs`: 4 tiếng chém ngẫu nhiên (`Slash1..4`) cho đòn đánh thường 1-3, đòn tụ lực Charge 1-2, và 3 kỹ năng E, Q, R. Tỷ lệ ~40% phát giọng nữ ("huh" grunt `PlayerAttack1..4`); riêng đòn tụ lực 2 nhát chém chỉ cho phép nhát 1 có tỷ lệ kêu giọng, nhát 2 im lặng. Tiếng gạt đòn kim loại đanh thép (`Parry.wav`) và nổ bộc phát phản đòn (`CounterAttack.ogg`).
+      * `PlayerFeedback.cs`: Khi vỡ thế Poise / choáng khựng $\to$ phát ngẫu nhiên 1 trong 5 tiếng dính đòn (`PlayerHurt1..5`); khi cạn sạch máu tử trận $\to$ phát tiếng ngã gục gãy đổ (`PlayerDeath.wav`).
+      * `PlayerStats.cs`: Tiếng thở dốc kiệt sức (`PlayerOutOfStamina.wav`) ngay khi thể lực chạm 0; âm thanh tít trầm (`PressDeep.wav`) khi người chơi cố bấm hành động trong trạng thái kiệt thể lực.
+      * `PlayerController.cs`: Tiếng bước chân phân biệt theo môi trường (`footstepsDirt` cho Làng Haven, `footstepsRock` cho Hầm ngục) theo nhịp sải chân vận tốc và âm thanh tiếp đất sau khi rơi.
+    - **Âm thanh Quái Vật Skeleton (3D Spatial Audio):**
+      * Cận chiến (`SkeletonWarriorAI.cs` & `WeaponHitbox.cs`): Tiếng quái vung đao chém gió (`SkeMeeleAttack.wav`) và tiếng chém trúng da thịt người chơi (`SkeMeeleHit.wav`).
+      * Cung thủ (`SkeletonRogueAI.cs` & `EnemyProjectile.cs`): Tiếng giương buông cung tên (`SkeArrowShoot.wav`) và tiếng mũi tên găm trúng người chơi (`SkeArrowHit.wav`).
+      * Pháp sư (`SkeletonMageAI.cs` & `MageGroundSpell.cs`): Tiếng gồng tụ ma pháp trên đầu trượng (`SkeSpellCast.wav`) và tiếng nổ bộc phát phép thuật mặt đất (`SkeSpellImpact.wav`, kích hoạt dù trúng hay trượt người chơi).
+      * Phản ứng chung (`EnemyFeedback.cs`): Cả 4 loại quái đều chung tiếng rắc xương khi dính sát thương (`SkeletonGetHit.mp3`) và tiếng xương sụp đổ vỡ vụn khi chết (`SkeletonDeath.mp3`).
+    - **Âm thanh Môi Trường & Hầm Ngục (Environment SFX):**
+      * Thùng gỗ vỡ (`BreakableProp.cs`): Phát ngẫu nhiên 1 trong 2 tiếng vỡ vụn gỗ (`BarrelBreak.wav` / `BarrelBreak2.wav`).
+      * Rương báu (`ChestInteractable.cs`): Tiếng cót két mở nắp rương báu (`ChestOpen.wav`).
+      * Cánh cửa (`DoorInteractable.cs` & `BossGateController.cs`): Tiếng kẽo kẹt mở cửa phòng hầm ngục (`DoorOpen.wav`) và tiếng mở rền vang của Đại Môn phòng Boss (`BossDoorOpen.wav`).
+      * Tiền vàng (`WorldItemPickup.cs`): Phát ngẫu nhiên 1 trong 2 tiếng keng leng keng khi nhặt vàng (`Coin.wav` / `Coin2.mp3`).
+      * Chuông Thánh Làng Haven (`VillageBellInteractable.cs`): Tiếng chuông ngân vang thiêng liêng (`BellSFX.wav`) khi cầu nguyện hồi đầy 100% máu và thần lực.
+      * Cổng không gian (`PortalController.cs`): Âm thanh ma thuật dịch chuyển tức thời (`PortalSFX.wav`).
+      * Ngọn đuốc (`SpatialTorchAudio.cs`): Vòng lặp âm thanh lửa cháy lách tách 3D Spatial Audio tự động gắn lên các prefab ngọn đuốc.
+      * Âm hưởng Hầm ngục (`AudioManager.cs`): Vòng lặp phát ngẫu nhiên các đoạn âm thanh rùng rợn (`AmbientSound.wav` / `AmbientSound2.wav`) mỗi 25-45 giây quanh người chơi.
+    - **Âm thanh Giao Diện Người Dùng (UI SFX):**
+      * Lò rèn (`BlacksmithUIController.cs`): Tiếng búa đe rèn đanh thép (`AnvilSFX.wav`) khi cường hóa hoặc chế tạo trang bị thành công.
+      * Cửa hàng (`ShopUIController.cs`): Tiếng tiền vàng xủng xoảng (`ShopSFX.wav`) khi giao dịch mua hoặc bán vật phẩm.
+      * Kho đồ (`InventoryManager.cs`): Tiếng mặc/tháo trang bị (`Equip.mp3`) và tiếng uống bình thuốc dược liệu (`PotionUse.wav`).
+      * Thao tác click (`UIButtonAudio.cs`): Tiếng click dày dặn cho các nút hoạt động và tiếng tít trầm (`PressDeep.wav`) khi bấm vào các nút bị khóa/disable hoặc không đủ điều kiện.
+  - [x] **POL-02D: Hệ thống Âm thanh Kỹ năng (Charge/Impact) & Động tác Idle của Player (`AudioManager.cs`, `PlayerCombat.cs`, `ProjectileSlash.cs`, `AudioSetupEditor.cs`):**
+    - **Âm thanh Tụ Lực Kỹ Năng (Charge SFX):**
+      * Chiêu E: `SmallCharge.wav` (0.60s) khớp chuẩn giai đoạn gồng kiếm khí (`Skill Slash.anim`).
+      * Chiêu Q: `MediumCharge.wav` (0.89s) khớp chuẩn giai đoạn nén khí chấn địa (`Skill AOE.anim`).
+      * Chiêu R: `BigCharge.wav` (1.21s) khớp chuẩn giai đoạn tụ lực tuyệt kỹ tối thượng (`Skill Ult.anim`).
+      * Tích hợp các Animation Event Receiver trên `PlayerCombat.cs`: `PlaySkillEChargeSound()`, `PlaySkillQChargeSound()`, `PlaySkillRChargeSound()`.
+    - **Âm thanh Va Chạm Kỹ Năng (Impact SFX):**
+      * Chiêu E: `EImpact.wav` (1.28s, 3D Spatial Audio) tự động kích hoạt tại `hitPoint` va chạm trong `ProjectileSlash.cs` khi sóng kiếm đâm trúng quái vật, chướng ngại vật hoặc đập vào tường đá hầm ngục.
+      * Chiêu Q: `QImpact.wav` (1.49s) phát âm thanh chấn địa nổ mặt đất qua Animation Event `PlaySkillQImpactSound()`.
+      * Chiêu R: `RImpact.wav` (0.28s) đanh thép, kích hoạt tự động trong `ExecuteUltGiganticHitbox()` khi nhát chém quét trúng ít nhất một kẻ địch (`damagedEntities.Count > 0`), hòa quyện cùng Hitlag 0.22s và tia lửa va chạm. Cung cấp thêm Animation Event `PlaySkillRImpactSound()`.
+    - **Âm thanh Động Tác Idle (Idle Reaction SFX):**
+      * Cắt nhỏ và gắn trực tiếp vào Animation Clips trên `MainModel` (cùng GameObject chứa `Animator`) giúp khớp 100% từng khung hình, triệt tiêu hoàn toàn lỗi lệch pha (desync).
+      * `IdleLookAround` (Idle Action 1): `PlayIdleCheckingSound(int index = 0)` (Checking1..5) và `PlayIdleHumsSound(int index = 0)` (Hums1..2).
+      * `IdleWarmup` (Idle Action 3): `PlayIdleWarmupSound(int index = 0)` (Warmup1..6).
+      * `IdleYawn` (Idle Action 4): `PlayIdleStretchingSound()` (`Streching.mp3`).
+      * Cung cấp cả hàm có tham số `intParameter` và hàm không tham số trực quan (`PlayIdleWarmup1()`..`PlayIdleWarmup6()`, `PlayIdleChecking1()`..`PlayIdleChecking5()`, `PlayIdleHums1()`, `PlayIdleHums2()`).
+    - **Đồng Bộ Dữ Liệu 1-Click (`AudioSetupEditor.cs`):** Tự động liên kết toàn bộ AudioClips mới vào `AudioManager.prefab` và đồng bộ sang `CoreSystems.prefab` trong `Assets/Prefabs/Core/` và `Assets/Resources/`.
+    - **Tinh Chỉnh & Hoàn Thiện Âm Thanh (Polish & Spatial Audio Fixes):**
+      * *Đồng bộ cấu hình mặc định AudioManager & Editor 1-Click:* Chuẩn hóa Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` cố định 2 âm thanh (`Slash1`, `Slash2`). Cập nhật `AudioSetupEditor.cs` lưu giữ chính xác các giá trị này khi bấm 1-Click setup mà không bị ghi đè.
+      * *Hợp nhất âm thanh UI Click vào `UIInteract.wav`:* Loại bỏ biến `uiClickClip` thừa trong `AudioManager.cs`, cập nhật các controller (`BlacksmithUIController`, `ShopUIController`, `InventoryManager`, `UIButtonAudio`) đồng bộ sử dụng `PlayUIInteract()`.
+      * *Âm thanh vầng hào quang mở rương (`ChestAura.wav`):* Tích hợp vào `ChestInteractable.cs` và `AudioManager.PlayChestAura()` phát đồng thời cùng tiếng mở rương `ChestOpen.wav`. Phân cấp âm lượng theo Tier: Rương Boss (`1.0`), Rương Hiếm (`0.70`), Rương Thường (`0.35`). Tự động nhận diện cấp rương theo tên hoặc cấu hình Inspector `ChestTier`.
+      * *Loại bỏ âm giọng hú khi xuất chiêu:* Xóa bỏ lệnh gọi `PlayPlayerAttackVoice` trong `PlaySkillESlash()`, `PlaySkillQSlash()`, `OnUltSlashRelease()` để nhường chỗ hoàn toàn cho âm gồng tụ lực và âm va chạm uy lực.
+      * *Âm thanh nhặt đồ (`ItemPickup.wav`):* Tích hợp vào `WorldItemPickup.cs` phát âm thanh 2D `PlayUIItemPickup()` mỗi khi người chơi bấm F nhặt trang bị/vật phẩm dưới đất.
+      * *Âm thanh tương tác giao diện (`UIInteract.wav`):* Tích hợp `PlayUIInteract()` khi mở Shop (`ShopUIController`), mở Túi đồ (`InventoryUIController`), mở Bảng cộng điểm tiềm năng (`AttributeAllocationUI`) và mở Bản đồ (`DungeonMapManager`, `VillageMapManager`).
+      * *Âm thanh ngọn đuốc Mono 3D:* Khuếch đại `Torch.wav` (nâng đỉnh sóng từ 0.032 lên 0.880, chuẩn 48kHz Mono, bật `preloadAudioData: 1`); nâng cự ly nghe trong `SpatialTorchAudio.cs` lên 3m-18m để camera góc nhìn thứ 3 nghe rõ âm thanh lửa cháy lách tách tự nhiên.
+      * *Chống ngắt quãng nhạc Làng Haven:* Bảo vệ `HandleSceneBgm` không ngắt nhạc khi vẫn ở trong `LandScene`; bổ sung FadeOut êm ái 2.5s ở cuối mỗi bài nhạc khám phá trước khi chuyển sang khoảng lặng.
+      * *Đồng bộ BGM Hầm ngục khi Loading 90%:* Tạm dừng phát nhạc hầm ngục ở mốc 40% (khi Scene nạp vào RAM) và kích hoạt `PlayDungeonBGM()` tại mốc 90% khi quá trình PCG hầm ngục chuẩn bị hoàn tất.
+      * *Aura âm thanh Cổng dịch chuyển (Portal Aura Loop):* Chuyển đổi âm thanh `PortalSFX.wav` thành nguồn phát 3D Spatial Audio lặp vô tận (Loop) bám quanh cổng dịch chuyển (bán kính 2m-16m) để người chơi lại gần là nghe thấy tiếng ma lực cổng rung chuyển; gỡ bỏ âm thanh one-shot khi bấm F.
 - [x] **POL-03: Bản đồ Hầm ngục Toàn màn hình & Khám phá Sương mù (`DungeonMapManager.cs`)**
   - Bật/tắt bằng phím nóng `M`, hỗ trợ phím `Esc` để đóng nhanh. Bản đồ nằm ở đáy Canvas bên dưới HUD.
   - Tự động đặt zoom 2.0x và căn giữa vị trí người chơi khi mở, hỗ trợ lăn chuột zoom (1.0x - 3.5x) và kéo chuột Pan.

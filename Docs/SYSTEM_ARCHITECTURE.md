@@ -539,6 +539,62 @@ Hệ thống bản đồ thích ứng theo ngữ cảnh từng Scene (Scene-Awar
 
 ---
 
+### H. Phân Hệ Âm Thanh & Nhạc Nền Toàn Cục (Audio & Dynamic Music System - AudioManager.cs)
+* **Kiến Trúc Điều Hành Toàn Cục (`AudioManager.cs`):**
+  * **Singleton DontDestroyOnLoad:** Khởi tạo an toàn tự phục hồi qua `EnsureInstance()` và `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]`, tự động nhận diện Scene để điều phối nhạc nền tương ứng.
+  * **Kiến Trúc 3 AudioSources BGM Riêng Biệt (Crossfade không giật):**
+    * `exploreSource`: Phục vụ nhạc nền thám hiểm (LandScene & DungeonScene).
+    * `combatSource`: Phục vụ nhạc chiến đấu khi quái vật phát hiện/đuổi theo người chơi.
+    * `bossSource`: Phục vụ nhạc đấu Boss (Ice Golem & Red Ignis) với độ ưu tiên cao nhất.
+  * **Thuật Toán BGM Shuffle & Khoảng Lặng (Silence Gap 5-10s):**
+    * Tự động chọn ngẫu nhiên bài kế tiếp khác với bài vừa phát (không bao giờ lặp lại bài cũ).
+    * Khi một bài khám phá kết thúc, hệ thống kích hoạt khoảng lặng 5–10s trước khi sang bài tiếp theo để chống hiện tượng mệt mỏi thính giác (Auditory Fatigue) và tôn vinh âm thanh môi trường.
+  * **Hệ Thống Fade Out Giữa Bài & Combat Grace Period:**
+    * Sử dụng Coroutine nội suy âm lượng bằng `Time.unscaledDeltaTime` (độc lập với Time.timeScale, bảo đảm mượt mà cả trong Hitlag và Slow-motion).
+    * Khoảng đệm an toàn `combatGracePeriod = 2.0s`: Khi con quái cuối cùng mất aggro, hệ thống chờ 2 giây trước khi Fade Out nhạc Combat về 0 và phục hồi lại nhạc khám phá, chống hiện tượng giật cục khi quái tiếp theo bất ngờ tiếp cận.
+  * **Hệ Thống Bể Âm Thanh SFX Pools (2D & 3D Spatial Audio):**
+    * **Pool 2D (8 AudioSources):** Phục vụ UI, tiếng vung kiếm, giọng kêu nữ, tiếng cạn thể lực.
+    * **Pool 3D Spatial (12 AudioSources):** Tọa độ hóa trong không gian 3D (`spatialBlend = 1.0f`, Linear Rolloff 2–25m) cho quái bắn cung, quái niệm phép, tiếng đập thùng gỗ, tiếng mở rương, tiếng đuốc cháy và tiếng chuông thánh.
+    * **Micro-Pitch Randomization ($0.94 \sim 1.06$):** Tự động đổi nhẹ cao độ từng nhát chém và bước chân để loại bỏ hoàn toàn cảm giác âm thanh bị rập khuôn.
+* **Bộ Công Cụ Tự Động Hóa 1-Click (`AudioSetupEditor.cs`):**
+  * Quét tự động toàn bộ 40+ AudioClips từ `Assets/Audio/` (`BGM`, `Player`, `Monster`, `Enviromemt`, `UI`, `Footsteps`).
+  * Tự động nối dây 100% trường dữ liệu và đóng gói thành 2 Prefabs tái sử dụng tại `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
+  * Tự động quét và gắn component `SpatialTorchAudio` lên các Prefab ngọn đuốc hầm ngục.
+  * Tích hợp menu 1-click vào Master Dashboard (`Ctrl+Alt+D`).
+* **Tích Hợp SFX Chi Tiết Theo Phân Hệ (POL-02C):**
+  * **Player:** Đòn đánh thường 1-3, đòn tụ lực Charge 1-2, kỹ năng E, Q, R random 4 tiếng chém; giọng nữ phản ứng (~40% chance, riêng Charge Attack chỉ kêu ở hit 1); Parry đanh thép; vỡ Poise phát 1 trong 5 tiếng rên dính đòn; cạn thể lực thở dốc và tiếng tít trầm khi spam hành động lúc hết thể lực; tiếng bước chân phân biệt Dirt/Rock theo vận tốc và âm thanh tiếp đất.
+  * **Monster Skeleton:** Melee chém gió và chém trúng da thịt; Rogue giương cung và mũi tên găm người chơi; Mage niệm phép và nổ phép mặt đất; âm thanh dính đòn rắc xương và sập xương vỡ vụn khi chết.
+  * **Environment:** Vỡ thùng gỗ (random 2 tiếng); mở rương báu; mở cửa hầm ngục và Đại Môn Boss; nhặt tiền vàng (random 2 tiếng); chuông thánh Haven hồi đầy máu/thần lực; cổng không gian ma thuật; ngọn đuốc cháy 3D; loop âm thanh ambient rùng rợn hầm ngục mỗi 25-45s quanh người chơi.
+  * **UI:** Đe rèn nâng cấp/chế tạo; tiền vàng giao dịch shop; mặc/tháo trang bị; uống bình thuốc; nút bấm tương tác click và tiếng tít trầm cảnh báo nút bị khóa.
+* **Hệ Thống Âm Thanh Kỹ Năng & Động Tác Idle Player (Task POL-02D):**
+  * **Âm thanh Tụ Lực Kỹ Năng (Charge SFX):**
+    - Chiêu E: `SmallCharge.wav` (0.60s) khớp thời lượng vung kiếm kiếm khí (`Skill Slash.anim`).
+    - Chiêu Q: `MediumCharge.wav` (0.89s) khớp thời lượng gồng cắm kiếm chấn địa (`Skill AOE.anim`).
+    - Chiêu R: `BigCharge.wav` (1.21s) khớp thời lượng tụ lực tuyệt kỹ tối thượng (`Skill Ult.anim`).
+    - Cung cấp sẵn các receiver method cho Animation Event trên `PlayerCombat.cs`: `PlaySkillEChargeSound()`, `PlaySkillQChargeSound()`, `PlaySkillRChargeSound()`.
+  * **Âm thanh Va Chạm Kỹ Năng (Impact SFX):**
+    - Chiêu E: `EImpact.wav` (1.28s, 3D Spatial Audio) tự động kích nổ tại `hitPoint` va chạm trong `ProjectileSlash.cs` khi sóng kiếm đâm trúng quái vật, chướng ngại vật hoặc đập vào tường đá hầm ngục.
+    - Chiêu Q: `QImpact.wav` (1.49s) phát âm thanh rung chuyển nổ mặt đất qua Animation Event `PlaySkillQImpactSound()` hoặc khi vòng phép nổ chấn địa.
+    - Chiêu R: `RImpact.wav` (0.28s) đanh thép, kích hoạt tự động trong `ExecuteUltGiganticHitbox()` khi nhát chém quét trúng ít nhất một kẻ địch (`damagedEntities.Count > 0`), hòa quyện cùng Hitlag 0.22s và tia lửa va chạm. Cung cấp thêm Animation Event `PlaySkillRImpactSound()`.
+  * **Âm thanh Động Tác Idle (Idle Reaction SFX):**
+    - Khắc phục triệt để lỗi lệch pha của clip âm thanh dài bằng cách chia nhỏ thành các âm thanh đơn lẻ và liên kết qua Animation Event trên `PlayerCombat.cs` (nằm trên cùng GameObject `MainModel` chứa `Animator`).
+    - `IdleLookAround` (Idle Action 1): `PlayIdleCheckingSound(int index = 0)` (Checking1..5) và `PlayIdleHumsSound(int index = 0)` (Hums1..2).
+    - `IdleWarmup` (Idle Action 3): `PlayIdleWarmupSound(int index = 0)` (Warmup1..6).
+    - `IdleYawn` (Idle Action 4): `PlayIdleStretchingSound()` (`Streching.mp3`).
+    - Hỗ trợ cả hàm nhận tham số `intParameter` (1..N hoặc 0 ngẫu nhiên) và các hàm không tham số trực quan (`PlayIdleWarmup1()`..`PlayIdleWarmup6()`, `PlayIdleChecking1()`..`PlayIdleChecking5()`, `PlayIdleHums1()`, `PlayIdleHums2()`).
+  * **Hệ Thống Âm Thanh Giao Diện & Môi Trường Nâng Cấp:**
+    - Cấu hình âm lượng mặc định chuẩn: Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` = 2 (`Slash1`, `Slash2`). Đồng bộ trực tiếp với `AudioSetupEditor.cs` 1-Click setup.
+    - Hợp nhất âm thanh UI Click vào `UIInteract.wav`: Loại bỏ `uiClickClip` thừa, thống nhất toàn bộ các UI Controller (`BlacksmithUIController`, `ShopUIController`, `InventoryManager`, `UIButtonAudio`) sử dụng `PlayUIInteract()`.
+    - Âm thanh Hào Quang Mở Rương (`ChestAura.wav`): Tích hợp vào `ChestInteractable.cs` và `AudioManager.PlayChestAura()` phát đồng thời cùng tiếng mở rương `ChestOpen.wav`. Âm lượng phân cấp theo Tier: Rương Boss (`1.0`), Rương Hiếm (`0.70`), Rương Thường (`0.35`).
+    - `ItemPickup.wav` (2D SFX) tích hợp vào `WorldItemPickup.cs` khi nhặt vật phẩm bằng phím F.
+    - `UIInteract.wav` (2D SFX) phát khi mở Shop, mở Kho đồ (Inventory), mở Modal Điểm tiềm năng và mở Bản đồ Minimap (Dungeon & Làng Haven).
+    - Âm thanh Đuốc (`SpatialTorchAudio.cs`): File `Torch.wav` được chuẩn hóa biên độ từ 0.032 lên 0.880, cấu hình Mono 3D Spatial Audio với tầm nghe tuyến tính 3m–18m, âm lượng 0.85f, tối ưu hoàn hảo cho Camera góc nhìn thứ 3.
+    - Chống ngắt quãng BGM Làng Haven: Khử bỏ lệnh reset bài không cần thiết trong `HandleSceneBgm` khi scene không đổi; áp dụng FadeOut êm dịu 2.5s ở cuối mỗi bài trước khoảng lặng.
+    - Đồng bộ BGM Hầm ngục khi Loading: Kìm hãm kích hoạt nhạc Dungeon tại mốc 40% (khi scene tải xong vào bộ nhớ) và chuyển sang mốc 90% (khi PCG hoàn thiện) trong `LoadingScreenManager.cs`.
+    - Vòng lặp Âm thanh Cổng Dịch Chuyển (`PortalController.cs`): AudioSource 3D Loop tự phát quanh cổng dịch chuyển với cự ly 2m–16m, mang lại cảm giác ma lực không gian chân thực khi người chơi tiến lại gần.
+
+---
+
 ## 3. Quản Lý Trạng Thái Toàn Cục (Game Architecture Patterns)
 - **Persist Data:** Sử dụng GameManager (DontDestroyOnLoad) hoặc ScriptableObjects để lưu trữ trạng thái giữa các lần chuyển Scene:
   * CurrentDay: Số ngày hiện tại (Day 1, Day 2...).

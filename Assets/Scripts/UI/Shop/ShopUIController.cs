@@ -464,6 +464,8 @@ namespace InfiniteLabyrinth.UI
       IsOpen = true;
       openedFrame = Time.frameCount;
 
+      AudioManager.Instance?.PlayUIInteract();
+
       AutoFindReferences();
       CachePlayerController();
 
@@ -821,6 +823,7 @@ namespace InfiniteLabyrinth.UI
       // 1. Kiểm tra đủ tiền
       if (currentGold < entry.BuyPrice)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         return;
       }
 
@@ -833,6 +836,7 @@ namespace InfiniteLabyrinth.UI
       bool added = InventoryManager.Instance.AddItem(item, 1, out int remainder, notifyPickup: true, affixData: affix);
       if (!added || remainder > 0)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         // Túi đồ đầy
         if (btnBuyText != null) btnBuyText.text = "BAG FULL!";
         return;
@@ -840,6 +844,7 @@ namespace InfiniteLabyrinth.UI
 
       // 3. Trừ tiền vàng
       InventoryManager.Instance.SpendGold(entry.BuyPrice);
+      AudioManager.Instance?.PlayUIShopTransaction();
 
       // 4. Giảm tồn kho nếu không vô hạn
       if (!entry.IsInfiniteStock && entry.StockQuantity > 0)
@@ -872,6 +877,7 @@ namespace InfiniteLabyrinth.UI
 
     public void SwitchInventoryTab(InventoryTab tab)
     {
+      AudioManager.Instance?.PlayUIInteract();
       currentInventoryTab = tab;
       UpdateTabHighlight();
       RefreshInventoryGrid();
@@ -987,6 +993,7 @@ namespace InfiniteLabyrinth.UI
 
       // 1. Cộng tiền vàng cho người chơi
       InventoryManager.Instance.AddGold(sellPrice);
+      AudioManager.Instance?.PlayUIShopTransaction();
 
       // 2. Trừ 1 số lượng vật phẩm trong ô
       bool removed = InventoryManager.Instance.RemoveItemAt(slot.ActualBagIndex, 1);

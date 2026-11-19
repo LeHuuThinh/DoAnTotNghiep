@@ -410,6 +410,8 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void Show()
     {
+      AudioManager.Instance?.PlayUIInteract();
+
       tempAtk = 0;
       tempHp = 0;
       tempStamina = 0;

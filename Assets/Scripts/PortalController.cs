@@ -36,12 +36,30 @@ public class PortalController : MonoBehaviour, IInteractable
   [SerializeField] private AudioClip teleportSound;
   [SerializeField] private GameObject teleportVfxPrefab;
 
+  [Header("=== ÂM THANH CỔNG (SPATIAL AURA LOOP) ===")]
+  [Tooltip("Âm thanh vầng hào quang ma thuật của cổng (Loop 3D)")]
+  [SerializeField] private AudioClip portalClip;
+
+  [Tooltip("Cự ly tối thiểu âm thanh giữ nguyên âm lượng")]
+  [SerializeField] private float minDistance = 2.0f;
+
+  [Tooltip("Cự ly tối đa nghe thấy tiếng cổng")]
+  [SerializeField] private float maxDistance = 16.0f;
+
+  [Range(0f, 1f)]
+  [SerializeField] private float volume = 0.85f;
+
+  private AudioSource audioSource;
+
   [Header("=== GIAO DIỆN CỔNG THẮNG TRẬN (TASK D02-5D) ===")]
   [Tooltip("Nếu bật, tương tác cổng sẽ mở giao diện 2 cửa sổ VictoryPortalUI (Về làng / Đi tầng 2 / Ở lại) thay vì chuyển cảnh ngay")]
   [SerializeField] private bool openVictoryChoiceUI = false;
 
   private void Awake()
   {
+    // Task 7: Thiết lập AudioSource 3D Spatial Loop cho Cổng
+    SetupAudioSource();
+
     // Tự động kiểm tra và cấu hình scene đích phù hợp nếu bị trùng scene hiện tại
     string activeScene = SceneManager.GetActiveScene().name;
     if (string.IsNullOrEmpty(targetSceneName) || targetSceneName == activeScene)
@@ -54,6 +72,57 @@ public class PortalController : MonoBehaviour, IInteractable
       {
         targetSceneName = "LandScene";
       }
+    }
+  }
+
+  private void SetupAudioSource()
+  {
+    audioSource = GetComponent<AudioSource>();
+    if (audioSource == null)
+    {
+      audioSource = gameObject.AddComponent<AudioSource>();
+    }
+
+    audioSource.playOnAwake = false;
+    audioSource.loop = true;
+    audioSource.spatialBlend = 1.0f; // 100% 3D Spatial Audio
+    audioSource.rolloffMode = AudioRolloffMode.Linear;
+    audioSource.minDistance = minDistance; // 2.0f
+    audioSource.maxDistance = maxDistance; // 16.0f
+    audioSource.dopplerLevel = 0f;
+  }
+
+  private void Start()
+  {
+    PlayPortalAuraLoop();
+  }
+
+  private void Update()
+  {
+    // Đảm bảo kết nối âm thanh ngay khi AudioManager sẵn sàng nếu lúc Start chưa có clip
+    if (audioSource != null && audioSource.clip == null && AudioManager.HasInstance && AudioManager.Instance.PortalClip != null)
+    {
+      PlayPortalAuraLoop();
+    }
+  }
+
+  private void PlayPortalAuraLoop()
+  {
+    if (audioSource == null) return;
+
+    AudioClip clip = portalClip;
+    if (clip == null && AudioManager.HasInstance)
+    {
+      clip = AudioManager.Instance.PortalClip;
+    }
+
+    if (clip != null)
+    {
+      audioSource.clip = clip;
+      float masterVol = AudioManager.HasInstance ? AudioManager.Instance.MasterVolume : 1f;
+      float sfxVol = AudioManager.HasInstance ? AudioManager.Instance.SfxVolume : 1f;
+      audioSource.volume = volume * sfxVol * masterVol;
+      audioSource.Play();
     }
   }
 
@@ -90,6 +159,10 @@ public class PortalController : MonoBehaviour, IInteractable
   private void OnEnable()
   {
     InteractableRegistry.Register(this);
+    if (audioSource != null && audioSource.clip != null && !audioSource.isPlaying)
+    {
+      audioSource.Play();
+    }
   }
 
   private void OnDisable()
@@ -132,10 +205,7 @@ public class PortalController : MonoBehaviour, IInteractable
 
     isTransitioning = true;
 
-    if (teleportSound != null)
-    {
-      AudioSource.PlayClipAtPoint(teleportSound, transform.position);
-    }
+    // Task 7: Đã có 3D looping AudioSource trên Portal nên loại bỏ one-shot PlayPortalSound khi tương tác dịch chuyển
 
     if (teleportVfxPrefab != null)
     {

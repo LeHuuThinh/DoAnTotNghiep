@@ -117,6 +117,10 @@ public class ProjectileSlash : MonoBehaviour
                     // Hãm phanh đặt đạn ngay tại mặt trước bức tường
                     transform.position = wallHit.point;
                     SpawnHitVfx(wallHit.point, wallHit.normal);
+                    if (AudioManager.HasInstance)
+                    {
+                        AudioManager.Instance.PlaySkillEImpact(wallHit.point);
+                    }
                     Destroy(gameObject);
                     return;
                 }
@@ -177,6 +181,11 @@ public class ProjectileSlash : MonoBehaviour
 
                 TriggerPlayerHitlag();
 
+                if (AudioManager.HasInstance)
+                {
+                    AudioManager.Instance.PlaySkillEImpact(hitPoint);
+                }
+
                 SpawnHitVfx(hitPoint, -transform.forward);
                 Destroy(gameObject);
                 return;
@@ -199,6 +208,10 @@ public class ProjectileSlash : MonoBehaviour
 
             hasHit = true;
             Vector3 hitPoint = GetSafeHitPoint(other);
+            if (AudioManager.HasInstance)
+            {
+                AudioManager.Instance.PlaySkillEImpact(hitPoint);
+            }
             SpawnHitVfx(hitPoint, -transform.forward);
             Destroy(gameObject);
         }

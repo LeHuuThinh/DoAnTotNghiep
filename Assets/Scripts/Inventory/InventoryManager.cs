@@ -105,7 +105,10 @@ namespace InfiniteLabyrinth.Inventory
       }
 
       Instance = this;
-      DontDestroyOnLoad(gameObject);
+      if (transform.parent == null)
+      {
+        DontDestroyOnLoad(gameObject);
+      }
 
       InitializeInventory();
     }
@@ -582,6 +585,7 @@ namespace InfiniteLabyrinth.Inventory
       slotA.SetItem(tempItem, tempQty, tempUpgrade, tempAffix);
 
       OnInventoryChanged?.Invoke();
+      AudioManager.Instance?.PlayUIInteract();
       return true;
     }
 
@@ -703,6 +707,7 @@ namespace InfiniteLabyrinth.Inventory
       }
 
       OnInventoryChanged?.Invoke();
+      AudioManager.Instance?.PlayUIEquip();
       return true;
     }
 
@@ -866,6 +871,7 @@ namespace InfiniteLabyrinth.Inventory
         }
 
         OnInventoryChanged?.Invoke();
+        AudioManager.Instance?.PlayUIEquip();
         return true;
       }
 
@@ -979,6 +985,7 @@ namespace InfiniteLabyrinth.Inventory
           }
 
           OnInventoryChanged?.Invoke();
+          AudioManager.Instance?.PlayUIEquip();
           return true;
         }
         else
@@ -1098,12 +1105,14 @@ namespace InfiniteLabyrinth.Inventory
 
       if (IsConsumableOnCooldown)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         Debug.Log("[Inventory] Bình thuốc đang trong thời gian hồi chiêu!");
         return false;
       }
 
       if (!ApplyConsumableEffects(item, out string failReason))
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         if (!string.IsNullOrEmpty(failReason)) Debug.Log($"[Inventory] {failReason}");
         return false;
       }
@@ -1111,6 +1120,7 @@ namespace InfiniteLabyrinth.Inventory
       // Trừ 1 vật phẩm khỏi túi đồ
       RemoveItem(item, 1);
       TriggerConsumableCooldown();
+      AudioManager.Instance?.PlayUIPotionUse();
       return true;
     }
 
@@ -1121,18 +1131,21 @@ namespace InfiniteLabyrinth.Inventory
     {
       if (equippedUsable == null || equippedUsableCount <= 0)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         Debug.Log("[Inventory] Chưa trang bị bình thuốc vào ô UsableSlot!");
         return false;
       }
 
       if (IsConsumableOnCooldown)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         Debug.Log("[Inventory] Bình thuốc đang trong thời gian hồi chiêu!");
         return false;
       }
 
       if (!ApplyConsumableEffects(equippedUsable, out string failReason))
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         if (!string.IsNullOrEmpty(failReason)) Debug.Log($"[Inventory] {failReason}");
         return false;
       }
@@ -1148,6 +1161,7 @@ namespace InfiniteLabyrinth.Inventory
       OnUsableChanged?.Invoke(equippedUsable, equippedUsableCount);
       OnEquipmentChanged?.Invoke(ItemType.Consumable, equippedUsable);
       OnUsableUsed?.Invoke();
+      AudioManager.Instance?.PlayUIPotionUse();
       return true;
     }
 
@@ -1615,6 +1629,7 @@ namespace InfiniteLabyrinth.Inventory
 
       slot.SetUpgradeLevel(slot.UpgradeLevel + 1);
       OnInventoryChanged?.Invoke();
+      AudioManager.Instance?.PlayUIUpgradeAnvil();
       return true;
     }
 

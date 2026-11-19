@@ -75,8 +75,12 @@ namespace InfiniteLabyrinth.Inventory
         Instantiate(breakVfxPrefab, transform.position + Vector3.up * 0.4f, Quaternion.identity);
       }
 
-      // 4. Phát âm thanh
-      if (breakSound != null)
+      // 4. Phát âm thanh vỡ thùng
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayBarrelBreak(transform.position);
+      }
+      else if (breakSound != null)
       {
         AudioSource.PlayClipAtPoint(breakSound, transform.position);
       }

@@ -87,7 +87,10 @@ namespace InfiniteLabyrinth.UI
       }
 
       instance = this;
-      DontDestroyOnLoad(gameObject);
+      if (transform.parent == null)
+      {
+        DontDestroyOnLoad(gameObject);
+      }
 
       EnsureDependencies();
     }
@@ -117,7 +120,10 @@ namespace InfiniteLabyrinth.UI
       instance = FindAnyObjectByType<LoadingScreenManager>();
       if (instance != null)
       {
-        DontDestroyOnLoad(instance.gameObject);
+        if (instance.transform.parent == null)
+        {
+          DontDestroyOnLoad(instance.gameObject);
+        }
         instance.EnsureDependencies();
         return;
       }
@@ -152,7 +158,10 @@ namespace InfiniteLabyrinth.UI
             GameObject canvasObj = Instantiate(canvasPrefab);
             canvasObj.name = "LoadingScreenCanvas";
             screenUI = canvasObj.GetComponent<LoadingScreenUI>();
-            DontDestroyOnLoad(canvasObj);
+            if (canvasObj.transform.parent == null)
+            {
+              DontDestroyOnLoad(canvasObj);
+            }
           }
           else
           {
@@ -161,7 +170,10 @@ namespace InfiniteLabyrinth.UI
         }
         else
         {
-          DontDestroyOnLoad(screenUI.gameObject);
+          if (screenUI.transform.parent == null)
+          {
+            DontDestroyOnLoad(screenUI.gameObject);
+          }
         }
       }
     }
@@ -217,12 +229,23 @@ namespace InfiniteLabyrinth.UI
       float transitionStartTime = Time.unscaledTime;
 
       // 2. Chạy tác vụ sinh hầm ngục trong Scene (tiến trình 0% -> 100%)
+      bool inSceneDungeonBgmTriggered = false;
       if (taskRoutine != null)
       {
         Action<float> reportProgress = (p) =>
         {
           float normalized = Mathf.Clamp01(p);
           if (screenUI != null) screenUI.SetProgress(normalized);
+
+          // Task 6: Kích hoạt Dungeon BGM tại mốc 90% tiến trình tải
+          if (!inSceneDungeonBgmTriggered && normalized >= 0.90f)
+          {
+            inSceneDungeonBgmTriggered = true;
+            if (locationSceneName.Contains("Dungeon"))
+            {
+              AudioManager.Instance?.PlayDungeonBGM();
+            }
+          }
         };
 
         yield return StartCoroutine(taskRoutine(reportProgress));
@@ -234,8 +257,24 @@ namespace InfiniteLabyrinth.UI
         {
           timer += Time.unscaledDeltaTime * 2f;
           if (screenUI != null) screenUI.SetProgress(timer);
+
+          if (!inSceneDungeonBgmTriggered && timer >= 0.90f)
+          {
+            inSceneDungeonBgmTriggered = true;
+            if (locationSceneName.Contains("Dungeon"))
+            {
+              AudioManager.Instance?.PlayDungeonBGM();
+            }
+          }
+
           yield return null;
         }
+      }
+
+      if (!inSceneDungeonBgmTriggered && locationSceneName.Contains("Dungeon"))
+      {
+        inSceneDungeonBgmTriggered = true;
+        AudioManager.Instance?.PlayDungeonBGM();
       }
 
       // 3. Đảm bảo thời gian đọc mẹo tối thiểu
@@ -377,6 +416,25 @@ namespace InfiniteLabyrinth.UI
       LockPlayerInput(true);
 
       // 4. Phase 2: Generation / World Setup (40% -> 100%)
+      bool dungeonBgmTriggered = false;
+      Action<float> handleCombinedProgress = (combined) =>
+      {
+        if (screenUI != null)
+        {
+          screenUI.SetProgress(combined);
+        }
+
+        // Task 6: Kích hoạt Dungeon BGM tại mốc 90% tiến trình tải (khi PCG sắp hoàn thành)
+        if (!dungeonBgmTriggered && combined >= 0.90f)
+        {
+          dungeonBgmTriggered = true;
+          if (sceneName.Contains("Dungeon"))
+          {
+            AudioManager.Instance?.PlayDungeonBGM();
+          }
+        }
+      };
+
       if (stagedRoutine != null)
       {
         // Custom staged routine (e.g. PCG Dungeon Generation)
@@ -384,10 +442,7 @@ namespace InfiniteLabyrinth.UI
         {
           float normalized = Mathf.Clamp01(stageProgress);
           float combined = Mathf.Lerp(0.4f, 1.0f, normalized);
-          if (screenUI != null)
-          {
-            screenUI.SetProgress(combined);
-          }
+          handleCombinedProgress(combined);
         };
 
         yield return StartCoroutine(stagedRoutine(reportProgress));
@@ -402,10 +457,7 @@ namespace InfiniteLabyrinth.UI
           {
             float normalized = Mathf.Clamp01(stageProgress);
             float combined = Mathf.Lerp(0.4f, 1.0f, normalized);
-            if (screenUI != null)
-            {
-              screenUI.SetProgress(combined);
-            }
+            handleCombinedProgress(combined);
           };
 
           yield return StartCoroutine(dungeonMgr.GenerateWorldRoutine(reportProgress));
@@ -421,15 +473,17 @@ namespace InfiniteLabyrinth.UI
             progressTimer += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(progressTimer / progressDuration);
             float combined = Mathf.Lerp(0.4f, 1.0f, t);
-
-            if (screenUI != null)
-            {
-              screenUI.SetProgress(combined);
-            }
-
+            handleCombinedProgress(combined);
             yield return null;
           }
         }
+      }
+
+      // Đảm bảo nếu chưa kích hoạt BGM ở 90% (ví dụ PCG nhảy bước hoặc scene khác), kích hoạt trước khi kết thúc
+      if (!dungeonBgmTriggered && sceneName.Contains("Dungeon"))
+      {
+        dungeonBgmTriggered = true;
+        AudioManager.Instance?.PlayDungeonBGM();
       }
 
       // 5. Ensure minimum display time for readability

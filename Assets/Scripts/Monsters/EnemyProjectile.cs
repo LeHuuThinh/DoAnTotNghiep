@@ -146,6 +146,8 @@ public class EnemyProjectile : MonoBehaviour
         // Gọi TakeDamage -> Truyền rõ kẻ tấn công để hệ thống Feedback, Parry & Aggro hoạt động chuẩn xác
         damageable.TakeDamage(damage, hitPoint, transform.forward, knockback, attacker);
 
+        AudioManager.Instance?.PlaySkeletonArrowHit(hitPoint);
+
         SpawnHitEffect(hitPoint, hitNormal.sqrMagnitude > 0.001f ? hitNormal : -transform.forward);
         Destroy(gameObject);
         return;

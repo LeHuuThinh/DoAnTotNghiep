@@ -96,6 +96,22 @@ public abstract class EnemyAIBase : MonoBehaviour
 
   // Optimization & Hibernation State
   protected bool isSleeping = false;
+  protected bool wasAggro = false;
+
+  public bool IsAggro => health != null && !health.IsDead && (currentState == AIState.Chase || currentState == AIState.Circling || currentState == AIState.Attack);
+
+  protected void CheckAndReportAggro()
+  {
+    bool currentAggro = IsAggro;
+    if (currentAggro != wasAggro)
+    {
+      wasAggro = currentAggro;
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.ReportEnemyAggro(this, wasAggro);
+      }
+    }
+  }
   public bool IsSleeping => isSleeping;
   protected Renderer[] cachedRenderers;
   protected ParticleSystem[] cachedParticles;
@@ -320,6 +336,15 @@ public abstract class EnemyAIBase : MonoBehaviour
 
   protected virtual void OnDisable()
   {
+    if (wasAggro)
+    {
+      wasAggro = false;
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.ReportEnemyAggro(this, false);
+      }
+    }
+
     if (health != null)
     {
       health.onTakeDamage.RemoveListener(OnTakeDamageAggro);
@@ -338,6 +363,15 @@ public abstract class EnemyAIBase : MonoBehaviour
 
   protected virtual void OnDeath()
   {
+    if (wasAggro)
+    {
+      wasAggro = false;
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.ReportEnemyAggro(this, false);
+      }
+    }
+
     if (isSleeping)
     {
       SetHibernation(false);
@@ -426,6 +460,7 @@ public abstract class EnemyAIBase : MonoBehaviour
 
     // Phân phối trạng thái cơ bản
     DetermineState(distanceToPlayer);
+    CheckAndReportAggro();
 
     // Thực thi hành vi
     switch (currentState)
@@ -596,6 +631,15 @@ public abstract class EnemyAIBase : MonoBehaviour
 
     isSleeping = sleep;
 
+    if (isSleeping && wasAggro)
+    {
+      wasAggro = false;
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.ReportEnemyAggro(this, false);
+      }
+    }
+
     if (isSleeping)
     {
       // 1. Dừng NavMeshAgent và tắt né tránh va chạm (0% CPU NavMesh)
@@ -711,6 +755,7 @@ public abstract class EnemyAIBase : MonoBehaviour
     if (!health.IsDead && playerTransform != null)
     {
       currentState = AIState.Circling;
+      CheckAndReportAggro();
     }
   }
 

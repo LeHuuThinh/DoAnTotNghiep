@@ -121,10 +121,17 @@ namespace InfiniteLabyrinth.Interaction
       isRotating = true;
 
       // Âm thanh
-      AudioClip clip = opening ? openSound : closeSound;
-      if (clip != null)
+      if (opening && AudioManager.HasInstance)
       {
-        AudioSource.PlayClipAtPoint(clip, transform.position);
+        AudioManager.Instance.PlayDoorOpen(transform.position);
+      }
+      else
+      {
+        AudioClip clip = opening ? openSound : closeSound;
+        if (clip != null)
+        {
+          AudioSource.PlayClipAtPoint(clip, transform.position);
+        }
       }
 
       // Khi bắt đầu mở, nếu có doorObstacleCollider thì tắt để người chơi đi qua

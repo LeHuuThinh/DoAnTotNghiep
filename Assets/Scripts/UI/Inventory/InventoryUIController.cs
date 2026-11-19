@@ -554,6 +554,7 @@ namespace InfiniteLabyrinth.UI
       if (ShopUIController.IsOpen || BlacksmithUIController.IsOpen) return;
 
       IsOpen = true;
+      AudioManager.Instance?.PlayUIInteract();
 
       // 1. Reset về Tab Tất cả, làm mới dữ liệu và ẩn popup trước khi hiện UI để không bị nháy hình 1 frame
       currentTab = InventoryTab.All;

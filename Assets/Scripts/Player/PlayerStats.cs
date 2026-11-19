@@ -294,10 +294,19 @@ public class PlayerStats : MonoBehaviour
     if (AdminCheatManager.IsInfiniteStamina) return true;
     if (currentStamina < amount)
     {
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayPlayerStaminaExhaustedAction();
+      }
       return false;
     }
 
     currentStamina = Mathf.Max(0f, currentStamina - amount);
+    if (currentStamina <= 0f && AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerOutOfStamina();
+    }
+
     staminaRegenTimer = staminaRegenDelay;
     onStaminaChanged?.Invoke(currentStamina, maxStamina);
     return true;
@@ -308,10 +317,19 @@ public class PlayerStats : MonoBehaviour
     if (AdminCheatManager.IsInfiniteStamina) return true;
     if (currentStamina <= 0f)
     {
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayPlayerStaminaExhaustedAction();
+      }
       return false;
     }
 
     currentStamina = Mathf.Max(0f, currentStamina - amount);
+    if (currentStamina <= 0f && AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerOutOfStamina();
+    }
+
     staminaRegenTimer = staminaRegenDelay;
     onStaminaChanged?.Invoke(currentStamina, maxStamina);
     return currentStamina > 0f;

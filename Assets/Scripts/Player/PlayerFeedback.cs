@@ -182,6 +182,10 @@ public class PlayerFeedback : MonoBehaviour
     {
       currentPoise = maxPoise;
       animator.SetTrigger(GetHitHash);
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayPlayerPoiseBreak();
+      }
 
       if (staggerCoroutine != null) StopCoroutine(staggerCoroutine);
       staggerCoroutine = StartCoroutine(StaggerRoutine());
@@ -230,6 +234,10 @@ public class PlayerFeedback : MonoBehaviour
   public void ExecuteParrySuccess(Transform incomingAttacker = null, Vector3 hitPoint = default, Vector3 hitDirection = default)
   {
     Debug.Log("<color=yellow>[PARRY THÀNH CÔNG!] Keng!</color>");
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerParry();
+    }
 
     // 1. Khựng hình hitlag 0.2s tạo độ đanh và cảm giác lực
     TriggerHitlag(parryHitlagDuration, parryTimeScale);
@@ -519,6 +527,11 @@ public class PlayerFeedback : MonoBehaviour
 
   private void HandleDeath()
   {
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayPlayerDeath();
+    }
+
     if (staggerCoroutine != null) StopCoroutine(staggerCoroutine);
     if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
     if (health != null) health.SetInvulnerable(false);
@@ -576,6 +589,12 @@ public class PlayerFeedback : MonoBehaviour
         Destroy(currentHealingVfxInstance);
         currentHealingVfxInstance = null;
       }
+    }
+
+    // Phát âm thanh hồi phục máu (Healing SFX)
+    if (AudioManager.HasInstance)
+    {
+      AudioManager.Instance.PlayHealing(transform.position);
     }
 
     healingVfxCoroutine = StartCoroutine(HealingVfxRoutine());

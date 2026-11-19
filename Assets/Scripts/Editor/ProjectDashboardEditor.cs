@@ -481,6 +481,36 @@ namespace InfiniteLabyrinth.Editor
             }
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            // Card 3: Audio System (Task POL-02)
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🎵 Hệ Thống Nhạc Nền & Âm Thanh Toàn Cục (Task POL-02)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("Quản lý 3 kênh BGM (Explore, Combat, Boss) có Crossfade & Fadeout giữa bài, khoảng lặng 5-10s; Tự động nạp và liên kết 40+ AudioClips từ Assets/Audio.", MessageType.None);
+
+            GUI.backgroundColor = new Color(0.9f, 0.6f, 0.2f);
+            if (GUILayout.Button("🎵 1-Click Thiết Lập AudioManager & Nối 40+ AudioClips", GUILayout.Height(34)))
+            {
+                AudioSetupEditor.SetupAudioManagerOneClick();
+            }
+            GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            // Card 4: Core Systems Architecture Prefab (Single Source of Truth)
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🌐 Phân Hệ Quản Trị Cốt Lõi [CORE_SYSTEMS] (Single Source of Truth)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("Gom cụm toàn bộ 8 Manager (GameManager, AudioManager, Inventory, LoadingScreen, Progression, DamageNumber, Cheat) thành 1 Prefab duy nhất và tự động đồng bộ sang tất cả Scenes.", MessageType.None);
+
+            GUI.backgroundColor = new Color(0.2f, 0.8f, 0.4f);
+            if (GUILayout.Button("🌐 1-Click Tạo Prefab [CORE_SYSTEMS] & Đồng Bộ Tất Cả Scenes", GUILayout.Height(34)))
+            {
+                CoreSystemsSetupEditor.CreateAndSyncCoreSystems();
+            }
+            GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndVertical();
         }
 
         #endregion

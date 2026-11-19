@@ -168,6 +168,9 @@ public class MageGroundSpell : MonoBehaviour
   {
     hasExploded = true;
 
+    // Phát âm thanh nổ phép thuật
+    AudioManager.Instance?.PlaySkeletonSpellImpact(transform.position);
+
     // 1. Quét gây sát thương lên người chơi nếu còn đứng trong vòng tròn
     Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius, targetLayers);
     foreach (Collider col in hitColliders)

@@ -76417,6 +76417,13 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
+  - time: 0.33333334
+    functionName: PlaySkillQChargeSound
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 0.4
     functionName: EnableSwordAura
     data: 
@@ -76440,6 +76447,13 @@ AnimationClip:
     messageOptions: 0
   - time: 1.7
     functionName: PlaySkillQSlash
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.7666667
+    functionName: PlaySkillQImpactSound
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

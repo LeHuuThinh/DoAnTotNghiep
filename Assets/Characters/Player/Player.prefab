@@ -1649,9 +1649,10 @@ MonoBehaviour:
   minIdleActionDelay: 6
   maxIdleActionDelay: 12
   idleActionStateNames:
-  - Idle Action 1
+  - Idle Action 5
   - Idle Action 2
   - Idle Action 3
+  - Idle Action 4
   animator: {fileID: 3586210189879081407}
   thirdPersonCamera: {fileID: 0}
   targetLockSystem: {fileID: 759275986569051391}

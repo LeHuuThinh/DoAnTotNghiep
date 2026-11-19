@@ -5,12 +5,23 @@ using InfiniteLabyrinth.Interaction;
 
 namespace InfiniteLabyrinth.Inventory
 {
+  public enum ChestTier
+  {
+    Normal,
+    Rare,
+    Boss
+  }
+
   /// <summary>
   /// Quản lý Rương kho báu trong hầm ngục theo 3 cấp độ (Thường, Hiếm, Boss).
   /// Kế thừa IInteractable hỗ trợ đè giữ phím [F] để mở nắp, kích nổ luồng tia sáng VFX theo màu tier và tung đồ ra đất.
   /// </summary>
   public class ChestInteractable : MonoBehaviour, IInteractable
   {
+    [Header("=== PHÂN LOẠI CẤP BẬC (TIER) ===")]
+    [Tooltip("Cấp bậc của rương để điều chỉnh âm lượng ChestAura và hiển thị (Normal: 0.35, Rare: 0.70, Boss: 1.0)")]
+    [SerializeField] private ChestTier chestTier = ChestTier.Normal;
+
     [Header("=== CẤU HÌNH MỞ RƯƠNG ===")]
     [Tooltip("Khớp nắp rương để xoay mở")]
     [SerializeField] private Transform chestLid;
@@ -49,6 +60,7 @@ namespace InfiniteLabyrinth.Inventory
     private Coroutine stopVfxCoroutine;
 
     public bool IsOpen => isOpen;
+    public ChestTier Tier => chestTier;
 
     // Triển khai IInteractable
     public string InteractionPrompt => interactionPrompt;
@@ -61,6 +73,18 @@ namespace InfiniteLabyrinth.Inventory
     private void Awake()
     {
       lootDropper = GetComponent<LootDropper>();
+
+      // Tự động nhận diện tier dựa theo tên đối tượng hoặc chestName nếu để mặc định
+      string combinedName = (gameObject.name + " " + chestName).ToLower();
+      if (combinedName.Contains("boss"))
+      {
+        chestTier = ChestTier.Boss;
+      }
+      else if (combinedName.Contains("rare") || combinedName.Contains("hiếm") || combinedName.Contains("gold"))
+      {
+        chestTier = ChestTier.Rare;
+      }
+
       if (chestLid == null)
       {
         chestLid = transform.Find("Lid") ?? transform.Find("chest_lid") ?? transform.Find("top");
@@ -134,8 +158,28 @@ namespace InfiniteLabyrinth.Inventory
         StartCoroutine(OpenLidRoutine());
       }
 
-      // 2. Kích hoạt hiệu ứng âm thanh
-      if (openSound != null)
+      // 2. Kích hoạt hiệu ứng âm thanh mở rương và hào quang chói lóa ChestAura
+      if (AudioManager.HasInstance)
+      {
+        AudioManager.Instance.PlayChestOpen(transform.position);
+
+        float auraVol = 0.35f;
+        switch (chestTier)
+        {
+          case ChestTier.Boss:
+            auraVol = 1.0f;
+            break;
+          case ChestTier.Rare:
+            auraVol = 0.70f;
+            break;
+          case ChestTier.Normal:
+          default:
+            auraVol = 0.35f;
+            break;
+        }
+        AudioManager.Instance.PlayChestAura(transform.position, auraVol);
+      }
+      else if (openSound != null)
       {
         AudioSource.PlayClipAtPoint(openSound, transform.position);
       }

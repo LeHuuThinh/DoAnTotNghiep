@@ -625,6 +625,7 @@ namespace InfiniteLabyrinth.UI
 
     public void SwitchBlacksmithTab(BlacksmithTab tab)
     {
+      AudioManager.Instance?.PlayUIInteract();
       currentBlacksmithTab = tab;
       if (tabUpgradeHighlight != null) tabUpgradeHighlight.SetActive(tab == BlacksmithTab.Upgrade);
       if (tabForgeHighlight != null) tabForgeHighlight.SetActive(tab == BlacksmithTab.Forge);
@@ -1212,13 +1213,22 @@ namespace InfiniteLabyrinth.UI
     private void HandleUpgradeClicked()
     {
       if (selectedUpgradeItem == null || !InventoryManager.HasInstance) return;
-      if (selectedUpgradeLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL) return;
+      if (selectedUpgradeLevel >= BlacksmithUpgradeConfig.MAX_UPGRADE_LEVEL)
+      {
+        AudioManager.Instance?.PlayUIDisabledClick();
+        return;
+      }
 
       if (!BlacksmithUpgradeConfig.GetRequirement(selectedUpgradeItem, selectedUpgradeLevel, out var req)) return;
-      if (!BlacksmithUpgradeConfig.CanAffordUpgrade(selectedUpgradeItem, selectedUpgradeLevel, InventoryManager.Instance, out _, out _, out _, out _)) return;
+      if (!BlacksmithUpgradeConfig.CanAffordUpgrade(selectedUpgradeItem, selectedUpgradeLevel, InventoryManager.Instance, out _, out _, out _, out _))
+      {
+        AudioManager.Instance?.PlayUIDisabledClick();
+        return;
+      }
 
       // 1. Trừ vàng
       InventoryManager.Instance.SpendGold(req.GoldCost);
+      AudioManager.Instance?.PlayUIUpgradeAnvil();
 
       // 2. Trừ nguyên liệu
       InventoryManager.Instance.RemoveItem(BlacksmithUpgradeConfig.UPGRADE_STONE_ID, req.StoneCount);
@@ -1484,24 +1494,34 @@ namespace InfiniteLabyrinth.UI
 
       // 1. Kiểm tra vàng & nguyên liệu
       int curGold = InventoryManager.Instance.CurrentGold;
-      if (curGold < r.GoldCost) return;
+      if (curGold < r.GoldCost)
+      {
+        AudioManager.Instance?.PlayUIDisabledClick();
+        return;
+      }
 
       foreach (var m in r.RequiredMaterials)
       {
         if (m.MaterialItem == null) continue;
-        if (InventoryManager.Instance.GetItemCount(m.MaterialItem) < m.Quantity) return;
+        if (InventoryManager.Instance.GetItemCount(m.MaterialItem) < m.Quantity)
+        {
+          AudioManager.Instance?.PlayUIDisabledClick();
+          return;
+        }
       }
 
       // 2. Kiểm tra slot trống túi đồ
       bool added = InventoryManager.Instance.AddItem(r.ResultItem, r.ResultQuantity, notifyPickup: true);
       if (!added)
       {
+        AudioManager.Instance?.PlayUIDisabledClick();
         if (btnForgeText != null) btnForgeText.text = "BAG FULL!";
         return;
       }
 
       // 3. Trừ vàng & trừ nguyên liệu
       InventoryManager.Instance.SpendGold(r.GoldCost);
+      AudioManager.Instance?.PlayUIUpgradeAnvil();
       foreach (var m in r.RequiredMaterials)
       {
         if (m.MaterialItem != null)
@@ -1541,6 +1561,7 @@ namespace InfiniteLabyrinth.UI
 
     public void SwitchInventoryTab(InventoryTab tab)
     {
+      AudioManager.Instance?.PlayUIInteract();
       currentInventoryTab = tab;
       UpdateInventoryTabHighlight();
       RefreshInventoryGrid();
