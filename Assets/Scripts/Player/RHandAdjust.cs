@@ -54,6 +54,14 @@ public class RHandAdjust : MonoBehaviour
     currentWeight = 1f;
   }
 
+  /// <summary>
+  /// Khôi phục hoặc gán nhanh trọng số can thiệp xương (dùng khi hủy Idle Action phản ứng tức thì)
+  /// </summary>
+  public void SnapWeight(float weight)
+  {
+    currentWeight = Mathf.Clamp01(weight);
+  }
+
   private void LateUpdate()
   {
     if (playerHealth != null && playerHealth.IsDead) return;

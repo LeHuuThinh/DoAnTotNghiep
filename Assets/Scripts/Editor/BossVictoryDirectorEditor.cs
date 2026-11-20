@@ -70,7 +70,7 @@ namespace InfiniteLabyrinth.EditorScripts
   /// </summary>
   public static class BossVictorySetupEditor
   {
-    [MenuItem("Infinite Labyrinth/Boss/8. Cấu Hình Đạo Diễn Chiến Thắng & Victory Banner (Task D02-5B)", false, 8)]
+    // [MenuItem("Infinite Labyrinth/Boss/8. Cấu Hình Đạo Diễn Chiến Thắng & Victory Banner (Task D02-5B)", false, 8)] (Archived)
     public static void SetupBossVictory()
     {
       Debug.Log("<color=gold>=== BẮT ĐẦU CẤU HÌNH BOSS VICTORY DIRECTOR (TASK D02-5B) ===</color>");
@@ -98,7 +98,7 @@ namespace InfiniteLabyrinth.EditorScripts
       Debug.Log("<color=green>[BossVictorySetup]</color> 🎉 Cấu hình Task D02-5B hoàn tất 100%! Đã chọn BossVictoryDirector trong Hierarchy.");
     }
 
-    [MenuItem("Infinite Labyrinth/Boss/9. Cấu Hình Đạo Diễn Sinh Rương & Cổng Bục Đá (Task D02-5C)", false, 9)]
+    // [MenuItem("Infinite Labyrinth/Boss/9. Cấu Hình Đạo Diễn Sinh Rương & Cổng Bục Đá (Task D02-5C)", false, 9)] (Archived)
     public static void SetupPedestalRevealAndChestPortal()
     {
       Debug.Log("<color=gold>=== BẮT ĐẦU CẤU HÌNH ĐẠO DIỄN SINH RƯƠNG & CỔNG BỤC ĐÁ (TASK D02-5C) ===</color>");

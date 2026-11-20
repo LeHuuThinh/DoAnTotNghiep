@@ -75,6 +75,127 @@ public class AudioManager : MonoBehaviour
     private float lastInspectorBgmVol = -1f;
     private float lastInspectorSfxVol = -1f;
 
+    // =========================================================================
+    // MA TRẬN CÂN BẰNG ÂM LƯỢNG CHI TIẾT (SOUND BALANCE MATRIX)
+    // Tự do kéo chỉnh âm lượng từng âm thanh trong Inspector (kể cả lúc đang Play)
+    // =========================================================================
+
+    [Header("=== MA TRẬN CÂN BẰNG - COMBAT NGƯỜI CHƠI ===")]
+    [Tooltip("Âm thanh đòn chém kiếm thường (Slash1..2)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerSlash = 1.0f;
+    [Tooltip("Tiếng hô/thét chém kiếm ('huh', 'ha')")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerAttackVoice = 0.85f;
+    [Tooltip("Tiếng rên đau khi dính đòn vỡ Poise (PlayerHurt1..5)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerHurtVoice = 1.0f;
+    [Tooltip("Tiếng gạt đòn kim loại đanh thép (Parry)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerParry = 1.0f;
+    [Tooltip("Tiếng bùng nổ xung lực phản đòn (Counter Attack)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerCounter = 1.0f;
+    [Tooltip("Tiếng thở dốc khi cạn sạch thể lực (PlayerOutOfStamina)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerOutOfStamina = 0.9f;
+    [Tooltip("Tiếng tít trầm cảnh báo khi cố hành động lúc hết stamina (Stamina Alert)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerStaminaAlert = 0.8f;
+    [Tooltip("Tiếng ngã gục khi tử trận (Death)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerDeath = 1.0f;
+    [Tooltip("Hiệu ứng âm thanh hồi máu / cầu nguyện chuông làng (Healing)")]
+    [Range(0f, 2f)] [SerializeField] private float volPlayerHeal = 0.95f;
+
+    [Header("=== MA TRẬN CÂN BẰNG - KỸ NĂNG NGƯỜI CHƠI (SKILLS) ===")]
+    [Tooltip("Tụ kiếm khí Skill E (SmallCharge)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillECharge = 1.0f;
+    [Tooltip("Gồng nén khí chấn địa Skill Q (MediumCharge)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillQCharge = 1.0f;
+    [Tooltip("Tụ lực tuyệt kỹ tối thượng Skill R (BigCharge)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillRCharge = 1.0f;
+    [Tooltip("Va chạm nổ kiếm khí Skill E (EImpact)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillEImpact = 1.0f;
+    [Tooltip("Chấn địa nổ mặt đất Skill Q (QImpact)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillQImpact = 1.0f;
+    [Tooltip("Nhát chém quét trúng kẻ địch Skill R (RImpact)")]
+    [Range(0f, 2f)] [SerializeField] private float volSkillRImpact = 1.0f;
+
+    [Header("=== MA TRẬN CÂN BẰNG - BƯỚC CHÂN & IDLE ===")]
+    [Tooltip("Khoảng cách giữa 2 bước chân Player khi ĐI BỘ (giây)")]
+    [Range(0.2f, 1.0f)] [SerializeField] private float playerWalkFootstepInterval = 0.44f;
+    [Tooltip("Khoảng cách giữa 2 bước chân Player khi CHẠY (giây)")]
+    [Range(0.15f, 0.8f)] [SerializeField] private float playerRunFootstepInterval = 0.30f;
+    [Tooltip("Tỷ lệ âm lượng bước chân khi ĐI BỘ so với chạy (mặc định: 0.55 = 55%)")]
+    [Range(0.2f, 1.0f)] [SerializeField] private float volPlayerWalkRatio = 0.55f;
+    [Tooltip("Bước chân trên đất cát / cỏ (Làng Haven)")]
+    [Range(0f, 2f)] [SerializeField] private float volFootstepsDirt = 0.6f;
+    [Tooltip("Bước chân trên sàn đá (Hầm ngục)")]
+    [Range(0f, 2f)] [SerializeField] private float volFootstepsRock = 0.6f;
+    [Tooltip("Động tác ngó nghiêng / quan sát (Checking1..5)")]
+    [Range(0f, 2f)] [SerializeField] private float volIdleChecking = 0.85f;
+    [Tooltip("Động tác khởi động / bẻ khớp (Warmup1..6)")]
+    [Range(0f, 2f)] [SerializeField] private float volIdleWarmup = 0.9f;
+    [Tooltip("Tiếng thở khẽ / ngâm nga (Hums1..2)")]
+    [Range(0f, 2f)] [SerializeField] private float volIdleHums = 0.8f;
+    [Tooltip("Động tác vươn vai / ngáp (Streching)")]
+    [Range(0f, 2f)] [SerializeField] private float volIdleStretching = 0.85f;
+
+    [Header("=== MA TRẬN CÂN BẰNG - QUÁI VẬT SKELETON ===")]
+    [Tooltip("Âm thanh bước chân quái vật trên sàn đá hầm ngục")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterFootstep = 0.75f;
+    [Tooltip("Khoảng cách giữa 2 bước chân Quái vật khi ĐI BỘ / VỜN QUANH (giây)")]
+    [Range(0.3f, 1.5f)] [SerializeField] private float monsterWalkFootstepInterval = 0.65f;
+    [Tooltip("Khoảng cách giữa 2 bước chân Quái vật khi CHẠY / TRUY ĐUỔI (giây)")]
+    [Range(0.2f, 1.0f)] [SerializeField] private float monsterRunFootstepInterval = 0.42f;
+    [Tooltip("Quái cận chiến vung đao chém gió")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterMeleeAttack = 0.85f;
+    [Tooltip("Đòn cận chiến chém trúng người chơi (da thịt)")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterMeleeHit = 0.9f;
+    [Tooltip("Quái cung thủ bắn cung tên")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterArrowShoot = 0.85f;
+    [Tooltip("Mũi tên găm trúng người chơi")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterArrowHit = 0.9f;
+    [Tooltip("Pháp sư gồng niệm chú trượng")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterSpellCast = 0.85f;
+    [Tooltip("Phép thuật nổ tung mặt đất")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterSpellImpact = 1.0f;
+    [Tooltip("Quái dính sát thương (rung rắc xương)")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterGetHit = 0.85f;
+    [Tooltip("Quái tử trận (sụp đổ vỡ xương)")]
+    [Range(0f, 2f)] [SerializeField] private float volMonsterDeath = 1.0f;
+
+    [Header("=== MA TRẬN CÂN BẰNG - MÔI TRƯỜNG & HẦM NGỤC ===")]
+    [Tooltip("Thùng gỗ vỡ vụn")]
+    [Range(0f, 2f)] [SerializeField] private float volBarrelBreak = 0.9f;
+    [Tooltip("Chuông thánh Làng Haven (khi cầu nguyện)")]
+    [Range(0f, 2f)] [SerializeField] private float volVillageBell = 1.0f;
+    [Tooltip("Mở cửa hầm ngục")]
+    [Range(0f, 2f)] [SerializeField] private float volDoorOpen = 0.85f;
+    [Tooltip("Mở Đại Môn phong ấn Boss")]
+    [Range(0f, 2f)] [SerializeField] private float volBossDoorOpen = 1.0f;
+    [Tooltip("Mở rương báu")]
+    [Range(0f, 2f)] [SerializeField] private float volChestOpen = 0.9f;
+    [Tooltip("Hào quang rương báu chói lóa (Chest Aura)")]
+    [Range(0f, 2f)] [SerializeField] private float volChestAura = 1.0f;
+    [Tooltip("Nhặt đồng tiền vàng")]
+    [Range(0f, 2f)] [SerializeField] private float volCoinPickup = 0.8f;
+    [Tooltip("Cổng dịch chuyển ma thuật")]
+    [Range(0f, 2f)] [SerializeField] private float volPortal = 0.9f;
+    [Tooltip("Âm thanh ngọn đuốc cháy lách tách (Torch Loop)")]
+    [Range(0f, 2f)] [SerializeField] private float volTorch = 0.85f;
+    [Tooltip("Âm thanh rùng rợn hầm ngục")]
+    [Range(0f, 2f)] [SerializeField] private float volAmbientStinger = 0.75f;
+
+    [Header("=== MA TRẬN CÂN BẰNG - GIAO DIỆN & TƯƠNG TÁC (UI) ===")]
+    [Tooltip("Đe rèn nâng cấp / rèn thành công")]
+    [Range(0f, 2f)] [SerializeField] private float volUIAnvil = 1.0f;
+    [Tooltip("Trang bị / tháo vũ khí, giáp trong kho đồ")]
+    [Range(0f, 2f)] [SerializeField] private float volUIEquip = 0.85f;
+    [Tooltip("Uống bình máu / dược phẩm")]
+    [Range(0f, 2f)] [SerializeField] private float volUIPotion = 0.9f;
+    [Tooltip("Giao dịch mua / bán tại Cửa Hàng")]
+    [Range(0f, 2f)] [SerializeField] private float volUIShop = 0.85f;
+    [Tooltip("Cảnh báo nút click bị khóa / không đủ điều kiện")]
+    [Range(0f, 2f)] [SerializeField] private float volUIDisabled = 0.75f;
+    [Tooltip("Nhặt vật phẩm dưới đất (phím F)")]
+    [Range(0f, 2f)] [SerializeField] private float volUIItemPickup = 0.9f;
+    [Tooltip("Mở túi đồ, shop, tab lò rèn, minimap")]
+    [Range(0f, 2f)] [SerializeField] private float volUIInteract = 0.85f;
+
     [Header("=== DANH SÁCH NHẠC NỀN (BGM TRACKS) ===")]
     [Tooltip("Nhạc nền Làng Haven & MainMenu")]
     [SerializeField] private AudioClip[] landBgmTracks;
@@ -119,9 +240,13 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip healClip;
 
     [Header("=== BƯỚC CHÂN NGƯỜI CHƠI (FOOTSTEPS) ===")]
-    [Tooltip("Bước chân trên đất cát / cỏ (Làng Haven)")]
+    [Tooltip("Bước chân ĐI BỘ trên đất cát / cỏ (Làng Haven)")]
+    [SerializeField] private AudioClip[] footstepsDirtWalk;
+    [Tooltip("Bước chân CHẠY trên đất cát / cỏ (Làng Haven)")]
     [SerializeField] private AudioClip[] footstepsDirt;
-    [Tooltip("Bước chân trên sàn đá hầm ngục (Dungeon)")]
+    [Tooltip("Bước chân ĐI BỘ trên sàn đá hầm ngục (Dungeon)")]
+    [SerializeField] private AudioClip[] footstepsRockWalk;
+    [Tooltip("Bước chân CHẠY trên sàn đá hầm ngục (Dungeon)")]
     [SerializeField] private AudioClip[] footstepsRock;
 
     [Header("=== ÂM THANH KỸ NĂNG NGƯỜI CHƠI (PLAYER SKILLS) ===")]
@@ -166,6 +291,8 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip skeletonGetHitClip;
     [Tooltip("Quái Skeleton tử trận (xương sập vỡ vụn)")]
     [SerializeField] private AudioClip skeletonDeathClip;
+    [Tooltip("Âm thanh bước chân quái vật trên sàn đá hầm ngục (Footsteps Rock Walk)")]
+    [SerializeField] private AudioClip[] monsterFootsteps;
 
     [Header("=== ÂM THANH MÔI TRƯỜNG & HẦM NGỤC (ENVIRONMENT SFX) ===")]
     [Tooltip("Âm thanh không khí hầm ngục rùng rợn")]
@@ -242,6 +369,194 @@ public class AudioManager : MonoBehaviour
     public BgmMode CurrentBgmMode => currentBgmMode;
     public AudioClip TorchClip => torchClip;
     public AudioClip PortalClip => portalClip;
+
+    // Public Getters cho Ma Trận Cân Bằng Âm Lượng
+    public float VolPlayerSlash => volPlayerSlash;
+    public float VolPlayerAttackVoice => volPlayerAttackVoice;
+    public float VolPlayerHurtVoice => volPlayerHurtVoice;
+    public float VolPlayerParry => volPlayerParry;
+    public float VolPlayerCounter => volPlayerCounter;
+    public float VolPlayerOutOfStamina => volPlayerOutOfStamina;
+    public float VolPlayerStaminaAlert => volPlayerStaminaAlert;
+    public float VolPlayerDeath => volPlayerDeath;
+    public float VolPlayerHeal => volPlayerHeal;
+
+    public float VolSkillECharge => volSkillECharge;
+    public float VolSkillQCharge => volSkillQCharge;
+    public float VolSkillRCharge => volSkillRCharge;
+    public float VolSkillEImpact => volSkillEImpact;
+    public float VolSkillQImpact => volSkillQImpact;
+    public float VolSkillRImpact => volSkillRImpact;
+
+    public float VolFootstepsDirt => volFootstepsDirt;
+    public float VolFootstepsRock => volFootstepsRock;
+    public float VolPlayerWalkRatio => volPlayerWalkRatio;
+    public float VolIdleChecking => volIdleChecking;
+    public float VolIdleWarmup => volIdleWarmup;
+    public float VolIdleHums => volIdleHums;
+    public float VolIdleStretching => volIdleStretching;
+
+    public float VolMonsterMeleeAttack => volMonsterMeleeAttack;
+    public float VolMonsterMeleeHit => volMonsterMeleeHit;
+    public float VolMonsterArrowShoot => volMonsterArrowShoot;
+    public float VolMonsterArrowHit => volMonsterArrowHit;
+    public float VolMonsterSpellCast => volMonsterSpellCast;
+    public float VolMonsterSpellImpact => volMonsterSpellImpact;
+    public float VolMonsterGetHit => volMonsterGetHit;
+    public float VolMonsterDeath => volMonsterDeath;
+    public float VolMonsterFootstep => volMonsterFootstep;
+    public float PlayerWalkFootstepInterval => playerWalkFootstepInterval;
+    public float PlayerRunFootstepInterval => playerRunFootstepInterval;
+    public float MonsterWalkFootstepInterval => monsterWalkFootstepInterval;
+    public float MonsterRunFootstepInterval => monsterRunFootstepInterval;
+
+    public float VolBarrelBreak => volBarrelBreak;
+    public float VolVillageBell => volVillageBell;
+    public float VolDoorOpen => volDoorOpen;
+    public float VolBossDoorOpen => volBossDoorOpen;
+    public float VolChestOpen => volChestOpen;
+    public float VolChestAura => volChestAura;
+    public float VolCoinPickup => volCoinPickup;
+    public float VolPortal => volPortal;
+    public float VolTorch => volTorch;
+    public float VolAmbientStinger => volAmbientStinger;
+
+    public float VolUIAnvil => volUIAnvil;
+    public float VolUIEquip => volUIEquip;
+    public float VolUIPotion => volUIPotion;
+    public float VolUIShop => volUIShop;
+    public float VolUIDisabled => volUIDisabled;
+    public float VolUIItemPickup => volUIItemPickup;
+    public float VolUIInteract => volUIInteract;
+
+    /// <summary>
+    /// Khôi phục toàn bộ Ma trận cân bằng âm lượng (38 thanh trượt) về giá trị chuẩn mặc định.
+    /// </summary>
+    public void ResetSoundBalanceToDefaults()
+    {
+        volPlayerSlash = 1.0f;
+        volPlayerAttackVoice = 0.85f;
+        volPlayerHurtVoice = 1.0f;
+        volPlayerParry = 1.0f;
+        volPlayerCounter = 1.0f;
+        volPlayerOutOfStamina = 0.9f;
+        volPlayerStaminaAlert = 0.8f;
+        volPlayerDeath = 1.0f;
+        volPlayerHeal = 0.95f;
+
+        volSkillECharge = 1.0f;
+        volSkillQCharge = 1.0f;
+        volSkillRCharge = 1.0f;
+        volSkillEImpact = 1.0f;
+        volSkillQImpact = 1.0f;
+        volSkillRImpact = 1.0f;
+
+        volFootstepsDirt = 0.6f;
+        volFootstepsRock = 0.6f;
+        volPlayerWalkRatio = 0.55f;
+        playerWalkFootstepInterval = 0.44f;
+        playerRunFootstepInterval = 0.30f;
+        volIdleChecking = 0.85f;
+        volIdleWarmup = 0.9f;
+        volIdleHums = 0.8f;
+        volIdleStretching = 0.85f;
+
+        volMonsterMeleeAttack = 0.85f;
+        volMonsterMeleeHit = 0.9f;
+        volMonsterArrowShoot = 0.85f;
+        volMonsterArrowHit = 0.9f;
+        volMonsterSpellCast = 0.85f;
+        volMonsterSpellImpact = 1.0f;
+        volMonsterGetHit = 0.85f;
+        volMonsterDeath = 1.0f;
+        volMonsterFootstep = 0.75f;
+        monsterWalkFootstepInterval = 0.65f;
+        monsterRunFootstepInterval = 0.42f;
+
+        volBarrelBreak = 0.9f;
+        volVillageBell = 1.0f;
+        volDoorOpen = 0.85f;
+        volBossDoorOpen = 1.0f;
+        volChestOpen = 0.9f;
+        volChestAura = 1.0f;
+        volCoinPickup = 0.8f;
+        volPortal = 0.9f;
+        volTorch = 0.85f;
+        volAmbientStinger = 0.75f;
+
+        volUIAnvil = 1.0f;
+        volUIEquip = 0.85f;
+        volUIPotion = 0.9f;
+        volUIShop = 0.85f;
+        volUIDisabled = 0.75f;
+        volUIItemPickup = 0.9f;
+        volUIInteract = 0.85f;
+    }
+
+    /// <summary>
+    /// Sao chép cấu hình ma trận âm lượng từ một đối tượng AudioManager khác.
+    /// </summary>
+    public void CopyBalanceSettingsFrom(AudioManager other)
+    {
+        if (other == null) return;
+        volPlayerSlash = other.volPlayerSlash;
+        volPlayerAttackVoice = other.volPlayerAttackVoice;
+        volPlayerHurtVoice = other.volPlayerHurtVoice;
+        volPlayerParry = other.volPlayerParry;
+        volPlayerCounter = other.volPlayerCounter;
+        volPlayerOutOfStamina = other.volPlayerOutOfStamina;
+        volPlayerStaminaAlert = other.volPlayerStaminaAlert;
+        volPlayerDeath = other.volPlayerDeath;
+        volPlayerHeal = other.volPlayerHeal;
+
+        volSkillECharge = other.volSkillECharge;
+        volSkillQCharge = other.volSkillQCharge;
+        volSkillRCharge = other.volSkillRCharge;
+        volSkillEImpact = other.volSkillEImpact;
+        volSkillQImpact = other.volSkillQImpact;
+        volSkillRImpact = other.volSkillRImpact;
+
+        volFootstepsDirt = other.volFootstepsDirt;
+        volFootstepsRock = other.volFootstepsRock;
+        volPlayerWalkRatio = other.volPlayerWalkRatio;
+        playerWalkFootstepInterval = other.playerWalkFootstepInterval;
+        playerRunFootstepInterval = other.playerRunFootstepInterval;
+        volIdleChecking = other.volIdleChecking;
+        volIdleWarmup = other.volIdleWarmup;
+        volIdleHums = other.volIdleHums;
+        volIdleStretching = other.volIdleStretching;
+
+        volMonsterMeleeAttack = other.volMonsterMeleeAttack;
+        volMonsterMeleeHit = other.volMonsterMeleeHit;
+        volMonsterArrowShoot = other.volMonsterArrowShoot;
+        volMonsterArrowHit = other.volMonsterArrowHit;
+        volMonsterSpellCast = other.volMonsterSpellCast;
+        volMonsterSpellImpact = other.volMonsterSpellImpact;
+        volMonsterGetHit = other.volMonsterGetHit;
+        volMonsterDeath = other.volMonsterDeath;
+        volMonsterFootstep = other.volMonsterFootstep;
+        monsterWalkFootstepInterval = other.monsterWalkFootstepInterval;
+        monsterRunFootstepInterval = other.monsterRunFootstepInterval;
+
+        volBarrelBreak = other.volBarrelBreak;
+        volVillageBell = other.volVillageBell;
+        volDoorOpen = other.volDoorOpen;
+        volBossDoorOpen = other.volBossDoorOpen;
+        volChestOpen = other.volChestOpen;
+        volChestAura = other.volChestAura;
+        volCoinPickup = other.volCoinPickup;
+        volPortal = other.volPortal;
+        volTorch = other.volTorch;
+        volAmbientStinger = other.volAmbientStinger;
+
+        volUIAnvil = other.volUIAnvil;
+        volUIEquip = other.volUIEquip;
+        volUIPotion = other.volUIPotion;
+        volUIShop = other.volUIShop;
+        volUIDisabled = other.volUIDisabled;
+        volUIItemPickup = other.volUIItemPickup;
+        volUIInteract = other.volUIInteract;
+    }
 
     /// <summary>
     /// Đảm bảo luôn tồn tại một AudioManager duy nhất trong game (ưu tiên bên trong [CORE_SYSTEMS]).
@@ -999,7 +1314,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetRandomClip(slashClips);
         if (clip != null)
         {
-            Play2D(clip, volume: 1.0f, pitchMin: 0.94f, pitchMax: 1.06f);
+            Play2D(clip, volume: volPlayerSlash, pitchMin: 0.94f, pitchMax: 1.06f);
         }
     }
 
@@ -1013,7 +1328,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetRandomClip(attackVoiceClips);
         if (clip != null)
         {
-            Play2D(clip, volume: 0.85f, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volPlayerAttackVoice, pitchMin: 0.96f, pitchMax: 1.04f);
         }
     }
 
@@ -1042,7 +1357,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetRandomClip(hurtVoiceClips);
         if (clip != null)
         {
-            Play2D(clip, volume: 1.0f, pitchMin: 0.95f, pitchMax: 1.05f);
+            Play2D(clip, volume: volPlayerHurtVoice, pitchMin: 0.95f, pitchMax: 1.05f);
         }
     }
 
@@ -1056,7 +1371,7 @@ public class AudioManager : MonoBehaviour
 
         if (outOfStaminaClip != null)
         {
-            Play2D(outOfStaminaClip, volume: 0.9f);
+            Play2D(outOfStaminaClip, volume: volPlayerOutOfStamina);
         }
     }
 
@@ -1070,7 +1385,7 @@ public class AudioManager : MonoBehaviour
 
         if (staminaEmptyAlertClip != null)
         {
-            Play2D(staminaEmptyAlertClip, volume: 0.8f, pitchMin: 0.92f, pitchMax: 0.96f);
+            Play2D(staminaEmptyAlertClip, volume: volPlayerStaminaAlert, pitchMin: 0.92f, pitchMax: 0.96f);
         }
     }
 
@@ -1081,7 +1396,7 @@ public class AudioManager : MonoBehaviour
     {
         if (deathClip != null)
         {
-            Play2D(deathClip, volume: 1.0f);
+            Play2D(deathClip, volume: volPlayerDeath);
         }
     }
 
@@ -1092,7 +1407,7 @@ public class AudioManager : MonoBehaviour
     {
         if (parryClip != null)
         {
-            Play2D(parryClip, volume: 1.0f, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(parryClip, volume: volPlayerParry, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
@@ -1103,7 +1418,7 @@ public class AudioManager : MonoBehaviour
     {
         if (counterAttackClip != null)
         {
-            Play2D(counterAttackClip, volume: 1.0f);
+            Play2D(counterAttackClip, volume: volPlayerCounter);
         }
     }
 
@@ -1113,30 +1428,56 @@ public class AudioManager : MonoBehaviour
     public void PlayHealing(Vector3? position = null, float volume = 0.95f)
     {
         if (healClip == null) return;
+        float finalVol = volPlayerHeal * (volume / 0.95f);
         if (position.HasValue)
         {
-            Play3D(healClip, position.Value, volume: volume, pitchMin: 0.98f, pitchMax: 1.02f, minDistance: 2f, maxDistance: 20f);
+            Play3D(healClip, position.Value, volume: finalVol, pitchMin: 0.98f, pitchMax: 1.02f, minDistance: 2f, maxDistance: 20f);
         }
         else
         {
-            Play2D(healClip, volume: volume, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(healClip, volume: finalVol, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
     /// <summary>
-    /// Phát âm thanh bước chân của người chơi dựa trên môi trường
+    /// Phát âm thanh bước chân của người chơi dựa trên môi trường và trạng thái Di chuyển (Đi bộ / Chạy)
     /// </summary>
-    public void PlayPlayerFootstep(bool isDungeon, float volume = 0.6f)
+    public void PlayPlayerFootstep(bool isDungeon, bool isRunning, float volumeMultiplier = 1.0f)
     {
-        if (Time.time < lastFootstepTime + 0.28f) return;
+        if (Time.time < lastFootstepTime + 0.12f) return;
         lastFootstepTime = Time.time;
 
-        AudioClip[] array = isDungeon ? footstepsRock : footstepsDirt;
+        AudioClip[] array;
+        if (isDungeon)
+        {
+            array = isRunning ? footstepsRock : (footstepsRockWalk != null && footstepsRockWalk.Length > 0 ? footstepsRockWalk : footstepsRock);
+        }
+        else
+        {
+            array = isRunning ? footstepsDirt : (footstepsDirtWalk != null && footstepsDirtWalk.Length > 0 ? footstepsDirtWalk : footstepsDirt);
+        }
+
+        float baseVol = isDungeon ? volFootstepsRock : volFootstepsDirt;
+        float walkScale = isRunning ? 1.0f : volPlayerWalkRatio;
+        float finalVol = baseVol * walkScale * volumeMultiplier;
+
+        // Đi bộ: Âm trầm, êm dịu hơn (pitch 0.88 - 0.94). Chạy: Âm đanh giòn, nảy lực (pitch 0.98 - 1.06)
+        float pMin = isRunning ? 0.98f : 0.88f;
+        float pMax = isRunning ? 1.06f : 0.94f;
+
         AudioClip clip = GetRandomClip(array);
         if (clip != null)
         {
-            Play2D(clip, volume: volume, pitchMin: 0.92f, pitchMax: 1.08f);
+            Play2D(clip, volume: finalVol, pitchMin: pMin, pitchMax: pMax);
         }
+    }
+
+    /// <summary>
+    /// Quá tải tương thích ngược cho PlayPlayerFootstep (ví dụ khi tiếp đất)
+    /// </summary>
+    public void PlayPlayerFootstep(bool isDungeon, float volume = 0.6f)
+    {
+        PlayPlayerFootstep(isDungeon, isRunning: true, volumeMultiplier: volume / 0.6f);
     }
 
     // =========================================================================
@@ -1150,7 +1491,7 @@ public class AudioManager : MonoBehaviour
     {
         if (skillEChargeClip != null)
         {
-            Play2D(skillEChargeClip, volume: 1.0f, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(skillEChargeClip, volume: volSkillECharge, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
@@ -1161,7 +1502,7 @@ public class AudioManager : MonoBehaviour
     {
         if (skillQChargeClip != null)
         {
-            Play2D(skillQChargeClip, volume: 1.0f, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(skillQChargeClip, volume: volSkillQCharge, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
@@ -1172,7 +1513,7 @@ public class AudioManager : MonoBehaviour
     {
         if (skillRChargeClip != null)
         {
-            Play2D(skillRChargeClip, volume: 1.0f, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(skillRChargeClip, volume: volSkillRCharge, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
@@ -1183,7 +1524,7 @@ public class AudioManager : MonoBehaviour
     {
         if (skillEImpactClip != null)
         {
-            Play3D(skillEImpactClip, position, volume: 1.0f, pitchMin: 0.95f, pitchMax: 1.05f, minDistance: 3f, maxDistance: 30f);
+            Play3D(skillEImpactClip, position, volume: volSkillEImpact, pitchMin: 0.95f, pitchMax: 1.05f, minDistance: 3f, maxDistance: 30f);
         }
     }
 
@@ -1195,11 +1536,11 @@ public class AudioManager : MonoBehaviour
         if (skillQImpactClip == null) return;
         if (position.HasValue)
         {
-            Play3D(skillQImpactClip, position.Value, volume: 1.0f, pitchMin: 0.96f, pitchMax: 1.04f, minDistance: 4f, maxDistance: 35f);
+            Play3D(skillQImpactClip, position.Value, volume: volSkillQImpact, pitchMin: 0.96f, pitchMax: 1.04f, minDistance: 4f, maxDistance: 35f);
         }
         else
         {
-            Play2D(skillQImpactClip, volume: 1.0f, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(skillQImpactClip, volume: volSkillQImpact, pitchMin: 0.96f, pitchMax: 1.04f);
         }
     }
 
@@ -1211,11 +1552,11 @@ public class AudioManager : MonoBehaviour
         if (skillRImpactClip == null) return;
         if (position.HasValue)
         {
-            Play3D(skillRImpactClip, position.Value, volume: 1.0f, pitchMin: 0.97f, pitchMax: 1.03f, minDistance: 4f, maxDistance: 35f);
+            Play3D(skillRImpactClip, position.Value, volume: volSkillRImpact, pitchMin: 0.97f, pitchMax: 1.03f, minDistance: 4f, maxDistance: 35f);
         }
         else
         {
-            Play2D(skillRImpactClip, volume: 1.0f, pitchMin: 0.97f, pitchMax: 1.03f);
+            Play2D(skillRImpactClip, volume: volSkillRImpact, pitchMin: 0.97f, pitchMax: 1.03f);
         }
     }
 
@@ -1232,7 +1573,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleCheckingClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: 0.85f, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volIdleChecking, pitchMin: 0.96f, pitchMax: 1.04f);
         }
     }
 
@@ -1245,7 +1586,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleWarmupClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: 0.9f, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volIdleWarmup, pitchMin: 0.96f, pitchMax: 1.04f);
         }
     }
 
@@ -1258,7 +1599,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleHumClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: 0.8f, pitchMin: 0.97f, pitchMax: 1.03f);
+            Play2D(clip, volume: volIdleHums, pitchMin: 0.97f, pitchMax: 1.03f);
         }
     }
 
@@ -1269,7 +1610,7 @@ public class AudioManager : MonoBehaviour
     {
         if (idleStretchingClip != null)
         {
-            Play2D(idleStretchingClip, volume: 0.85f, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(idleStretchingClip, volume: volIdleStretching, pitchMin: 0.98f, pitchMax: 1.02f);
         }
     }
 
@@ -1287,14 +1628,27 @@ public class AudioManager : MonoBehaviour
     // CÁC HÀM PHÁT SFX CHO QUÁI SKELETON (3D SPATIAL)
     // =========================================================================
 
-    public void PlaySkeletonMeleeAttack(Vector3 pos) => Play3D(meleeAttackClip, pos, volume: 0.85f, pitchMin: 0.95f, pitchMax: 1.05f);
-    public void PlaySkeletonMeleeHit(Vector3 pos) => Play3D(meleeHitClip, pos, volume: 0.9f);
-    public void PlaySkeletonArrowShoot(Vector3 pos) => Play3D(arrowShootClip, pos, volume: 0.85f, pitchMin: 0.95f, pitchMax: 1.05f);
-    public void PlaySkeletonArrowHit(Vector3 pos) => Play3D(arrowHitClip, pos, volume: 0.9f);
-    public void PlaySkeletonSpellCast(Vector3 pos) => Play3D(spellCastClip, pos, volume: 0.85f);
-    public void PlaySkeletonSpellImpact(Vector3 pos) => Play3D(spellImpactClip, pos, volume: 1.0f, pitchMin: 0.93f, pitchMax: 1.07f);
-    public void PlaySkeletonGetHit(Vector3 pos) => Play3D(skeletonGetHitClip, pos, volume: 0.85f, pitchMin: 0.93f, pitchMax: 1.07f);
-    public void PlaySkeletonDeath(Vector3 pos) => Play3D(skeletonDeathClip, pos, volume: 1.0f, pitchMin: 0.95f, pitchMax: 1.05f);
+    public void PlaySkeletonMeleeAttack(Vector3 pos) => Play3D(meleeAttackClip, pos, volume: volMonsterMeleeAttack, pitchMin: 0.95f, pitchMax: 1.05f);
+    public void PlaySkeletonMeleeHit(Vector3 pos) => Play3D(meleeHitClip, pos, volume: volMonsterMeleeHit);
+    public void PlaySkeletonArrowShoot(Vector3 pos) => Play3D(arrowShootClip, pos, volume: volMonsterArrowShoot, pitchMin: 0.95f, pitchMax: 1.05f);
+    public void PlaySkeletonArrowHit(Vector3 pos) => Play3D(arrowHitClip, pos, volume: volMonsterArrowHit);
+    public void PlaySkeletonSpellCast(Vector3 pos) => Play3D(spellCastClip, pos, volume: volMonsterSpellCast);
+    public void PlaySkeletonSpellImpact(Vector3 pos) => Play3D(spellImpactClip, pos, volume: volMonsterSpellImpact, pitchMin: 0.93f, pitchMax: 1.07f);
+    public void PlaySkeletonGetHit(Vector3 pos) => Play3D(skeletonGetHitClip, pos, volume: volMonsterGetHit, pitchMin: 0.93f, pitchMax: 1.07f);
+    public void PlaySkeletonDeath(Vector3 pos) => Play3D(skeletonDeathClip, pos, volume: volMonsterDeath, pitchMin: 0.95f, pitchMax: 1.05f);
+
+    /// <summary>
+    /// Phát âm thanh bước chân của quái vật trên sàn đá hầm ngục (3D Spatial Audio)
+    /// </summary>
+    public void PlayMonsterFootstep(Vector3 pos, float volumeMultiplier = 1.0f)
+    {
+        if (monsterFootsteps == null || monsterFootsteps.Length == 0) return;
+        AudioClip clip = GetRandomClip(monsterFootsteps);
+        if (clip != null)
+        {
+            Play3D(clip, pos, volume: volMonsterFootstep * volumeMultiplier, pitchMin: 0.90f, pitchMax: 1.10f, minDistance: 2f, maxDistance: 22f);
+        }
+    }
 
     // =========================================================================
     // CÁC HÀM PHÁT SFX CHO MÔI TRƯỜNG & HẦM NGỤC (ENVIRONMENT SFX)
@@ -1303,13 +1657,13 @@ public class AudioManager : MonoBehaviour
     public void PlayBarrelBreak(Vector3 pos)
     {
         AudioClip clip = GetRandomClip(barrelBreakClips);
-        if (clip != null) Play3D(clip, pos, volume: 0.9f, pitchMin: 0.93f, pitchMax: 1.07f);
+        if (clip != null) Play3D(clip, pos, volume: volBarrelBreak, pitchMin: 0.93f, pitchMax: 1.07f);
     }
 
-    public void PlayVillageBell(Vector3 pos) => Play3D(bellClip, pos, volume: 1.0f);
-    public void PlayDoorOpen(Vector3 pos) => Play3D(doorOpenClip, pos, volume: 0.85f);
-    public void PlayBossDoorOpen(Vector3 pos) => Play3D(bossDoorOpenClip, pos, volume: 1.0f);
-    public void PlayChestOpen(Vector3 pos) => Play3D(chestOpenClip, pos, volume: 0.9f);
+    public void PlayVillageBell(Vector3 pos) => Play3D(bellClip, pos, volume: volVillageBell);
+    public void PlayDoorOpen(Vector3 pos) => Play3D(doorOpenClip, pos, volume: volDoorOpen);
+    public void PlayBossDoorOpen(Vector3 pos) => Play3D(bossDoorOpenClip, pos, volume: volBossDoorOpen);
+    public void PlayChestOpen(Vector3 pos) => Play3D(chestOpenClip, pos, volume: volChestOpen);
 
     /// <summary>
     /// Phát âm thanh vầng hào quang chói lóa khi mở rương (Chest Aura) với độ lớn theo cấp bậc rương.
@@ -1318,35 +1672,35 @@ public class AudioManager : MonoBehaviour
     public void PlayChestAura(Vector3 pos, float volumeMultiplier = 1.0f)
     {
         if (chestAuraClip == null) return;
-        Play3D(chestAuraClip, pos, volume: Mathf.Clamp01(1.0f * volumeMultiplier), pitchMin: 0.98f, pitchMax: 1.02f, minDistance: 3f, maxDistance: 30f);
+        Play3D(chestAuraClip, pos, volume: Mathf.Clamp01(volChestAura * volumeMultiplier), pitchMin: 0.98f, pitchMax: 1.02f, minDistance: 3f, maxDistance: 30f);
     }
 
     public void PlayCoinPickup(Vector3 pos)
     {
         AudioClip clip = GetRandomClip(coinPickupClips);
-        if (clip != null) Play3D(clip, pos, volume: 0.8f, pitchMin: 0.95f, pitchMax: 1.08f);
+        if (clip != null) Play3D(clip, pos, volume: volCoinPickup, pitchMin: 0.95f, pitchMax: 1.08f);
     }
 
-    public void PlayPortalSound(Vector3 pos) => Play3D(portalClip, pos, volume: 0.9f);
+    public void PlayPortalSound(Vector3 pos) => Play3D(portalClip, pos, volume: volPortal);
 
     public void PlayDungeonAmbientStinger(Vector3 pos)
     {
         AudioClip clip = GetRandomClip(ambientClips);
-        if (clip != null) Play3D(clip, pos, volume: 0.75f);
+        if (clip != null) Play3D(clip, pos, volume: volAmbientStinger);
     }
 
     // =========================================================================
     // CÁC HÀM PHÁT SFX CHO GIAO DIỆN (UI SFX)
     // =========================================================================
 
-    public void PlayUIUpgradeAnvil() => Play2D(anvilClip, volume: 1.0f);
-    public void PlayUIEquip() => Play2D(equipClip, volume: 0.85f);
-    public void PlayUIPotionUse() => Play2D(potionClip, volume: 0.9f);
-    public void PlayUIShopTransaction() => Play2D(shopClip, volume: 0.85f);
-    public void PlayUIDisabledClick() => Play2D(staminaEmptyAlertClip, volume: 0.75f, pitchMin: 0.92f, pitchMax: 0.96f);
+    public void PlayUIUpgradeAnvil() => Play2D(anvilClip, volume: volUIAnvil);
+    public void PlayUIEquip() => Play2D(equipClip, volume: volUIEquip);
+    public void PlayUIPotionUse() => Play2D(potionClip, volume: volUIPotion);
+    public void PlayUIShopTransaction() => Play2D(shopClip, volume: volUIShop);
+    public void PlayUIDisabledClick() => Play2D(staminaEmptyAlertClip, volume: volUIDisabled, pitchMin: 0.92f, pitchMax: 0.96f);
     public void PlayUIClick() => PlayUIInteract();
-    public void PlayUIItemPickup() => Play2D(itemPickupClip, volume: 0.9f);
-    public void PlayUIInteract() => Play2D(uiInteractClip, volume: 0.85f);
+    public void PlayUIItemPickup() => Play2D(itemPickupClip, volume: volUIItemPickup);
+    public void PlayUIInteract() => Play2D(uiInteractClip, volume: volUIInteract);
 
     // =========================================================================
     // TIỆN ÍCH CORE PHÁT 2D VÀ 3D (GENERIC AUDIO CORE)

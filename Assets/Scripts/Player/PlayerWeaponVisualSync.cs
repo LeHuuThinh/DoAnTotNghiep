@@ -193,6 +193,7 @@ public class PlayerWeaponVisualSync : MonoBehaviour
 
     // 2. KHI CÓ VŨ KHÍ TRANG BỊ:
     visualHolder.gameObject.SetActive(true);
+    visualHolder.localScale = Vector3.one;
     if (hitbox != null)
     {
       hitbox.enabled = true;
@@ -269,4 +270,118 @@ public class PlayerWeaponVisualSync : MonoBehaviour
 
     currentVisualInstance = null;
   }
+
+  #region IDLE ACTION SCALE TRANSITION
+
+  private Coroutine scaleCoroutine;
+
+  /// <summary>
+  /// Thu nhỏ hoặc phóng to mô hình kiếm mượt mà bằng hiệu ứng Elastic / Pop-in (dùng cho Idle Action)
+  /// </summary>
+  public void AnimateWeaponScale(bool show, float duration = 0.2f)
+  {
+    EnsureVisualHolder();
+    if (visualHolder == null) return;
+
+    // Nếu không có vũ khí trang bị, không cần scale
+    bool hasWeapon = InventoryManager.HasInstance && InventoryManager.Instance.EquippedWeapon != null;
+    if (!hasWeapon && show) return;
+
+    if (scaleCoroutine != null)
+    {
+      StopCoroutine(scaleCoroutine);
+    }
+
+    scaleCoroutine = StartCoroutine(AnimateScaleRoutine(show, duration));
+  }
+
+  /// <summary>
+  /// Khôi phục hoặc gán ngay lập tức scale của kiếm trong 1 frame (dùng khi hủy Idle Action phản xạ tức thì)
+  /// </summary>
+  public void SnapWeaponScale(float scale = 1f)
+  {
+    EnsureVisualHolder();
+    if (visualHolder == null) return;
+
+    if (scaleCoroutine != null)
+    {
+      StopCoroutine(scaleCoroutine);
+      scaleCoroutine = null;
+    }
+
+    bool hasWeapon = InventoryManager.HasInstance && InventoryManager.Instance.EquippedWeapon != null;
+    if (hasWeapon)
+    {
+      if (scale > 0.001f)
+      {
+        visualHolder.gameObject.SetActive(true);
+        visualHolder.localScale = Vector3.one * scale;
+      }
+      else
+      {
+        visualHolder.localScale = Vector3.zero;
+        visualHolder.gameObject.SetActive(false);
+      }
+    }
+    else
+    {
+      visualHolder.gameObject.SetActive(false);
+    }
+  }
+
+  private IEnumerator AnimateScaleRoutine(bool show, float duration)
+  {
+    if (duration <= 0.001f)
+    {
+      SnapWeaponScale(show ? 1f : 0f);
+      yield break;
+    }
+
+    if (show)
+    {
+      visualHolder.gameObject.SetActive(true);
+    }
+
+    Vector3 startScale = visualHolder.localScale;
+    float elapsed = 0f;
+
+    while (elapsed < duration)
+    {
+      elapsed += Time.deltaTime;
+      float t = Mathf.Clamp01(elapsed / duration);
+
+      float currentScaleValue;
+      if (show)
+      {
+        // Hiệu ứng Pop-In Overshoot: từ 0 -> vọt lên ~1.12x rồi nảy về 1.0x (EaseOutBack)
+        float c1 = 1.70158f;
+        float c3 = c1 + 1f;
+        float ease = 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
+        currentScaleValue = Mathf.LerpUnclamped(startScale.x, 1f, ease);
+      }
+      else
+      {
+        // Hiệu ứng Shrink Quadratic Ease In: rút nhanh về 0
+        float ease = t * t;
+        currentScaleValue = Mathf.Lerp(startScale.x, 0f, ease);
+      }
+
+      visualHolder.localScale = Vector3.one * Mathf.Max(0f, currentScaleValue);
+      yield return null;
+    }
+
+    if (show)
+    {
+      visualHolder.localScale = Vector3.one;
+    }
+    else
+    {
+      visualHolder.localScale = Vector3.zero;
+      visualHolder.gameObject.SetActive(false);
+    }
+
+    scaleCoroutine = null;
+  }
+
+  #endregion
 }

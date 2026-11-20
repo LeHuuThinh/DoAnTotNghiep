@@ -58,7 +58,7 @@ namespace InfiniteLabyrinth.UI
       EditorGUILayout.EndHorizontal();
     }
 
-    [MenuItem("Infinite Labyrinth/Core Loop & UI/3. Cấu Hình Victory Portal (GM-03)", false, 3)]
+    // [MenuItem("Infinite Labyrinth/Core Loop & UI/3. Cấu Hình Victory Portal (GM-03)", false, 3)] (Archived)
     public static void SetupVictoryPortalUIMenuItem()
     {
       // 1. Kiểm tra trong Canvas.prefab

@@ -104,6 +104,23 @@ public class PortalController : MonoBehaviour, IInteractable
     {
       PlayPortalAuraLoop();
     }
+
+    // Cập nhật âm lượng theo thời gian thực đồng bộ với AudioManager.VolPortal
+    UpdatePortalAudioVolume();
+  }
+
+  private void UpdatePortalAudioVolume()
+  {
+    if (audioSource == null || !audioSource.isPlaying) return;
+
+    if (AudioManager.HasInstance)
+    {
+      float targetVol = AudioManager.Instance.VolPortal * AudioManager.Instance.SfxVolume * AudioManager.Instance.MasterVolume;
+      if (Mathf.Abs(audioSource.volume - targetVol) > 0.005f)
+      {
+        audioSource.volume = targetVol;
+      }
+    }
   }
 
   private void PlayPortalAuraLoop()
@@ -119,9 +136,10 @@ public class PortalController : MonoBehaviour, IInteractable
     if (clip != null)
     {
       audioSource.clip = clip;
+      float baseVol = AudioManager.HasInstance ? AudioManager.Instance.VolPortal : volume;
       float masterVol = AudioManager.HasInstance ? AudioManager.Instance.MasterVolume : 1f;
       float sfxVol = AudioManager.HasInstance ? AudioManager.Instance.SfxVolume : 1f;
-      audioSource.volume = volume * sfxVol * masterVol;
+      audioSource.volume = baseVol * sfxVol * masterVol;
       audioSource.Play();
     }
   }

@@ -36,9 +36,27 @@ namespace InfiniteLabyrinth.Audio
             if (AudioManager.HasInstance && AudioManager.Instance.TorchClip != null)
             {
                 audioSource.clip = AudioManager.Instance.TorchClip;
-                audioSource.volume = volume * AudioManager.Instance.SfxVolume * AudioManager.Instance.MasterVolume;
+                audioSource.volume = GetTargetVolume();
                 audioSource.Play();
             }
+        }
+
+        private void Update()
+        {
+            if (audioSource == null || !audioSource.isPlaying) return;
+
+            float targetVol = GetTargetVolume();
+            if (Mathf.Abs(audioSource.volume - targetVol) > 0.005f)
+            {
+                audioSource.volume = targetVol;
+            }
+        }
+
+        private float GetTargetVolume()
+        {
+            if (!AudioManager.HasInstance) return volume;
+            float baseVol = AudioManager.Instance.VolTorch;
+            return baseVol * AudioManager.Instance.SfxVolume * AudioManager.Instance.MasterVolume;
         }
 
         private void OnEnable()

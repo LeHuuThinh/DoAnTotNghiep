@@ -24,7 +24,7 @@ public static class SpringManagerHelper
     private const string RedIgnisPrefabPath = "Assets/Characters/Boss/IgnisDo/Boss_RedIgnis.prefab";
     private const string DarknessIgnisPrefabPath = "Assets/Characters/Boss/IgnisTim/Boss_DarknessIgnis.prefab";
 
-    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Tự Động Sửa Lỗi Áo Choàng (Auto Fix Cape)")]
+    // [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Tự Động Sửa Lỗi Áo Choàng (Auto Fix Cape)")] (Archived)
     public static void AutoFixRedIgnisCape()
     {
         AutoFixBossCloth<RedIgnisClothMotion>(
@@ -35,7 +35,7 @@ public static class SpringManagerHelper
             "14 SpringBones (chống lộn/xoắn áo khi vung tay) & 16 colliders (kèm 3 Back Panel)");
     }
 
-    [MenuItem("Infinite Labyrinth/Boss/Darkness Ignis/Tự Động Sửa Lỗi Tóc & Áo Choàng (Auto Fix Cape & Hair)")]
+    // [MenuItem("Infinite Labyrinth/Boss/Darkness Ignis/Tự Động Sửa Lỗi Tóc & Áo Choàng (Auto Fix Cape & Hair)")] (Archived)
     public static void AutoFixDarknessIgnisCloth()
     {
         AutoFixBossCloth<DarknessIgnisClothMotion>(
@@ -201,7 +201,7 @@ public static class SpringManagerHelper
         return manager;
     }
 
-    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Chẩn Đoán Lún Đất (Diagnose Sinking)")]
+    // [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Chẩn Đoán Lún Đất (Diagnose Sinking)")] (Archived)
     public static void DiagnoseSinking()
     {
         GameObject ignis = GameObject.Find("Boss_RedIgnis");

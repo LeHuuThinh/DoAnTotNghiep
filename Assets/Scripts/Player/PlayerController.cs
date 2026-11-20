@@ -1,5 +1,25 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
+/// <summary>
+/// Cấu hình tùy chọn cho từng hành động Idle Flair ngẫu nhiên.
+/// Cho phép chủ động chọn động tác nào thu kiếm & giải phóng 2 tay (vươn vai, khởi động...),
+/// và động tác nào vẫn giữ nguyên kiếm trên tay phải.
+/// </summary>
+[System.Serializable]
+public class IdleActionConfig
+{
+    [Tooltip("Tên State trong Animator của Player (ví dụ: Idle Action 1, Idle Action 2...)")]
+    public string stateName = "Idle Action 1";
+
+    [Tooltip("Nếu TÍCH CHỌN: Thu nhỏ kiếm biến mất và tắt Layer tay phải (2 tay cử động tự do: vươn vai, khởi động...). Nếu BỎ CHỌN: Vẫn cầm kiếm và giữ Layer tay phải bình thường.")]
+    public bool hideWeaponAndFreeHands = true;
+
+    [Tooltip("Ghi chú mô tả hành động (ví dụ: Vươn vai, Khởi động, Ngắm kiếm...)")]
+    public string description = "";
+}
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -86,20 +106,39 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float minIdleActionDelay = 6f;
     [Tooltip("Thời gian đứng yên tối đa trước khi kích hoạt hành động ngẫu nhiên (giây)")]
     [SerializeField] private float maxIdleActionDelay = 12f;
-    [Tooltip("Tên các state hành động Idle trong Animator")]
-    [SerializeField] private string[] idleActionStateNames = new string[] { "Idle Action 1", "Idle Action 2", "Idle Action 3" };
+
+    [Tooltip("Thời gian thanh kiếm thu nhỏ dần khi chuẩn bị thực hiện động tác Idle (giây)")]
+    [SerializeField] private float weaponShrinkDuration = 0.22f;
+    [Tooltip("Thời gian thanh kiếm phóng to hiện lại sau khi kết thúc động tác Idle (giây)")]
+    [SerializeField] private float weaponGrowDuration = 0.25f;
+
+    [Tooltip("Danh sách cấu hình các hành động Idle ngẫu nhiên. Cho phép chủ động chọn động tác nào thu kiếm & tắt layer tay phải, động tác nào giữ kiếm.")]
+    [SerializeField] private List<IdleActionConfig> idleActionConfigs = new List<IdleActionConfig>()
+    {
+        new IdleActionConfig { stateName = "Idle Action 1", hideWeaponAndFreeHands = true, description = "Vươn vai (Tự do 2 tay)" },
+        new IdleActionConfig { stateName = "Idle Action 2", hideWeaponAndFreeHands = true, description = "Khởi động (Tự do 2 tay)" },
+        new IdleActionConfig { stateName = "Idle Action 3", hideWeaponAndFreeHands = true, description = "Động tác 3 (Tự do 2 tay)" },
+        new IdleActionConfig { stateName = "Idle Action 4", hideWeaponAndFreeHands = true, description = "Động tác 4 (Tự do 2 tay)" }
+    };
+
+    [SerializeField, HideInInspector] private string[] idleActionStateNames; // Tương thích ngược phiên bản cũ
 
     private float idleTimer = 0f;
     private float nextIdleActionDelay = 8f;
     private bool isPlayingIdleAction = false;
+    private bool isPreparingIdleAction = false;
+    private bool currentActionFreedHands = false;
+    private Coroutine idleTransitionCoroutine = null;
 
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
     [SerializeField] private TargetLockSystem targetLockSystem;
-    [SerializeField] private PlayerCombat playerCombat; // Tham chiếu tới PlayerCombat
-    [SerializeField] private PlayerStats playerStats;   // Tham chiếu tới PlayerStats
-    [SerializeField] private Health health;             // Tham chiếu tới Health để điều khiển I-Frames
+    [SerializeField] private PlayerCombat playerCombat;                 // Tham chiếu tới PlayerCombat
+    [SerializeField] private PlayerWeaponVisualSync weaponVisualSync;   // Tham chiếu đồng bộ mô hình kiếm
+    [SerializeField] private RHandAdjust rHandAdjust;                   // Tham chiếu điều chỉnh góc xương tay phải
+    [SerializeField] private PlayerStats playerStats;                   // Tham chiếu tới PlayerStats
+    [SerializeField] private Health health;                             // Tham chiếu tới Health để điều khiển I-Frames
 
     // Components & Physics States
     private CharacterController characterController;
@@ -155,6 +194,35 @@ public class PlayerController : MonoBehaviour
             if (playerCombat == null) playerCombat = GetComponentInChildren<PlayerCombat>();
         }
 
+        if (weaponVisualSync == null)
+        {
+            weaponVisualSync = GetComponent<PlayerWeaponVisualSync>();
+            if (weaponVisualSync == null) weaponVisualSync = GetComponentInChildren<PlayerWeaponVisualSync>();
+            if (weaponVisualSync == null) weaponVisualSync = GetComponentInParent<PlayerWeaponVisualSync>();
+        }
+
+        if (rHandAdjust == null)
+        {
+            rHandAdjust = GetComponent<RHandAdjust>();
+            if (rHandAdjust == null) rHandAdjust = GetComponentInChildren<RHandAdjust>();
+            if (rHandAdjust == null) rHandAdjust = GetComponentInParent<RHandAdjust>();
+        }
+
+        // Tương thích ngược: Nếu idleActionConfigs rỗng nhưng có mảng cũ idleActionStateNames
+        if ((idleActionConfigs == null || idleActionConfigs.Count == 0) && idleActionStateNames != null && idleActionStateNames.Length > 0)
+        {
+            idleActionConfigs = new List<IdleActionConfig>();
+            for (int i = 0; i < idleActionStateNames.Length; i++)
+            {
+                idleActionConfigs.Add(new IdleActionConfig
+                {
+                    stateName = idleActionStateNames[i],
+                    hideWeaponAndFreeHands = true,
+                    description = $"Động tác {i + 1}"
+                });
+            }
+        }
+
         if (playerStats == null)
         {
             playerStats = GetComponent<PlayerStats>();
@@ -180,6 +248,26 @@ public class PlayerController : MonoBehaviour
         }
 
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
+    }
+
+    private void OnValidate()
+    {
+        if (idleActionConfigs == null || idleActionConfigs.Count == 0)
+        {
+            if (idleActionStateNames != null && idleActionStateNames.Length > 0)
+            {
+                idleActionConfigs = new List<IdleActionConfig>();
+                for (int i = 0; i < idleActionStateNames.Length; i++)
+                {
+                    idleActionConfigs.Add(new IdleActionConfig
+                    {
+                        stateName = idleActionStateNames[i],
+                        hideWeaponAndFreeHands = true,
+                        description = $"Động tác {idleActionStateNames[i]}"
+                    });
+                }
+            }
+        }
     }
 
     private void OnDisable()
@@ -522,6 +610,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    [Header("=== CẤU HÌNH NHỊP BƯỚC CHÂN (FOOTSTEP CADENCE) ===")]
+    [Tooltip("Khoảng thời gian giữa các bước chân khi ĐI BỘ (giây, mặc định: 0.44s). Nếu AudioManager có thiết lập thì sẽ đồng bộ theo AudioManager.")]
+    [Range(0.2f, 1.0f)]
+    [SerializeField] private float footstepWalkInterval = 0.44f;
+
+    [Tooltip("Khoảng thời gian giữa các bước chân khi CHẠY (giây, mặc định: 0.30s). Nếu AudioManager có thiết lập thì sẽ đồng bộ theo AudioManager.")]
+    [Range(0.15f, 0.8f)]
+    [SerializeField] private float footstepRunInterval = 0.30f;
+
     private float footstepTimer = 0f;
     private void HandleFootstepAudio(bool onGround, Vector3 velocity)
     {
@@ -531,7 +628,10 @@ public class PlayerController : MonoBehaviour
         if (speed < 0.6f) return;
 
         bool isRunning = IsRunning;
-        float interval = isRunning ? 0.30f : 0.44f;
+        float walkInt = AudioManager.HasInstance ? AudioManager.Instance.PlayerWalkFootstepInterval : footstepWalkInterval;
+        float runInt = AudioManager.HasInstance ? AudioManager.Instance.PlayerRunFootstepInterval : footstepRunInterval;
+        float interval = isRunning ? runInt : walkInt;
+
         footstepTimer += Time.deltaTime;
         if (footstepTimer >= interval)
         {
@@ -539,7 +639,7 @@ public class PlayerController : MonoBehaviour
             if (AudioManager.HasInstance)
             {
                 bool isDungeon = GameManager.HasInstance && GameManager.Instance.IsInDungeon;
-                AudioManager.Instance.PlayPlayerFootstep(isDungeon, isRunning ? 0.65f : 0.45f);
+                AudioManager.Instance.PlayPlayerFootstep(isDungeon, isRunning);
             }
         }
     }
@@ -709,8 +809,8 @@ public class PlayerController : MonoBehaviour
                            && !isPreparingJump && !isJumping && !isLocked && !isBlocking && !isAttacking
                            && landingLockTimer <= 0f;
 
-        // Nếu đang trong diễn hoạt Idle Action
-        if (isPlayingIdleAction)
+        // Nếu đang trong diễn hoạt Idle Action hoặc đang trong pha thu kiếm chuẩn bị vào Idle
+        if (isPlayingIdleAction || isPreparingIdleAction)
         {
             // Kiểm tra xem có bất kỳ input hoặc thay đổi trạng thái nào từ người chơi không
             bool hasMovementInput = isMoving || input.sqrMagnitude > 0.001f;
@@ -740,20 +840,18 @@ public class PlayerController : MonoBehaviour
                 return;
             }
 
-            // Kiểm tra trạng thái Animator để biết khi nào clip kết thúc
-            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-            bool backInLocomotion = stateInfo.IsName("Locomotion") && !animator.IsInTransition(0);
-            bool animFinished = !animator.IsInTransition(0) && stateInfo.normalizedTime >= 0.98f;
-
-            if (backInLocomotion || animFinished)
+            // Nếu đang trong diễn hoạt chính của clip
+            if (isPlayingIdleAction)
             {
-                if (animFinished && !stateInfo.IsName("Locomotion"))
+                // Kiểm tra trạng thái Animator để biết khi nào clip kết thúc
+                AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+                bool backInLocomotion = stateInfo.IsName("Locomotion") && !animator.IsInTransition(0);
+                bool animFinished = !animator.IsInTransition(0) && stateInfo.normalizedTime >= 0.98f;
+
+                if (backInLocomotion || animFinished)
                 {
-                    animator.CrossFadeInFixedTime("Locomotion", 0.25f, 0);
+                    FinishIdleAction(animFinished && !stateInfo.IsName("Locomotion"));
                 }
-                isPlayingIdleAction = false;
-                idleTimer = 0f;
-                nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
             }
             return;
         }
@@ -778,17 +876,90 @@ public class PlayerController : MonoBehaviour
         idleTimer = 0f;
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
 
-        if (idleActionStateNames == null || idleActionStateNames.Length == 0) return;
+        if (idleActionConfigs == null || idleActionConfigs.Count == 0) return;
 
-        // Chọn ngẫu nhiên 1 hành động
-        int randomIndex = Random.Range(0, idleActionStateNames.Length);
-        string preferredName = idleActionStateNames[randomIndex];
+        // Chọn ngẫu nhiên 1 hành động trong danh sách cấu hình
+        int randomIndex = Random.Range(0, idleActionConfigs.Count);
+        IdleActionConfig chosenConfig = idleActionConfigs[randomIndex];
+        if (chosenConfig == null || string.IsNullOrEmpty(chosenConfig.stateName)) return;
 
-        // Tìm đúng tên State trong Animator (hỗ trợ cả trường hợp có hoặc không có dấu cách)
-        string resolvedName = ResolveIdleActionStateName(preferredName, randomIndex + 1);
+        if (idleTransitionCoroutine != null)
+        {
+            StopCoroutine(idleTransitionCoroutine);
+        }
 
-        animator.CrossFadeInFixedTime(resolvedName, 0.25f, 0);
+        idleTransitionCoroutine = StartCoroutine(TransitionIntoIdleActionRoutine(chosenConfig, randomIndex + 1));
+    }
+
+    private IEnumerator TransitionIntoIdleActionRoutine(IdleActionConfig config, int actionIndex)
+    {
+        currentActionFreedHands = config.hideWeaponAndFreeHands;
+        string resolvedName = ResolveIdleActionStateName(config.stateName, actionIndex);
+
+        if (currentActionFreedHands)
+        {
+            isPreparingIdleAction = true;
+            isPlayingIdleAction = false;
+
+            // 1. Tắt Layer tay phải mượt mà
+            if (playerCombat != null)
+            {
+                playerCombat.SetIdleActionHandOverride(true, immediate: false);
+            }
+
+            // 2. Thu nhỏ kiếm dần về 0
+            if (weaponVisualSync != null)
+            {
+                weaponVisualSync.AnimateWeaponScale(false, weaponShrinkDuration);
+            }
+
+            // Chờ quá trình thu nhỏ hoàn tất
+            if (weaponShrinkDuration > 0f)
+            {
+                yield return new WaitForSeconds(weaponShrinkDuration);
+            }
+
+            isPreparingIdleAction = false;
+        }
+
+        // 3. Kích hoạt Animation Idle
+        animator.CrossFadeInFixedTime(resolvedName, 0.20f, 0);
         isPlayingIdleAction = true;
+        idleTransitionCoroutine = null;
+    }
+
+    private void FinishIdleAction(bool needCrossFadeToLocomotion)
+    {
+        if (needCrossFadeToLocomotion && animator != null)
+        {
+            animator.CrossFadeInFixedTime("Locomotion", 0.25f, 0);
+        }
+
+        if (idleTransitionCoroutine != null)
+        {
+            StopCoroutine(idleTransitionCoroutine);
+            idleTransitionCoroutine = null;
+        }
+
+        // Khôi phục kiếm và Layer tay phải nếu trước đó đã giải phóng
+        if (currentActionFreedHands)
+        {
+            if (playerCombat != null)
+            {
+                playerCombat.SetIdleActionHandOverride(false, immediate: false);
+            }
+
+            if (weaponVisualSync != null)
+            {
+                weaponVisualSync.AnimateWeaponScale(true, weaponGrowDuration);
+            }
+        }
+
+        isPlayingIdleAction = false;
+        isPreparingIdleAction = false;
+        currentActionFreedHands = false;
+        idleTimer = 0f;
+        nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
     }
 
     private string ResolveIdleActionStateName(string preferredName, int actionNumber)
@@ -820,9 +991,36 @@ public class PlayerController : MonoBehaviour
 
     public void CancelIdleAction()
     {
-        if (!isPlayingIdleAction) return;
+        if (!isPlayingIdleAction && !isPreparingIdleAction) return;
+
+        if (idleTransitionCoroutine != null)
+        {
+            StopCoroutine(idleTransitionCoroutine);
+            idleTransitionCoroutine = null;
+        }
+
+        // KHÔI PHỤC NGAY LẬP TỨC TRONG 1 FRAME (0 Delay phản xạ chiến đấu)
+        if (currentActionFreedHands)
+        {
+            if (playerCombat != null)
+            {
+                playerCombat.SetIdleActionHandOverride(false, immediate: true);
+            }
+
+            if (rHandAdjust != null)
+            {
+                rHandAdjust.SnapWeight(1f);
+            }
+
+            if (weaponVisualSync != null)
+            {
+                weaponVisualSync.SnapWeaponScale(1f);
+            }
+        }
 
         isPlayingIdleAction = false;
+        isPreparingIdleAction = false;
+        currentActionFreedHands = false;
         idleTimer = 0f;
         nextIdleActionDelay = Random.Range(minIdleActionDelay, maxIdleActionDelay);
 

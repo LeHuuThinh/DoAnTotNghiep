@@ -104,7 +104,7 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
     * **Quái xương (Skeleton Monsters):** Khi bị Player chém trúng (combo 1, 2, 3, charge, counter, sóng kiếm E hay nổ Q), EnemyFeedback sinh ngay MobsGetHitVFX.prefab (màu xám vụn xương) tại điểm tiếp xúc hitPoint, góc tứa phun ngược chiều cú chém (-hitDirection) ra không khí.
     * **Người chơi (Player):** Khi bị quái chém, bắn tên hoặc phép thuật trúng đích, PlayerFeedback sinh ngay GetHitVFX.prefab (màu đỏ tứa máu) tại điểm dính đòn hitPoint. Khi Player **Parry thành công**, onCheckParryOrBlock chặn đứng sát thương trước khi trừ máu nên **không bị tứa máu đỏ**.
     * **Đòn kết liễu (Lethal Hit):** Luôn bảo đảm phát sinh Hit VFX ngay cả khi đòn đánh hạ gục mục tiêu.
-    * **Công cụ Tự động hóa 1-Click:** CombatVfxSetupEditor.cs với MenuItem Infinite Labyrinth -> Combat -> 1. Cấu Hình Hit VFX Cho Player & Quái Vật (1-Click).
+    * **Đã hoàn thiện & đóng gói Prefab:** MobsGetHitVFX.prefab và GetHitVFX.prefab đã được cấu hình hoàn chỉnh vào `PlayerFeedback.cs` và `EnemyFeedback.cs`, tinh chỉnh độ nảy và bán kính trực tiếp trong Inspector.
   * **Nháy trắng phát quang (Solid White Flash):** Sử dụng MaterialPropertyBlock ghi đè Texture2D.whiteTexture và kích hoạt _EMISSION (cường độ 2.5) trực tiếp trên GPU (0% clone material, giữ nguyên 100% SRP Batcher).
   * **Đòn kết liễu (Lethal Hit Sequence):** Khi dính đòn tử thủ, quái lập tức nháy trắng toàn thân và giữ màu trắng xuyên suốt thời gian hitlag kết liễu (lethalFlashDuration = 0.15s realtime), sau đó trả về màu texture ban đầu rồi mới kích hoạt animation ngã chết (Die).
   * **Hitlag Souls-like:** WeaponHitbox làm chậm thế giới xuống còn 5% (Time.timeScale = 0.05f) trong thời gian unscaled realtime. Toàn bộ giá trị hitlag từng đòn chém (attack1Hitlag: 0.035s, attack2Hitlag: 0.045s, attack3Hitlag: 0.08s, chargeHit1Hitlag: 0.05s, chargeHit2Hitlag: 0.095s, counterAttackHitlag: 0.11s) và đòn kết liễu (lethalHitlag: 0.18s) được đưa ra Inspector PlayerCombat.cs.
@@ -121,7 +121,7 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
       + *Charge Hit 1:* Chém mở màn lấy đà gồng lực (Rotation: -176.57°, -92.12°, -45°, Scale 1.1x).
       + *Charge Hit 2:* Nhát bổ thẳng đứng từ trên cao cắm xuống đất (Rotation: -90°, -92.12°, -90°, Scale 1.35x).
       + *Counter Attack:* Cú chém phản đòn bùng nổ năng lượng diện rộng (Rotation: -176.57°, -92.12°, -15°, Scale 1.5x).
-    * **Cơ Chế Tự Phục Hồi & Tự Động Hóa 1-Click:** PlayerCombat tự động tìm kiếm và gắn PlayerSlashVFX khi khởi chạy, tự động fallback nạp Resources/Slash VFX, Resources/E Slash VFX, Resources/Q Slash VFX nếu thiếu tham chiếu. Hỗ trợ cấu hình độc lập cho cả 6 đòn đánh cơ bản và 2 kỹ năng đặc biệt (E: Sóng kiếm khí, Q: Đập đất AOE). Hỗ trợ công cụ PlayerSlashVfxSetupEditor.cs với MenuItem Infinite Labyrinth -> Combat -> 2. Cấu Hình Slash, Impact & Parry VFX Cho Kiếm Player (1-Click) và Custom Editor với đầy đủ 8 nút Test trực quan trong Scene View.
+    * **Cơ Chế Tự Phục Hồi & Custom Editor Trực Quan:** PlayerCombat tự động tìm kiếm và gắn PlayerSlashVFX khi khởi chạy, tự động fallback nạp Resources/Slash VFX, Resources/E Slash VFX, Resources/Q Slash VFX nếu thiếu tham chiếu. Hỗ trợ cấu hình độc lập cho cả 6 đòn đánh cơ bản và 2 kỹ năng đặc biệt (E: Sóng kiếm khí, Q: Đập đất AOE). Tích hợp Custom Editor `PlayerSlashVFXEditor.cs` với thanh chỉnh Slow-motion và đầy đủ 8 nút Test đòn chém trực quan ngay trong Inspector Scene View.
   * **Hiệu ứng Tia Lửa Va Chạm Khi Chém Trúng Đích (Hit Impact Burst VFX - WeaponHitbox.cs, Impact VFX.prefab):**
     * **Tách rời Impact khỏi Slash Trail (Decoupled Impact):** Tắt Impact gắn cứng trong prefab đường kiếm để tránh nổ chớp sáng vô lý khi chém trượt trong không khí.
     * **Kích hoạt Đúng Điểm Chạm (Contact Point Burst):** WeaponHitbox.cs chỉ kích nổ Impact VFX khi va chạm với các mục tiêu thuộc Layer Enemy (9) hoặc Damageable (8) và có thành phần IDamageable/Health.
@@ -194,6 +194,11 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * **Thanh chịu đòn Poise (maxPoise = 500 điểm):** Độc lập hoàn toàn với sát thương máu, không tự hồi phục trong trận chiến. Bị bào mòn theo độ uy lực và Knockback của từng đòn đánh từ Player (Chém thường: 35, Chém 3 / Charge 1: 50, Chém gồng 2 / Skill E: 70, Counter / Phép Q: 100). Cung cấp event onPoiseChanged(float current, float max) và alias onStaminaChanged cho UI kết nối.
        * **Cơ chế Suy yếu (WeakenIG):** Khi Poise về 0, kích hoạt bước lùi suy yếu duy nhất 1 lần trong trận đấu (hasTriggeredWeaken = true). Hoạt ảnh chạy trọn vẹn 100% độ dài clip theo đúng tốc độ người chơi cài đặt (kể cả khi tua chậm Speed = 0.5). Tự động chốt tọa độ gốc mới (CommitWeakenPosition) để không bị giật lùi về chỗ cũ; không đứng yên bất động sau clip (weakenFreezeAfterDuration = 0s), lập tức chuyển về Idle sẵn sàng tiếp tục chiến đấu.
        * **Phase 2 Cuồng Nộ (Enrage Sequence khi HP <= 50% / 750 HP):** Kích hoạt hoạt cảnh chao đảo 50%HP (4.2s), phát sóng chấn động đẩy lùi Player bán kính 5m (lực đẩy 4.5m) kèm âm thanh và VFX chấn động sàn, gầm thét phun lửa AttackRoaring, đợi 3.0s rồi phóng liên tiếp 3 quả cầu tím IceBallIG dồn dập. Nhịp độ giao tranh (combatPacing) tăng tốc từ 6-7s xuống 4-5s với tần suất tấn công hung hãn.
+       * **Phản hồi Nhận đòn Nháy Trắng Phát Quang (Solid White Flash - Chuẩn Souls-like):** Sử dụng MaterialPropertyBlock ghi đè Texture2D.whiteTexture (_BaseMap, _MainTex), đổi màu hitFlashColor = Color.white và kích hoạt phát sáng _EmissionColor (cường độ 2.5) trực tiếp trên GPU (0% clone material, giữ nguyên 100% SRP Batcher).
+       * **Cơ Chế Khóa Ranh Giới Đấu Trường & Chống Xuyên Cửa Đại Môn (Arena Safe Bounds & Failsafe Auto-Rescue):**
+         + Tích hợp ClampToArenaSafeBounds: Luôn khóa cứng điểm đáp của JumpAttack và từng bước lao của RunAttack bên trong phòng Boss, cách Cửa Đại Môn tối thiểu 2.5m, triệt tiêu 100% nguy cơ Boss bay xuyên hoặc lướt qua cánh cửa lớn ra ngoài hành lang.
+         + Nâng cấp SphereCast 1.2m dày dặn thay vì Raycast mỏng: Quét toàn bộ thể tích thân Boss ( = 1.52) và kiểm tra Continuous Collision Sweep liên tục giữa các frame bay trên không.
+         + Cơ chế EnforceArenaContainmentFailsafe trong LateUpdate: Nếu xảy ra glitch ngoài ý muốn khi cửa đã khóa LockedArena, Boss lập tức được tự động kéo trở lại bên trong đấu trường.
      * **Bộ chiêu thức hoàn chỉnh (7 Kỹ năng chiến đấu trên IceGolemController.cs):**
        * Attack1 *(Phím 1)*: Đấm thẳng cận chiến kết hợp hiệu ứng va đập Impact VFX (A VFX Prefabs/Explossion/Impact).
        * GumoGumo Slam *(Phím 2)*: Đấm liên hoàn xuống sàn rung đất 2 tay, tích hợp bộ thông số bắt điểm chạm đất thực tế (gumoVisualHeightOffset = 0.35m, gumoHandContactHeight = 0.55m, gumoHandMinHeight = 0.30m, gumoHandReleaseHeight = 0.95m) chống chìm chân vào sàn, bùng nổ hiệu ứng Attack1 Effect tại từng vị trí bàn tay tiếp đất.
@@ -216,7 +221,7 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * Nhận diện 4 hướng di chuyển: Tiến (Walk), Lùi (WalkBackIG), Dạt Trái (WalkLeftIG), Dạt Phải (WalkRightIG) trong khi vẫn khóa mặt bám sát Player (strafeMode = true). Điều khiển thủ công qua **4 phím mũi tên (Arrow Keys)** tách biệt độc lập với phím W, A, S, D của Player.
      * **Khóa mục tiêu & Tự động hóa an toàn:**
        * Tự động phát hiện Player (autoFindPlayer), tự xoay mặt đối diện đối thủ (alwaysFacePlayer, facePlayerOnAttack, tốc độ facePlayerSpeed = 240 deg/s).
-       * Cơ chế tự bảo vệ chống duplicate component trong Awake() và Menu dọn dẹp Scene Editor (Infinite Labyrinth -> Boss -> 3. Dọn Dẹp Scene & Khắc Phục Lỗi Ice Golem).
+       * Cơ chế tự bảo vệ chống duplicate component trong Awake() và tự động dọn dẹp an toàn khi khởi tạo.
      * **Đạo Diễn Điện Ảnh Chiến Thắng, Biểu Ngữ "VICTORY ACHIEVED" & Bục Đá 12m (BossVictoryDirector.cs - Task D02-5B & D02-5C):**
        * Lắng nghe sự kiện IceGolemController.OnBossDefeated khi Boss cạn máu (hoặc phím K trong Play Mode).
        * Khựng hình Hitlag 0.22s (Time.timeScale = 0.05f) tôn vinh nhát chém kết liễu, tạm khóa điều khiển Player.
@@ -224,6 +229,12 @@ Hầm ngục được sinh tự động hoàn toàn mỗi khi người chơi bư
        * Biểu ngữ hoàng kim Souls-like BossVictoryBanner trong EnemyCanvas bừng sáng giữa màn hình (Fade In, Breathing Scale, giữ sáng 2.2s rồi Fade Out).
        * **Đạo diễn Bục Đá 12m & Sinh Thưởng (Task D02-5C):** Ngay sau khi banner tắt, camera lia mượt mà lên đỉnh Bục Đá cao 12m (BossArena_Pedestal) ở vách Bắc; đồng loạt sinh Rương Boss (Interactive_Chest_Boss) và Cổng Dịch Chuyển (VictoryPortal) tại các socket [BossChest_Socket] và [Portal_Socket]; kích nổ cột sáng thần thánh (Point Light range 24m) và giữ camera ngắm bục 2.2s trước khi trượt êm ái quay về sau lưng Player và mở lại toàn bộ điều khiển.
        * **Vô hiệu hóa Reset Episode ML-Agents:** Khóa cờ respawnBossOnDeath = false trên IceGolemAgent.cs và Boss_IceGolem.prefab, bảo đảm Boss nằm gục vĩnh viễn trên sàn khi tử trận và không vô tình reset episode khiến Boss quay lại bục hay Player bị dịch chuyển về phòng khởi đầu.
+       * **Quy Chuẩn Non-Destructive Tooling Cho Ice Golem (IceGolemSetupEditor.cs):**
+         * Gỡ bỏ hoàn toàn `[InitializeOnLoadMethod]` và `AutoCheckAndSetup()`, chấm dứt vĩnh viễn việc tự động ghi đè reset các thông số cân bằng (Cooldowns, Damage, Range, Knockback, Pacing) mỗi khi Unity biên dịch hoặc reload domain.
+         * Chuyển `ExecuteSetup` thành cơ chế Non-Destructive / Safe-Guard: Chỉ gắn bổ sung Component, xương Hitbox và VFX Prefabs khi trường dữ liệu đang null; tuyệt đối không ghi đè bất kỳ biến số nào (Damage, Cooldown, Pacing, Tốc độ...) mà người dùng đã cân chỉnh trong Inspector. Hỗ trợ hộp thoại xác nhận trước khi thực thi thủ công từ Menu.
+       * **Cơ Chế Chạy Húc Looping Charge & Khử Lỗi Trượt Patin Cho RunAttack (30m):**
+         * Loại bỏ transition `HasExitTime = 0.9` cứng từ state `RunAttack` về `Idle` trong `BossController.controller`. Cho phép chu kỳ chạy Mixamo lặp vô hạn theo đúng hành trình di chuyển thực tế.
+         * Trong `IceGolemController.cs`, chuyển đổi về `Idle` được kích hoạt chuẩn xác qua `CrossFadeInFixedTime("Idle", 0.2f)` ngay khi Boss chạm đủ quãng đường mục tiêu hoặc va chạm vật cản, triệt tiêu hoàn toàn hiện tượng Boss bị khựng động tác chạy và trượt patin giữa chừng.
 
   2. **Trùm Lửa: Red Ignis (Boss_RedIgnis.prefab - The Crimson Duelist / True Flame Ignis):**
      * **Định vị chiến đấu:** Kiếm sĩ Duelist tốc độ cao, xoay mặt theo Player mượt mà (`facePlayerSpeed = 110 deg/s` mặc định; tăng 1.5x khi lấy đà), chủ động áp sát và vờn đối thủ ở cự ly gần (`optimalDistanceMin..Max = 1.0 - 2.0m`), sở hữu thanh kiếm ma thuật rực lửa.
@@ -465,7 +476,7 @@ flowchart TD
        + *Giáp Xương Quái:* 6 Mảnh Xương Quái + 2 Huy Hiệu Chiến Binh + 200 Vàng.
        + *Băng Giáp Cực Bắc:* 1 Trái Tim Băng Ice Core + 2 Mảnh Cổ Tự Băng + 1 Tinh Thể Hoàn Mỹ + 600 Vàng.
      * **Giao Diện 2 Panel Đồng Bộ:** Panel Trái gồm 2 Tab chuyển đổi [ NÂNG CẤP | RÈN ] (cửa sổ so sánh Before/After, container nguyên liệu, hiển thị giá vàng thời gian thực). Panel Phải đồng bộ 30 ô túi đồ và Popup thao tác với nút `[Put in]` độc quyền.
-     * **NPC Thợ Rèn & Công Cụ 1-Click:** `BlacksmithInteractable.cs` gắn trên `BlackSmithNPC` (bán kính 3.2m, phím F); Tool `BlacksmithSetupEditor.cs` với MenuItem `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp Master Dashboard.
+     * **NPC Thợ Rèn:** `BlacksmithInteractable.cs` gắn trên `BlackSmithNPC` tại Làng Haven (bán kính 3.2m, phím F), toàn bộ công thức rèn và nâng cấp được lưu trữ thành các asset ScriptableObject trong `Assets/ScriptableObjects/Crafting/`.
    * **Cổng dịch chuyển (`PortalController.cs`):** Giữ phím F để bước vào Dungeon thông qua màn hình Loading Screen bất đồng bộ.
    * **Tối Ưu Hóa Hiệu Năng Ngôi Làng (NpcPatrol.cs & LandSceneOptimizerEditor.cs):**
      - **Distance LOD Culling & Hibernation cho 61+ NPCs:** Tự động đưa NPC ở xa (> 48m) vào chế độ ngủ đông (dừng NavMeshAgent, tắt né tránh, ngắt tính toán Animator qua CullCompletely), giải phóng 100% CPU. Khi người chơi lại gần (< 40m), NPC tự động thức tỉnh tuần tra mượt mà. Quét cự ly Time-sliced 0.35s rải đều các frame.
@@ -535,7 +546,7 @@ Hệ thống bản đồ thích ứng theo ngữ cảnh từng Scene (Scene-Awar
      * 🔨 **Lò Rèn Haven (`BlackSmithShop.png`):** Vị trí $(X=210.05, Z=119.76)$ — Cường hóa vũ khí $+1\dots+5$ & Chế tạo thần binh từ Lõi Boss.
      * 🌀 **Cổng Hầm Ngục (`Portal.png`):** Vị trí $(X=235.17, Z=98.45)$ — Dịch chuyển sang `DungeonScene`.
    * **Vị Trí & Góc Xoay Người Chơi:** Icon `Player_Icon.png` bám sát tọa độ thế giới 3D và xoay theo hướng mặt nhân vật thời gian thực.
-   * **Cơ Chế Tự Phục Hồi & Tự Động Hóa:** `EnsureInstance()` và `[RuntimeInitializeOnLoadMethod]` tự động nạp sprite, dựng cấu trúc hierarchy và kết nối an toàn 100% trong Runtime. Hỗ trợ tool 1-click `VillageMapSetupEditor.cs` và Master Dashboard (`Ctrl+Alt+D`).
+   * **Cơ Chế Tự Phục Hồi & Tự Động Hóa:** `EnsureInstance()` và `[RuntimeInitializeOnLoadMethod]` tự động nạp sprite, dựng cấu trúc hierarchy và kết nối an toàn 100% trong Runtime.
 
 ---
 
@@ -556,11 +567,10 @@ Hệ thống bản đồ thích ứng theo ngữ cảnh từng Scene (Scene-Awar
     * **Pool 2D (8 AudioSources):** Phục vụ UI, tiếng vung kiếm, giọng kêu nữ, tiếng cạn thể lực.
     * **Pool 3D Spatial (12 AudioSources):** Tọa độ hóa trong không gian 3D (`spatialBlend = 1.0f`, Linear Rolloff 2–25m) cho quái bắn cung, quái niệm phép, tiếng đập thùng gỗ, tiếng mở rương, tiếng đuốc cháy và tiếng chuông thánh.
     * **Micro-Pitch Randomization ($0.94 \sim 1.06$):** Tự động đổi nhẹ cao độ từng nhát chém và bước chân để loại bỏ hoàn toàn cảm giác âm thanh bị rập khuôn.
-* **Bộ Công Cụ Tự Động Hóa 1-Click (`AudioSetupEditor.cs`):**
-  * Quét tự động toàn bộ 40+ AudioClips từ `Assets/Audio/` (`BGM`, `Player`, `Monster`, `Enviromemt`, `UI`, `Footsteps`).
-  * Tự động nối dây 100% trường dữ liệu và đóng gói thành 2 Prefabs tái sử dụng tại `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
-  * Tự động quét và gắn component `SpatialTorchAudio` lên các Prefab ngọn đuốc hầm ngục.
-  * Tích hợp menu 1-click vào Master Dashboard (`Ctrl+Alt+D`).
+* **Hệ Thống Dữ Liệu Âm Thanh Đã Đóng Gói (AudioManager Prefabs):**
+  * Toàn bộ 40+ AudioClips từ `Assets/Audio/` (`BGM`, `Player`, `Monster`, `Enviromemt`, `UI`, `Footsteps`) đã được liên kết hoàn thiện vào 2 Prefabs tái sử dụng: `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
+  * Gắn component `SpatialTorchAudio` lên các Prefab ngọn đuốc hầm ngục để phát âm thanh 3D lập thể.
+  * Hỗ trợ Custom Editor `AudioManagerEditor.cs` với 40+ thanh trượt cân chỉnh âm lượng trực tiếp trên Inspector.
 * **Tích Hợp SFX Chi Tiết Theo Phân Hệ (POL-02C):**
   * **Player:** Đòn đánh thường 1-3, đòn tụ lực Charge 1-2, kỹ năng E, Q, R random 4 tiếng chém; giọng nữ phản ứng (~40% chance, riêng Charge Attack chỉ kêu ở hit 1); Parry đanh thép; vỡ Poise phát 1 trong 5 tiếng rên dính đòn; cạn thể lực thở dốc và tiếng tít trầm khi spam hành động lúc hết thể lực; tiếng bước chân phân biệt Dirt/Rock theo vận tốc và âm thanh tiếp đất.
   * **Monster Skeleton:** Melee chém gió và chém trúng da thịt; Rogue giương cung và mũi tên găm người chơi; Mage niệm phép và nổ phép mặt đất; âm thanh dính đòn rắc xương và sập xương vỡ vụn khi chết.
@@ -583,7 +593,14 @@ Hệ thống bản đồ thích ứng theo ngữ cảnh từng Scene (Scene-Awar
     - `IdleYawn` (Idle Action 4): `PlayIdleStretchingSound()` (`Streching.mp3`).
     - Hỗ trợ cả hàm nhận tham số `intParameter` (1..N hoặc 0 ngẫu nhiên) và các hàm không tham số trực quan (`PlayIdleWarmup1()`..`PlayIdleWarmup6()`, `PlayIdleChecking1()`..`PlayIdleChecking5()`, `PlayIdleHums1()`, `PlayIdleHums2()`).
   * **Hệ Thống Âm Thanh Giao Diện & Môi Trường Nâng Cấp:**
-    - Cấu hình âm lượng mặc định chuẩn: Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` = 2 (`Slash1`, `Slash2`). Đồng bộ trực tiếp với `AudioSetupEditor.cs` 1-Click setup.
+    - Phân Biệt Bước Chân Đi Bộ & Chạy Toàn Diện (`AudioManager.cs`, `PlayerController.cs`):
+      + Tách mảng âm thanh đi bộ riêng (`footstepsDirtWalk`, `footstepsRockWalk`) từ folder `_Walk` (âm mềm, tiếp đất nhẹ nhàng) và chạy (`footstepsDirt`, `footstepsRock`) từ `_Run` (âm nén, dậm chân mạnh mẽ).
+      + Tỷ lệ âm lượng đi bộ `volPlayerWalkRatio` (mặc định 0.55 = 55% âm lượng chạy) kiểm soát qua thanh trượt trong Ma Trận Cân Bằng Âm Lượng.
+      + Biến điệu tần số (Pitch Modulation): Đi bộ áp dụng Pitch trầm (`0.88 - 0.94`), chạy áp dụng Pitch đanh giòn (`0.98 - 1.06`), giúp tai người nghe lập tức phân biệt rõ ràng dù cadence animation rất sát nhau (`0.32s` vs `0.30s`).
+    - Ma Trận Cân Bằng Âm Lượng Toàn Diện (Sound Balance Matrix & Custom Editor): Tích hợp 40+ thanh trượt điều chỉnh âm lượng và nhịp độ riêng biệt cho từng hành vi âm thanh trong game (Combat, Kỹ năng, Bước chân & Idle, Quái vật, Môi trường, UI). Cung cấp Custom Inspector `AudioManagerEditor.cs` hỗ trợ Live Tuning ngay trong Play Mode và lưu trực tiếp vào Prefabs.
+    - Âm Thanh Bước Chân Quái Vật & Nhịp Bước Động: Tích hợp 6 âm thanh bước chân trên đá (`Footsteps_Rock_Walk_01..06`, khác biệt với bước chân Player) vào `EnemyAIBase.cs` phát 3D Spatial Audio cho cả 4 quái Skeleton (Warrior, Minion, Rogue, Mage) khi di chuyển. Cung cấp thanh trượt điều chỉnh khoảng cách bước chân (Cadence) cho Player và Quái vật (đi bộ / chạy).
+    - Đồng Bộ Âm Lượng Thời Gian Thực Đuốc & Cổng Dịch Chuyển: Cung cấp `volTorch` và `volPortal` trong Ma Trận Âm Lượng; `PortalController.cs` và `SpatialTorchAudio.cs` liên tục lắng nghe và nội suy âm lượng ngay tức thì trong Play Mode.
+    - Cấu hình âm lượng mặc định chuẩn: Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` = 2 (`Slash1`, `Slash2`). Cân chỉnh trực tiếp qua Inspector của `AudioManager.prefab`.
     - Hợp nhất âm thanh UI Click vào `UIInteract.wav`: Loại bỏ `uiClickClip` thừa, thống nhất toàn bộ các UI Controller (`BlacksmithUIController`, `ShopUIController`, `InventoryManager`, `UIButtonAudio`) sử dụng `PlayUIInteract()`.
     - Âm thanh Hào Quang Mở Rương (`ChestAura.wav`): Tích hợp vào `ChestInteractable.cs` và `AudioManager.PlayChestAura()` phát đồng thời cùng tiếng mở rương `ChestOpen.wav`. Âm lượng phân cấp theo Tier: Rương Boss (`1.0`), Rương Hiếm (`0.70`), Rương Thường (`0.35`).
     - `ItemPickup.wav` (2D SFX) tích hợp vào `WorldItemPickup.cs` khi nhặt vật phẩm bằng phím F.

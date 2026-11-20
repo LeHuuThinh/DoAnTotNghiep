@@ -246,6 +246,58 @@ MonoBehaviour:
   bgmVolume: 0.1
   sfxVolume: 0.5
   loadSavedSettingsOnStart: 0
+  volPlayerSlash: 0.6
+  volPlayerAttackVoice: 0.3
+  volPlayerHurtVoice: 0.4
+  volPlayerParry: 0.45
+  volPlayerCounter: 0.35
+  volPlayerOutOfStamina: 0.6
+  volPlayerStaminaAlert: 0.2
+  volPlayerDeath: 0.65
+  volPlayerHeal: 0.3
+  volSkillECharge: 0.3
+  volSkillQCharge: 0.3
+  volSkillRCharge: 0.3
+  volSkillEImpact: 0.6
+  volSkillQImpact: 0.5
+  volSkillRImpact: 0.35
+  playerWalkFootstepInterval: 0.32
+  playerRunFootstepInterval: 0.3
+  volPlayerWalkRatio: 0.4
+  volFootstepsDirt: 0.3
+  volFootstepsRock: 0.3
+  volIdleChecking: 0.3
+  volIdleWarmup: 0.3
+  volIdleHums: 0.3
+  volIdleStretching: 0.3
+  volMonsterFootstep: 0.3
+  monsterWalkFootstepInterval: 0.65
+  monsterRunFootstepInterval: 0.42
+  volMonsterMeleeAttack: 0.2
+  volMonsterMeleeHit: 0.5
+  volMonsterArrowShoot: 0.45
+  volMonsterArrowHit: 0.55
+  volMonsterSpellCast: 0.45
+  volMonsterSpellImpact: 0.35
+  volMonsterGetHit: 0.5
+  volMonsterDeath: 0.3
+  volBarrelBreak: 0.15
+  volVillageBell: 0.55
+  volDoorOpen: 0.75
+  volBossDoorOpen: 0.65
+  volChestOpen: 0.6
+  volChestAura: 0.35
+  volCoinPickup: 0.45
+  volPortal: 0.15
+  volTorch: 0.15
+  volAmbientStinger: 0.45
+  volUIAnvil: 0.65
+  volUIEquip: 0.55
+  volUIPotion: 0.4
+  volUIShop: 0.4
+  volUIDisabled: 0.3
+  volUIItemPickup: 0.2
+  volUIInteract: 0.35
   landBgmTracks:
   - {fileID: 8300000, guid: 34019e332ada5f242a4fb44a1cf4507b, type: 3}
   - {fileID: 8300000, guid: 60cf0194b31a6df4bb7917dcc5fcc6c6, type: 3}
@@ -285,11 +337,25 @@ MonoBehaviour:
   staminaEmptyAlertClip: {fileID: 8300000, guid: 00dd4077e1850fa42bdac5cb03d19cc2, type: 3}
   deathClip: {fileID: 8300000, guid: 1fff6c3b33d2b914cbbb5a05029dc5f0, type: 3}
   healClip: {fileID: 8300000, guid: 48e8482cda0ef954b930143f3f52b532, type: 3}
+  footstepsDirtWalk:
+  - {fileID: 8300000, guid: 9ea11a2d13d536e4e8441a0f5895995c, type: 3}
+  - {fileID: 8300000, guid: 203ac8b6f07070e4f93f1c1a6fff06c3, type: 3}
+  - {fileID: 8300000, guid: ac6649006dbee9e4685752e124111da7, type: 3}
+  - {fileID: 8300000, guid: f42914d98b070f741b2feee96a2988ee, type: 3}
+  - {fileID: 8300000, guid: feb62160ad1f8334ab037017b843d162, type: 3}
+  - {fileID: 8300000, guid: 001f691d110d55648871a03f446ffa08, type: 3}
   footstepsDirt:
   - {fileID: 8300000, guid: 9e68ea1ebd76aa44c8cfa5beb9850830, type: 3}
   - {fileID: 8300000, guid: 1deb201b8bf8f89479323a74e421150b, type: 3}
   - {fileID: 8300000, guid: 7c518e8469a403b4c981664ecb28a79a, type: 3}
   - {fileID: 8300000, guid: 1f2844efbf7abf647ba3d75d510f823a, type: 3}
+  footstepsRockWalk:
+  - {fileID: 8300000, guid: 1f0199a4c6005ec4abbb302f71bc036d, type: 3}
+  - {fileID: 8300000, guid: 53e2adf2ac488ef46bb2b4074de9e363, type: 3}
+  - {fileID: 8300000, guid: a03a96c5d1e99b4409ddd79098abd9ab, type: 3}
+  - {fileID: 8300000, guid: 7187dc81f98b8be4eb97bfc4dd9a5abf, type: 3}
+  - {fileID: 8300000, guid: e3cfcb32689b274419ac73380ea96888, type: 3}
+  - {fileID: 8300000, guid: 314d37dfb74502a4094b835d0e0d6c23, type: 3}
   footstepsRock:
   - {fileID: 8300000, guid: ecd647025e0a3c04fbd5829fff509e09, type: 3}
   - {fileID: 8300000, guid: 3bd1b93317b7a3a49b13011cdaa64d0b, type: 3}
@@ -326,9 +392,19 @@ MonoBehaviour:
   spellImpactClip: {fileID: 8300000, guid: f65fbb63a37a68e42bedb018cd114acb, type: 3}
   skeletonGetHitClip: {fileID: 8300000, guid: 677c5d39e9c007a46aca7a61feb50c19, type: 3}
   skeletonDeathClip: {fileID: 8300000, guid: 9c8dd1a25f8b6b342ae87137cb8f7866, type: 3}
+  monsterFootsteps:
+  - {fileID: 8300000, guid: 1f0199a4c6005ec4abbb302f71bc036d, type: 3}
+  - {fileID: 8300000, guid: 53e2adf2ac488ef46bb2b4074de9e363, type: 3}
+  - {fileID: 8300000, guid: a03a96c5d1e99b4409ddd79098abd9ab, type: 3}
+  - {fileID: 8300000, guid: 7187dc81f98b8be4eb97bfc4dd9a5abf, type: 3}
+  - {fileID: 8300000, guid: e3cfcb32689b274419ac73380ea96888, type: 3}
+  - {fileID: 8300000, guid: 314d37dfb74502a4094b835d0e0d6c23, type: 3}
   ambientClips:
   - {fileID: 8300000, guid: 3e6b8e6daef92cd48bc5092b2cacbbf3, type: 3}
   - {fileID: 8300000, guid: c9aa0b5c79a8bc84e9105418c7df08af, type: 3}
+  - {fileID: 8300000, guid: a069ef478225faf40a13396462976b97, type: 3}
+  - {fileID: 8300000, guid: 38bc756ee1ce3db4a99eb01d79612235, type: 3}
+  - {fileID: 8300000, guid: cd6d606e04d01e445982939b4b8ad53f, type: 3}
   barrelBreakClips:
   - {fileID: 8300000, guid: 58d1888ea5ac78b43b4356bb0876a16a, type: 3}
   - {fileID: 8300000, guid: 756b747b881474c429a64ced63a71fe8, type: 3}
@@ -1039,6 +1115,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b09c634f9d2eec04692a983380c66236, type: 2}
   - {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
   - {fileID: 11400000, guid: 576b4e28676e43439859d8cfc16d1349, type: 2}
+  - {fileID: 11400000, guid: e59ce4706770448db59914912889858d, type: 2}
+  - {fileID: 11400000, guid: 8d5dd87f9088433392d6c9ca7918f585, type: 2}
+  - {fileID: 11400000, guid: 4214e3c285b14ffd9aa0ad746ffb0694, type: 2}
+  - {fileID: 11400000, guid: d956e73ea3554a48b4b2f0ed1855fbdb, type: 2}
+  - {fileID: 11400000, guid: 5c918308f5254e16a15f37eacacb6144, type: 2}
+  - {fileID: 11400000, guid: a9b1182eaeb04928a9215804b55a93f3, type: 2}
+  - {fileID: 11400000, guid: 0c26feaaa5a94da78eb6c0b1ade673b3, type: 2}
+  - {fileID: 11400000, guid: c2196b2fd7a948d4865f247cf19ef29e, type: 2}
+  - {fileID: 11400000, guid: 85209d30838f4da0b62dd18ab1e3842b, type: 2}
+  - {fileID: 11400000, guid: e3e97e9a6af840da8877aa2c08a157cb, type: 2}
+  - {fileID: 11400000, guid: 7140561714774197a0e5be9765b61dd0, type: 2}
   skeletonWarriorPrefab: {fileID: 3329707019587242983, guid: 65ad483aba4897242b1045c1ab5dcb3e, type: 3}
   skeletonMinionPrefab: {fileID: 2517675790099561320, guid: 6d7045efad74d824c98a3ecdc5606166, type: 3}
   skeletonRoguePrefab: {fileID: 4989933198260461715, guid: 954d63b683e01ee458114819de824bfe, type: 3}
@@ -5261,7 +5348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.LoadingScreenManager
   screenData: {fileID: 11400000, guid: f9c05a7f097a8ba4e87eb8d488986e19, type: 2}
-  screenUI: {fileID: 0}
+  screenUI: {fileID: 6562092687700162351}
   minLoadingTime: 3
   isLoading: 0
   currentFloor: 1
@@ -8769,6 +8856,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 07b1953fd8e8a804b82a076d62c0f114, type: 3}
+--- !u!114 &6562092687700162351 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1622232044150450611, guid: 07b1953fd8e8a804b82a076d62c0f114, type: 3}
+  m_PrefabInstance: {fileID: 5589653210531471004}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7445a2c4c5cb3146b8acefbf5bb0466, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.LoadingScreenUI
 --- !u!224 &8779258489845394740 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3766239565519041448, guid: 07b1953fd8e8a804b82a076d62c0f114, type: 3}

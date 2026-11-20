@@ -154,6 +154,8 @@ MonoBehaviour:
   starterUsableCount: 0
   starterWeapon: {fileID: 11400000, guid: 8448360df3f399940bd0799e9232720b, type: 2}
   starterArmor: {fileID: 0}
+  starterAccessory1: {fileID: 0}
+  starterAccessory2: {fileID: 0}
   currentGold: 0
   equippedWeapon: {fileID: 0}
   equippedWeaponUpgradeLevel: 0
@@ -161,6 +163,8 @@ MonoBehaviour:
     rolledAttack: 0
     rolledDefense: 0
     rolledHealth: 0
+    mainStatType: 3
+    rolledMainStat: 0
     subStats: []
     enchantments: []
   equippedArmor: {fileID: 0}
@@ -169,6 +173,28 @@ MonoBehaviour:
     rolledAttack: 0
     rolledDefense: 0
     rolledHealth: 0
+    mainStatType: 3
+    rolledMainStat: 0
+    subStats: []
+    enchantments: []
+  equippedAccessory1: {fileID: 0}
+  equippedAccessory1UpgradeLevel: 0
+  equippedAccessory1Affix:
+    rolledAttack: 0
+    rolledDefense: 0
+    rolledHealth: 0
+    mainStatType: 3
+    rolledMainStat: 0
+    subStats: []
+    enchantments: []
+  equippedAccessory2: {fileID: 0}
+  equippedAccessory2UpgradeLevel: 0
+  equippedAccessory2Affix:
+    rolledAttack: 0
+    rolledDefense: 0
+    rolledHealth: 0
+    mainStatType: 3
+    rolledMainStat: 0
     subStats: []
     enchantments: []
   equippedUsable: {fileID: 0}

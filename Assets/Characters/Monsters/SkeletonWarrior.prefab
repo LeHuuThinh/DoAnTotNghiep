@@ -71,6 +71,9 @@ MonoBehaviour:
   attackAnimationSpeed: 1.3
   expReward: 15
   enemyDefense: 10
+  enableFootstepAudio: 1
+  customWalkFootstepInterval: 0
+  customRunFootstepInterval: 0
   isElite: 0
   weaponHitbox: {fileID: 2550425182332717077}
   attackDamage: 15

@@ -136,6 +136,11 @@ namespace InfiniteLabyrinth.UI
     [Header("=== DANH SÁCH CÔNG THỨC RÈN (CRAFTING RECIPES) ===")]
     [SerializeField] private List<CraftingRecipe> craftingRecipes = new List<CraftingRecipe>();
 
+    [Header("=== CƠ SỞ DỮ LIỆU VẬT PHẨM (SERIALIZED ITEM DATABASE) ===")]
+    [Tooltip("Danh sách toàn bộ vật phẩm để Lò Rèn hiển thị đúng Icon, Tên, Rarity khi Build độc lập (.exe)")]
+    [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
+    public List<ItemData> ItemDatabase => itemDatabase;
+
     [Header("=== THỜI LƯỢNG MỞ / ĐÓNG ===")]
     [SerializeField] private float fadeDuration = 0.18f;
 
@@ -1724,22 +1729,103 @@ namespace InfiniteLabyrinth.UI
     private ItemData FindItemAssetById(string id)
     {
       if (string.IsNullOrEmpty(id)) return null;
-      var all = Resources.LoadAll<ItemData>("");
-      foreach (var item in all)
+
+      // 1. Tìm trong serialized itemDatabase (được lưu cứng trong Prefab, bảo đảm 100% hoạt động trong Standalone Build)
+      if (itemDatabase != null)
       {
-        if (item != null && item.Id == id) return item;
+        for (int i = 0; i < itemDatabase.Count; i++)
+        {
+          var item = itemDatabase[i];
+          if (item != null && item.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+            return item;
+        }
       }
-#if UNITY_EDITOR
-      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
-      foreach (var g in guids)
+
+      // 2. Tìm trong túi đồ hiện tại của Player (nếu người chơi đang sở hữu món đó)
+      if (InventoryManager.HasInstance && InventoryManager.Instance.Slots != null)
       {
-        string p = UnityEditor.AssetDatabase.GUIDToAssetPath(g);
+        var invSlots = InventoryManager.Instance.Slots;
+        for (int i = 0; i < invSlots.Count; i++)
+        {
+          if (!invSlots[i].IsEmpty && invSlots[i].ItemData != null && 
+              invSlots[i].ItemData.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+          {
+            return invSlots[i].ItemData;
+          }
+        }
+      }
+
+      // 3. Fallback: Tìm trong danh sách công thức rèn (mỗi recipe có chứa MaterialItem và ResultItem)
+      if (craftingRecipes != null)
+      {
+        for (int i = 0; i < craftingRecipes.Count; i++)
+        {
+          var r = craftingRecipes[i];
+          if (r == null) continue;
+          if (r.ResultItem != null && r.ResultItem.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+            return r.ResultItem;
+          if (r.RequiredMaterials != null)
+          {
+            for (int j = 0; j < r.RequiredMaterials.Count; j++)
+            {
+              var mat = r.RequiredMaterials[j].MaterialItem;
+              if (mat != null && mat.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                return mat;
+            }
+          }
+        }
+      }
+
+      // 4. Fallback Resources (nếu sau này có vật phẩm đặt trong Resources)
+      var all = Resources.LoadAll<ItemData>("");
+      for (int i = 0; i < all.Length; i++)
+      {
+        if (all[i] != null && all[i].Id.Equals(id, StringComparison.OrdinalIgnoreCase)) return all[i];
+      }
+
+#if UNITY_EDITOR
+      // 5. Editor Fallback (AssetDatabase khi ở trong Editor)
+      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
+      for (int i = 0; i < guids.Length; i++)
+      {
+        string p = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
         var it = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(p);
-        if (it != null && it.Id == id) return it;
+        if (it != null && it.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) return it;
       }
 #endif
       return null;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+      if (itemDatabase == null || itemDatabase.Count == 0)
+      {
+        EnsureItemDatabaseLoaded();
+      }
+    }
+
+    public void EnsureItemDatabaseLoaded()
+    {
+      if (itemDatabase == null) itemDatabase = new List<ItemData>();
+      string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData", new[] { "Assets/ScriptableObjects/Items" });
+      bool modified = false;
+      foreach (var g in guids)
+      {
+        string p = UnityEditor.AssetDatabase.GUIDToAssetPath(g);
+        var it = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(p);
+        if (it != null && !itemDatabase.Contains(it))
+        {
+          itemDatabase.Add(it);
+          modified = true;
+        }
+      }
+      if (modified)
+      {
+        UnityEditor.EditorUtility.SetDirty(this);
+      }
+    }
+#endif
 
     private IEnumerator PunchRoutine(Transform tr, float scale, float duration)
     {

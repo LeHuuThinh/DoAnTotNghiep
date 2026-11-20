@@ -71,6 +71,9 @@ MonoBehaviour:
   attackAnimationSpeed: 1
   expReward: 15
   enemyDefense: 10
+  enableFootstepAudio: 1
+  customWalkFootstepInterval: 0
+  customRunFootstepInterval: 0
   isElite: 0
   groundSpellPrefab: {fileID: 4330468513817889461, guid: 2b8670c3a0c493c4582c812ae2294f2c, type: 3}
   staffTipPoint: {fileID: 7695429859635390306}

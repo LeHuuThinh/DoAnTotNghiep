@@ -11,14 +11,14 @@ namespace InfiniteLabyrinth.Editor
     {
         private const string SCENE_NAME = "LandScene";
 
-        [MenuItem("Infinite Labyrinth/Optimization/1. Tối Ưu Hóa LandScene (1-Click)", false, 10)]
+        [MenuItem("Infinite Labyrinth/⚡ Tối Ưu Hóa LandScene (Optimizer Window)", false, 10)]
         public static void ShowWindow()
         {
             var window = GetWindow<LandSceneOptimizerEditor>("LandScene Optimizer");
             window.minSize = new Vector2(440, 580);
         }
 
-        [MenuItem("Infinite Labyrinth/Optimization/2. Chạy Nhanh Tối Ưu Hóa LandScene (1-Click)", false, 11)]
+        // [MenuItem("Infinite Labyrinth/Optimization/2. Chạy Nhanh Tối Ưu Hóa LandScene (1-Click)", false, 11)] (Archived)
         public static void RunQuickOptimization()
         {
             EnsureLandSceneLoaded();

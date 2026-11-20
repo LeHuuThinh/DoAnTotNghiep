@@ -61,7 +61,7 @@ namespace InfiniteLabyrinth.Editor
             }
         }
 
-        [MenuItem("Infinite Labyrinth/Core Loop & UI/2. Cấu Hình DeadScreenUI (GM-02)", false, 2)]
+        // [MenuItem("Infinite Labyrinth/Core Loop & UI/2. Cấu Hình DeadScreenUI (GM-02)", false, 2)] (Archived)
         public static void SetupDeadScreenUIInScene()
         {
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();

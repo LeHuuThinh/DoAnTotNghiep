@@ -199,6 +199,7 @@ public class PlayerCombat : MonoBehaviour
   private bool comboBuffered = false;
   private float attackTimer = 0f;
   private float targetLayerWeight = 0f;
+  private bool isIdleActionFreeHands = false;
 
   [Header("Weapon Stance State")]
   private bool hasWeapon = false;
@@ -318,7 +319,7 @@ public class PlayerCombat : MonoBehaviour
   public void SetWeaponEquipped(bool equipped)
   {
     hasWeapon = equipped;
-    targetLayerWeight = equipped ? 1f : 0f;
+    targetLayerWeight = (equipped && !isIdleActionFreeHands) ? 1f : 0f;
 
     if (!equipped)
     {
@@ -336,6 +337,22 @@ public class PlayerCombat : MonoBehaviour
       if (swordAuraBlueVfx != null) swordAuraBlueVfx.SetActive(false);
       if (swordAuraOrangeVfx != null) swordAuraOrangeVfx.SetActive(false);
       if (swordAuraUltVfx != null) swordAuraUltVfx.SetActive(false);
+    }
+  }
+
+  /// <summary>
+  /// Tạm thời vô hiệu hóa Layer tay phải để nhân vật tự do 2 tay trong các hoạt cảnh Idle.
+  /// </summary>
+  /// <param name="freeHands">true: hạ weight về 0; false: khôi phục theo hasWeapon</param>
+  /// <param name="immediate">true: áp dụng ngay lập tức trong 1 frame (dùng khi cancel)</param>
+  public void SetIdleActionHandOverride(bool freeHands, bool immediate = false)
+  {
+    isIdleActionFreeHands = freeHands;
+    targetLayerWeight = freeHands ? 0f : (hasWeapon ? 1f : 0f);
+
+    if (immediate && animator != null && swordLayerIndex < animator.layerCount)
+    {
+      animator.SetLayerWeight(swordLayerIndex, targetLayerWeight);
     }
   }
 
@@ -825,6 +842,7 @@ public class PlayerCombat : MonoBehaviour
     isHoldingMouse = false;
     holdTimer = 0f;
     attackTimer = 0f;
+    isIdleActionFreeHands = false;
     targetLayerWeight = hasWeapon ? 1f : 0f;
 
     isChargeAttackActive = false;

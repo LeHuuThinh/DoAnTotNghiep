@@ -1648,8 +1648,23 @@ MonoBehaviour:
   enableIdleActions: 1
   minIdleActionDelay: 6
   maxIdleActionDelay: 12
+  weaponShrinkDuration: 0.22
+  weaponGrowDuration: 0.25
+  idleActionConfigs:
+  - stateName: Idle Action 1
+    hideWeaponAndFreeHands: 1
+    description: "V\u01B0\u01A1n vai (T\u1EF1 do 2 tay)"
+  - stateName: Idle Action 2
+    hideWeaponAndFreeHands: 1
+    description: "Kh\u1EDFi \u0111\u1ED9ng (T\u1EF1 do 2 tay)"
+  - stateName: Idle Action 3
+    hideWeaponAndFreeHands: 1
+    description: "\u0110\u1ED9ng t\xE1c 3 (T\u1EF1 do 2 tay)"
+  - stateName: Idle Action 4
+    hideWeaponAndFreeHands: 1
+    description: "\u0110\u1ED9ng t\xE1c 4 (T\u1EF1 do 2 tay)"
   idleActionStateNames:
-  - Idle Action 5
+  - Idle Action 1
   - Idle Action 2
   - Idle Action 3
   - Idle Action 4
@@ -1657,8 +1672,12 @@ MonoBehaviour:
   thirdPersonCamera: {fileID: 0}
   targetLockSystem: {fileID: 759275986569051391}
   playerCombat: {fileID: 2224738506303633511}
+  weaponVisualSync: {fileID: 8192837465918273645}
+  rHandAdjust: {fileID: 6971768768852571698}
   playerStats: {fileID: 4698226416880465567}
   health: {fileID: 1443231080541979558}
+  footstepWalkInterval: 0.44
+  footstepRunInterval: 0.3
   enableCollisionLogging: 0
 --- !u!143 &4791678739667565749
 CharacterController:

@@ -14,7 +14,7 @@
 | **Giai đoạn 2** | Vòng Lặp Trò Chơi & Quản Lý Ngày (Core Loop) | 3 / 3 | ✅ Hoàn thành | **100%** | GameManager, Tử trận chuông làng, Thắng tầng qua cổng |
 | **Giai đoạn 3** | Kinh Tế, Tiến Trình RPG & Ngôi Làng Haven | 14 / 14 | ✅ **Hoàn thành** | **100%** | **Cửa hàng RPG-07, Lò rèn RPG-08, Ma trận rơi đồ RPG-09, Cân bằng độ khó RPG-12, Trang sức RPG-14, Cường hóa linh hoạt & Giá bán RPG-16, Potions & Buffs RPG-17** |
 | **Giai đoạn 4** | Điểm Nhấn Đồ Án - Cặp Trùm Souls-like & ML-Agents | 8 / 9 | 🟡 **ĐANG THỰC HIỆN** | **89%** | Xong Ice Golem, Red Ignis, ML Ice Golem & RedIgnisAgent (ML-03); Đang tiếp tục train ML-04 |
-| **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 2 / 4 | 🟡 **Đang thực hiện** | **50%** | Xong Bản đồ hầm ngục POL-03 & Bản đồ Làng Haven POL-04; Chờ Menu & Audio |
+| **Giai đoạn 5** | Giao Diện Hoàn Chỉnh & Âm Thanh (UI & Polish) | 3 / 5 | 🟡 **Đang thực hiện** | **60%** | Xong Bản đồ POL-03, POL-04 & Idle Weapon Pop POL-05; Chờ Menu & Audio Final |
 | **Giai đoạn 6** | Công Cụ Kiểm Thử & Quản Trị (Admin Debug) | 5 / 5 | ✅ Hoàn thành | **100%** | Admin Console (phím `~`), Master Dashboard (Ctrl+Alt+D), Teleport, God Mode, Cheats RPG |
 | **Giai đoạn 7** | Tối Ưu Hệ Thống Inventory, UI & Vòng Đời Ứng Dụng | 3 / 3 | ✅ Hoàn thành | **100%** | UsableSlot, Drag & Drop, Punch scale, Sửa lỗi Scene Cleanup |
 
@@ -71,7 +71,7 @@
 - [x] **FIX-04: Khắc phục hầm ngục Standalone Build (.exe) bị trống trơn đạo cụ (Bake Prefabs trực tiếp vào DungeonScene & Tự động hóa IPreprocessBuildWithReport)**
   - Phát hiện nguyên nhân cốt lõi: `DungeonPropDecorator` trước đây nạp động 80+ Prefabs (đuốc, bàn ghế, thùng vỡ, rương báu, templates tàn tích, bục Boss) qua `AssetDatabase` trong hàm `Awake()` chỉ chạy được ở Unity Editor. Khi build bản standalone (.exe), `AssetDatabase` bị loại bỏ và scene file `DungeonScene.unity` chưa từng được lưu danh sách prefabs, dẫn đến toàn bộ danh sách là null/rỗng khiến hầm ngục sinh ra trống trơn.
   - Khắc phục triệt để: Xây dựng bộ công cụ [`DungeonPropSetupEditor.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/DungeonPropSetupEditor.cs), tích hợp `IPreprocessBuildWithReport` tự động kiểm tra và khóa cứng toàn bộ prefabs vào file `DungeonScene.unity` trước mỗi lần Build Player.
-  - Tích hợp 1-Click Menu `Infinite Labyrinth -> PCG -> 1. Cấu Hình & Lưu Prefabs Trang Trí Hầm Ngục (1-Click)` và đưa vào Master Dashboard (`Ctrl+Alt+D`).
+  - Tự động hóa kiểm tra và nhúng Prefabs vào scene qua `IPreprocessBuildWithReport` trước mỗi lần Build Player.
 
 - [x] **PCG-03: Hệ thống sinh Thùng Gỗ Đập Được & Rương Báu (Interactive Chests & Breakable Barrels)**
   - Tự động nạp các Prefabs từ `Assets/Prefabs/RPG/` (`Breakable_Barrel_Small/Medium/Large`, `Interactive_Chest`, `Interactive_Chest_Gold`).
@@ -90,7 +90,7 @@
 - [x] **OPT-02: Tối ưu hóa hiệu năng LandScene (Ngôi Làng Haven Village Hub - Nâng FPS từ ~65 lên 110+ FPS)**
   - Tối ưu hóa Địa hình: Kích hoạt GPU Instancing cho bề mặt địa hình (`drawInstanced = true`), cắt giảm cự ly render cây cối xuống `treeDistance = 200m` và billboard xuống 120m, nâng `heightmapPixelError = 10`, tắt `shadowCastingMode = Off` cho Terrain.
   - Mặt Nước & Post Processing: Tắt Cast Shadows cho mặt nước, dọn GameObject Bloom trùng lặp, tắt `highQualityFiltering` trên URP Bloom.
-  - Bộ Công Cụ Tự Động Hóa 1-Click (`LandSceneOptimizerEditor.cs`): Gộp 94 viên sỏi rời rạc thành 1 Mesh 32-bit duy nhất (`Gravel_Combined_Mesh.asset`), giảm 93 Draw Calls; Đánh dấu Static cho 214 đối tượng làng; Tắt bóng đổ cho đạo cụ nhỏ; Tối ưu hóa toàn diện 61 NPC (`NpcPatrol.cs`: `CullUpdateTransforms`, `LowQualityObstacleAvoidance`, Distance LOD Hibernation 40m-48m, Time-slicing 0.35s, bộ nhớ đệm sharedWaypoints).
+  - Bộ Công Cụ Tối Ưu Hóa (`LandSceneOptimizerEditor.cs`): Gộp 94 viên sỏi rời rạc thành 1 Mesh 32-bit duy nhất (`Gravel_Combined_Mesh.asset`), giảm 93 Draw Calls; Đánh dấu Static cho 214 đối tượng làng; Tắt bóng đổ cho đạo cụ nhỏ; Tối ưu hóa toàn diện 61 NPC (`NpcPatrol.cs`: `CullUpdateTransforms`, `LowQualityObstacleAvoidance`, Distance LOD Hibernation 40m-48m, Time-slicing 0.35s, bộ nhớ đệm sharedWaypoints).
   - Tích hợp Tự Phục Hồi Admin Console (`AdminCheatConsole Self-Healing`): Tự động gọi `EnsureInstance()`, hỗ trợ phím nóng dự phòng `~`, `F1`, `F2`, chống bấm đúp cùng frame, thiết lập tọa độ dịch chuyển riêng cho LandScene.
 
 - [x] **UI-01: Cập nhật `PlayerHUD` hiển thị đầy đủ 3 thanh tài nguyên Souls-like**
@@ -102,7 +102,7 @@
   - Billboard 3D Thông Minh: Tự động xoay mặt vuông góc 100% về phía Camera người chơi, phẳng phiu không méo lệch.
   - Khai thác Sprite Grayscale & Hiệu Ứng Souls-like: `Monster_Border.png` và `Monster_Fill.png`, MainFill tô đỏ tươi qua `Image.color`, Ghost Bar vàng nhạt tụt đuổi sau 0.45s trễ.
   - Tối Ưu Hóa Hiệu Năng: Tắt Canvas khi quái ở xa hoặc ngủ đông (0 Draw Calls), ẩn khi 100% HP, Fade In khi dính đòn, Fade Out khi tử trận, tắt 100% `GraphicRaycaster`.
-  - Tool 1-Click: `EnemyHealthBarSetupEditor.cs` tự động tạo `EnemyHealthBar.prefab` và gắn vào 4 quái Skeleton.
+  - Đã đóng gói hoàn thiện `EnemyHealthBar.prefab` và cấu hình trên 4 quái Skeleton.
 
 - [x] **UI-03: Màn hình Loading Screen chuyển cảnh Async & Hầm ngục PCG (Task LD-01 - LD-09)**
   - LD-01: `LoadingScreenData.cs` lưu trữ 21 mẹo tiếng Anh theo 5 nhóm chủ đề, mảng ảnh nền hầm ngục/làng, tự động nạp ảnh render.
@@ -113,9 +113,8 @@
   - LD-07 & LD-08 & LD-09: Hoạt ảnh Sprite Sheet 192 frame bằng `Time.unscaledDeltaTime`, tối ưu Time-Slicing Coroutine trang trí Props và sinh quái, component đa năng `UISpriteSheetAnimator.cs` và 2 prefabs UI/World Space.
 
 - [x] **UI-04: Toggle Switch chuyển đổi xem trước 3D / 2D trong Inventory (`CharacterPreviewToggleUI.cs`)**
-  - Giao diện Toggle Switch [ 3D | 2D ] với con trỏ trượt mượt mà `SlidingHandle` (SmoothStep 0.15s), đổi màu vàng kim/xám mờ, lưu `PlayerPrefs`.
+  - Tích hợp Custom Inspector `CharacterPreviewToggleEditor.cs`.
   - Tối ưu hóa GPU: Chế độ 2D tắt hoàn toàn `previewCamera` và `previewLight` (0% chi phí render buồng soi 3D), kích hoạt `Character2DBox` chạy hoạt ảnh meme 190 frame. Chế độ 3D bật lại camera soi nhân vật.
-  - Tích hợp 1-Click Editor `CharacterPreviewToggleEditor.cs`.
 
 - [x] **D-01: Bộ sinh quái tự động cho hầm ngục theo Biệt Đội / Cụm (`ProceduralEnemySpawner.cs`)**
   - Tổ hợp Biệt Đội chuẩn RPG (Nhóm 4 quái, Nhóm 3 quái, Nhóm 2 quái, Nhóm 1 quái lẻ) kết hợp Spatial Clustering (Neo bán kính 3m, cách nhau >= 8.5m, bám sàn NavMesh).
@@ -124,7 +123,7 @@
 
 - [x] **VFX-01: Hệ thống Hit VFX Phản Hồi Đòn Đánh Cho Player & Quái Vật (`MobsGetHitVFX` & `GetHitVFX`)**
   - Quái xương dính đòn sinh `MobsGetHitVFX.prefab` (vụn xương xám) tại `hitPoint`, tứa ngược chiều chém. Player dính đòn sinh `GetHitVFX.prefab` (máu đỏ). Parry thành công không tứa máu.
-  - Bảo toàn phát sinh Hit VFX cả trong đòn kết liễu hạ gục quái. Tool 1-Click `CombatVfxSetupEditor.cs`.
+  - Bảo toàn phát sinh Hit VFX cả trong đòn kết liễu hạ gục quái, cấu hình trực tiếp trên Prefab.
 
 - [x] **VFX-02: Hệ thống Sword Slash Trail & Arc VFX Cho Player (`PlayerSlashVFX` & `Slash VFX.prefab`)**
   - Kiến trúc Decoupled Arc Slash độc lập theo 6 đòn đánh cơ bản (Attack 1-3, Charge 1-2, Counter) và 2 kỹ năng đặc biệt (E sóng kiếm, Q nổ đất).
@@ -165,7 +164,7 @@
     + Skill R: Đỏ Huyết Tinh Crimson uy lực tột đỉnh (`Damage_SkillR`)
     + Quái đánh Player: Đỏ tươi nguy hiểm (`Damage_PlayerHit`), hiển thị số thuần túy không dấu trừ.
   - Bảng tùy chỉnh kích thước (Base Scale, Peak Scale, Duration) và độ dày Outline (`outlineWidth = 0.1f`) trực tiếp trên Inspector với `OnValidate()`.
-  - Tool 1-Click Unity Editor tạo Prefab: `Infinite Labyrinth -> Combat -> 3. Tạo Prefab Số Sát Thương (DamageNumberItem) (1-Click)`.
+  - Đã tạo và cấu hình hoàn thiện Prefab `DamageNumberItem` trong `Assets/Resources/`.
 
 - [x] **D-02: Cơ chế Boss Arena Toàn Diện tại Boss Room (D02-1 -> D02-5)**
   - [x] **D02-1:** Sinh phòng Boss khổng lồ (676-900 tiles, vòm trần 24m), Đại Lộ Hành Lang 40m uy nghi rộng 12m, 4 Cột Trụ đá chịu lực khổng lồ né đòn, hệ thống 3 Tầng Ánh Sáng Souls-like (Giếng trời ánh trăng, 4 Vạc lửa rực cháy chân cột, Hào quang thân Boss, 2 hàng đuốc Đại Lộ).
@@ -184,7 +183,7 @@
 - [x] **GM-01: Quản lý vòng lặp ngày & tầng (`GameManager.cs`, `InfoUIController.cs`)**
   - Singleton `GameManager.cs` (`DontDestroyOnLoad`) quản lý `CurrentDay`, `CurrentFloor`, các events `OnDayChanged`, `OnFloorChanged`, `OnGameStateChanged`.
   - Giao diện thông tin `InfoUIController.cs`: `TopCornerInfo` góc trên-phải (Day N, Floor X, Vị trí hiện tại); Biểu ngữ điện ảnh Souls-like `MidScreenInfo` giới thiệu vùng đất mới khi vừa bước qua cổng (Fade In/Hold 2.2s/Fade Out).
-  - Tự động hóa 1-Click Unity Menu và runtime auto-wire.
+  - Tự động hóa runtime auto-wire khi khởi tạo.
 
 - [x] **GM-02: Cơ chế Tử trận & Hồi sinh tại Chuông Làng (Death & Respawn Loop)**
   - Màn hình tử trận `DeadScreenUIController.cs`: Lắng nghe `Health.onDeath`, chờ 1.2s hoạt cảnh ngã gục, mở chuột, Fade In biểu ngữ `YOU DIED` và nút `BtnRespawn`.
@@ -193,7 +192,7 @@
 - [x] **GM-03: Cơ chế Chiến thắng Tầng & Lựa chọn Đi tiếp / Về Làng (`VictoryPortalUI.cs`, `GameManager.cs`)**
   - Lựa chọn 1 (Trở về Làng): Bảo toàn 100% kho đồ, `AdvanceDay()` (`CurrentDay += 1`), `ResetFloorToTown()` (`CurrentFloor = 1`), nạp `LandScene`.
   - Lựa chọn 2 (Tiến vào Tầng kế): Tính `targetFloor = CurrentFloor + 1`, cập nhật tiến trình `SetFloor(targetFloor)`, tải `DungeonScene` với seed mới và độ sâu mới qua `LoadingScreenManager`.
-  - Master 1-Click Menu cấu hình toàn bộ vòng lặp GM-01 đến GM-03.
+  - Cấu hình hoàn thiện toàn bộ vòng lặp GM-01 đến GM-03 trên Scene và `CoreSystems.prefab`.
 
 ---
 
@@ -238,7 +237,7 @@
   - [`PlayerInteraction.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Player/PlayerInteraction.cs) điều hướng danh sách bằng con lăn chuột (`Mouse Scroll Wheel`) hoặc phím Mũi Tên, hỗ trợ cửa sổ trượt (Sliding Window tối đa 5 dòng) mượt mà.
   - Phản hồi Corner kép: Mục đang chọn (Selected) tự động bật 2 Corner (Background Corner & KeyIcon Corner) và sáng rực (`alpha = 1.0f`); các mục còn lại tắt 2 Corner và làm mờ nhẹ (`alpha = 0.6f`).
   - Phím F (Tap hoặc Hold) chỉ tác động duy nhất lên mục đang được chọn. Nhặt xong món đó danh sách tự động co lại và chuyển sang món kế tiếp.
-  - Bộ công cụ 1-Click Unity Editor ([`InteractionListSetupEditor.cs`](file:///c:/2.tapcodedienloan/Đồ%20án%20tốt%20nghiệp/Infinite%20Labyrinth/Assets/Scripts/Editor/InteractionListSetupEditor.cs)) và cơ chế tự phục hồi Runtime (`InteractionListUI.EnsureInstance()`).
+  - Cấu hình hoàn thiện danh sách tương tác và cơ chế tự phục hồi Runtime (`InteractionListUI.EnsureInstance()`).
 
 - [x] **RPG-06: Cơ Sở Dữ Liệu 49 Vật Phẩm & Đồng Bộ Mô Hình Vũ Khí Nhân Vật (49 Items Database & Visual Sync)**
   - Khởi tạo trọn bộ 49 ScriptableObjects Items chuẩn hóa tiếng Anh:
@@ -248,7 +247,7 @@
     + 6 Dược Phẩm Sinh Tồn (Bình Máu Nhỏ 40 HP, Bình Máu Lớn 100 HP, Tiên Dược Thể Lực, Mật Năng Lượng Spirit, Thuốc Da Sắt +15 DEF, Rượu Cuồng Nộ +15 ATK).
     + 2 Vật phẩm nhiệm vụ & Tiền tệ: Đồng Tiền Vàng (Gold Coin) & Chìa Khóa Boss Hầm Ngục (Dungeon Boss Key).
   - Đồng bộ hóa mô hình kiếm cầm tay (`PlayerWeaponVisualSync.cs`): Gắn trên Player, tự động tìm socket `WeaponSocket`, thay đổi model 3D mượt mà khi đổi kiếm trong túi đồ, vô hiệu hóa collider con tránh lỗi hitbox/VFX chém.
-  - Công cụ 1-Click tạo bộ dữ liệu 49 items và gắn visual sync cho Player.
+  - Khởi tạo hoàn thiện cơ sở dữ liệu 49 items ScriptableObject và gắn visual sync cho Player.
 
 - [x] **RPG-07: Hệ Thống Cửa Hàng Làng Haven (Shop NPCs - Tách 2 Cửa Hàng: Trang Bị & Nhu Yếu Phẩm)** *(ƯU TIÊN SỐ 1 HIỆN TẠI)*
   - [x] **RPG-07A: Kiến trúc Dữ liệu Cửa hàng Đa Năng (`ShopData.cs`, `ShopManager.cs`):**
@@ -274,8 +273,8 @@
       * `EquipmentShop`: Gợi ý `"[F] Mua Trang Bị"`, truyền `EquipmentShopData` mở UI Shop tiêu đề *"TIỆM TRANG BỊ & RÈN BINH"*.
       * `SuppliesShop`: Gợi ý `"[F] Mua Nhu Yếu Phẩm"`, truyền `SuppliesShopData` mở UI Shop tiêu đề *"TIỆM DƯỢC LIỆU & TẠP HÓA"*.
     - Góc máy camera trò chuyện (Dialogue Framing) lia nhẹ tạo chiều sâu điện ảnh.
-  - [x] **RPG-07D: Công Cụ Tự Động Hóa 1-Click Unity Editor & Kiểm Thử Toàn Diện:**
-    - Tool `ShopSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 6. Thiết Lập Shop Làng Haven (1-Click)` tự động liên kết Prefab UI, ShopData và 2 NPC Shop.
+  - [x] **RPG-07D: Cấu Hình Hoàn Thiện & Kiểm Thử Toàn Diện:**
+    - Đã liên kết hoàn thiện Prefab UI, ShopData và 2 NPC Shop trong LandScene.
 
 - [x] **RPG-08: Lò Rèn Haven & Hệ Thống Cường Hóa / Chế Tạo Thần Binh (Blacksmith NPC - Upgrade & Crafting)**
   - [x] **RPG-08A: Kiến trúc Dữ liệu Cường Hóa (+1 đến +5) & Công Thức Chế Tạo (`InventorySlot.cs`, `CraftingRecipe.cs`):**
@@ -307,10 +306,13 @@
   - [x] **RPG-08C: Thiết Lập NPC Thợ Rèn Tại Lò Rèn Làng Haven (`LandScene`):**
     - Gắn `BlacksmithInteractable.cs` vào NPC tại cụm `BlackSmith`: Gợi ý `"[F] Forge & Upgrade Armaments"`, mở giao diện Lò Rèn.
     - Tự động khóa di chuyển, mở chuột và đóng bằng ESC/Tab mượt mà qua CanvasGroup.
-  - [x] **RPG-08D: Game Feel Hoành Tráng, Hào Quang +5 & Tool 1-Click Unity Editor:**
+  - [x] **RPG-08D: Game Feel Hoành Tráng, Hào Quang +5 & Cấu Hình Hoàn Thiện:**
     - Hiệu ứng nháy sáng phồng nhẹ (Punch Scale) khi nâng cấp và rèn thành công.
     - Khi trang bị đạt cấp `+5`, kích hoạt hiệu ứng hào quang vàng kim phát sáng quanh lưỡi kiếm trong game (`PlayerWeaponVisualSync.cs`).
-    - Tool `BlacksmithSetupEditor.cs` với MenuItem: `Infinite Labyrinth -> RPG -> 7. Thiết Lập Lò Rèn Haven (1-Click)` và tích hợp vào Master Dashboard (Ctrl+Alt+D).
+    - Cấu hình hoàn thiện Lò Rèn Haven trên LandScene và ScriptableObjects, bảo toàn 100% dữ liệu tùy chỉnh người dùng.
+    - Chuẩn hóa quy chuẩn **Non-Destructive Tooling & Standalone Build Data Integrity (Fix lỗi Standalone Build)**:
+      + Nâng cấp `BlacksmithSetupEditor.cs`: Bảo tồn 100% dữ liệu tùy chỉnh người dùng (không đè giá vàng, nguyên liệu của `CraftingRecipe` đã tồn tại trên đĩa, không ghi đè cài đặt Prompt/Radius của `BlacksmithInteractable`, merge danh sách thay vì `ClearArray()`).
+      + Khắc phục triệt để lỗi nguyên liệu bị hiện `"Special Material"`, sai rarity (Rare thay vì Epic) và mất Icon trong bản Build: Bổ sung `itemDatabase` serialize cứng toàn bộ 62 Items vào `BlackSmithCanvas.prefab`, nâng cấp hàm `FindItemAssetById` với cơ chế dò tìm đa tầng (Database -> Bag Slots -> Crafting Recipes -> Resources -> AssetDatabase) bảo đảm 100% bản Build độc lập hiển thị chính xác icon, tên cuộn giấy cổ và độ hiếm Epic tím.
 
 - [x] **RPG-09: Cân Bằng & Cập Nhật Ma Trận Rơi Đồ Toàn Diện (Detailed Drop Tables & Balanced Gold Economy)**
   - Mở rộng cơ sở dữ liệu lên **51 Items** với 2 vật phẩm đá quý bán lấy Vàng:
@@ -320,7 +322,7 @@
     + 3 Thùng gỗ đập được: Thùng nhỏ (50% Vàng 1-3, 25% Bình máu nhỏ), Thùng vừa (70% Vàng 3-7, 35% Máu/Thể lực, 15% Đá cường hóa), Thùng lớn (100% Vàng 8-15, 40% Máu lớn, 25% 1-2 Đá cường hóa, 5% Thiết kiếm rỉ).
     + 4 Quái Skeleton: Minion (65% Vàng 1-3, 30% Mảnh xương, **6% Monster Gem**), Warrior (80% Vàng 3-6, 45% Mảnh xương, 20% Huy hiệu, 10% Đá cường hóa, **8% Monster Gem**), Rogue (80% Vàng 4-7, 40% Mũi tên đen, 20% Bình máu, 12% Tiên dược, **8% Monster Gem**), Mage (90% Vàng 7-12, 50% Bụi ma pháp, 25% Đá cường hóa, 8% Giấy da cổ, **12% Monster Gem**).
     + 3 Cấp độ Rương: Rương thường (100% Vàng 20-40, 100% Máu nhỏ, 40% Đá cường hóa, 25% Đồ Uncommon), Rương hiếm (100% Vàng 50-90, 100% Máu lớn, 100% 2-3 Đá cường hóa, 50% Vũ khí Rare, 30% Thiết giáp sắt), Rương Boss Bục Đá 12m (100% Vàng 150-250, **100% 1 Boss Gem Epic**, 100% Lõi Băng Ice Core, 100% 2-3 Mảnh Cổ Tự, 100% 3-5 Đá Cường Hóa & 1 Tinh Thể Hoàn Mỹ, 100% 3 Máu lớn & 2 Năng lượng, 65% Đồ Epic/Legendary cực phẩm).
-  - Tích hợp công cụ 1-Click tự động phát hiện và cập nhật toàn bộ Prefabs lẫn Scene instances (`LootTableSetupEditor.cs`: MenuItem `Infinite Labyrinth -> RPG -> 2. Cấu Hình Ma Trận Rơi Đồ (Full Loot Drop Tables)` và Master Dashboard Ctrl+Alt+D).
+  - Cập nhật và lưu trực tiếp Ma Trận Rơi Đồ vào toàn bộ 10 Prefabs lẫn Scene instances.
 
 - [x] **RPG-10: Nâng Cấp Hệ Thống Chỉ Số Mở Rộng, Cơ Chế Chí Mạng, Hút Máu & Hiển Thị Icon Bạo Kích**
   - **Mở rộng 7 chỉ số chiến đấu & tiện ích:** Bổ sung `CritRate`, `CritDamage`, `Lifesteal`, `SpiritCostReduction`, `StaminaCostReduction`, `SpiritGainBonus`, `MoveSpeedBonus` vào `ItemData.cs` và tổng hợp trong `InventoryManager.cs`.
@@ -590,7 +592,14 @@
     + Khi vào cự ly chuẩn (3.5m - 8.0m): Mở khóa di chuyển ngang vờn quanh đối thủ chuẩn phong cách Souls-like.
     + Khi áp sát quá gần (< 3.0m): Khóa tiến, lùi lại hoặc ra đòn cận chiến.
   - **Bảo Toàn Monolithic Controller Thống Nhất (`IceGolemController.cs`):** Duy trì cấu trúc file nguyên khối ổn định tuyệt đối 100% Serialization trong Unity Inspector, bảo toàn toàn bộ VFX Prefabs và tham chiếu xương.
-  - Menu 1-Click Unity Editor: Cấu hình Prefab Boss, Nối dây Animator và Dọn dẹp Scene.
+  - **Phản Hồi Sát Thương Nháy Trắng Chuẩn Souls-like & Chống Xuyên Cửa Đấu Trường:**
+    + **Nháy trắng phát quang (Solid White Flash):** Đổi màu chớp nhận đòn từ đỏ sang trắng tinh khiết (hitFlashColor = Color.white), ghi đè Texture2D.whiteTexture (_BaseMap, _MainTex) và kích hoạt _EmissionColor cường độ 2.5 trực tiếp trên GPU.
+    + **Khắc phục lỗi đòn Tung tới xuyên Cửa Đại Môn:** Tích hợp ClampToArenaSafeBounds (khóa cứng điểm đáp và hành lang di chuyển cách Cửa Đại Môn $\ge 2.5), nâng cấp kiểm tra va chạm bằng Physics.SphereCast 1.2m dày dặn thay cho Raycast mỏng, bổ sung Continuous Collision Sweep giữa các frame bay trên không của JumpAttack, và kích hoạt cơ chế tự cứu Failsafe EnforceArenaContainmentFailsafe trong LateUpdate nếu Boss bị glitch văng ra ngoài khi cửa đã đóng.
+  - **Bảo Toàn Thông Số Inspector & Non-Destructive Tooling (`IceGolemSetupEditor.cs`):**
+    + Gỡ bỏ hoàn toàn `[InitializeOnLoadMethod]` và phương thức tự chạy ngầm `AutoCheckAndSetup()`, chấm dứt triệt để lỗi reset toàn bộ Cooldowns về 15s và đè chỉ số người dùng mỗi khi Unity reload/compile.
+    + Chuyển đổi `ExecuteSetup()` sang mô hình Safe-Guard Non-Destructive: chỉ bổ sung component, xương và VFX nếu bị null; bảo lưu 100% các biến Cooldown, Damage, Range, Pacing, Speed mà người dùng đã cân chỉnh trong Inspector.
+    + **Đồng Bộ Chu Kỳ Hoạt Ảnh RunAttack Với Quãng Đường Tùy Chỉnh (30m):** Loại bỏ transition tự ngắt `ExitTime = 0.9` cứng trong `BossController.controller`, cho phép hoạt ảnh chạy lặp vô hạn (Looping Charge) bám theo toàn bộ hành trình lao tới của Boss; kết thúc bằng `CrossFadeInFixedTime("Idle", 0.2f)` ngay khi đạt đủ cự ly hoặc va chạm vật cản, triệt tiêu hoàn toàn hiện tượng Boss bị khựng động tác chạy và trượt patin về đích.
+  - Cấu hình hoàn thiện Prefab Boss, Nối dây Animator và bảo vệ 100% dữ liệu tùy chỉnh trong Inspector.
 
 - [x] **BOSS-02: Chuẩn Hóa Khung Xương, Vật Lý Áo Choàng & Vũ Khí Trùm Red Ignis (`Boss_RedIgnis.prefab`)**
   - Nâng cấp toàn diện vật lý tóc đuôi mũ (cố định đốt gốc `Bone`, rũ mượt `Bone.002..Bone.006`, `hatTailForceScale = 0.22`) & áo choàng 3 dải Trái/Giữa/Phải (`14 SpringBones` dùng `stiffnessForce` thấp `5.0→1.5` chống xoắn vai, tắt `lengthLimitTargets`/`enableAngleLimits`, **16 anatomical colliders** gồm 4 Sphere + 9 Capsule + 3 Back Panel bù scale chống xuyên người); `RedIgnisClothMotion.cs` bước cố định `60Hz`, chống lộn ngược (`ClampUpwardDrape`), xử lý va chạm đa điểm dọc xương/vạt lá (`EnforcePostStepSegmentCollisions`), hãm rung khi xoay/đi ngang (`ApplyDynamicTurnDamping`), tạo dáng xòe nhẹ chữ A (`capeHemFlare`, `wingSpreadStrength = 1.65f`), đồng bộ nhịp bước `WalkSpeed` trên 4 state `Walk*RI`, và gắn đủ 4 `[Header]` + 17 `[Tooltip]` tiếng Việt trên Inspector.
@@ -605,7 +614,7 @@
   - Tham số tầm bay & tốc độ chỉnh trực tiếp trên Inspector cho chiêu 1, 2, 3: `attackSlashMaxDistance` (18m) & `horizontalSlashMaxDistance` (16m) giới hạn tầm bay thực tế qua `RedIgnisSlashProjectile.cs` (`maxDistance`); JumpAttack bỏ sàn cứng 25m và hỗ trợ `jumpLeapDistance` (25m), `jumpStopOffset` (1.3m), `jumpLeapSpeed` (12m/s) + `jumpAttackLeapDuration` (0.85s) giúp Boss bay chậm, dễ quan sát né và đáp sát mặt Player.
   - Hệ thống VFX độc lập `IgnisDo/VFX/`: Script đạn `RedIgnisSlashProjectile.cs` quét raycast liên tục chống xuyên tường và tự hủy khi chạm giới hạn `maxDistance`, không can thiệp thư mục VFX gốc.
   - Hệ thống Scene View Gizmos (`OnDrawGizmosSelected` & `DrawGroundCircle`): Vẽ đường ngắm Player, quỹ đạo/tầm tối đa sóng kiếm 1 & 2, tầm nhảy tối đa & điểm đáp + vòng nổ AoE JumpAttack, và quãng lướt + hitbox 4 nhát ComboAttack trực quan theo thông số Inspector.
-  - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Tool 1-Click cấu hình Prefab và Animator.
+  - Animator Controller chuẩn mực đặt `IdleRI` làm Entry; Cấu hình hoàn thiện Prefab và Animator.
 
 - [x] **BOSS-04: Hệ Thống Vệt Kiếm IgnisSwordTrail.cs, Chuẩn Hóa Combo 4 Nhát & Cơ Chế Gồng Kiếm Lửa Phase 2** *(HOÀN THÀNH)*
   - **Hệ Thống Vệt Kiếm Độc Quyền Trực Tiếp Trên Kiếm (IgnisSwordTrail.cs):**
@@ -665,8 +674,8 @@
     - **Thuật toán BGM Shuffle & Khoảng Lặng (Silence Gap 5-10s):** Chọn ngẫu nhiên bài tiếp theo không trùng bài trước, dừng nghỉ 5-10s giữa hai bài thám hiểm chống mỏi thính giác.
     - **Hệ thống Fade Out giữa bài & Dual Crossfade:** Coroutine nội suy âm lượng bằng `Time.unscaledDeltaTime` (độc lập với Hitlag/Pause), chuyển đổi êm dịu giữa nhạc Khám phá, Chiến đấu và Trùm.
     - **Bể Âm Thanh SFX Pools:** 8 kênh 2D SFX (UI, Grunts, Stamina) và 12 kênh 3D Spatial Audio (xa nghe nhỏ, gần nghe to, linear rolloff 2-25m).
-    - **Bộ nạp 40+ AudioClips tự động 1-Click:** `AudioSetupEditor.cs` tự động quét thư mục `Assets/Audio/` nạp toàn bộ BGM, đòn chém, giọng kêu, quái vật, môi trường, UI và đóng gói thành Prefab tại `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
-    - Tích hợp nút 1-Click vào Master Dashboard (`Ctrl+Alt+D`).
+    - **Đóng gói 40+ AudioClips:** Toàn bộ BGM, đòn chém, giọng kêu, quái vật, môi trường, UI đã được nạp và đóng gói thành Prefab tại `Assets/Prefabs/Audio/AudioManager.prefab` và `Assets/Resources/AudioManager.prefab`.
+    - Hỗ trợ Custom Inspector `AudioManagerEditor.cs` với 40+ thanh trượt Live Tuning.
   - [x] **POL-02B: Tích hợp Combat BGM theo quái Aggro & Fade Out giữa bài (`EnemyAIBase.cs`, `AudioManager.cs`):**
     - **Cơ chế Báo cáo Aggro Tự Động (`EnemyAIBase.CheckAndReportAggro`):** Mỗi khi quái vật Skeleton chuyển sang trạng thái `Chase`, `Circling` hoặc `Attack` $\to$ tự động báo cáo trạng thái aggro lên `AudioManager.ReportEnemyAggro(this, true)`.
     - **Quản lý Tập Hợp Quái Aggro (`activeAggroEnemies`):** Con quái đầu tiên phát hiện người chơi $\to$ kích hoạt chuyển sang Combat BGM ngẫu nhiên. Khi quái tử trận (`OnDeath`), bị tiêu biến (`OnDisable`), hoặc ngủ đông (`SetHibernation`) $\to$ tự động hủy aggro.
@@ -713,9 +722,18 @@
       * `IdleWarmup` (Idle Action 3): `PlayIdleWarmupSound(int index = 0)` (Warmup1..6).
       * `IdleYawn` (Idle Action 4): `PlayIdleStretchingSound()` (`Streching.mp3`).
       * Cung cấp cả hàm có tham số `intParameter` và hàm không tham số trực quan (`PlayIdleWarmup1()`..`PlayIdleWarmup6()`, `PlayIdleChecking1()`..`PlayIdleChecking5()`, `PlayIdleHums1()`, `PlayIdleHums2()`).
-    - **Đồng Bộ Dữ Liệu 1-Click (`AudioSetupEditor.cs`):** Tự động liên kết toàn bộ AudioClips mới vào `AudioManager.prefab` và đồng bộ sang `CoreSystems.prefab` trong `Assets/Prefabs/Core/` và `Assets/Resources/`.
+    - **Đồng Bộ Dữ Liệu Âm Thanh:** Đã liên kết toàn bộ AudioClips mới vào `AudioManager.prefab` và đồng bộ sang `CoreSystems.prefab` trong `Assets/Prefabs/Core/` và `Assets/Resources/`.
     - **Tinh Chỉnh & Hoàn Thiện Âm Thanh (Polish & Spatial Audio Fixes):**
-      * *Đồng bộ cấu hình mặc định AudioManager & Editor 1-Click:* Chuẩn hóa Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` cố định 2 âm thanh (`Slash1`, `Slash2`). Cập nhật `AudioSetupEditor.cs` lưu giữ chính xác các giá trị này khi bấm 1-Click setup mà không bị ghi đè.
+      * *Phân Biệt Âm Thanh Đi Bộ (Walk) và Chạy (Run) Toàn Diện (`AudioManager.cs`, `PlayerController.cs`):*
+        + **Tách biệt Clip âm thanh:** Tách mảng âm thanh đi bộ riêng (`footstepsDirtWalk`, `footstepsRockWalk`) từ thư mục `_Walk` (bước êm, tiếp đất nhẹ nhàng) và mảng chạy (`footstepsDirt`, `footstepsRock`) từ `_Run` (bước dậm dứt khoát, lực nảy mạnh).
+        + **Cân bằng Âm lượng (Volume Scale):** Bổ sung thanh trượt `volPlayerWalkRatio` (mặc định `0.55` = 55% âm lượng chạy), cho phép đi bộ êm ái, không lấn át không gian âm thanh xung quanh.
+        + **Biến điệu Tần số (Pitch Modulation):** Đi bộ áp dụng Pitch trầm ấm (`0.88 - 0.94`), chạy áp dụng Pitch đanh giòn (`0.98 - 1.06`). Nhờ đó, dù nhịp bước chân (`0.32s` vs `0.30s`) rất sát nhau theo animation, người chơi vẫn phân biệt ngay lập tức giữa đi bộ và chạy.
+        + **Tích hợp Inspector Live Tuning:** Thêm thanh trượt `Tỷ Lệ Âm Đi Bộ / Chạy (Walk Ratio)` vào Custom Inspector `AudioManagerEditor.cs`.
+      * *Bảng Cân Bằng Âm Lượng Toàn Diện (Sound Balance Matrix & Custom Editor):* Bổ sung 40+ thanh trượt điều chỉnh âm lượng và nhịp độ riêng biệt trong `AudioManager.cs` bao quát toàn bộ 6 nhóm âm thanh: Combat Người Chơi, Kỹ Năng, Bước Chân & Động Tác Idle, Quái Vật Skeleton, Môi Trường & Hầm Ngục, và Giao Diện UI. Xây dựng Custom Inspector `AudioManagerEditor.cs` hỗ trợ **Live Tuning thời gian thực lúc Play Mode**, kèm nút **"Lưu Thiết Lập Vào Prefabs"** để lưu vĩnh viễn các tinh chỉnh.
+      * *Âm Thanh Bước Chân Quái Vật Trên Đá (`EnemyAIBase.cs`, `AudioManager.cs`):* Tích hợp 6 âm thanh bước chân trên đá riêng biệt (`Footsteps_Rock_Walk_01..06`, khác biệt với bước chân Player) vào `EnemyAIBase.cs` phát 3D Spatial Audio tự động cho cả 4 quái Skeleton (Warrior, Minion, Rogue, Mage) khi di chuyển tuần tra hoặc truy đuổi.
+      * *Tùy Chỉnh Nhịp Độ Bước Chân Player & Quái (Footstep Cadence):* Bổ sung các thanh trượt kiểm soát khoảng cách giữa 2 bước chân khi đi bộ/chạy cho Player (`playerWalkFootstepInterval`, `playerRunFootstepInterval`) và Quái vật (`monsterWalkFootstepInterval`, `monsterRunFootstepInterval`) trên `AudioManager` và `PlayerController.cs`. Nhịp bước quái nội suy mượt mà theo vận tốc thực tế (đi bộ chậm ~0.65s, chạy áp sát ~0.42s).
+      * *Đồng Bộ Âm Lượng Thời Gian Thực Cho Đuốc & Cổng Dịch Chuyển (`SpatialTorchAudio.cs`, `PortalController.cs`):* Bổ sung `volTorch` vào Ma Trận Âm Lượng; kết nối `PortalController` và `SpatialTorchAudio` liên tục lắng nghe `VolPortal` và `VolTorch` từ `AudioManager` để khi kéo thanh trượt trong Play Mode, âm lượng vòng lặp 3D Loop của Cổng và Đuốc thay đổi ngay lập tức.
+      * *Đồng bộ cấu hình mặc định AudioManager:* Chuẩn hóa Master Volume = 1.0, BGM Volume = 0.1, SFX Volume = 0.5, số lượng đòn chém cơ bản `slashClips` cố định 2 âm thanh (`Slash1`, `Slash2`). Cân chỉnh trực tiếp qua Inspector của `AudioManager.prefab`.
       * *Hợp nhất âm thanh UI Click vào `UIInteract.wav`:* Loại bỏ biến `uiClickClip` thừa trong `AudioManager.cs`, cập nhật các controller (`BlacksmithUIController`, `ShopUIController`, `InventoryManager`, `UIButtonAudio`) đồng bộ sử dụng `PlayUIInteract()`.
       * *Âm thanh vầng hào quang mở rương (`ChestAura.wav`):* Tích hợp vào `ChestInteractable.cs` và `AudioManager.PlayChestAura()` phát đồng thời cùng tiếng mở rương `ChestOpen.wav`. Phân cấp âm lượng theo Tier: Rương Boss (`1.0`), Rương Hiếm (`0.70`), Rương Thường (`0.35`). Tự động nhận diện cấp rương theo tên hoặc cấu hình Inspector `ChestTier`.
       * *Loại bỏ âm giọng hú khi xuất chiêu:* Xóa bỏ lệnh gọi `PlayPlayerAttackVoice` trong `PlaySkillESlash()`, `PlaySkillQSlash()`, `OnUltSlashRelease()` để nhường chỗ hoàn toàn cho âm gồng tụ lực và âm va chạm uy lực.
@@ -744,7 +762,14 @@
     + 🌀 Cổng Dịch Chuyển Dungeon (`Portal.png` - $X=235.17, Z=98.45$).
   - Vị trí & Hướng nhìn Người chơi: Icon `Player_Icon.png` bám sát tọa độ thế giới 3D và xoay mượt mà theo góc quay nhân vật thời gian thực.
   - Trải nghiệm Pan & Zoom hoàn hảo: Lăn chuột zoom ($0.6\times \dots 3.5\times$), kéo chuột trái Pan, tự động căn giữa Người chơi (`CenterMapOnPlayer`) khi vừa mở.
-  - Cơ chế Tự Phục Hồi (`EnsureInstance()` & `[RuntimeInitializeOnLoadMethod]`): Tự động nạp sprite, dựng khung UI và liên kết trong Runtime mà không cần setup thủ công. Tích hợp Tool 1-Click `VillageMapSetupEditor.cs` và Master Dashboard (`Ctrl+Alt+D`).
+  - Cơ chế Tự Phục Hồi (`EnsureInstance()` & `[RuntimeInitializeOnLoadMethod]`): Tự động nạp sprite, dựng khung UI và liên kết trong Runtime mà không cần setup thủ công.
+
+- [x] **POL-05: Hệ Thống Tự Do Cử Động 2 Tay & Thu/Phóng Kiếm Cho Các Động Tác Idle Player (`PlayerController.cs`, `PlayerCombat.cs`, `PlayerWeaponVisualSync.cs`, `RHandAdjust.cs`)**
+  - **Bảng Cấu Hình Danh Sách Trong Inspector (`IdleActionConfig`):** Cung cấp danh sách trực quan trên `PlayerController.cs`, cho phép người phát triển chủ động tích chọn/bỏ chọn tính năng thu kiếm & giải phóng tay phải (`hideWeaponAndFreeHands`) cho từng animation Idle cụ thể (vươn vai, khởi động...). Tương thích ngược tự động qua `OnValidate()` và `Awake()`.
+  - **Hiệu Ứng Thu Nhỏ & Búng Nở Kiếm (Elastic Shrink & Pop-in):**
+    + *Pha chuẩn bị Idle:* Kiếm thu nhỏ dần về 0 theo đường cong mượt mà trong 0.22s (`weaponShrinkDuration`), đồng thời hạ Layer tay phải (`Weapon_Layer`) và `RHandAdjust` về 0 để cánh tay xuôi tự nhiên trước khi phát animation clip.
+    + *Pha kết thúc Idle:* Bật lại Layer tay phải, kiếm búng nở vọt ra tới 1.12x rồi nảy nhẹ về 1.0x trong 0.25s (`weaponGrowDuration` qua `EaseOutBack`) tạo cảm giác triệu hồi vũ khí cực kỳ đã mắt.
+  - **Phản Xạ Chiến Đấu Tức Thì (Zero-Delay Responsiveness):** Nếu người chơi bấm phím bất kỳ (WASD, Chuột Trái tấn công, Chuột Phải đỡ đòn, Shift né, Space nhảy...) trong khi đang thu kiếm hoặc đang diễn hoạt Idle, hệ thống lập tức ngắt Coroutine và Snap toàn bộ Layer tay phải + Scale kiếm về 100% trong 1 frame, bảo đảm 0% input lag.
 
 ---
 
@@ -768,16 +793,13 @@
   - **Cửa Sổ Sáng Tạo (Creative Mode - Toàn bộ 51 Items Game):** Ô tìm kiếm thời gian thực (`TMP_InputField`), 6 nút lọc phân loại nhanh (`ALL`, `WEAPON`, `ARMOR`, `POTION`, `MATERIAL`, `KEY/GOLD`), danh sách ScrollView hiển thị toàn bộ 51 items (bao gồm cả `MonsterGem` và `BossGem` mới thêm) kèm Icon, Tên theo màu Rarity, chỉ số, nút `[ +1 ]` và `[ +Max ]` nhận đồ thẳng vào túi.
   - Mở/đóng đồng bộ với Mini Debug Overlay góc trên-phải (FPS, tọa độ, location, cheat badges), Toast Notifications phản hồi tức thì.
 
-- [x] **ADM-04: Công Cụ Tự Động Hóa 1-Click Unity Editor & Đóng Gói Prefab**
-  - MenuItem: `Infinite Labyrinth -> Admin -> 1. Setup Admin Cheat Console (Hotkey ~)`.
+- [x] **ADM-04: Đóng Gói Hoàn Thiện Prefab Admin Cheat Console**
   - Tự động dựng toàn bộ Canvas UI, cài đặt EventSystem, nối dây 100% nút bấm, tự động nạp danh mục 51 items và xuất thành Prefab tái sử dụng: `Assets/Prefabs/Admin/AdminCheatCanvas.prefab`.
 
-- [x] **DEV-01: Tái Cấu Trúc Toàn Diện Hệ Thống Editor & Master Control Center (`ProjectDashboardEditor.cs`)**
-  - Gom toàn bộ công cụ phát triển, setup 1-click vào một cửa sổ trung tâm duy nhất: `ProjectDashboardEditor` (phím tắt `Ctrl + Alt + D` hoặc menu `Infinite Labyrinth -> 🚀 Master Control Center (Dashboard)`).
-  - Phân chia 5 Tab trực quan: Combat & VFX, Boss Encounters (Ice Golem & Red Ignis), RPG & Haven Hub, Game Loop & UI, và Optimization & Admin.
-  - Tích hợp thanh Scene Quick Switch chuyển đổi nhanh giữa `LandScene` và `DungeonScene`.
-  - Triệt tiêu 100% menu rác, trùng lặp trên thanh công cụ Unity: Xóa bỏ menu tách rời `Boss/`, xóa bỏ menu `Tools/Infinite Labyrinth` và `Tools/RedIgnis`.
-  - Hợp nhất cấu trúc thư mục: Xóa bỏ `Assets/Editor/` cũ, chuyển các script Red Ignis về `Assets/Scripts/Editor/`, chuyển các script sửa lỗi một lần (one-off) đã hoàn thành vào `Assets/Scripts/Editor/Archive/`.
+- [x] **DEV-01: Tái Cấu Trúc Toàn Diện Hệ Thống Editor & Master Dashboard (`ProjectDashboardEditor.cs`)**
+  - Bảng điều khiển trung tâm: `ProjectDashboardEditor` (phím tắt `Ctrl + Alt + D` hoặc menu `Infinite Labyrinth -> 🚀 Master Control Center (Dashboard)`).
+  - Thiết kế chuẩn Non-Destructive: Điều hướng Scene nhanh (`LandScene`, `DungeonScene`), truy cập công cụ an toàn, bảo vệ 100% dữ liệu Inspector do người dùng cân chỉnh mà không có nút setup nào gây reset dữ liệu.
+  - Triệt tiêu 100% menu rác, trùng lặp trên thanh công cụ Unity: Lưu trữ toàn bộ các script setup cũ vào thư mục `Assets/Scripts/Editor/Archive/` và vô hiệu hóa MenuItems.
 
 ---
 

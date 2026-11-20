@@ -19,6 +19,9 @@
 - **CẤM TUYỆT ĐỐI tự ý viết script tự động hóa Editor (`[MenuItem]`, Python, v.v.):** 
   - KHÔNG TỰ TIỆN tạo các script Editor (thêm nút trên thanh Menu Bar/taskbar) hoặc script automation để tự động gán component / setup Scene.
   - Chỉ được viết script Editor khi người dùng YÊU CẦU ĐÍCH DANH bằng câu lệnh: *"Hãy viết Editor script để làm việc này"*.
+- **CẤM TUYỆT ĐỐI gọi chạy lại các script setup đã lưu trữ (`Assets/Scripts/Editor/Archive/`):**
+  - Toàn bộ công cụ setup 1-Click cũ đã được chuyển vào `Assets/Scripts/Editor/Archive/` và vô hiệu hóa MenuItem.
+  - Tuyệt đối KHÔNG tự ý gọi lại các hàm setup cũ (qua `execute_menu_item`, `execute_code`, hay phục hồi MenuItem) vì sẽ đè bẹp và reset toàn bộ các giá trị Inspector (tọa độ UI, damage, cooldown, offset...) mà người dùng đã kỳ công cân chỉnh bằng tay.
 - **BẮT BUỘC HƯỚNG DẪN THAO TÁC BẰNG TAY (UI Checklist):**
   - Mọi thao tác cấu hình Scene, Prefab, gán Component, kéo thả Reference hoặc tinh chỉnh Inspector, AI **PHẢI** xuất ra hướng dẫn từng bước rõ ràng để người dùng tự thao tác trong giao diện Unity Editor.
   - Định dạng hướng dẫn chuẩn:

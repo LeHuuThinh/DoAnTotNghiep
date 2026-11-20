@@ -79,7 +79,7 @@ namespace InfiniteLabyrinth.Editor
       }
     }
 
-    [MenuItem("Infinite Labyrinth/Inventory/1. Kiểm Tra & Cấu Hình TabBar Animation (1-Click)", priority = 100)]
+    // [MenuItem("Infinite Labyrinth/Inventory/1. Kiểm Tra & Cấu Hình TabBar Animation (1-Click)", priority = 100)] (Archived)
     public static void SetupTabBarAnimation()
     {
       InventoryUIController controller = Object.FindAnyObjectByType<InventoryUIController>(FindObjectsInactive.Include);
@@ -117,7 +117,7 @@ namespace InfiniteLabyrinth.Editor
       Debug.Log("<color=green>[InventoryUIControllerEditor]</color> Đã cấu hình và kết nối hoàn tất hiệu ứng phồng nút TabBar cho Inventory!");
     }
 
-    [MenuItem("Infinite Labyrinth/Inventory/2. Cấu Hình & Kết Nối Usable Quick Slot (1-Click)", priority = 101)]
+    // [MenuItem("Infinite Labyrinth/Inventory/2. Cấu Hình & Kết Nối Usable Quick Slot (1-Click)", priority = 101)] (Archived)
     public static void SetupUsableSlotSystem()
     {
       string[] guids = AssetDatabase.FindAssets("Canvas t:Prefab");

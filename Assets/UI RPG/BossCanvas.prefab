@@ -1006,14 +1006,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d96f3cbbff2e40c458d0e2bf8e185d26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.BossHUDController
-  bossHPRoot: {fileID: 0}
-  hpFillImage: {fileID: 0}
-  divide50Marker: {fileID: 0}
-  hpBorderImage: {fileID: 0}
-  nameGroupRoot: {fileID: 0}
-  bannerImage: {fileID: 0}
-  bossNameText: {fileID: 0}
+  bossHPRoot: {fileID: 5420128438043626251}
+  hpFillImage: {fileID: 9138017678527707361}
+  divide50Marker: {fileID: 6226626881604463775}
+  hpBorderImage: {fileID: 2991128713350960838}
+  nameGroupRoot: {fileID: 5607353414355676088}
+  bannerImage: {fileID: 2993448890158690756}
+  bossNameText: {fileID: 6496573788354545458}
   frostHpColor: {r: 0.25, g: 0.82, b: 1, a: 1}
+  bleedIcon: {fileID: 7027639900737756151}
   bannerIntroAnchoredPos: {x: 420, y: -540}
   bannerIntroScale: 0.95
   bannerFadeInDuration: 0.6

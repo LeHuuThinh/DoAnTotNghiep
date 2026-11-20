@@ -809,8 +809,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -60.834, y: -149.42}
-  m_SizeDelta: {x: 60.468, y: 70.039}
+  m_AnchoredPosition: {x: -70.224, y: -149.42}
+  m_SizeDelta: {x: 79.248, y: 70.039}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9120342331197587759
 CanvasRenderer:
@@ -5056,8 +5056,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -60.834, y: -149.19}
-  m_SizeDelta: {x: 60.468, y: 69.572}
+  m_AnchoredPosition: {x: -70.224, y: -149.19}
+  m_SizeDelta: {x: 79.248, y: 69.572}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6637971426907767947
 CanvasRenderer:
@@ -5783,7 +5783,6 @@ RectTransform:
   - {fileID: 7678167964572896201}
   - {fileID: 339938793144533141}
   - {fileID: 1344703557272918511}
-  - {fileID: 4701975116934863763}
   - {fileID: 5241166565658847562}
   m_Father: {fileID: 6414408741016281250}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -29462,6 +29461,7 @@ RectTransform:
   - {fileID: 7712548784135971767}
   - {fileID: 7301804933721877089}
   - {fileID: 3879802168674474792}
+  - {fileID: 4701975116934863763}
   m_Father: {fileID: 8845966392953865087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
@@ -30135,11 +30135,11 @@ RectTransform:
   m_Children:
   - {fileID: 228750327262580864}
   - {fileID: 2282554506370494051}
-  m_Father: {fileID: 8845966392953865087}
+  m_Father: {fileID: 1344703557272918511}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 257.07806, y: 57.05002}
+  m_AnchoredPosition: {x: 257, y: -170.94998}
   m_SizeDelta: {x: 398.9503, y: 78}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5366991683875698090
@@ -45064,58 +45064,130 @@ MonoBehaviour:
   afterUpgradeLevelText: {fileID: 7214588740602417127}
   afterItemStats: {fileID: 0}
   beforeWindowUI:
-    windowRoot: {fileID: 0}
-    itemIcon: {fileID: 0}
-    rarityBg: {fileID: 0}
-    rarityBar: {fileID: 0}
-    itemName: {fileID: 0}
-    upgradeLevelText: {fileID: 0}
-    mainStatsRoot: {fileID: 0}
-    mainStatLabel: {fileID: 0}
-    mainStatValue: {fileID: 0}
-    subStatsDivider: {fileID: 0}
-    subStatsLayoutRoot: {fileID: 0}
-    subStatRows: []
-    itemEnchantmentContainer: {fileID: 0}
-    enchantmentDivider: {fileID: 0}
-    enchantmentLayoutRoot: {fileID: 0}
-    enchantRows: []
+    windowRoot: {fileID: 2829902217423346612}
+    itemIcon: {fileID: 2121084187459254595}
+    rarityBg: {fileID: 6143881777566281975}
+    rarityBar: {fileID: 1465458370556650557}
+    itemName: {fileID: 8737478924992229821}
+    upgradeLevelText: {fileID: 3285584273835962633}
+    mainStatsRoot: {fileID: 7570483952916316673}
+    mainStatLabel: {fileID: 7524662716280006646}
+    mainStatValue: {fileID: 7249789099589286208}
+    subStatsDivider: {fileID: 4573001559468919257}
+    subStatsLayoutRoot: {fileID: 1561318490754314501}
+    subStatRows:
+    - root: {fileID: 5568005554712115193}
+      labelText: {fileID: 2561260024713897564}
+      valueText: {fileID: 2948448919945711284}
+    - root: {fileID: 2785533742191054177}
+      labelText: {fileID: 5481405448094389153}
+      valueText: {fileID: 3991981397081441701}
+    - root: {fileID: 2740654610530370774}
+      labelText: {fileID: 2885195341594943628}
+      valueText: {fileID: 7327598820945709130}
+    - root: {fileID: 5158361929908242475}
+      labelText: {fileID: 1729266744798090538}
+      valueText: {fileID: 1153467535223787386}
+    itemEnchantmentContainer: {fileID: 5468421861612811500}
+    enchantmentDivider: {fileID: 6515844033549795800}
+    enchantmentLayoutRoot: {fileID: 4277439872755631880}
+    enchantRows:
+    - root: {fileID: 1671021746782893509}
+      iconActive: {fileID: 8099773601289981081}
+      iconUnactive: {fileID: 4244450694796818188}
+      text: {fileID: 3275734961017415519}
+    - root: {fileID: 6341869092062696794}
+      iconActive: {fileID: 1790595194102163677}
+      iconUnactive: {fileID: 6025720595186364310}
+      text: {fileID: 3509698565148384196}
+    - root: {fileID: 5378875490577339533}
+      iconActive: {fileID: 7255093814835715547}
+      iconUnactive: {fileID: 8718095675724742697}
+      text: {fileID: 8538282132717299870}
     fallbackItemStats: {fileID: 0}
   afterWindowUI:
-    windowRoot: {fileID: 0}
-    itemIcon: {fileID: 0}
-    rarityBg: {fileID: 0}
-    rarityBar: {fileID: 0}
-    itemName: {fileID: 0}
-    upgradeLevelText: {fileID: 0}
-    mainStatsRoot: {fileID: 0}
-    mainStatLabel: {fileID: 0}
-    mainStatValue: {fileID: 0}
-    subStatsDivider: {fileID: 0}
-    subStatsLayoutRoot: {fileID: 0}
-    subStatRows: []
-    itemEnchantmentContainer: {fileID: 0}
-    enchantmentDivider: {fileID: 0}
-    enchantmentLayoutRoot: {fileID: 0}
-    enchantRows: []
+    windowRoot: {fileID: 7712548784135971767}
+    itemIcon: {fileID: 7401450526083292707}
+    rarityBg: {fileID: 1694443014893845961}
+    rarityBar: {fileID: 4657412478885933194}
+    itemName: {fileID: 1694474129169469950}
+    upgradeLevelText: {fileID: 7214588740602417127}
+    mainStatsRoot: {fileID: 8573082725051822519}
+    mainStatLabel: {fileID: 7993524575357431563}
+    mainStatValue: {fileID: 5445762309092359625}
+    subStatsDivider: {fileID: 2725831742726677954}
+    subStatsLayoutRoot: {fileID: 6522378988565730925}
+    subStatRows:
+    - root: {fileID: 9037640136204650988}
+      labelText: {fileID: 4500884263123778575}
+      valueText: {fileID: 5325921610078339312}
+    - root: {fileID: 4649321178225432129}
+      labelText: {fileID: 5344337490513519445}
+      valueText: {fileID: 5990323350394660453}
+    - root: {fileID: 6432408025945191254}
+      labelText: {fileID: 8439965730716966739}
+      valueText: {fileID: 7062055837014882608}
+    - root: {fileID: 3611184582931822229}
+      labelText: {fileID: 4150391504869530337}
+      valueText: {fileID: 2838343369246551685}
+    itemEnchantmentContainer: {fileID: 7570674788092676538}
+    enchantmentDivider: {fileID: 7584363251203561099}
+    enchantmentLayoutRoot: {fileID: 8312853646811797029}
+    enchantRows:
+    - root: {fileID: 4034392563220972621}
+      iconActive: {fileID: 3603160235373788190}
+      iconUnactive: {fileID: 1906708458856101849}
+      text: {fileID: 3252979124011708488}
+    - root: {fileID: 6342079527896517088}
+      iconActive: {fileID: 6345965996869132646}
+      iconUnactive: {fileID: 4915354507244265257}
+      text: {fileID: 3982468187482411796}
+    - root: {fileID: 3382426696100114499}
+      iconActive: {fileID: 5689825816318474391}
+      iconUnactive: {fileID: 150560891498527935}
+      text: {fileID: 8906663699225367665}
     fallbackItemStats: {fileID: 0}
   forgeWindowUI:
-    windowRoot: {fileID: 0}
-    itemIcon: {fileID: 0}
-    rarityBg: {fileID: 0}
-    rarityBar: {fileID: 0}
-    itemName: {fileID: 0}
+    windowRoot: {fileID: 324353769849494122}
+    itemIcon: {fileID: 6953267016436583415}
+    rarityBg: {fileID: 4754179674821991685}
+    rarityBar: {fileID: 4241810044041757673}
+    itemName: {fileID: 8218224252919180005}
     upgradeLevelText: {fileID: 0}
-    mainStatsRoot: {fileID: 0}
-    mainStatLabel: {fileID: 0}
-    mainStatValue: {fileID: 0}
-    subStatsDivider: {fileID: 0}
-    subStatsLayoutRoot: {fileID: 0}
-    subStatRows: []
-    itemEnchantmentContainer: {fileID: 0}
-    enchantmentDivider: {fileID: 0}
-    enchantmentLayoutRoot: {fileID: 0}
-    enchantRows: []
+    mainStatsRoot: {fileID: 2956459277004125808}
+    mainStatLabel: {fileID: 5880078311444572369}
+    mainStatValue: {fileID: 1639072635453672834}
+    subStatsDivider: {fileID: 62682464651728792}
+    subStatsLayoutRoot: {fileID: 7600158471876220140}
+    subStatRows:
+    - root: {fileID: 2131370640669978084}
+      labelText: {fileID: 3959154005551829484}
+      valueText: {fileID: 5968551581329124927}
+    - root: {fileID: 9160955591740221795}
+      labelText: {fileID: 8464594129127957509}
+      valueText: {fileID: 1766603051323669402}
+    - root: {fileID: 3636005116537190830}
+      labelText: {fileID: 5644374794752061210}
+      valueText: {fileID: 8496180383291753376}
+    - root: {fileID: 4465393995370742834}
+      labelText: {fileID: 1539550026115712089}
+      valueText: {fileID: 2046899870373711018}
+    itemEnchantmentContainer: {fileID: 8283902499739408838}
+    enchantmentDivider: {fileID: 704870117061015435}
+    enchantmentLayoutRoot: {fileID: 5208177771041465585}
+    enchantRows:
+    - root: {fileID: 43691373732606300}
+      iconActive: {fileID: 8879887363333827277}
+      iconUnactive: {fileID: 4863953574408375315}
+      text: {fileID: 4820898471926336347}
+    - root: {fileID: 1147573918968808613}
+      iconActive: {fileID: 2163646449938210156}
+      iconUnactive: {fileID: 700470464847422878}
+      text: {fileID: 2172729020324295251}
+    - root: {fileID: 8729872754566442169}
+      iconActive: {fileID: 8176540531605111375}
+      iconUnactive: {fileID: 1823948205150243983}
+      text: {fileID: 8934659321826780493}
     fallbackItemStats: {fileID: 0}
   enchantHintRect: {fileID: 0}
   enchantHintCanvasGroup: {fileID: 0}
@@ -45133,7 +45205,7 @@ MonoBehaviour:
   forgeSlotIcon: {fileID: 6953267016436583415}
   forgeSlotRarityBg: {fileID: 4754179674821991685}
   forgeSlotRarityBar: {fileID: 4241810044041757673}
-  btnForgeSlot: {fileID: 0}
+  btnForgeSlot: {fileID: 5543178553221595246}
   forgeItemName: {fileID: 8218224252919180005}
   forgeItemStats: {fileID: 0}
   forgeMaterialsContainer: {fileID: 939731295002779651}
@@ -45146,7 +45218,37 @@ MonoBehaviour:
   inventoryPanel: {fileID: 1726434272545093460}
   inventoryGridContainer: {fileID: 4530580537600040345}
   playerGoldText: {fileID: 644339979105364168}
-  bagSlots: []
+  bagSlots:
+  - {fileID: 7966735861283740135}
+  - {fileID: 3092829693932068022}
+  - {fileID: 6655287157801462703}
+  - {fileID: 7140711318912043419}
+  - {fileID: 6583369338507869248}
+  - {fileID: 2710245256878894704}
+  - {fileID: 5755073444369856149}
+  - {fileID: 8497339239163548}
+  - {fileID: 7761892033546412835}
+  - {fileID: 6693318879983996806}
+  - {fileID: 5761541317939563323}
+  - {fileID: 4405601614724760633}
+  - {fileID: 1715097826128838156}
+  - {fileID: 8119353234474413360}
+  - {fileID: 4896810178309801980}
+  - {fileID: 7277526116021164642}
+  - {fileID: 6309588682303054040}
+  - {fileID: 2221807860662426718}
+  - {fileID: 356006403964982708}
+  - {fileID: 8782203684271874459}
+  - {fileID: 3674027612203537373}
+  - {fileID: 8042280776733117852}
+  - {fileID: 6058147086292506627}
+  - {fileID: 6794830214703533316}
+  - {fileID: 8868007886291382132}
+  - {fileID: 353539960008585871}
+  - {fileID: 2767300329366267129}
+  - {fileID: 8374282427950679528}
+  - {fileID: 5156891713219012415}
+  - {fileID: 4264135468649529233}
   tabAllButton: {fileID: 4464049203610645322}
   tabWeaponButton: {fileID: 6471331839494389743}
   tabArmorButton: {fileID: 8587496118408630014}
@@ -45155,7 +45257,7 @@ MonoBehaviour:
   tabWeaponHighlight: {fileID: 1956424768758060190}
   tabArmorHighlight: {fileID: 6349629665598761265}
   tabItemHighlight: {fileID: 5128853973650056950}
-  itemDetailPopup: {fileID: 0}
+  itemDetailPopup: {fileID: 6242987283998131920}
   craftingRecipes:
   - {fileID: 11400000, guid: 68b098bd1a0d437e98eeb314910dd007, type: 2}
   - {fileID: 11400000, guid: a754dee8e9244169b6c27ab1496dc9e8, type: 2}
@@ -45165,6 +45267,73 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1a7335a6ee1d48ba8f15f1ed11ecb9d3, type: 2}
   - {fileID: 11400000, guid: 68bf8e694ac553b489c2d1a1eac5d99a, type: 2}
   - {fileID: 11400000, guid: 78bf8e694ac553b489c2d1a1eac5d99b, type: 2}
+  - {fileID: 11400000, guid: 0b29046d8ea50f140920220a86f82bd7, type: 2}
+  - {fileID: 11400000, guid: 14b1de7bc363ca540ad1cd54fda7cf1e, type: 2}
+  - {fileID: 11400000, guid: f25f2d7c505fa60409eecd86f5de8ba9, type: 2}
+  - {fileID: 11400000, guid: 1331ed3963f1e524c9d7ce4e2a1c4a44, type: 2}
+  itemDatabase:
+  - {fileID: 11400000, guid: d956e73ea3554a48b4b2f0ed1855fbdb, type: 2}
+  - {fileID: 11400000, guid: 5c918308f5254e16a15f37eacacb6144, type: 2}
+  - {fileID: 11400000, guid: a9b1182eaeb04928a9215804b55a93f3, type: 2}
+  - {fileID: 11400000, guid: e3e97e9a6af840da8877aa2c08a157cb, type: 2}
+  - {fileID: 11400000, guid: e59ce4706770448db59914912889858d, type: 2}
+  - {fileID: 11400000, guid: 4214e3c285b14ffd9aa0ad746ffb0694, type: 2}
+  - {fileID: 11400000, guid: 7140561714774197a0e5be9765b61dd0, type: 2}
+  - {fileID: 11400000, guid: 0c26feaaa5a94da78eb6c0b1ade673b3, type: 2}
+  - {fileID: 11400000, guid: 8d5dd87f9088433392d6c9ca7918f585, type: 2}
+  - {fileID: 11400000, guid: c2196b2fd7a948d4865f247cf19ef29e, type: 2}
+  - {fileID: 11400000, guid: 85209d30838f4da0b62dd18ab1e3842b, type: 2}
+  - {fileID: 11400000, guid: 425ff8df52afdae4ea56b8465d4a42b2, type: 2}
+  - {fileID: 11400000, guid: 497c38e457a3ced41aaad0c647b95eda, type: 2}
+  - {fileID: 11400000, guid: fda9dadf01218aa4486da5e0fa6c87fc, type: 2}
+  - {fileID: 11400000, guid: ee9a7b5216f7cfb4b916e0d9eef5c8b3, type: 2}
+  - {fileID: 11400000, guid: 596a197d90005564ab7e6937e9777465, type: 2}
+  - {fileID: 11400000, guid: a65d75703f61fa44f9cfc60bb76f8f88, type: 2}
+  - {fileID: 11400000, guid: eccf2470cd8b90e4e99ffed5bed4897a, type: 2}
+  - {fileID: 11400000, guid: 7c165e8163acfc647a16676465af61d7, type: 2}
+  - {fileID: 11400000, guid: c859c0b25f96a57428f5cdf52ccfd7e4, type: 2}
+  - {fileID: 11400000, guid: 576b4e28676e43439859d8cfc16d1349, type: 2}
+  - {fileID: 11400000, guid: 98bf2e694ac553b489c2d1a1eac5d66c, type: 2}
+  - {fileID: 11400000, guid: b09c634f9d2eec04692a983380c66236, type: 2}
+  - {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8002, type: 2}
+  - {fileID: 11400000, guid: 5c3e1ae0770f0f74096f32f889831ff8, type: 2}
+  - {fileID: 11400000, guid: 00b2634565da50441b55b21ca7682f65, type: 2}
+  - {fileID: 11400000, guid: 86f1c7eb22a49284b9686f872800e3cc, type: 2}
+  - {fileID: 11400000, guid: c8e4a6db4e421654787fae0a632deb8f, type: 2}
+  - {fileID: 11400000, guid: d607f6844e69096449d100f1442f234d, type: 2}
+  - {fileID: 11400000, guid: 0600cc650835ff64f9d30e08d9b7b7e1, type: 2}
+  - {fileID: 11400000, guid: b179c3d4e5f608192a3b4c5d6e7f8001, type: 2}
+  - {fileID: 11400000, guid: 24f9777be1690c145a977f86f47b8278, type: 2}
+  - {fileID: 11400000, guid: b175101cd64834c4096c4fc8122bee76, type: 2}
+  - {fileID: 11400000, guid: 7b216b1277e5c2c4ca1027b72c06b758, type: 2}
+  - {fileID: 11400000, guid: ca88d807d8a52ec40be7bcaefac4f132, type: 2}
+  - {fileID: 11400000, guid: e5f7f012263c6e34e9f1ca901693962e, type: 2}
+  - {fileID: 11400000, guid: 2ec3dab76ad431e419c18c263e89288d, type: 2}
+  - {fileID: 11400000, guid: 420a4cbe66f95064192363210dfc9861, type: 2}
+  - {fileID: 11400000, guid: 498fa9ecd49cf114a869eff04139fd60, type: 2}
+  - {fileID: 11400000, guid: 35fb540df63871148a3c056092261912, type: 2}
+  - {fileID: 11400000, guid: 228e6ea92fe786946a05a3e4d94ab8d7, type: 2}
+  - {fileID: 11400000, guid: 078ecae869069834aa0e5e7a79433edd, type: 2}
+  - {fileID: 11400000, guid: 491a153bff6200e499a954849407be99, type: 2}
+  - {fileID: 11400000, guid: d3d64b16a9d03e749abe5fc57238dfc6, type: 2}
+  - {fileID: 11400000, guid: 1fa95291773753f4b9021b52e49ec4c2, type: 2}
+  - {fileID: 11400000, guid: 425e1dc07a1b2d748ac9df0b60b25971, type: 2}
+  - {fileID: 11400000, guid: e396c4031a35d714698bc940ff809a12, type: 2}
+  - {fileID: 11400000, guid: e816844065c55dc498fd01f7533f5181, type: 2}
+  - {fileID: 11400000, guid: a813f13f33a7e7c4498c6e81b631c709, type: 2}
+  - {fileID: 11400000, guid: 726bf9e5a15f2de429b325ce59a8eb9b, type: 2}
+  - {fileID: 11400000, guid: 7de2335eff08fbe4c8d048fd1cfa0758, type: 2}
+  - {fileID: 11400000, guid: 7dd88f621b0e8a24788530f81ac7bd16, type: 2}
+  - {fileID: 11400000, guid: 3721843f2fc6e4047a32332e3c1f758e, type: 2}
+  - {fileID: 11400000, guid: 95b2be8327f6bf64aa639c6b234d3ed4, type: 2}
+  - {fileID: 11400000, guid: 0a5275c8def1647489bd98f46bc3a2d2, type: 2}
+  - {fileID: 11400000, guid: bb9834325c68d0346aae4a12fe723c83, type: 2}
+  - {fileID: 11400000, guid: 6cf384282ad65aa4fa1246bb1b1ffc8f, type: 2}
+  - {fileID: 11400000, guid: b048573c4f6bbda4f9d151acaf76c80b, type: 2}
+  - {fileID: 11400000, guid: 43b9a63fcad40444bbe1ded1c740d6b6, type: 2}
+  - {fileID: 11400000, guid: f48b5249ecf26854990ea3cf23ec4c8e, type: 2}
+  - {fileID: 11400000, guid: 29aa6209c27f86e4b81c5651ce3bffe7, type: 2}
+  - {fileID: 11400000, guid: 8448360df3f399940bd0799e9232720b, type: 2}
   fadeDuration: 0.18
 --- !u!1 &8125014760083904596
 GameObject:
@@ -49852,3 +50021,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2819958714413597054, guid: 0728a7223d1d67f4da89abc30d326e63, type: 3}
   m_PrefabInstance: {fileID: 7230963498572038144}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6242987283998131920 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3673249709797836496, guid: 0728a7223d1d67f4da89abc30d326e63, type: 3}
+  m_PrefabInstance: {fileID: 7230963498572038144}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c655f1242cc3cb4ea5acf2ca611fd3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.ItemDetailPopupUI

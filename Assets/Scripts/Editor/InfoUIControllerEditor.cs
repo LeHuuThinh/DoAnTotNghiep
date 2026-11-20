@@ -54,7 +54,7 @@ namespace InfiniteLabyrinth.Editor
             }
         }
 
-        [MenuItem("Infinite Labyrinth/Core Loop & UI/1. Cấu Hình InfoUI (GM-01)", false, 1)]
+        // [MenuItem("Infinite Labyrinth/Core Loop & UI/1. Cấu Hình InfoUI (GM-01)", false, 1)] (Archived)
         public static void SetupInfoUIInScene()
         {
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();

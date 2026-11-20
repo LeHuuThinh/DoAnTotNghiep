@@ -241,7 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IceGolemController
   anim: {fileID: 4683911688809379091}
-  moveSpeed: 3.5
+  moveSpeed: 6
   rotationSpeed: 120
   strafeMode: 1
   moveAcceleration: 6
@@ -251,30 +251,30 @@ MonoBehaviour:
   bodyAuraColor: {r: 0.25, g: 0.75, b: 1, a: 1}
   bodyAuraRange: 16
   bodyAuraIntensity: 3
-  attack1Cooldown: 15
-  gumoGumoCooldown: 15
-  flameBreathCooldown: 15
-  jumpAttackCooldown: 15
-  runAttackCooldown: 15
-  attackLTCooldown: 15
-  iceBallCooldown: 15
+  attack1Cooldown: 6
+  gumoGumoCooldown: 25
+  flameBreathCooldown: 30
+  jumpAttackCooldown: 20
+  runAttackCooldown: 25
+  attackLTCooldown: 10
+  iceBallCooldown: 25
   specialSkillGlobalCooldown: 5
-  preventConsecutiveSkillSpam: 1
-  runAttackDistance: 15
+  preventConsecutiveSkillSpam: 0
+  runAttackDistance: 30
   runAttackSpeed: 22
   runAttackInitialSpeed: 6
-  runAttackAccelerationDistance: 5
-  runAttackDuration: 1.5
-  runAttackDamage: 35
+  runAttackAccelerationDistance: 10
+  runAttackDuration: 3
+  runAttackDamage: 20
   runAttackKnockback: 2
   runAttackHitRadius: 2.2
   runAuraVfxPrefab: {fileID: 0}
   runAuraZOffset: 0
   handAuraVfxPrefab: {fileID: 0}
-  attackLTDamage: 20
-  attackLTFinalDamage: 30
-  attackLTKnockback: 1.8
-  attackLTFinalKnockback: 3.5
+  attackLTDamage: 10
+  attackLTFinalDamage: 20
+  attackLTKnockback: 0.6
+  attackLTFinalKnockback: 1.5
   attackLTHitTime1: 0.8
   attackLTHitTime2: 1.7
   attackLTHitTime3: 2.6
@@ -283,9 +283,9 @@ MonoBehaviour:
   iceBallCastDelay: 1.15
   iceBallTotalDuration: 3
   iceBallSpeed: 16
-  iceBallDamage: 35
+  iceBallDamage: 20
   iceBallExplosionRadius: 3.5
-  iceBallKnockback: 2.5
+  iceBallKnockback: 1.5
   iceBallLifeTime: 4
   iceBallExplodeVfxPrefab: {fileID: 0}
   bossMaxHealth: 1500
@@ -293,7 +293,7 @@ MonoBehaviour:
   bossExpReward: 350
   maxPoise: 500
   currentPoise: 500
-  weakenFreezeAfterDuration: 0
+  weakenFreezeAfterDuration: 4
   phase2StaggerVisualHeightOffset: 0
   weakenVisualHeightOffset: 0
   weakenAnimDuration: 3.6
@@ -304,8 +304,9 @@ MonoBehaviour:
   onStaminaChanged:
     m_PersistentCalls:
       m_Calls: []
-  hitFlashDuration: 0.12
-  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  hitFlashDuration: 0.15
+  hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
+  hitFlashEmissionIntensity: 2.5
   playerTarget: {fileID: 0}
   autoFindPlayer: 1
   alwaysFacePlayer: 1
@@ -375,8 +376,8 @@ MonoBehaviour:
   minHoldDuration: 0.5
   maxHoldDuration: 1
   holdAnimationSpeed: 0.2
-  attack1Damage: 25
-  attack1Knockback: 2.5
+  attack1Damage: 13
+  attack1Knockback: 1
   attack1HitDistance: 2.4
   attack1HitHeight: 1.3
   attack1HitRadius: 1.8
@@ -388,9 +389,9 @@ MonoBehaviour:
   leftHandBone: {fileID: 6607775300521178199}
   rightHandBone: {fileID: 4904379116028943908}
   handSlamImpactVfx: {fileID: 186731537552307344, guid: fc014707b582176468fc71c9933a0c57, type: 3}
-  gumoSlamVfxScale: 2
-  gumoShockwaveRadius: 3.8
-  gumoSlamDamage: 18
+  gumoSlamVfxScale: 0.8
+  gumoShockwaveRadius: 3.2
+  gumoSlamDamage: 11
   gumoSlamKnockback: 0.4
   gumoVisualHeightOffset: 0.35
   gumoHandContactHeight: 0.75
@@ -412,12 +413,12 @@ MonoBehaviour:
   flameVisualLength: 3.58
   flameVisualWidth: 2.9
   flameDensity: 1.9
-  flameRange: 15.5
-  flameConeAngle: 49
+  flameRange: 18
+  flameConeAngle: 30
   flameStartTime: 0.75
   flameDuration: 3.2
-  flameDamagePerTick: 12
-  flameDamageTickInterval: 0.2
+  flameDamagePerTick: 9
+  flameDamageTickInterval: 1
   flameKnockback: 0.6
   enableFlameShake: 1
   flameShakeMagnitude: 0.025

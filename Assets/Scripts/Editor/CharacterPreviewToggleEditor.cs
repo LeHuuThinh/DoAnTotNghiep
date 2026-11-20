@@ -66,7 +66,7 @@ namespace InfiniteLabyrinth.Editor
       DrawDefaultInspector();
     }
 
-    [MenuItem("Infinite Labyrinth/UI/6. Cấu Hình & Kết Nối Toggle 2D-3D Preview (1-Click)", priority = 6)]
+    // [MenuItem("Infinite Labyrinth/UI/6. Cấu Hình & Kết Nối Toggle 2D-3D Preview (1-Click)", priority = 6)] (Archived)
     public static void MenuSetupToggle()
     {
       CharacterPreviewToggleUI toggle = Object.FindAnyObjectByType<CharacterPreviewToggleUI>();

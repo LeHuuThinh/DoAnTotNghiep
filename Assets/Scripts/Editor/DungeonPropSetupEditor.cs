@@ -43,7 +43,7 @@ namespace InfiniteLabyrinth.Editor
             }
         }
 
-        [MenuItem("Infinite Labyrinth/PCG/1. Cấu Hình & Lưu Prefabs Trang Trí Hầm Ngục (1-Click)", false, 1)]
+        // [MenuItem("Infinite Labyrinth/PCG/1. Cấu Hình & Lưu Prefabs Trang Trí Hầm Ngục (1-Click)", false, 1)] (Archived)
         public static void MenuConfigureAndSaveDungeonProps()
         {
             ConfigureAndSaveDungeonProps(silent: false);

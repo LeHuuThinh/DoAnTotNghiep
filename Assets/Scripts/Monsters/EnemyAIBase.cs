@@ -59,6 +59,16 @@ public abstract class EnemyAIBase : MonoBehaviour
   [Tooltip("Chỉ số Giáp/Phòng thủ cơ bản của quái (giảm sát thương nhận vào theo công thức % chuẩn ARPG: Damage * 100 / (100 + Def))")]
   [SerializeField] protected float enemyDefense = 10f;
 
+  [Header("=== ÂM THANH BƯỚC CHÂN (FOOTSTEP AUDIO) ===")]
+  [Tooltip("Bật/tắt phát âm thanh bước chân khi quái di chuyển")]
+  [SerializeField] protected bool enableFootstepAudio = true;
+  [Tooltip("Tùy chỉnh khoảng thời gian bước chân khi đi bộ / vờn (giây, nếu <= 0 sẽ lấy từ AudioManager)")]
+  [SerializeField] protected float customWalkFootstepInterval = 0f;
+  [Tooltip("Tùy chỉnh khoảng thời gian bước chân khi chạy truy đuổi (giây, nếu <= 0 sẽ lấy từ AudioManager)")]
+  [SerializeField] protected float customRunFootstepInterval = 0f;
+
+  protected float footstepTimer = 0f;
+
   public float EnemyDefense => enemyDefense;
 
   [Header("Elite / Floor Scaling")]
@@ -488,6 +498,7 @@ public abstract class EnemyAIBase : MonoBehaviour
     }
 
     UpdateAnimator();
+    HandleFootstepAudio();
   }
 
   protected virtual void DetermineState(float distanceToPlayer)
@@ -788,6 +799,45 @@ public abstract class EnemyAIBase : MonoBehaviour
       animator.SetFloat(SpeedHash, Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 8f));
       animator.SetFloat(StrafeXHash, 0f);
       animator.SetFloat(StrafeZHash, 0f);
+    }
+  }
+
+  /// <summary>
+  /// Xử lý phát âm thanh bước chân 3D của quái vật trên sàn đá hầm ngục theo nhịp độ di chuyển
+  /// </summary>
+  protected virtual void HandleFootstepAudio()
+  {
+    if (!enableFootstepAudio || agent == null || !agent.isOnNavMesh || health.IsDead || IsAttacking)
+    {
+      footstepTimer = 0f;
+      return;
+    }
+
+    Vector3 vel = agent.velocity;
+    float speed = new Vector2(vel.x, vel.z).magnitude;
+    if (speed < 0.25f)
+    {
+      footstepTimer = 0f;
+      return;
+    }
+
+    float walkInt = (customWalkFootstepInterval > 0f) ? customWalkFootstepInterval :
+      (AudioManager.HasInstance ? AudioManager.Instance.MonsterWalkFootstepInterval : 0.65f);
+    float runInt = (customRunFootstepInterval > 0f) ? customRunFootstepInterval :
+      (AudioManager.HasInstance ? AudioManager.Instance.MonsterRunFootstepInterval : 0.42f);
+
+    float speedFraction = Mathf.InverseLerp(walkSpeed * 0.5f, runSpeed, speed);
+    float interval = Mathf.Lerp(walkInt, runInt, speedFraction);
+
+    footstepTimer += Time.deltaTime;
+    if (footstepTimer >= interval)
+    {
+      footstepTimer = 0f;
+      if (AudioManager.HasInstance)
+      {
+        float volMultiplier = Mathf.Lerp(0.7f, 1.0f, speedFraction);
+        AudioManager.Instance.PlayMonsterFootstep(transform.position, volMultiplier);
+      }
     }
   }
 

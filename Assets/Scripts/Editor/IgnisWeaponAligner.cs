@@ -20,7 +20,7 @@ public class IgnisWeaponAligner : EditorWindow
     // Detected sword blade axis
     private Vector3 bladeLocalAxis = Vector3.forward;
 
-    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/0. Khôi Phục Dáng T-Pose & Kiếm Ban Đầu (Reset to T-Pose)")]
+    // [MenuItem("Infinite Labyrinth/Boss/Red Ignis/0. Khôi Phục Dáng T-Pose & Kiếm Ban Đầu (Reset to T-Pose)")] (Archived)
     public static void ResetToOriginalTPose()
     {
         if (AnimationMode.InAnimationMode())
@@ -83,7 +83,7 @@ public class IgnisWeaponAligner : EditorWindow
         }
     }
 
-    [MenuItem("Infinite Labyrinth/Boss/Red Ignis/Cân Chỉnh Kiếm Boss (Ignis Weapon Aligner)")]
+    [MenuItem("Infinite Labyrinth/⚔️ Cân Chỉnh Kiếm Boss Ignis (Weapon Aligner)", false, 20)]
     public static void ShowWindow()
     {
         var window = GetWindow<IgnisWeaponAligner>("Ignis Weapon Aligner");

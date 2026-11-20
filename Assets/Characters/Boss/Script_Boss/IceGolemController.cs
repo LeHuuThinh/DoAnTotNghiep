@@ -176,11 +176,13 @@ public class IceGolemController : MonoBehaviour
     public bool IsWeakened => isWeakened;
     public bool HasTriggeredWeaken => hasTriggeredWeaken;
 
-    [Header("=== PHẢN HỒI NHẬN SÁT THƯƠNG & CHỚP ĐỎ GPU ===")]
-    [Tooltip("Thời gian nháy đỏ mỗi khi dính đòn (giây)")]
+    [Header("=== PHẢN HỒI NHẬN SÁT THƯƠNG & CHỚP TRẮNG GPU ===")]
+    [Tooltip("Thời gian nháy trắng mỗi khi dính đòn (giây)")]
     [SerializeField] private float hitFlashDuration = 0.12f;
-    [Tooltip("Màu sắc nháy khi trúng đòn")]
-    [SerializeField] private Color hitFlashColor = new Color(1f, 0.25f, 0.25f, 1f);
+    [Tooltip("Màu sắc nháy khi trúng đòn (mặc định trắng sáng tinh khiết chuẩn Souls-like)")]
+    [SerializeField] private Color hitFlashColor = Color.white;
+    [Tooltip("Cường độ phát sáng Emission khi nháy trắng (chói lóa trực tiếp trên GPU)")]
+    [SerializeField] private float hitFlashEmissionIntensity = 2.5f;
 
     [Header("=== MỤC TIÊU ĐỐI THỦ (PLAYER TARGET TRACKING) ===")]
     [Tooltip("Transform của đối thủ Player. Nếu để trống, Boss sẽ TỰ ĐỘNG tìm Player trong Scene (theo Tag 'Player', component PlayerController, hoặc tên GameObject 'Player')")]
@@ -513,8 +515,11 @@ public class IceGolemController : MonoBehaviour
     private Renderer[] bossRenderers;
     private Coroutine flashCoroutine;
     private static MaterialPropertyBlock flashMpb;
+    private static readonly int BaseMapProp = Shader.PropertyToID("_BaseMap");
+    private static readonly int MainTexProp = Shader.PropertyToID("_MainTex");
     private static readonly int BaseColorProp = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorProp = Shader.PropertyToID("_Color");
+    private static readonly int EmissionColorProp = Shader.PropertyToID("_EmissionColor");
 
     // Timestamps theo dõi thời điểm kích hoạt chiêu (Cooldown Tracking)
     private float lastAttack1Time = -999f;
@@ -987,6 +992,115 @@ public class IceGolemController : MonoBehaviour
                 anim.transform.localPosition = new Vector3(0f, cur.y, 0f);
             }
         }
+
+        // Failsafe bảo vệ: Giữ Boss luôn ở bên trong đấu trường khi cửa đã khóa chặt
+        EnforceArenaContainmentFailsafe();
+    }
+
+    /// <summary>
+    /// Giới hạn vị trí an toàn trong phòng Boss: Tuyệt đối không cho phép Boss vượt qua Cửa Đại Môn (Boss Gate) ra bên ngoài hành lang.
+    /// Duy trì khoảng cách đệm an toàn (safeMarginFromGate = 2.5m) để thân hình khổng lồ của Boss không chạm hoặc lọt qua collider cửa.
+    /// </summary>
+    public Vector3 ClampToArenaSafeBounds(Vector3 position, float safeMarginFromGate = 2.5f)
+    {
+        InfiniteLabyrinth.Interaction.BossGateController gate = InfiniteLabyrinth.Interaction.BossGateController.Instance;
+        if (gate == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            gate = FindAnyObjectByType<InfiniteLabyrinth.Interaction.BossGateController>();
+#else
+            gate = FindObjectOfType<InfiniteLabyrinth.Interaction.BossGateController>();
+#endif
+        }
+
+        if (gate != null)
+        {
+            Vector3 gatePos = gate.transform.position;
+            // Vector hướng từ cửa đi sâu vào trong phòng Boss (chiếu phẳng trên mặt sàn XZ)
+            Vector3 toInside = gate.transform.forward;
+            toInside.y = 0f;
+            if (toInside.sqrMagnitude < 0.001f)
+            {
+                toInside = (transform.position - gatePos);
+                toInside.y = 0f;
+            }
+            if (toInside.sqrMagnitude < 0.001f)
+            {
+                toInside = Vector3.forward;
+            }
+            toInside.Normalize();
+
+            // Khoảng cách theo phương chiều sâu của position so với cửa
+            Vector3 toPos = position - gatePos;
+            toPos.y = 0f;
+            float depth = Vector3.Dot(toPos, toInside);
+
+            // Nếu vị trí này nằm sau cửa (ra ngoài hành lang) hoặc quá sát cửa (< safeMarginFromGate):
+            if (depth < safeMarginFromGate)
+            {
+                // Đẩy vị trí lùi sâu vào bên trong phòng Boss
+                Vector3 projectedPoint = gatePos + toInside * safeMarginFromGate;
+                // Giữ lại thành phần ngang (vuông góc với toInside)
+                Vector3 right = Vector3.Cross(Vector3.up, toInside).normalized;
+                float lateral = Vector3.Dot(toPos, right);
+                // Giới hạn cả chiều ngang để không lọt qua mép tường 2 bên cửa
+                lateral = Mathf.Clamp(lateral, -4.5f, 4.5f);
+                Vector3 safePos = projectedPoint + right * lateral;
+                safePos.y = position.y;
+                return safePos;
+            }
+        }
+
+        return position;
+    }
+
+    /// <summary>
+    /// Failsafe bảo vệ tuyệt đối: Đảm bảo Boss không bao giờ bị glitch rơi ra ngoài Cửa phòng Boss khi trận chiến đang diễn ra.
+    /// Nếu phát hiện Boss bị xuyên qua cửa ra ngoài hành lang, lập tức kéo Boss trở lại bên trong phòng.
+    /// </summary>
+    private void EnforceArenaContainmentFailsafe()
+    {
+        if (isDead || isCinematicStandby) return;
+
+        InfiniteLabyrinth.Interaction.BossGateController gate = InfiniteLabyrinth.Interaction.BossGateController.Instance;
+        if (gate == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            gate = FindAnyObjectByType<InfiniteLabyrinth.Interaction.BossGateController>();
+#else
+            gate = FindObjectOfType<InfiniteLabyrinth.Interaction.BossGateController>();
+#endif
+        }
+
+        if (gate != null && gate.IsArenaLocked)
+        {
+            Vector3 gatePos = gate.transform.position;
+            Vector3 toInside = gate.transform.forward;
+            toInside.y = 0f;
+            if (toInside.sqrMagnitude < 0.001f) toInside = (transform.position - gatePos);
+            toInside.y = 0f;
+            if (toInside.sqrMagnitude < 0.001f) toInside = Vector3.forward;
+            toInside.Normalize();
+
+            Vector3 toBoss = transform.position - gatePos;
+            toBoss.y = 0f;
+            float depth = Vector3.Dot(toBoss, toInside);
+
+            // Nếu Boss ở phía bên kia cửa (< 0.5m so với cửa về phía trong phòng)
+            if (depth < 0.5f)
+            {
+                Vector3 safeInsidePos = gatePos + toInside * 3.5f;
+                safeInsidePos = GetGroundPosition(safeInsidePos);
+                transform.position = safeInsidePos;
+                if (rb != null)
+                {
+                    rb.position = safeInsidePos;
+                    if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+                }
+                Physics.SyncTransforms();
+                Debug.LogWarning($"<color=yellow>[IceGolemController]</color> ⚠️ Phát hiện Boss nằm ngoài Cửa Đấu Trường! Đã tự động kéo Boss trở lại bên trong phòng Boss tại {safeInsidePos}.");
+            }
+        }
     }
 
     /// <summary>
@@ -1219,7 +1333,7 @@ public class IceGolemController : MonoBehaviour
     }
 
     /// <summary>
-    /// Kích hoạt hiệu ứng chớp đỏ GPU khi trúng đòn (không clone Material, bảo toàn 100% SRP Batcher)
+    /// Kích hoạt hiệu ứng chớp trắng phát quang GPU khi trúng đòn (không clone Material, bảo toàn 100% SRP Batcher)
     /// </summary>
     public void FlashHitFeedback()
     {
@@ -1231,8 +1345,22 @@ public class IceGolemController : MonoBehaviour
     private System.Collections.IEnumerator FlashHitRoutine()
     {
         if (flashMpb == null) flashMpb = new MaterialPropertyBlock();
+
+        // 1. Ghi đè texture thành màu trắng thuần (Texture2D.whiteTexture)
+        // Giúp loại bỏ texture xỉn màu gốc, đưa mô hình về màu trắng tinh khiết chuẩn Souls-like
+        flashMpb.SetTexture(BaseMapProp, Texture2D.whiteTexture);
+        flashMpb.SetTexture(MainTexProp, Texture2D.whiteTexture);
+
+        // 2. Thiết lập tông màu Base Color
         flashMpb.SetColor(BaseColorProp, hitFlashColor);
         flashMpb.SetColor(ColorProp, hitFlashColor);
+
+        // 3. Tăng cường độ phát sáng (Emission) để nháy chói lóa ngay cả khi boss đứng trong bóng tối
+        if (hitFlashEmissionIntensity > 0f)
+        {
+            Color emissionColor = hitFlashColor * hitFlashEmissionIntensity;
+            flashMpb.SetColor(EmissionColorProp, emissionColor);
+        }
 
         for (int i = 0; i < bossRenderers.Length; i++)
         {
@@ -2754,11 +2882,23 @@ public class IceGolemController : MonoBehaviour
         float probeDistance = Mathf.Max(0.1f, moveStep) + bodyLeadBuffer;
         LayerMask mask = GetRunAttackObstacleMask();
 
-        float[] sideOffsets = { 0f, -0.85f, 0.85f };
         bool found = false;
         float minDist = float.MaxValue;
         Vector3 baseOrigin = originPosition + Vector3.up * 1.4f;
 
+        // 1. Quét thể tích hình cầu SphereCast toàn thân Boss (R = 1.2m)
+        if (Physics.SphereCast(baseOrigin, 1.2f, dir, out RaycastHit sphereHit, probeDistance, mask, QueryTriggerInteraction.Ignore))
+        {
+            if (!IsPlayerOrSelfCollider(sphereHit.collider))
+            {
+                minDist = sphereHit.distance;
+                closestObstacleHit = sphereHit;
+                found = true;
+            }
+        }
+
+        // 2. Quét đa tia (RaycastAll 3 điểm) bổ trợ bắt các góc cạnh nhô ra
+        float[] sideOffsets = { 0f, -0.85f, 0.85f };
         for (int i = 0; i < sideOffsets.Length; i++)
         {
             Vector3 rayOrigin = baseOrigin + right * sideOffsets[i];
@@ -2862,6 +3002,17 @@ public class IceGolemController : MonoBehaviour
             float remainingDistance = runAttackDistance - traveledDistance;
             float stepDist = Mathf.Min(currentSpeed * Time.deltaTime, remainingDistance);
             Vector3 currentPos = dashStartPos + chargeDirection * traveledDistance;
+
+            // 1. Kiểm tra ranh giới Cửa Đại Môn phòng Boss (không bao giờ lao qua cửa)
+            Vector3 proposedNextPos = currentPos + chargeDirection * stepDist;
+            Vector3 clampedPos = ClampToArenaSafeBounds(proposedNextPos, 2.5f);
+            if (Vector3.Distance(clampedPos, proposedNextPos) > 0.05f)
+            {
+                hitObstacle = true;
+                break;
+            }
+
+            // 2. Quét vật cản va chạm (SphereCast & Raycasts)
             if (TryGetRunAttackObstacle(currentPos, chargeDirection, stepDist, out RaycastHit obstacleHit))
             {
                 hitObstacle = true;
@@ -2871,6 +3022,7 @@ public class IceGolemController : MonoBehaviour
 
             traveledDistance += stepDist;
             Vector3 nextPos = dashStartPos + chargeDirection * traveledDistance;
+            nextPos = ClampToArenaSafeBounds(nextPos, 2.5f);
             transform.position = nextPos;
             if (rb != null)
             {
@@ -2883,6 +3035,10 @@ public class IceGolemController : MonoBehaviour
 
             yield return null;
         }
+
+        transform.position = ClampToArenaSafeBounds(transform.position, 2.5f);
+        if (rb != null) rb.position = transform.position;
+        Physics.SyncTransforms();
 
         float actualMovedDist = Vector3.Distance(dashStartPos, transform.position);
         RestoreRunAttackPhysicsState();
@@ -2903,20 +3059,21 @@ public class IceGolemController : MonoBehaviour
             SafeResetTrigger(RunAttackHash);
             if (anim != null)
             {
-                anim.CrossFade("Idle", 0.08f, 0);
+                anim.CrossFadeInFixedTime("Idle", 0.12f);
             }
+            yield return new WaitForSeconds(0.12f);
         }
         else
         {
             Debug.Log($"[IceGolem] Chiêu 5 (RunAttack) hoàn tất quãng đường {actualMovedDist:0.##}m / {runAttackDistance:0.##}m.");
 
-            // Chờ animation RunAttack chuyển hoàn tất về thế Idle (kèm timeout chống kẹt)
-            float runSafetyTimeout = 1.0f;
-            while (anim != null && anim.GetCurrentAnimatorStateInfo(0).IsName("RunAttack") && runSafetyTimeout > 0f)
+            // Hoạt ảnh RunAttack lặp lại mượt mà suốt quãng đường chạy (15m, 30m...), khi tới đích chuyển mượt về thế Idle
+            SafeResetTrigger(RunAttackHash);
+            if (anim != null)
             {
-                runSafetyTimeout -= Time.deltaTime;
-                yield return null;
+                anim.CrossFadeInFixedTime("Idle", 0.2f);
             }
+            yield return new WaitForSeconds(0.2f);
         }
 
         isRunAttacking = false;
@@ -5020,20 +5177,35 @@ public class IceGolemController : MonoBehaviour
             targetLandingPos = startPos + transform.forward * jumpAttackDistance;
         }
 
+        // 1. Giới hạn ngay điểm tiếp đất không cho vượt qua Cửa lớn phòng Boss
+        targetLandingPos = ClampToArenaSafeBounds(targetLandingPos, 2.5f);
+
         Vector3 flightDir = (targetLandingPos - startPos);
+        flightDir.y = 0f;
         float flightDist = flightDir.magnitude;
+        LayerMask queryObstacleMask = GetRunAttackObstacleMask();
+
         if (flightDist > 0.05f)
         {
             flightDir.Normalize();
-            if (Physics.Raycast(startPos + Vector3.up * 1.5f, flightDir, out RaycastHit wallHit, flightDist, obstacleLayer))
+            // 2. Dùng SphereCast với bán kính 1.2m dày dặn thay vì Raycast mỏng manh
+            if (Physics.SphereCast(startPos + Vector3.up * 1.6f, 1.2f, flightDir, out RaycastHit wallHit, flightDist, queryObstacleMask, QueryTriggerInteraction.Ignore))
             {
-                targetLandingPos = wallHit.point - flightDir * 0.8f;
+                if (!IsPlayerOrSelfCollider(wallHit.collider))
+                {
+                    float safeHitDist = Mathf.Max(0.5f, wallHit.distance - 2.0f);
+                    targetLandingPos = startPos + flightDir * safeHitDist;
+                }
             }
         }
 
+        // 3. Clamp lại một lần nữa và lấy cao độ mặt sàn chuẩn xác
+        targetLandingPos = ClampToArenaSafeBounds(targetLandingPos, 2.5f);
         targetLandingPos = GetGroundPosition(targetLandingPos);
 
         float flightTimer = 0f;
+        Vector3 previousPos = startPos;
+
         while (flightTimer < jumpFlightDuration)
         {
             flightTimer += Time.deltaTime;
@@ -5043,10 +5215,34 @@ public class IceGolemController : MonoBehaviour
             float arcY = Mathf.Sin(t * Mathf.PI) * jumpAttackArcHeight;
             currentPos.y += arcY;
 
+            // 4. Trong lúc bay trên không: Đảm bảo không bao giờ bay vượt qua Cửa phòng Boss
+            currentPos = ClampToArenaSafeBounds(currentPos, 2.0f);
+
+            // 5. Kiểm tra va chạm liên tục (Continuous Collision Sweep) giữa các frame
+            Vector3 moveDelta = currentPos - previousPos;
+            float stepDistance = moveDelta.magnitude;
+            if (stepDistance > 0.02f)
+            {
+                Vector3 stepDir = moveDelta / stepDistance;
+                if (Physics.SphereCast(previousPos + Vector3.up * 1.4f, 1.0f, stepDir, out RaycastHit midAirHit, stepDistance + 0.2f, queryObstacleMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (!IsPlayerOrSelfCollider(midAirHit.collider))
+                    {
+                        // Va phải tường hoặc cửa giữa không trung -> Dừng bay tiến và rơi thẳng xuống sàn an toàn
+                        targetLandingPos = ClampToArenaSafeBounds(previousPos, 2.5f);
+                        targetLandingPos = GetGroundPosition(targetLandingPos);
+                        break;
+                    }
+                }
+            }
+
             transform.position = currentPos;
+            previousPos = currentPos;
             yield return null;
         }
 
+        targetLandingPos = ClampToArenaSafeBounds(targetLandingPos, 2.5f);
+        targetLandingPos = GetGroundPosition(targetLandingPos);
         transform.position = targetLandingPos;
 
         if (anim != null)
@@ -5060,7 +5256,9 @@ public class IceGolemController : MonoBehaviour
             rb.isKinematic = originalKinematic;
             rb.useGravity = originalGravity;
             if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+            rb.position = targetLandingPos;
         }
+        Physics.SyncTransforms();
 
         OnJumpAttackImpact(targetLandingPos);
 
