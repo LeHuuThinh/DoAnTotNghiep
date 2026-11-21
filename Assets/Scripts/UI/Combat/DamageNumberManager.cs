@@ -408,6 +408,7 @@ namespace InfiniteLabyrinth.UI.Combat
     public void SpawnDamage(float damage, Vector3 worldPosition, DamageNumberType type = DamageNumberType.Normal, bool isCrit = false)
     {
       if (damage <= 0f) return;
+      if (SettingsManager.HasInstance && !SettingsManager.Instance.DamageNumbersEnabled) return;
 
       if (cachedMainCamera == null)
       {

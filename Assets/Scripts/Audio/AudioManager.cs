@@ -18,6 +18,7 @@ public class AudioManager : MonoBehaviour
     public enum BgmMode
     {
         None,
+        Menu,
         Land,
         Dungeon,
         Combat,
@@ -66,14 +67,27 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float bgmVolume = 0.1f;
     [Range(0f, 1f)]
+    [SerializeField] private float voiceVolume = 0.5f;
+    [Range(0f, 1f)]
     [SerializeField] private float sfxVolume = 0.5f;
+    [Range(0f, 1f)]
+    [SerializeField] private float uiVolume = 0.5f;
 
     [Tooltip("Nếu tích chọn, khi Play game sẽ nạp lại âm lượng đã lưu từ PlayerPrefs. Nếu bỏ tích (mặc định), sẽ dùng trực tiếp chỉ số bạn thiết lập trong Inspector / Prefab.")]
     [SerializeField] private bool loadSavedSettingsOnStart = false;
 
+    // Runtime effective volumes (được điều phối theo tỉ lệ thiết lập trong SettingUI)
+    private float currentRuntimeMaster = 1.0f;
+    private float currentRuntimeBgm = 0.1f;
+    private float currentRuntimeVoice = 0.5f;
+    private float currentRuntimeSfx = 0.5f;
+    private float currentRuntimeUi = 0.5f;
+
     private float lastInspectorMasterVol = -1f;
     private float lastInspectorBgmVol = -1f;
+    private float lastInspectorVoiceVol = -1f;
     private float lastInspectorSfxVol = -1f;
+    private float lastInspectorUiVol = -1f;
 
     // =========================================================================
     // MA TRẬN CÂN BẰNG ÂM LƯỢNG CHI TIẾT (SOUND BALANCE MATRIX)
@@ -193,8 +207,12 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 2f)] [SerializeField] private float volUIDisabled = 0.75f;
     [Tooltip("Nhặt vật phẩm dưới đất (phím F)")]
     [Range(0f, 2f)] [SerializeField] private float volUIItemPickup = 0.9f;
-    [Tooltip("Mở túi đồ, shop, tab lò rèn, minimap")]
+    [Tooltip("Mở túi đồ, shop, tab lò rèn, minimap (UIInteract 1)")]
     [Range(0f, 2f)] [SerializeField] private float volUIInteract = 0.85f;
+    [Tooltip("Tương tác công tắc Toggle, nút 3D/2D, nhả Slider (UIInteract 2)")]
+    [Range(0f, 2f)] [SerializeField] private float volUIInteract2 = 0.85f;
+    [Tooltip("Click nút Menu, PauseMenu, chuyển Tab, đóng giao diện (UIInteract 3)")]
+    [Range(0f, 2f)] [SerializeField] private float volUIInteract3 = 0.85f;
 
     [Header("=== DANH SÁCH NHẠC NỀN (BGM TRACKS) ===")]
     [Tooltip("Nhạc nền Làng Haven & MainMenu")]
@@ -327,8 +345,12 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip shopClip;
     [Tooltip("Âm thanh nhặt vật phẩm từ dưới đất")]
     [SerializeField] private AudioClip itemPickupClip;
-    [Tooltip("Âm thanh mở giao diện hoặc tương tác UI")]
+    [Tooltip("Âm thanh mở giao diện hoặc tương tác UI chính (UIInteract 1)")]
     [SerializeField] private AudioClip uiInteractClip;
+    [Tooltip("Âm thanh chuyển Toggle, nút 3D/2D, nhả Slider (UIInteract 2)")]
+    [SerializeField] private AudioClip uiInteract2Clip;
+    [Tooltip("Âm thanh click nút Menu, chuyển Tab, đóng giao diện (UIInteract 3)")]
+    [SerializeField] private AudioClip uiInteract3Clip;
 
     // AudioSources phục vụ BGM
     private AudioSource exploreSource;
@@ -365,7 +387,9 @@ public class AudioManager : MonoBehaviour
     // Public Getters & Setters
     public float MasterVolume => masterVolume;
     public float BgmVolume => bgmVolume;
+    public float VoiceVolume => voiceVolume;
     public float SfxVolume => sfxVolume;
+    public float UiVolume => uiVolume;
     public BgmMode CurrentBgmMode => currentBgmMode;
     public AudioClip TorchClip => torchClip;
     public AudioClip PortalClip => portalClip;
@@ -428,6 +452,8 @@ public class AudioManager : MonoBehaviour
     public float VolUIDisabled => volUIDisabled;
     public float VolUIItemPickup => volUIItemPickup;
     public float VolUIInteract => volUIInteract;
+    public float VolUIInteract2 => volUIInteract2;
+    public float VolUIInteract3 => volUIInteract3;
 
     /// <summary>
     /// Khôi phục toàn bộ Ma trận cân bằng âm lượng (38 thanh trượt) về giá trị chuẩn mặc định.
@@ -491,6 +517,8 @@ public class AudioManager : MonoBehaviour
         volUIDisabled = 0.75f;
         volUIItemPickup = 0.9f;
         volUIInteract = 0.85f;
+        volUIInteract2 = 0.85f;
+        volUIInteract3 = 0.85f;
     }
 
     /// <summary>
@@ -499,6 +527,12 @@ public class AudioManager : MonoBehaviour
     public void CopyBalanceSettingsFrom(AudioManager other)
     {
         if (other == null) return;
+        masterVolume = other.masterVolume;
+        bgmVolume = other.bgmVolume;
+        voiceVolume = other.voiceVolume;
+        sfxVolume = other.sfxVolume;
+        uiVolume = other.uiVolume;
+
         volPlayerSlash = other.volPlayerSlash;
         volPlayerAttackVoice = other.volPlayerAttackVoice;
         volPlayerHurtVoice = other.volPlayerHurtVoice;
@@ -556,6 +590,8 @@ public class AudioManager : MonoBehaviour
         volUIDisabled = other.volUIDisabled;
         volUIItemPickup = other.volUIItemPickup;
         volUIInteract = other.volUIInteract;
+        volUIInteract2 = other.volUIInteract2;
+        volUIInteract3 = other.volUIInteract3;
     }
 
     /// <summary>
@@ -660,6 +696,18 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
+        currentRuntimeMaster = masterVolume;
+        currentRuntimeBgm = bgmVolume;
+        currentRuntimeVoice = voiceVolume;
+        currentRuntimeSfx = sfxVolume;
+        currentRuntimeUi = uiVolume;
+
+        if (InfiniteLabyrinth.UI.SettingsManager.HasInstance)
+        {
+            var d = InfiniteLabyrinth.UI.SettingsManager.Instance.CurrentData;
+            ApplySettingsVolumes(d.masterVolume, d.musicVolume, d.voiceVolume, d.sfxVolume, d.uiVolume);
+        }
+
         // Tự động nhận diện scene khởi động ban đầu
         HandleSceneBgm(SceneManager.GetActiveScene().name);
     }
@@ -684,8 +732,9 @@ public class AudioManager : MonoBehaviour
         if (combatSource != null) { combatSource.Stop(); combatSource.volume = 0f; }
         if (bossSource != null) { bossSource.Stop(); bossSource.volume = 0f; }
 
+        bool isMenu = sceneName.Contains("Menu");
         bool isDungeon = sceneName.Contains("Dungeon");
-        BgmMode targetMode = isDungeon ? BgmMode.Dungeon : BgmMode.Land;
+        BgmMode targetMode = isMenu ? BgmMode.Menu : (isDungeon ? BgmMode.Dungeon : BgmMode.Land);
 
         // Task 5: Không ngắt quãng hoặc phát lại exploreSource nếu BGM hiện tại đã đúng Scene (ví dụ Land)
         if (currentBgmMode == targetMode && (exploreSource != null && exploreSource.isPlaying || exploreRoutine != null))
@@ -698,7 +747,11 @@ public class AudioManager : MonoBehaviour
         // Ngắt bài cũ đang phát dở trên exploreSource để nạp bài mới của Scene
         if (exploreSource != null) { exploreSource.Stop(); exploreSource.volume = 0f; }
 
-        if (isDungeon)
+        if (isMenu)
+        {
+            PlayMenuBGM();
+        }
+        else if (isDungeon)
         {
             // Task 6: Tạm hoãn phát Dungeon BGM ở mốc 40% nếu LoadingScreenManager đang chạy tiến trình tải cảnh,
             // để LoadingScreenManager tự kích hoạt tại mốc 90% khi PCG sắp hoàn thành.
@@ -776,6 +829,7 @@ public class AudioManager : MonoBehaviour
     public void SetMasterVolume(float vol)
     {
         masterVolume = Mathf.Clamp01(vol);
+        currentRuntimeMaster = masterVolume;
         PlayerPrefs.SetFloat("Audio_MasterVolume", masterVolume);
         UpdateAllSourceVolumes();
     }
@@ -783,21 +837,62 @@ public class AudioManager : MonoBehaviour
     public void SetBgmVolume(float vol)
     {
         bgmVolume = Mathf.Clamp01(vol);
+        currentRuntimeBgm = bgmVolume;
         PlayerPrefs.SetFloat("Audio_BgmVolume", bgmVolume);
         UpdateAllSourceVolumes();
+    }
+
+    public void SetVoiceVolume(float vol)
+    {
+        voiceVolume = Mathf.Clamp01(vol);
+        currentRuntimeVoice = voiceVolume;
+        PlayerPrefs.SetFloat("Audio_VoiceVolume", voiceVolume);
     }
 
     public void SetSfxVolume(float vol)
     {
         sfxVolume = Mathf.Clamp01(vol);
+        currentRuntimeSfx = sfxVolume;
         PlayerPrefs.SetFloat("Audio_SfxVolume", sfxVolume);
+    }
+
+    public void SetUiVolume(float vol)
+    {
+        uiVolume = Mathf.Clamp01(vol);
+        currentRuntimeUi = uiVolume;
+        PlayerPrefs.SetFloat("Audio_UiVolume", uiVolume);
+    }
+
+    // =========================================================================
+    // ĐIỀU PHỐI ÂM LƯỢNG THEO SETTINGS UI (CALIBRATED SOUND MAPPING)
+    // =========================================================================
+    private const float DEFAULT_SETTING_MASTER = 1.0f; // Mặc định 10.0 trên Settings UI
+    private const float DEFAULT_SETTING_SUB = 0.8f;    // Mặc định 8.0 trên Settings UI cho 4 kênh còn lại
+
+    /// <summary>
+    /// Đồng bộ âm lượng từ SettingsManager theo ma trận cân bằng chuẩn của AudioManager.
+    /// Setting Master (1.0) gióng vào masterVolume (1.0).
+    /// Setting BGM (0.8) gióng vào bgmVolume (0.1).
+    /// Setting Voice, SFX, UI (0.8) gióng vào 0.5.
+    /// </summary>
+    public void ApplySettingsVolumes(float settingMaster, float settingBgm, float settingVoice, float settingSfx, float settingUi)
+    {
+        currentRuntimeMaster = Mathf.Clamp01(masterVolume * (settingMaster / DEFAULT_SETTING_MASTER));
+        currentRuntimeBgm = Mathf.Clamp01(bgmVolume * (settingBgm / DEFAULT_SETTING_SUB));
+        currentRuntimeVoice = Mathf.Clamp01(voiceVolume * (settingVoice / DEFAULT_SETTING_SUB));
+        currentRuntimeSfx = Mathf.Clamp01(sfxVolume * (settingSfx / DEFAULT_SETTING_SUB));
+        currentRuntimeUi = Mathf.Clamp01(uiVolume * (settingUi / DEFAULT_SETTING_SUB));
+
+        UpdateAllSourceVolumes();
     }
 
     private void OnValidate()
     {
         masterVolume = Mathf.Clamp01(masterVolume);
         bgmVolume = Mathf.Clamp01(bgmVolume);
+        voiceVolume = Mathf.Clamp01(voiceVolume);
         sfxVolume = Mathf.Clamp01(sfxVolume);
+        uiVolume = Mathf.Clamp01(uiVolume);
 
         if (Application.isPlaying)
         {
@@ -810,12 +905,30 @@ public class AudioManager : MonoBehaviour
         // Cho phép kéo thanh trượt volume trong Inspector lúc Play Mode ăn ngay lập tức
         if (Mathf.Abs(masterVolume - lastInspectorMasterVol) > 0.005f || 
             Mathf.Abs(bgmVolume - lastInspectorBgmVol) > 0.005f ||
-            Mathf.Abs(sfxVolume - lastInspectorSfxVol) > 0.005f)
+            Mathf.Abs(voiceVolume - lastInspectorVoiceVol) > 0.005f ||
+            Mathf.Abs(sfxVolume - lastInspectorSfxVol) > 0.005f ||
+            Mathf.Abs(uiVolume - lastInspectorUiVol) > 0.005f)
         {
             lastInspectorMasterVol = masterVolume;
             lastInspectorBgmVol = bgmVolume;
+            lastInspectorVoiceVol = voiceVolume;
             lastInspectorSfxVol = sfxVolume;
-            UpdateAllSourceVolumes();
+            lastInspectorUiVol = uiVolume;
+
+            if (InfiniteLabyrinth.UI.SettingsManager.HasInstance)
+            {
+                var d = InfiniteLabyrinth.UI.SettingsManager.Instance.CurrentData;
+                ApplySettingsVolumes(d.masterVolume, d.musicVolume, d.voiceVolume, d.sfxVolume, d.uiVolume);
+            }
+            else
+            {
+                currentRuntimeMaster = masterVolume;
+                currentRuntimeBgm = bgmVolume;
+                currentRuntimeVoice = voiceVolume;
+                currentRuntimeSfx = sfxVolume;
+                currentRuntimeUi = uiVolume;
+                UpdateAllSourceVolumes();
+            }
         }
     }
 
@@ -827,19 +940,25 @@ public class AudioManager : MonoBehaviour
                 masterVolume = PlayerPrefs.GetFloat("Audio_MasterVolume", masterVolume);
             if (PlayerPrefs.HasKey("Audio_BgmVolume"))
                 bgmVolume = PlayerPrefs.GetFloat("Audio_BgmVolume", bgmVolume);
+            if (PlayerPrefs.HasKey("Audio_VoiceVolume"))
+                voiceVolume = PlayerPrefs.GetFloat("Audio_VoiceVolume", voiceVolume);
             if (PlayerPrefs.HasKey("Audio_SfxVolume"))
                 sfxVolume = PlayerPrefs.GetFloat("Audio_SfxVolume", sfxVolume);
+            if (PlayerPrefs.HasKey("Audio_UiVolume"))
+                uiVolume = PlayerPrefs.GetFloat("Audio_UiVolume", uiVolume);
         }
 
         lastInspectorMasterVol = masterVolume;
         lastInspectorBgmVol = bgmVolume;
+        lastInspectorVoiceVol = voiceVolume;
         lastInspectorSfxVol = sfxVolume;
+        lastInspectorUiVol = uiVolume;
     }
 
     private void UpdateAllSourceVolumes()
     {
-        float targetBgmVol = bgmVolume * masterVolume;
-        if (currentBgmMode == BgmMode.Land || currentBgmMode == BgmMode.Dungeon)
+        float targetBgmVol = currentRuntimeBgm * currentRuntimeMaster;
+        if (currentBgmMode == BgmMode.Land || currentBgmMode == BgmMode.Dungeon || currentBgmMode == BgmMode.Menu)
         {
             if (exploreSource != null && exploreSource.isPlaying)
             {
@@ -868,6 +987,16 @@ public class AudioManager : MonoBehaviour
     // =========================================================================
     // HỆ THỐNG ĐIỀU PHỐI BGM (PLAYLIST SHUFFLE, CROSSFADE & FADEOUT)
     // =========================================================================
+
+    /// <summary>
+    /// Phát BGM Menu Chính (Shuffle bài từ landBgmTracks + 5-10s khoảng lặng)
+    /// </summary>
+    public void PlayMenuBGM()
+    {
+        lastExploreMode = BgmMode.Menu;
+        if (currentBgmMode == BgmMode.Combat || currentBgmMode == BgmMode.Boss) return;
+        StartExploreBgm(BgmMode.Menu, landBgmTracks);
+    }
 
     /// <summary>
     /// Phát BGM Làng Haven & MainMenu (Shuffle bài + 5-10s khoảng lặng)
@@ -924,7 +1053,7 @@ public class AudioManager : MonoBehaviour
     {
         if (playlist == null || playlist.Length == 0) yield break;
 
-        while (currentBgmMode == BgmMode.Land || currentBgmMode == BgmMode.Dungeon)
+        while (currentBgmMode == BgmMode.Land || currentBgmMode == BgmMode.Dungeon || currentBgmMode == BgmMode.Menu)
         {
             // 1. Chọn bài ngẫu nhiên khác với bài vừa phát
             int nextIndex = GetRandomTrackIndex(playlist, lastExploreTrackIndex);
@@ -934,7 +1063,7 @@ public class AudioManager : MonoBehaviour
             if (clip != null)
             {
                 exploreSource.clip = clip;
-                FadeIn(exploreSource, bgmVolume * masterVolume, defaultFadeDuration, ref exploreFadeRoutine);
+                FadeIn(exploreSource, currentRuntimeBgm * currentRuntimeMaster, defaultFadeDuration, ref exploreFadeRoutine);
 
                 // Task 5: Cuối bài hát (2-3s cuối), thực hiện FadeOut êm ái trước khi bước vào khoảng lặng
                 float elapsed = 0f;
@@ -945,7 +1074,7 @@ public class AudioManager : MonoBehaviour
 
                 while (elapsed < duration)
                 {
-                    if (currentBgmMode != BgmMode.Land && currentBgmMode != BgmMode.Dungeon)
+                    if (currentBgmMode != BgmMode.Land && currentBgmMode != BgmMode.Dungeon && currentBgmMode != BgmMode.Menu)
                     {
                         // Đã chuyển sang Combat hoặc Boss -> dừng vòng lặp khám phá
                         yield break;
@@ -973,7 +1102,7 @@ public class AudioManager : MonoBehaviour
             float gapTimer = 0f;
             while (gapTimer < silenceGap)
             {
-                if (currentBgmMode != BgmMode.Land && currentBgmMode != BgmMode.Dungeon) yield break;
+                if (currentBgmMode != BgmMode.Land && currentBgmMode != BgmMode.Dungeon && currentBgmMode != BgmMode.Menu) yield break;
                 gapTimer += Time.unscaledDeltaTime;
                 yield return null;
             }
@@ -1171,6 +1300,10 @@ public class AudioManager : MonoBehaviour
         {
             PlayDungeonBGM();
         }
+        else if (lastExploreMode == BgmMode.Menu)
+        {
+            PlayMenuBGM();
+        }
         else
         {
             PlayLandBGM();
@@ -1328,7 +1461,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetRandomClip(attackVoiceClips);
         if (clip != null)
         {
-            Play2D(clip, volume: volPlayerAttackVoice, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volPlayerAttackVoice, pitchMin: 0.96f, pitchMax: 1.04f, category: AudioCategory.Voice);
         }
     }
 
@@ -1357,7 +1490,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetRandomClip(hurtVoiceClips);
         if (clip != null)
         {
-            Play2D(clip, volume: volPlayerHurtVoice, pitchMin: 0.95f, pitchMax: 1.05f);
+            Play2D(clip, volume: volPlayerHurtVoice, pitchMin: 0.95f, pitchMax: 1.05f, category: AudioCategory.Voice);
         }
     }
 
@@ -1371,7 +1504,7 @@ public class AudioManager : MonoBehaviour
 
         if (outOfStaminaClip != null)
         {
-            Play2D(outOfStaminaClip, volume: volPlayerOutOfStamina);
+            Play2D(outOfStaminaClip, volume: volPlayerOutOfStamina, category: AudioCategory.Voice);
         }
     }
 
@@ -1385,7 +1518,7 @@ public class AudioManager : MonoBehaviour
 
         if (staminaEmptyAlertClip != null)
         {
-            Play2D(staminaEmptyAlertClip, volume: volPlayerStaminaAlert, pitchMin: 0.92f, pitchMax: 0.96f);
+            Play2D(staminaEmptyAlertClip, volume: volPlayerStaminaAlert, pitchMin: 0.92f, pitchMax: 0.96f, category: AudioCategory.UI);
         }
     }
 
@@ -1396,7 +1529,7 @@ public class AudioManager : MonoBehaviour
     {
         if (deathClip != null)
         {
-            Play2D(deathClip, volume: volPlayerDeath);
+            Play2D(deathClip, volume: volPlayerDeath, category: AudioCategory.Voice);
         }
     }
 
@@ -1573,7 +1706,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleCheckingClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: volIdleChecking, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volIdleChecking, pitchMin: 0.96f, pitchMax: 1.04f, category: AudioCategory.Voice);
         }
     }
 
@@ -1586,7 +1719,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleWarmupClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: volIdleWarmup, pitchMin: 0.96f, pitchMax: 1.04f);
+            Play2D(clip, volume: volIdleWarmup, pitchMin: 0.96f, pitchMax: 1.04f, category: AudioCategory.Voice);
         }
     }
 
@@ -1599,7 +1732,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip = GetIndexedOrRandomClip(idleHumClips, index);
         if (clip != null)
         {
-            Play2D(clip, volume: volIdleHums, pitchMin: 0.97f, pitchMax: 1.03f);
+            Play2D(clip, volume: volIdleHums, pitchMin: 0.97f, pitchMax: 1.03f, category: AudioCategory.Voice);
         }
     }
 
@@ -1610,7 +1743,7 @@ public class AudioManager : MonoBehaviour
     {
         if (idleStretchingClip != null)
         {
-            Play2D(idleStretchingClip, volume: volIdleStretching, pitchMin: 0.98f, pitchMax: 1.02f);
+            Play2D(idleStretchingClip, volume: volIdleStretching, pitchMin: 0.98f, pitchMax: 1.02f, category: AudioCategory.Voice);
         }
     }
 
@@ -1693,42 +1826,54 @@ public class AudioManager : MonoBehaviour
     // CÁC HÀM PHÁT SFX CHO GIAO DIỆN (UI SFX)
     // =========================================================================
 
-    public void PlayUIUpgradeAnvil() => Play2D(anvilClip, volume: volUIAnvil);
-    public void PlayUIEquip() => Play2D(equipClip, volume: volUIEquip);
-    public void PlayUIPotionUse() => Play2D(potionClip, volume: volUIPotion);
-    public void PlayUIShopTransaction() => Play2D(shopClip, volume: volUIShop);
-    public void PlayUIDisabledClick() => Play2D(staminaEmptyAlertClip, volume: volUIDisabled, pitchMin: 0.92f, pitchMax: 0.96f);
+    public void PlayUIUpgradeAnvil() => Play2D(anvilClip, volume: volUIAnvil, category: AudioCategory.UI);
+    public void PlayUIEquip() => Play2D(equipClip, volume: volUIEquip, category: AudioCategory.UI);
+    public void PlayUIPotionUse() => Play2D(potionClip, volume: volUIPotion, category: AudioCategory.UI);
+    public void PlayUIShopTransaction() => Play2D(shopClip, volume: volUIShop, category: AudioCategory.UI);
+    public void PlayUIDisabledClick() => Play2D(staminaEmptyAlertClip, volume: volUIDisabled, pitchMin: 0.92f, pitchMax: 0.96f, category: AudioCategory.UI);
     public void PlayUIClick() => PlayUIInteract();
-    public void PlayUIItemPickup() => Play2D(itemPickupClip, volume: volUIItemPickup);
-    public void PlayUIInteract() => Play2D(uiInteractClip, volume: volUIInteract);
+    public void PlayUIItemPickup() => Play2D(itemPickupClip, volume: volUIItemPickup, category: AudioCategory.UI);
+    public void PlayUIInteract() => Play2D(uiInteractClip, volume: volUIInteract, category: AudioCategory.UI);
+    public void PlayUIInteract1() => PlayUIInteract();
+    public void PlayUIInteract2() => Play2D(uiInteract2Clip != null ? uiInteract2Clip : uiInteractClip, volume: volUIInteract2, category: AudioCategory.UI);
+    public void PlayUIInteract3() => Play2D(uiInteract3Clip != null ? uiInteract3Clip : uiInteractClip, volume: volUIInteract3, category: AudioCategory.UI);
 
     // =========================================================================
     // TIỆN ÍCH CORE PHÁT 2D VÀ 3D (GENERIC AUDIO CORE)
     // =========================================================================
 
-    public void Play2D(AudioClip clip, float volume = 1.0f, float pitchMin = 1.0f, float pitchMax = 1.0f)
+    public enum AudioCategory
+    {
+        SFX,
+        Voice,
+        UI
+    }
+
+    public void Play2D(AudioClip clip, float volume = 1.0f, float pitchMin = 1.0f, float pitchMax = 1.0f, AudioCategory category = AudioCategory.SFX)
     {
         if (clip == null) return;
 
         AudioSource src = GetAvailable2DSource();
         if (src == null) return;
 
+        float catVol = category == AudioCategory.Voice ? currentRuntimeVoice : (category == AudioCategory.UI ? currentRuntimeUi : currentRuntimeSfx);
         src.clip = clip;
-        src.volume = volume * sfxVolume * masterVolume;
+        src.volume = volume * catVol * currentRuntimeMaster;
         src.pitch = Random.Range(pitchMin, pitchMax);
         src.Play();
     }
 
-    public void Play3D(AudioClip clip, Vector3 position, float volume = 1.0f, float pitchMin = 0.95f, float pitchMax = 1.05f, float minDistance = 2.0f, float maxDistance = 25.0f)
+    public void Play3D(AudioClip clip, Vector3 position, float volume = 1.0f, float pitchMin = 0.95f, float pitchMax = 1.05f, float minDistance = 2.0f, float maxDistance = 25.0f, AudioCategory category = AudioCategory.SFX)
     {
         if (clip == null) return;
 
         AudioSource src = GetAvailable3DSource();
         if (src == null) return;
 
+        float catVol = category == AudioCategory.Voice ? currentRuntimeVoice : (category == AudioCategory.UI ? currentRuntimeUi : currentRuntimeSfx);
         src.transform.position = position;
         src.clip = clip;
-        src.volume = volume * sfxVolume * masterVolume;
+        src.volume = volume * catVol * currentRuntimeMaster;
         src.pitch = Random.Range(pitchMin, pitchMax);
         src.minDistance = minDistance;
         src.maxDistance = maxDistance;

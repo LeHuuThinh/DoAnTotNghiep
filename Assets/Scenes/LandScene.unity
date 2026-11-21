@@ -858,24 +858,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7006891945417507263, guid: 76822e9b2dad7fd44bf262e2c246f4b9, type: 3}
   m_PrefabInstance: {fileID: 445504318}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &33828749 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 43691373732606300, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &33828753
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 33828749}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 0
 --- !u!4 &35492645 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3022883480339883004, guid: a4aa5523aec3ee045ab04999f6b2fb7d, type: 3}
@@ -3993,24 +3975,6 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
---- !u!1 &181421856 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6342079527896517088, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &181421860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 181421856}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 1
 --- !u!1001 &182127290
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13436,21 +13400,6 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
---- !u!115 &490124552
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: EnchantRowHoverTrigger
-  m_Namespace: InfiniteLabyrinth.UI
-  m_AssemblyName: Assembly-CSharp
 --- !u!4 &500863583 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5412173821412678239, guid: ef7489c565cc7b045a61e1333cd4d95b, type: 3}
@@ -14507,24 +14456,6 @@ MonoBehaviour:
   m_Center: {x: 0, y: 1, z: 0}
   m_Area: 1
   m_AffectedAgents: 00000000
---- !u!1 &539079051 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1671021746782893509, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &539079055
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 539079051}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 0
 --- !u!1001 &540800038
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19821,24 +19752,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5709571995360304181, guid: bffaf84d3633d0b40b74c2a435d0ec01, type: 3}
   m_PrefabInstance: {fileID: 767506027}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &768763601 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6341869092062696794, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &768763605
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 768763601}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 1
 --- !u!1001 &775029948
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28622,24 +28535,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0c664a221a007eb4ba40f301111e12ba, type: 3}
---- !u!1 &1226144144 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1147573918968808613, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1226144148
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1226144144}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 1
 --- !u!4 &1232699011 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 706518500377960155, guid: 9066876e361e9464fa1028f154c2c992, type: 3}
@@ -28870,24 +28765,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 419123951}
   m_SourcePrefab: {fileID: 100100000, guid: b5020ae89aba3c44a98d9529509bbe17, type: 3}
---- !u!1 &1244794792 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8729872754566442169, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1244794796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1244794792}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 2
 --- !u!1001 &1254362792
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30459,24 +30336,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd7e9b02c2fd7a848aab69ddfdc6225e, type: 3}
---- !u!1 &1314743053 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5378875490577339533, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1314743057
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1314743053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 2
 --- !u!1001 &1316860763
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33503,24 +33362,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 681859611}
   m_SourcePrefab: {fileID: 100100000, guid: 9a606c4ca71f9a74fbdfe44cb098a27f, type: 3}
---- !u!1 &1477961745 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4034392563220972621, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1477961749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1477961745}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 0
 --- !u!4 &1483440490 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 174771281428771975, guid: cc629d86f27840e4788b39400f41ec83, type: 3}
@@ -44601,24 +44442,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7568791283060140561, guid: 410496b14ced4ea459acb5fc99dae538, type: 3}
   m_PrefabInstance: {fileID: 721807761}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1942127434 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3382426696100114499, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-  m_PrefabInstance: {fileID: 3607276053430195074}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1942127438
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1942127434}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 490124552}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.EnchantRowHoverTrigger
-  rowIndex: 2
 --- !u!1 &1947382858 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5114848476070007173, guid: 9a606c4ca71f9a74fbdfe44cb098a27f, type: 3}
@@ -50224,33 +50047,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7602211835920880625, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2140591888}
-    - targetCorrespondingSourceObject: {fileID: 1671021746782893509, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 539079055}
-    - targetCorrespondingSourceObject: {fileID: 6341869092062696794, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 768763605}
-    - targetCorrespondingSourceObject: {fileID: 5378875490577339533, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1314743057}
-    - targetCorrespondingSourceObject: {fileID: 4034392563220972621, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1477961749}
-    - targetCorrespondingSourceObject: {fileID: 6342079527896517088, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 181421860}
-    - targetCorrespondingSourceObject: {fileID: 3382426696100114499, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1942127438}
-    - targetCorrespondingSourceObject: {fileID: 43691373732606300, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 33828753}
-    - targetCorrespondingSourceObject: {fileID: 1147573918968808613, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1226144148}
-    - targetCorrespondingSourceObject: {fileID: 8729872754566442169, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1244794796}
   m_SourcePrefab: {fileID: 100100000, guid: 4886a6f89c28edd4783e6f8677a1675c, type: 3}
 --- !u!1001 &6283139830266366263
 PrefabInstance:

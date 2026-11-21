@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 637389898194813808, guid: b6203e8e346958647b6725adee0c8a6b, type: 3}
+      propertyPath: uiInteract2Clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 01bb33f2b50607a4fbe62b1ddfdcd660, type: 3}
+    - target: {fileID: 637389898194813808, guid: b6203e8e346958647b6725adee0c8a6b, type: 3}
+      propertyPath: uiInteract3Clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 5f41d51953a142e468c3ba522cbc5568, type: 3}
     - target: {fileID: 3318796059910053589, guid: b6203e8e346958647b6725adee0c8a6b, type: 3}
       propertyPath: m_Name
       value: CoreSystems

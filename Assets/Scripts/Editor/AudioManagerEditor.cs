@@ -23,14 +23,18 @@ public class AudioManagerEditor : Editor
     // Serialized Properties
     private SerializedProperty masterVolumeProp;
     private SerializedProperty bgmVolumeProp;
+    private SerializedProperty voiceVolumeProp;
     private SerializedProperty sfxVolumeProp;
+    private SerializedProperty uiVolumeProp;
     private SerializedProperty loadSavedSettingsProp;
 
     private void OnEnable()
     {
         masterVolumeProp = serializedObject.FindProperty("masterVolume");
         bgmVolumeProp = serializedObject.FindProperty("bgmVolume");
+        voiceVolumeProp = serializedObject.FindProperty("voiceVolume");
         sfxVolumeProp = serializedObject.FindProperty("sfxVolume");
+        uiVolumeProp = serializedObject.FindProperty("uiVolume");
         loadSavedSettingsProp = serializedObject.FindProperty("loadSavedSettingsOnStart");
     }
 
@@ -74,7 +78,9 @@ public class AudioManagerEditor : Editor
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(masterVolumeProp, new GUIContent("Master Volume", "Âm lượng tổng của toàn bộ trò chơi"));
             EditorGUILayout.PropertyField(bgmVolumeProp, new GUIContent("BGM Volume", "Âm lượng nhạc nền thám hiểm, chiến đấu và Boss"));
+            EditorGUILayout.PropertyField(voiceVolumeProp, new GUIContent("Voice Volume", "Âm lượng giọng nhân vật (hô chém, rên đau, thở dốc, idle)"));
             EditorGUILayout.PropertyField(sfxVolumeProp, new GUIContent("SFX Volume", "Âm lượng hiệu ứng âm thanh chung"));
+            EditorGUILayout.PropertyField(uiVolumeProp, new GUIContent("UI Volume", "Âm lượng giao diện, tương tác UI, đe rèn, nhặt đồ"));
             EditorGUILayout.PropertyField(loadSavedSettingsProp, new GUIContent("Load Saved Settings", "Tự động tải lại âm lượng đã lưu từ PlayerPrefs"));
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(4);
@@ -208,7 +214,9 @@ public class AudioManagerEditor : Editor
             DrawVolumeSlider("volUIShop", "Giao Dịch Cửa Hàng (Shop)");
             DrawVolumeSlider("volUIDisabled", "Click Nút Bị Khóa / Disable");
             DrawVolumeSlider("volUIItemPickup", "Nhặt Đồ Dưới Đất (Phím F)");
-            DrawVolumeSlider("volUIInteract", "Mở Giao Diện / Chuyển Tab");
+            DrawVolumeSlider("volUIInteract", "Mở Giao Diện (UIInteract 1)");
+            DrawVolumeSlider("volUIInteract2", "Toggle / 3D-2D / Thả Slider (UIInteract 2)");
+            DrawVolumeSlider("volUIInteract3", "Menu / Tab / Đóng UI (UIInteract 3)");
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(4);
         }
@@ -295,7 +303,9 @@ public class AudioManagerEditor : Editor
             if (prop.name == "m_Script" || 
                 prop.name == "masterVolume" || 
                 prop.name == "bgmVolume" || 
+                prop.name == "voiceVolume" || 
                 prop.name == "sfxVolume" || 
+                prop.name == "uiVolume" || 
                 prop.name == "loadSavedSettingsOnStart" || 
                 prop.name.StartsWith("vol") ||
                 prop.name.StartsWith("player") ||

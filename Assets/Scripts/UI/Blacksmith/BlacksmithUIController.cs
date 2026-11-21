@@ -528,6 +528,7 @@ namespace InfiniteLabyrinth.UI
     {
       IsOpen = true;
       openedFrame = Time.frameCount;
+      AudioManager.Instance?.PlayUIInteract();
       AutoFindReferences();
       CachePlayerController();
 
@@ -564,11 +565,12 @@ namespace InfiniteLabyrinth.UI
     public void CloseBlacksmith()
     {
       if (!IsOpen) return;
+      AudioManager.Instance?.PlayUIInteract3();
 
       // Tự động hoàn trả trang bị nếu còn nằm trên đe rèn
       if (heldUpgradeItem != null)
       {
-        TakeOutUpgradeItem();
+        TakeOutUpgradeItem(-1, false);
       }
 
       IsOpen = false;
@@ -685,7 +687,7 @@ namespace InfiniteLabyrinth.UI
       // Nếu trước đó đang có trang bị khác trên đe rèn -> Hoàn trả lại túi trước!
       if (heldUpgradeItem != null)
       {
-        TakeOutUpgradeItem();
+        TakeOutUpgradeItem(-1, false);
       }
 
       // 1. Lưu lại trang bị trên đe rèn
@@ -704,6 +706,7 @@ namespace InfiniteLabyrinth.UI
 
       UpdateUpgradeUI();
       RefreshInventoryGrid();
+      AudioManager.Instance?.PlayUIEquip();
 
       if (itemDetailPopup != null)
       {
@@ -714,7 +717,7 @@ namespace InfiniteLabyrinth.UI
     /// <summary>
     /// Tháo trang bị từ đe rèn trả lại túi đồ (vào ô chỉ định hoặc ô ban đầu)
     /// </summary>
-    public void TakeOutUpgradeItem(int targetBagIndex = -1)
+    public void TakeOutUpgradeItem(int targetBagIndex = -1, bool playSound = true)
     {
       if (heldUpgradeItem == null || !InventoryManager.HasInstance) return;
 
@@ -768,6 +771,7 @@ namespace InfiniteLabyrinth.UI
       ClearUpgradeUI();
       RefreshInventoryGrid();
       UpdatePlayerGold();
+      if (playSound) AudioManager.Instance?.PlayUIEquip();
 
       if (itemDetailPopup != null)
       {

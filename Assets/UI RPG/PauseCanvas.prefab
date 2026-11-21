@@ -1437,7 +1437,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3815934573773072574
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2021,13 +2021,14 @@ GameObject:
   - component: {fileID: 4712743780994234144}
   - component: {fileID: 20356156435045572}
   - component: {fileID: 8712283219260389863}
+  - component: {fileID: 2601618991290829491}
   m_Layer: 5
   m_Name: PauseCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3884999275654836549
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2113,6 +2114,25 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &2601618991290829491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108865583407568397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94aa65ee913e2774f8e77657993dfb3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.PauseMenuController
+  pauseMenuUI: {fileID: 6960509744849005015}
+  settingUI: {fileID: 3046851818533104077}
+  btnResume: {fileID: 2241983203030797379}
+  btnSettings: {fileID: 2612306589700125646}
+  btnSaveGame: {fileID: 8337980908566458303}
+  btnBackToMenu: {fileID: 7294943964310387965}
+  mainMenuSceneName: MainMenuScene
 --- !u!1 &8571653352687761200
 GameObject:
   m_ObjectHideFlags: 0
@@ -2460,6 +2480,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SettingUI
       objectReference: {fileID: 0}
+    - target: {fileID: 2234123286047943704, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4303485220824827191, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2540,6 +2564,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6980267122481399695, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2550,3 +2578,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4303485220824827191, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
   m_PrefabInstance: {fileID: 4509923507020354209}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3046851818533104077 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1503885749316680556, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
+  m_PrefabInstance: {fileID: 4509923507020354209}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e0a9d6236cf73844bcac916503b9613, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.SettingsUIController

@@ -244,7 +244,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   masterVolume: 1
   bgmVolume: 0.1
+  voiceVolume: 0.5
   sfxVolume: 0.5
+  uiVolume: 0.5
   loadSavedSettingsOnStart: 0
   volPlayerSlash: 0.6
   volPlayerAttackVoice: 0.3
@@ -297,7 +299,9 @@ MonoBehaviour:
   volUIShop: 0.4
   volUIDisabled: 0.3
   volUIItemPickup: 0.2
-  volUIInteract: 0.35
+  volUIInteract: 0.15
+  volUIInteract2: 0.15
+  volUIInteract3: 0.15
   landBgmTracks:
   - {fileID: 8300000, guid: 34019e332ada5f242a4fb44a1cf4507b, type: 3}
   - {fileID: 8300000, guid: 60cf0194b31a6df4bb7917dcc5fcc6c6, type: 3}
@@ -424,6 +428,8 @@ MonoBehaviour:
   shopClip: {fileID: 8300000, guid: b7fa547fa2fe3f142baa5156db926ac2, type: 3}
   itemPickupClip: {fileID: 8300000, guid: 316c1db24649e7c43a0fc300cd901b23, type: 3}
   uiInteractClip: {fileID: 8300000, guid: 30c507d7d69da3543a96b8502f97edd8, type: 3}
+  uiInteract2Clip: {fileID: 0}
+  uiInteract3Clip: {fileID: 0}
 --- !u!1 &777467505956135259
 GameObject:
   m_ObjectHideFlags: 0

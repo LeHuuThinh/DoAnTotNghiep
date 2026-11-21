@@ -14,6 +14,7 @@ namespace InfiniteLabyrinth.Editor
     /// </summary>
     public class ProjectDashboardEditor : EditorWindow
     {
+        private const string SCENE_MAIN_MENU = "Assets/Scenes/MainMenuScene.unity";
         private const string SCENE_LAND = "Assets/Scenes/LandScene.unity";
         private const string SCENE_DUNGEON = "Assets/Scenes/DungeonScene.unity";
 
@@ -171,6 +172,18 @@ namespace InfiniteLabyrinth.Editor
             DrawSectionHeader("🌿 QUẢN LÝ VÀ CHUYỂN ĐỔI SCENE NHANH");
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("🎮 MainMenuScene (Menu Chính & Title Screen)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Màn hình mở đầu game, chứa MainMenuCanvas, ContinueUI (SaveInfo preview), NewgameUI và SettingUI.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("➡️ Mở MainMenuScene (Assets/Scenes/MainMenuScene.unity)", GUILayout.Height(30)))
+            {
+                SwitchScene(SCENE_MAIN_MENU);
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("🏡 LandScene (Làng Haven - Safe Hub)", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("Nơi người chơi hồi sinh tại Chuông Làng, ghé Tiệm Trang Bị, Tiệm Dược Liệu, Lò Rèn và bước qua Cổng Hầm Ngục.", EditorStyles.wordWrappedMiniLabel);
             EditorGUILayout.Space(4);
@@ -208,6 +221,14 @@ namespace InfiniteLabyrinth.Editor
             if (GUILayout.Button("CoreSystems Prefab"))
             {
                 PingAsset("Assets/Prefabs/Core/CoreSystems.prefab");
+            }
+            if (GUILayout.Button("SettingUI Prefab"))
+            {
+                PingAsset("Assets/UI RPG/SettingUI.prefab");
+            }
+            if (GUILayout.Button("PauseCanvas Prefab"))
+            {
+                PingAsset("Assets/UI RPG/PauseCanvas.prefab");
             }
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
@@ -345,6 +366,18 @@ namespace InfiniteLabyrinth.Editor
             if (GUILayout.Button("⚡ Mở Cửa Sổ Tối Ưu LandScene (Optimizer Window)", GUILayout.Height(30)))
             {
                 LandSceneOptimizerEditor.ShowWindow();
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(6);
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("⚙️ Cấu Hình SettingUI Prefab (1-Click)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Tự động gắn SettingsUIController, 4 ToggleSwitchUI, nối dây Dropdowns, Sliders và lưu prefab.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("⚙️ Cấu Hình SettingUI Prefab (1-Click)", GUILayout.Height(30)))
+            {
+                SettingsSetupEditor.SetupSettingUIPrefab();
             }
             EditorGUILayout.EndVertical();
 

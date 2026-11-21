@@ -268,6 +268,11 @@ namespace InfiniteLabyrinth.UI
 
     public void SetMode(PreviewMode newMode, bool animate = true)
     {
+      if (animate && newMode != currentMode)
+      {
+        AudioManager.Instance?.PlayUIInteract2();
+      }
+
       currentMode = newMode;
 
       if (rememberPlayerChoice)

@@ -7052,6 +7052,7 @@ GameObject:
   - component: {fileID: 1801487200}
   - component: {fileID: 1801487199}
   - component: {fileID: 1801487198}
+  - component: {fileID: 1801487202}
   m_Layer: 5
   m_Name: MainMenuCanvas
   m_TagString: Untagged
@@ -7148,6 +7149,39 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1801487202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801487197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 300b64190bcdd5e4ead402598248cec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.MainMenuController
+  mainMenuUI: {fileID: 2094818301}
+  continueUI: {fileID: 1650889213}
+  newgameUI: {fileID: 1585853219}
+  newgameModeSelectedUI: {fileID: 181620648}
+  settingUI: {fileID: 1982195336201184928}
+  btnContinue: {fileID: 1094488007}
+  btnNewGame: {fileID: 958093016}
+  btnSettings: {fileID: 95625934}
+  btnCredits: {fileID: 840363579}
+  btnQuit: {fileID: 1212553668}
+  btnContinueConfirm: {fileID: 960867010}
+  btnContinueBack: {fileID: 421390919}
+  dayCountText: {fileID: 1054814571}
+  floorCountText: {fileID: 541400373}
+  levelCountText: {fileID: 306900217}
+  goldCountText: {fileID: 1208960597}
+  btnNewGameConfirm: {fileID: 1409871852}
+  btnNewGameBack: {fileID: 1703206347}
+  btnNewGameSingle: {fileID: 872315912}
+  btnNewGameCoop: {fileID: 898815393}
+  targetGameplayScene: LandScene
 --- !u!1 &1936034570
 GameObject:
   m_ObjectHideFlags: 0
@@ -8240,6 +8274,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
+--- !u!114 &1982195336201184928 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1503885749316680556, guid: 77bb83f9e4e1f224ea145d60b22d3c40, type: 3}
+  m_PrefabInstance: {fileID: 1982195336201184927}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e0a9d6236cf73844bcac916503b9613, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfiniteLabyrinth.UI.SettingsUIController
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

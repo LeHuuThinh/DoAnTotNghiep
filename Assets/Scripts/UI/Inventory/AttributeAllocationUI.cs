@@ -442,6 +442,7 @@ namespace InfiniteLabyrinth.UI
     /// </summary>
     public void Hide()
     {
+      AudioManager.Instance?.PlayUIInteract3();
       tempAtk = 0;
       tempHp = 0;
       tempStamina = 0;

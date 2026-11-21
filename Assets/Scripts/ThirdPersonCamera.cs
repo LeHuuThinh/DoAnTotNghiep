@@ -597,8 +597,13 @@ public class ThirdPersonCamera : MonoBehaviour
     if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
 
     Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-    cameraYaw += mouseDelta.x * mouseSensitivity;
-    cameraPitch = Mathf.Clamp(cameraPitch - mouseDelta.y * mouseSensitivity, minPitch, maxPitch);
+    float sensitivityMultiplier = InfiniteLabyrinth.UI.SettingsManager.HasInstance ? InfiniteLabyrinth.UI.SettingsManager.Instance.MouseSensitivity : 1f;
+    bool invertY = InfiniteLabyrinth.UI.SettingsManager.HasInstance && InfiniteLabyrinth.UI.SettingsManager.Instance.MouseInvertY;
+    float effectiveSensitivity = mouseSensitivity * sensitivityMultiplier;
+
+    cameraYaw += mouseDelta.x * effectiveSensitivity;
+    float pitchDelta = (invertY ? mouseDelta.y : -mouseDelta.y) * effectiveSensitivity;
+    cameraPitch = Mathf.Clamp(cameraPitch + pitchDelta, minPitch, maxPitch);
 
     float scrollDelta = Mouse.current.scroll.ReadValue().y;
     cameraDistance = Mathf.Clamp(cameraDistance - scrollDelta * zoomSpeed * 0.01f, minZoomDistance, maxZoomDistance);
@@ -606,10 +611,10 @@ public class ThirdPersonCamera : MonoBehaviour
 
   private void HandleCursorLock()
   {
-    if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+    // Nếu PauseMenu đang mở -> để PauseMenu quản lý chuột
+    if (InfiniteLabyrinth.UI.PauseMenuController.IsPaused)
     {
-      Cursor.lockState = CursorLockMode.None;
-      Cursor.visible = true;
+      return;
     }
 
     if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
@@ -715,6 +720,11 @@ public class ThirdPersonCamera : MonoBehaviour
   // =========================================================================
   public void TriggerShake(float duration, float magnitude)
   {
+    if (InfiniteLabyrinth.UI.SettingsManager.HasInstance && !InfiniteLabyrinth.UI.SettingsManager.Instance.ScreenShakeEnabled)
+    {
+      return;
+    }
+
     if (cameraShakeCoroutine != null)
     {
       StopCoroutine(cameraShakeCoroutine);

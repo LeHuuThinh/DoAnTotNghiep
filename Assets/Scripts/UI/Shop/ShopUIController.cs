@@ -512,6 +512,7 @@ namespace InfiniteLabyrinth.UI
     {
       if (!IsOpen) return;
       IsOpen = false;
+      AudioManager.Instance?.PlayUIInteract3();
       LastClosedFrame = Time.frameCount;
 
       if (itemDetailPopup != null)

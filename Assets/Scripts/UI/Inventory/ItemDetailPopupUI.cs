@@ -2045,24 +2045,4 @@ namespace InfiniteLabyrinth.UI
     public TextMeshProUGUI text;
     [NonSerialized] public EnchantRowHoverTrigger hoverTrigger;
   }
-
-  /// <summary>
-  /// Bắt sự kiện hover chuột trên từng dòng Enchant để kích hoạt / ẩn EnchantHint
-  /// </summary>
-  public class EnchantRowHoverTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
-  {
-    public Action<int> onHoverEnter;
-    public Action<int> onHoverExit;
-    public int rowIndex;
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-      onHoverEnter?.Invoke(rowIndex);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-      onHoverExit?.Invoke(rowIndex);
-    }
-  }
 }

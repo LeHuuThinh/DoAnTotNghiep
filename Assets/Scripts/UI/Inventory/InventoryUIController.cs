@@ -600,6 +600,7 @@ namespace InfiniteLabyrinth.UI
     {
       if (!IsOpen) return;
       IsOpen = false;
+      AudioManager.Instance?.PlayUIInteract3();
 
       // 1. Khóa tương tác UI ngay lập tức
       if (rootCanvasGroup != null)
@@ -863,6 +864,10 @@ namespace InfiniteLabyrinth.UI
 
     public void SwitchTab(InventoryTab tab)
     {
+      if (currentTab != tab)
+      {
+        AudioManager.Instance?.PlayUIInteract3();
+      }
       currentTab = tab;
       UpdateTabButtonsVisual(animate: true);
 
